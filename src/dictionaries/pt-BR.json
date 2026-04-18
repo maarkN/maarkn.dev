@@ -58,6 +58,71 @@
       }
     }
   },
+  "about": {
+    "kicker": "Sobre",
+    "title": "Um construtor que cuida dos detalhes e entrega o trabalho.",
+    "bio": [
+      "Eu sou o Marco — na internet a maioria das pessoas me conhece como maarkn. Sou engenheiro fullstack sênior em Goiânia, atendendo clientes e times pelo mundo.",
+      "Comecei a programar profissionalmente em 2019 e nunca mais parei. Nesses anos saí de trainee de frontend para liderar a arquitetura de produtos usados por milhares de pessoas — plataformas de VoIP, apps de fintech, assistentes para imobiliárias, sites de museus, chatbots agrícolas e algumas coisas que ainda não posso comentar.",
+      "O que eu realmente curto é estar do começo ao fim: entender o que as pessoas precisam de verdade, desenhar como o sistema vai se comportar, escrever o código que dá vida a isso e seguir por perto quando entra no ar e cresce. Gosto de arquitetura limpa, mas gosto mais de software que funciona, não surpreende o time que mantém e entrega uma experiência boa pra quem usa.",
+      "Quando não estou programando, estou estudando — agora melhorando o inglês pra morar fora, e explorando como agentes de IA podem ser úteis no dia a dia em vez de só impressionar em demo."
+    ],
+    "valuesTitle": "Como eu trabalho",
+    "values": [
+      {
+        "title": "Do começo ao fim",
+        "body": "Da primeira conversa até a versão rodando em produção. Eu não entrego e sumo."
+      },
+      {
+        "title": "Comunicação clara, sem firula",
+        "body": "Traduzo entre negócio e código. Stakeholder recebe resposta direta, não jargão técnico."
+      },
+      {
+        "title": "Pragmático no lugar do perfeito",
+        "body": "Entrego a coisa mais simples que resolve, depois ajusto quando a realidade pede."
+      },
+      {
+        "title": "Respeito por quem vem depois",
+        "body": "Código é mais lido do que escrito. Deixo o repositório um pouco melhor do que encontrei."
+      }
+    ],
+    "timelineTitle": "Linha do tempo",
+    "timelineNow": "Atual",
+    "timeline": {
+      "freelance": {
+        "role": "Desenvolvedor Fullstack & Consultor",
+        "summary": "Construindo produtos de ponta a ponta como freelancer: refatoração de um app Flutter com compras in-app, vários assistentes WhatsApp com LLMs, plataforma de relatórios de crédito de carbono, chatbot imobiliário em Miami, e auditorias de segurança e performance."
+      },
+      "nectar": {
+        "role": "Desenvolvedor Sênior N2",
+        "summary": "Liderei a arquitetura de um produto VoIP integrado ao CRM da empresa. Desenhei regras de tarifação, provisionamento em tempo real, gravação e transcrição de chamadas, multitenancy e gestão de equipes."
+      },
+      "sevencred": {
+        "role": "Engenheiro Fullstack (Remoto)",
+        "summary": "Construí uma API fintech para empréstimos FCO em microsserviços, app Flutter pra solicitação, portal em Ghost e crawlers ingerindo dados de APIs públicas brasileiras."
+      },
+      "ecto": {
+        "role": "Desenvolvedor Fullstack Sênior (Remoto)",
+        "summary": "Migrei a ingestão de avaliações do Google de batch para eventos em tempo real. Liderei dois devs juniores, montei o processo de code review e entreguei um sistema de assinatura pra atender clientes pequenos."
+      },
+      "vendorhub": {
+        "role": "Desenvolvedor Frontend (Híbrido)",
+        "summary": "Padronizei o UI, refatorei o cadastro de produtos do core e criei uma extensão Chrome pra analisar performance de anúncios do Mercado Livre direto na página."
+      },
+      "ecto1": {
+        "role": "Desenvolvedor Web Fullstack (Remoto)",
+        "summary": "Entreguei features numa plataforma de gestão de listings do Google Meu Negócio, cuidei dos deploys e dei uma melhorada em alguns blogs Gatsby no caminho."
+      },
+      "collectgram1": {
+        "role": "Desenvolvedor Frontend JR (Remoto)",
+        "summary": "Construí fluxos de indicação e assinatura, corrigi bugs e fiz o painel administrativo evoluir num produto de gestão de coleções."
+      },
+      "collectgram0": {
+        "role": "Trainee Frontend (Híbrido)",
+        "summary": "Onde tudo começou: um dashboard de marketplace em Vue.js e templates de email marketing com Pug e Sass."
+      }
+    }
+  },
   "social": {
     "linkedin": "LinkedIn",
     "github": "GitHub",

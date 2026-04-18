@@ -58,6 +58,71 @@
       }
     }
   },
+  "about": {
+    "kicker": "About",
+    "title": "A builder who sweats the details and ships the work.",
+    "bio": [
+      "I'm Marco — most people online know me as maarkn. I'm a senior fullstack engineer based in Goiânia, Brazil, working with clients and teams around the world.",
+      "I started writing software professionally in 2019 and never really stopped. Over the years I moved from frontend trainee to leading the architecture of products used by thousands — VoIP platforms, fintech apps, real-estate assistants, museum sites, agronomy chatbots, and a few things I can't talk about yet.",
+      "What I really enjoy is being involved end-to-end: understanding what people actually need, designing how the system should behave, writing the code that makes it real, and staying close while it goes live and grows. I care about clean architecture, but I care more about software that works, doesn't surprise the team that maintains it, and gives the user a smooth ride.",
+      "When I'm not coding, I'm usually studying — currently improving my English to relocate abroad, and exploring how AI agents can be useful day-to-day instead of just impressive in demos."
+    ],
+    "valuesTitle": "How I work",
+    "values": [
+      {
+        "title": "End-to-end ownership",
+        "body": "From the first conversation to the version running in production. I don't hand things off and disappear."
+      },
+      {
+        "title": "Clear, plain communication",
+        "body": "I translate between business and code. Stakeholders get straight answers, not jargon."
+      },
+      {
+        "title": "Pragmatic over perfect",
+        "body": "I ship the simplest thing that solves the problem, then iterate when reality pushes back."
+      },
+      {
+        "title": "Respect for the next person",
+        "body": "Code is read more than it's written. I leave the codebase a little better than I found it."
+      }
+    ],
+    "timelineTitle": "Career timeline",
+    "timelineNow": "Now",
+    "timeline": {
+      "freelance": {
+        "role": "Fullstack Developer & Consultant",
+        "summary": "Building end-to-end products as a freelancer: a refactored Flutter app with in-app purchases, several WhatsApp assistants powered by LLMs, a carbon-credit reporting platform, a real-estate chatbot for Miami, and a few security and performance audits."
+      },
+      "nectar": {
+        "role": "Senior Developer L2",
+        "summary": "Led the architecture of a VoIP product integrated with the company CRM. Designed billing rules, real-time provisioning, call recording and transcription, multitenancy and team management."
+      },
+      "sevencred": {
+        "role": "Fullstack Engineer (Remote)",
+        "summary": "Built a fintech API for FCO loans with a microservices mindset, a Flutter app for applications, a Ghost-based portal, and crawlers ingesting data from public Brazilian gov APIs."
+      },
+      "ecto": {
+        "role": "Senior Fullstack Developer (Remote)",
+        "summary": "Migrated Google reviews ingestion from batch to real-time events. Led two junior developers, set the code-review process, and shipped a subscription system to onboard small clients."
+      },
+      "vendorhub": {
+        "role": "Frontend Developer (Hybrid)",
+        "summary": "Drove UI standardization, refactored the core product registration flow, and built a Chrome extension to analyze Mercado Livre ad performance directly inside the marketplace."
+      },
+      "ecto1": {
+        "role": "Fullstack Web Developer (Remote)",
+        "summary": "Shipped features on a Google My Business listings platform, managed deployments, and improved a few Gatsby blogs along the way."
+      },
+      "collectgram1": {
+        "role": "Frontend Developer JR (Remote)",
+        "summary": "Built referral and subscription flows, fixed bugs and grew the admin dashboard of a collection-management product."
+      },
+      "collectgram0": {
+        "role": "Frontend Trainee (Hybrid)",
+        "summary": "Where it all started: a Vue.js marketplace dashboard and email marketing templates with Pug and Sass."
+      }
+    }
+  },
   "social": {
     "linkedin": "LinkedIn",
     "github": "GitHub",
