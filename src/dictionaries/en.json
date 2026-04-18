@@ -40,22 +40,10 @@
     "kicker": "A few numbers",
     "title": "Six years of building things that don't break.",
     "items": {
-      "years": {
-        "value": "6",
-        "label": "Years writing software professionally"
-      },
-      "projects": {
-        "value": "30+",
-        "label": "Products and platforms delivered"
-      },
-      "stacks": {
-        "value": "12",
-        "label": "Languages and frameworks in daily use"
-      },
-      "countries": {
-        "value": "4",
-        "label": "Countries with clients I've worked with"
-      }
+      "years": { "value": "6", "label": "Years writing software professionally" },
+      "projects": { "value": "30+", "label": "Products and platforms delivered" },
+      "stacks": { "value": "12", "label": "Languages and frameworks in daily use" },
+      "countries": { "value": "4", "label": "Countries with clients I've worked with" }
     }
   },
   "about": {
@@ -121,6 +109,20 @@
         "role": "Frontend Trainee (Hybrid)",
         "summary": "Where it all started: a Vue.js marketplace dashboard and email marketing templates with Pug and Sass."
       }
+    }
+  },
+  "toolkit": {
+    "kicker": "Toolkit",
+    "title": "The tools I reach for, day after day.",
+    "sub": "These are the languages, frameworks and ideas I use most. The list isn't exhaustive — I learn whatever the project needs — but it's an honest snapshot of where I'm fluent.",
+    "yearsSuffix": "y",
+    "groups": {
+      "frontend": { "title": "Frontend", "caption": "Interfaces people actually want to use." },
+      "backend": { "title": "Backend & APIs", "caption": "The plumbing that has to work every time." },
+      "mobile": { "title": "Mobile", "caption": "Apps that ship to real stores." },
+      "data": { "title": "Data & Storage", "caption": "Where things live and how they're found." },
+      "infra": { "title": "Infra & DevOps", "caption": "Putting code in front of users, safely." },
+      "practices": { "title": "Practices & Soft skills", "caption": "How I work with code and with people." }
     }
   },
   "social": {

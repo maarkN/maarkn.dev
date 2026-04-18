@@ -4,6 +4,7 @@ import { Nav } from "@/components/nav";
 import { Hero } from "@/components/hero";
 import { BigNumbers } from "@/components/big-numbers";
 import { About } from "@/components/about";
+import { Toolkit } from "@/components/toolkit";
 import { Footer } from "@/components/footer";
 
 export default async function HomePage({ params }: PageProps<"/[lang]">) {
@@ -19,6 +20,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         <Hero labels={dict.hero} cardLabels={dict.card} />
         <BigNumbers labels={dict.bigNumbers} />
         <About labels={dict.about} />
+        <Toolkit labels={dict.toolkit} />
       </main>
       <Footer labels={dict.footer} socials={dict.social} />
     </>
