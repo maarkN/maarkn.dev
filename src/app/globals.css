@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+/* ════════════════════════════════════════════════
+   THEME TOKENS — fusion of V1 (Digital Construct)
+   + V2 (Professional OS). Dark · Light · Dev.
+   ════════════════════════════════════════════════ */
+
+:root,
+[data-theme="dark"] {
+  --bg:           #0a0a0b;
+  --bg-low:       #060608;
+  --surface:      #131317;
+  --surface-2:    #1a1a1f;
+  --surface-3:    #222228;
+  --border:       #2a2a30;
+  --border-2:     #3a3a42;
+  --text:         #f0f0f5;
+  --text-2:       #c3c6d7;
+  --muted:        #7a7a90;
+  --accent:       #4f6ef7;
+  --accent-2:     #7b93ff;
+  --accent-glow:  rgba(79, 110, 247, 0.25);
+  --green:        #22c55e;
+  --red:          #ff2d55;
+  --grid-opacity: 0.28;
+}
+
+[data-theme="light"] {
+  --bg:           #f0f4ff;
+  --bg-low:       #e6ecff;
+  --surface:      #ffffff;
+  --surface-2:    #f6f8ff;
+  --surface-3:    #ecf0fa;
+  --border:       #d4dcf0;
+  --border-2:     #b5c1e2;
+  --text:         #0f172a;
+  --text-2:       #1e2a4a;
+  --muted:        #5b6478;
+  --accent:       #2547d8;
+  --accent-2:     #1d3ac0;
+  --accent-glow:  rgba(37, 71, 216, 0.18);
+  --green:        #16a34a;
+  --red:          #dc2626;
+  --grid-opacity: 0.55;
+}
+
+[data-theme="dev"] {
+  --bg:           #050810;
+  --bg-low:       #02040a;
+  --surface:      #0a1018;
+  --surface-2:    #0f1622;
+  --surface-3:    #15203a;
+  --border:       #1a2540;
+  --border-2:     #2a3a60;
+  --text:         #d4ffea;
+  --text-2:       #88c8b6;
+  --muted:        #486478;
+  --accent:       #00ff88;
+  --accent-2:     #ff2d8e;
+  --accent-glow:  rgba(0, 255, 136, 0.2);
+  --green:        #00ff88;
+  --red:          #ff2d8e;
+  --grid-opacity: 0.18;
+}
+
+@theme inline {
+  --color-bg:          var(--bg);
+  --color-bg-low:      var(--bg-low);
+  --color-surface:     var(--surface);
+  --color-surface-2:   var(--surface-2);
+  --color-surface-3:   var(--surface-3);
+  --color-border:      var(--border);
+  --color-border-2:    var(--border-2);
+  --color-text:        var(--text);
+  --color-text-2:      var(--text-2);
+  --color-muted:       var(--muted);
+  --color-accent:      var(--accent);
+  --color-accent-2:    var(--accent-2);
+  --color-green:       var(--green);
+  --color-red:         var(--red);
+
+  --font-sans:    var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* ════════════════════════════════════════════════
+   BASE
+   ════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg);
+  color-scheme: dark;
+}
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dev"]   { color-scheme: dark; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* DEV mode adds subtle scanlines */
+[data-theme="dev"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 136, 0.018) 2px,
+    rgba(0, 255, 136, 0.018) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+[data-theme="dev"] ::selection { color: #000; }
+
+/* Subtle scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-low); }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ════════════════════════════════════════════════
+   SHARED PRIMITIVES
+   ════════════════════════════════════════════════ */
+.bg-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  opacity: var(--grid-opacity);
+  mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
+}
+
+.glow-accent {
+  box-shadow: 0 8px 28px var(--accent-glow);
+}
