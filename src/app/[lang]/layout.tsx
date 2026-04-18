@@ -1,0 +1,74 @@
+import type { Metadata } from "next";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { notFound } from "next/navigation";
+import "../globals.css";
+import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
+import { hasLocale, locales, type Locale } from "@/i18n/config";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://maarkn.dev"),
+  title: {
+    default: "Marco Filho · Senior Fullstack Engineer · maarkn.dev",
+    template: "%s · maarkn.dev",
+  },
+  description:
+    "I help companies turn ideas into clean, fast and reliable digital products. Senior fullstack engineer with 6 years of experience, working remotely from Brazil.",
+  openGraph: {
+    title: "Marco Filho · Senior Fullstack Engineer",
+    description:
+      "I help companies turn ideas into clean, fast and reliable digital products.",
+    url: "https://maarkn.dev",
+    siteName: "maarkn.dev",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
+  icons: { icon: "/favicon.ico" },
+};
+
+export function generateStaticParams() {
+  return locales.map((lang) => ({ lang }));
+}
+
+export default async function LocaleLayout({
+  children,
+  params,
+}: LayoutProps<"/[lang]">) {
+  const { lang } = await params;
+  if (!hasLocale(lang)) notFound();
+
+  const fontVars = `${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`;
+
+  return (
+    <html
+      lang={lang as Locale}
+      data-theme="dark"
+      suppressHydrationWarning
+      className={fontVars}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body className="min-h-dvh font-sans antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
+    </html>
+  );
+}
