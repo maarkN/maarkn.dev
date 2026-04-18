@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "projects": "Work",
+    "skills": "Toolkit",
+    "blog": "Writing",
+    "contact": "Contact"
+  },
+  "themes": {
+    "light": "Light",
+    "dark": "Dark",
+    "dev": "Dev"
+  },
+  "hero": {
+    "badgeAvailable": "Open to new opportunities",
+    "eyebrow": "Marco Filho · maarkn",
+    "title": {
+      "line1": "I build digital",
+      "line2": "products that",
+      "line3": "people actually use."
+    },
+    "role": "Senior fullstack engineer · 5+ years · Remote from Brazil",
+    "sub": "I help companies turn ideas into clean, fast and reliable products — from the first sketch to the version that ships and grows. Equally comfortable shaping the architecture, writing the code, and talking to the people who use it.",
+    "ctaPrimary": "See my work",
+    "ctaSecondary": "Download CV"
+  },
+  "card": {
+    "label": "identity_card.tsx",
+    "name": "Marco Filho",
+    "role": "Senior Fullstack Engineer",
+    "stats": {
+      "years": "Years building",
+      "projects": "Products shipped",
+      "stack": "Tech stacks",
+      "countries": "Countries served"
+    }
+  },
+  "bigNumbers": {
+    "kicker": "A few numbers",
+    "title": "Six years of building things that don't break.",
+    "items": {
+      "years": {
+        "value": "6",
+        "label": "Years writing software professionally"
+      },
+      "projects": {
+        "value": "30+",
+        "label": "Products and platforms delivered"
+      },
+      "stacks": {
+        "value": "12",
+        "label": "Languages and frameworks in daily use"
+      },
+      "countries": {
+        "value": "4",
+        "label": "Countries with clients I've worked with"
+      }
+    }
+  },
+  "social": {
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "email": "Email me",
+    "whatsapp": "WhatsApp"
+  },
+  "footer": {
+    "available": "Available for new projects",
+    "location": "Goiânia, Brazil · Working worldwide",
+    "rights": "All rights reserved."
+  }
+}

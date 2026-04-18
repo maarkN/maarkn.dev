@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "home": "Início",
+    "about": "Sobre",
+    "projects": "Projetos",
+    "skills": "Ferramentas",
+    "blog": "Textos",
+    "contact": "Contato"
+  },
+  "themes": {
+    "light": "Claro",
+    "dark": "Escuro",
+    "dev": "Dev"
+  },
+  "hero": {
+    "badgeAvailable": "Aberto a novas oportunidades",
+    "eyebrow": "Marco Filho · maarkn",
+    "title": {
+      "line1": "Construo produtos",
+      "line2": "digitais que",
+      "line3": "as pessoas usam de verdade."
+    },
+    "role": "Engenheiro fullstack sênior · 5+ anos · Remoto do Brasil",
+    "sub": "Ajudo empresas a transformar ideias em produtos limpos, rápidos e confiáveis — do primeiro esboço até a versão que chega ao usuário e cresce. Faço a arquitetura, escrevo o código e converso com quem vai usar.",
+    "ctaPrimary": "Ver projetos",
+    "ctaSecondary": "Baixar CV"
+  },
+  "card": {
+    "label": "identity_card.tsx",
+    "name": "Marco Filho",
+    "role": "Engenheiro Fullstack Sênior",
+    "stats": {
+      "years": "Anos no ofício",
+      "projects": "Produtos entregues",
+      "stack": "Stacks de tecnologia",
+      "countries": "Países atendidos"
+    }
+  },
+  "bigNumbers": {
+    "kicker": "Alguns números",
+    "title": "Seis anos construindo coisas que não quebram.",
+    "items": {
+      "years": {
+        "value": "6",
+        "label": "Anos escrevendo software profissionalmente"
+      },
+      "projects": {
+        "value": "30+",
+        "label": "Produtos e plataformas entregues"
+      },
+      "stacks": {
+        "value": "12",
+        "label": "Linguagens e frameworks no dia a dia"
+      },
+      "countries": {
+        "value": "4",
+        "label": "Países com clientes atendidos"
+      }
+    }
+  },
+  "social": {
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "email": "Mande email",
+    "whatsapp": "WhatsApp"
+  },
+  "footer": {
+    "available": "Disponível para novos projetos",
+    "location": "Goiânia, Brasil · Atendendo o mundo",
+    "rights": "Todos os direitos reservados."
+  }
+}
