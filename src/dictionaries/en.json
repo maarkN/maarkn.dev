@@ -40,10 +40,22 @@
     "kicker": "A few numbers",
     "title": "Six years of building things that don't break.",
     "items": {
-      "years": { "value": "6", "label": "Years writing software professionally" },
-      "projects": { "value": "30+", "label": "Products and platforms delivered" },
-      "stacks": { "value": "12", "label": "Languages and frameworks in daily use" },
-      "countries": { "value": "4", "label": "Countries with clients I've worked with" }
+      "years": {
+        "value": "6",
+        "label": "Years writing software professionally"
+      },
+      "projects": {
+        "value": "30+",
+        "label": "Products and platforms delivered"
+      },
+      "stacks": {
+        "value": "12",
+        "label": "Languages and frameworks in daily use"
+      },
+      "countries": {
+        "value": "4",
+        "label": "Countries with clients I've worked with"
+      }
     }
   },
   "about": {
@@ -117,12 +129,30 @@
     "sub": "These are the languages, frameworks and ideas I use most. The list isn't exhaustive — I learn whatever the project needs — but it's an honest snapshot of where I'm fluent.",
     "yearsSuffix": "y",
     "groups": {
-      "frontend": { "title": "Frontend", "caption": "Interfaces people actually want to use." },
-      "backend": { "title": "Backend & APIs", "caption": "The plumbing that has to work every time." },
-      "mobile": { "title": "Mobile", "caption": "Apps that ship to real stores." },
-      "data": { "title": "Data & Storage", "caption": "Where things live and how they're found." },
-      "infra": { "title": "Infra & DevOps", "caption": "Putting code in front of users, safely." },
-      "practices": { "title": "Practices & Soft skills", "caption": "How I work with code and with people." }
+      "frontend": {
+        "title": "Frontend",
+        "caption": "Interfaces people actually want to use."
+      },
+      "backend": {
+        "title": "Backend & APIs",
+        "caption": "The plumbing that has to work every time."
+      },
+      "mobile": {
+        "title": "Mobile",
+        "caption": "Apps that ship to real stores."
+      },
+      "data": {
+        "title": "Data & Storage",
+        "caption": "Where things live and how they're found."
+      },
+      "infra": {
+        "title": "Infra & DevOps",
+        "caption": "Putting code in front of users, safely."
+      },
+      "practices": {
+        "title": "Practices & Soft skills",
+        "caption": "How I work with code and with people."
+      }
     }
   },
   "social": {
@@ -135,5 +165,35 @@
     "available": "Available for new projects",
     "location": "Goiânia, Brazil · Working worldwide",
     "rights": "All rights reserved."
+  },
+  "projects": {
+    "kicker": "Selected work",
+    "title": "Things I've shipped that people actually use.",
+    "sub": "A small slice of the products and platforms I've built over the last few years — for clients, employers and a couple of side bets. Some I can show in detail, others stay anonymous behind an NDA.",
+    "view": "View case",
+    "seeAll": "See all projects",
+    "categories": {
+      "web": "Web app",
+      "mobile": "Mobile",
+      "ai": "AI · Chatbots",
+      "backend": "Backend · APIs",
+      "client": "Client work"
+    },
+    "statuses": {
+      "live": "Live",
+      "internal": "Internal",
+      "nda": "Under NDA",
+      "archived": "Archived"
+    },
+    "taglines": {
+      "miami-real-estate-assistant": "A WhatsApp assistant for a Miami real-estate agency that captures leads, syncs properties from MLS and answers questions like a tireless junior agent.",
+      "municipalities-chatbot": "City-by-city WhatsApp helper that crawls each town's website, indexes it, and answers citizens' questions about services, opening hours and documents.",
+      "voip-platform": "Calls, recordings, transcriptions and dynamic billing in a single VoIP product wired into the company's CRM.",
+      "fintech-loan-api": "A loan platform for a Brazilian agribusiness fund: APIs, a Flutter app for applicants, and crawlers ingesting public government data.",
+      "carbon-credit-platform": "Triage chatbot plus an automated report engine that turns raw project data into legal-style viability documents.",
+      "drug-leaflet-platform": "A high-performance, SEO-first reference for medication leaflets — Astro on the front, NestJS and ANVISA crawling on the back.",
+      "museum-institutional-site": "Institutional site for a museum, with a Ghost-based CRM, SEO-driven content and interactive webframes for in-museum kiosks.",
+      "vanilla-farming-assistant": "An agronomic assistant for vanilla growers, grounded in vectorized technical documentation."
+    }
   }
 }
