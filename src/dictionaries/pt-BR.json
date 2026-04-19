@@ -194,6 +194,103 @@
       "drug-leaflet-platform": "Referência de bulas de medicamentos com foco em SEO e performance — Astro no front, NestJS e crawler da ANVISA no back.",
       "museum-institutional-site": "Site institucional de um museu, com CRM em Ghost, conteúdo orientado a SEO e webframes interativos pros kiosques internos.",
       "vanilla-farming-assistant": "Assistente agronômico pra produtores de baunilha, baseado em documentação técnica vetorizada."
+    },
+    "details": {
+      "miami-real-estate-assistant": {
+        "description": "Uma imobiliária em Miami queria capturar e qualificar leads na velocidade do WhatsApp. Construímos um assistente que conversa com prospectos em linguagem natural, sincroniza o catálogo de imóveis do MLS local e de um admin interno, e guia o visitante por bairro, faixa de preço e número de quartos sem nunca parecer um formulário.",
+        "role": "Arquitetura, backend, integração MCP com o marketplace do MLS, dashboard admin de leads/imóveis/perfis de corretores, SDK de chat web e um ETL com LLM que importa novos empreendimentos a partir de PDFs, Word e Excel.",
+        "features": [
+          "Captura e roteamento de leads via WhatsApp, com handoff pra corretor humano",
+          "Sincronização com MLS e enriquecimento contínuo dos imóveis com descrições geradas por LLM",
+          "Dashboard administrativo de leads, imóveis e corretores",
+          "SDK de chat web embedável pra sites parceiros"
+        ]
+      },
+      "municipalities-chatbot": {
+        "description": "Uma plataforma que permite a qualquer cidade conectar um assistente WhatsApp aos seus serviços ao cidadão em dias. O agente rastreia o site da prefeitura, indexa o conteúdo em uma vector store e responde dúvidas sobre coleta de lixo, horários, documentos e mais em linguagem simples.",
+        "role": "Design do crawler, indexação vetorial, pipeline de retrieval, integração WhatsApp e configuração multitenant pra cada cidade ter sua própria base de conhecimento e tom de voz.",
+        "features": [
+          "Crawl e índice vetorial por cidade, com atualizações agendadas",
+          "Respostas com retrieval-augmented baseadas em conteúdo oficial",
+          "Admin multitenant pra gerenciar cidades, mensagens de fallback e brand voice",
+          "Integração com WhatsApp Business API e analytics de conversas"
+        ]
+      },
+      "voip-platform": {
+        "description": "Uma nova vertical pra uma empresa brasileira de CRM: um produto VoIP que não parece grudado. Chamadas, gravações, transcrições e tarifação dinâmica vivem ao lado do registro do cliente, então o vendedor retoma de onde a conversa parou.",
+        "role": "Líder de backend — desenhei a arquitetura, construí regras de tarifação, provisionamento em tempo real de ramais e DIDs, otimização de áudio, multitenancy e gestão de equipes.",
+        "features": [
+          "Chamadas internas e nacionais com gravação e transcrição",
+          "Regras dinâmicas de tarifação por equipe e tenant",
+          "Provisionamento em tempo real de ramais e DIDs",
+          "Multitenancy, features baseadas em papel e analytics de uso",
+          "Otimização de áudio que reduz banda sem perder qualidade"
+        ]
+      },
+      "fintech-loan-api": {
+        "description": "Plataforma de crédito pra um fundo agro brasileiro. Construímos o backend que sustenta o fluxo de solicitação, o app Flutter que o tomador usa e os pipelines de dados que puxam e normalizam informações de algumas APIs públicas do governo.",
+        "role": "Arquitetura backend em microsserviços, app Flutter pro tomador, ETL de dados públicos (SIGEF, RFB) pra MongoDB, code review e mentoria de um dev júnior.",
+        "features": [
+          "Microsserviços projetados pra escala e segurança de fintech",
+          "App Flutter pra solicitação de empréstimo e onboarding",
+          "Crawlers e pipelines de ETL que normalizam dados públicos",
+          "Portal público construído com Ghost CMS e Handlebars"
+        ]
+      },
+      "carbon-credit-platform": {
+        "description": "Plataforma que ajuda donos de projetos de crédito de carbono a fazer triagem e gerar relatórios de viabilidade. A triagem mora num chatbot; os relatórios saem de um motor automatizado que transforma dados do projeto em um documento jurídico que o time edita e envia.",
+        "role": "Backend, engenharia de prompts e motor de templates de relatório. Trabalhei junto com os fundadores pra traduzir conhecimento de domínio em saídas estruturadas e reprodutíveis.",
+        "features": [
+          "Chatbot de FAQ e triagem baseado na documentação dos projetos",
+          "Geração automática de relatórios de viabilidade com formatação jurídica",
+          "Templates editáveis pra o time de operações refinar a saída",
+          "Exportação pronta pra entrega ao cliente"
+        ]
+      },
+      "drug-leaflet-platform": {
+        "description": "Site de referência de bulas de medicamentos no Brasil, focado em velocidade e SEO. O frontend é Astro pra entrega estática rápida; o backend é NestJS com um crawler que ingere dados da ANVISA pra manter as bulas atualizadas.",
+        "role": "Backend em NestJS, crawler da ANVISA, normalização de conteúdo e frontend em Astro pra páginas com performance e SEO acima da média.",
+        "features": [
+          "Frontend em Astro entregando páginas rápidas e SEO-first",
+          "Backend NestJS servindo a API de bulas",
+          "Crawler da ANVISA que mantém o catálogo fresco",
+          "Marcação Schema.org pronta pra ingestão por buscadores"
+        ]
+      },
+      "museum-institutional-site": {
+        "description": "Site institucional pra um museu, com CMS Ghost que o time curatorial roda sozinho. O site também serve de back-end pros webframes interativos usados nos kiosques físicos do museu.",
+        "role": "Arquitetura, configuração do Ghost e tematização em Handlebars, desenvolvimento dos webframes do kiosque, setup de SEO.",
+        "features": [
+          "Ghost CMS amigável a uso headless pro time curatorial",
+          "Webframes de kiosque pra experiências interativas dentro do museu",
+          "SEO e estratégia de conteúdo pra visibilidade fora do prédio",
+          "Tema alinhado à marca em Handlebars"
+        ]
+      },
+      "vanilla-farming-assistant": {
+        "description": "Assistente especializado pra produtores de baunilha, baseado em documentação agronômica vetorizada. O produtor pergunta em linguagem natural e recebe respostas vindas de material técnico real, em vez de um modelo genérico.",
+        "role": "Pipeline de ingestão de documentos, setup da vector store, engenharia de prompts e canal de entrega via WhatsApp.",
+        "features": [
+          "Biblioteca vetorizada de documentos agronômicos específicos da baunilha",
+          "Respostas com retrieval-augmented citando o material de origem",
+          "Distribuição via WhatsApp pra o produtor não precisar instalar nada",
+          "Loop de feedback que mostra lacunas na documentação base"
+        ]
+      }
+    },
+    "back": "Voltar pra todos os projetos",
+    "viewLive": "Ver site no ar",
+    "viewRepo": "Ver código no GitHub",
+    "noLinks": "Sem links públicos",
+    "roleHeading": "Meu papel",
+    "featuresHeading": "Funcionalidades-chave",
+    "stackHeading": "Stack",
+    "page": {
+      "kicker": "Trabalhos selecionados",
+      "title": "Tudo que eu botaria meu nome.",
+      "sub": "Todos os projetos numa página só, filtráveis por categoria. A lista é curada à mão — apostas pequenas, plataformas grandes e algumas coisas que tenho mais orgulho.",
+      "filterAll": "Todos",
+      "empty": "Nada nessa categoria ainda."
     }
   }
 }
