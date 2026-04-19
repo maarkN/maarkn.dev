@@ -21,10 +21,10 @@ O projeto é uma aplicação [Next.js 16](https://nextjs.org) escrita em TypeScr
 - **Sobre** — bio em linguagem não-técnica, quatro valores de trabalho e linha do tempo de carreira animada.
 - **Toolkit** — seis cards agrupados cobrindo Frontend, Backend, Mobile, Dados, Infra e Práticas, com selo de anos de experiência por tag.
 - **Footer + sociais** — LinkedIn, GitHub, email e WhatsApp, com SVGs inline para os ícones de marca que o lucide v1 removeu.
+- **Trabalhos selecionados** — oito projetos curados com capas CSS estilizadas na home, mais a rota dedicada `/projects` com filtro por categoria e páginas individuais em `/projects/[slug]` (descrição, papel desempenhado, funcionalidades-chave, stack e links).
 
 ### No roadmap
 
-- **Projetos** — grid filtrável de produtos e cases, começando com dados estáticos e evoluindo pra um pequeno CMS administrativo.
 - **Contato** — formulário tipado integrado com [Resend](https://resend.com) e status de disponibilidade.
 - **Página de links** — hub estilo Linktree pra referência rápida.
 - **Chat com IA** — widget flutuante com a [API da Claude](https://www.anthropic.com/api), respostas em streaming e rate limiting por IP.
@@ -80,7 +80,10 @@ src/
 │   ├── globals.css              # design tokens (Claro/Escuro/Dev) e estilos base
 │   └── [lang]/
 │       ├── layout.tsx           # html, fontes, ThemeProvider, metadata
-│       └── page.tsx             # compõe as seções da home
+│       ├── page.tsx             # compõe as seções da home
+│       └── projects/
+│           ├── page.tsx         # listagem completa com filtro por categoria
+│           └── [slug]/page.tsx  # página individual de cada projeto
 ├── components/
 │   ├── nav.tsx
 │   ├── theme-{provider,switcher,photo}.tsx
@@ -90,6 +93,10 @@ src/
 │   ├── big-numbers.tsx
 │   ├── about.tsx
 │   ├── toolkit.tsx
+│   ├── projects.tsx
+│   ├── project-card.tsx
+│   ├── projects-filter.tsx
+│   ├── project-detail.tsx
 │   ├── socials.tsx
 │   └── footer.tsx
 ├── dictionaries/
@@ -101,7 +108,8 @@ src/
 │   ├── utils.ts                 # helper cn()
 │   ├── site.ts                  # constantes globais do site
 │   ├── timeline.ts              # dados da linha do tempo de carreira
-│   └── toolkit.ts               # stack agrupada
+│   ├── toolkit.ts               # stack agrupada
+│   └── projects.ts              # catálogo de projetos (estático, pré-CMS)
 └── proxy.ts                     # roteamento de idioma (renomeado de middleware no Next 16)
 ```
 

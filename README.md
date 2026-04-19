@@ -21,10 +21,10 @@ The project is a [Next.js 16](https://nextjs.org) application written in TypeScr
 - **About** — bio in non-technical language, four working values and an animated vertical career timeline.
 - **Toolkit** — six grouped cards covering Frontend, Backend, Mobile, Data, Infra and Practices, with a years-of-experience badge per tag.
 - **Footer + socials** — LinkedIn, GitHub, email and WhatsApp, with inline brand SVGs for the icons that lucide v1 dropped.
+- **Selected work** — eight curated projects with stylized CSS-only covers on the home, plus a dedicated `/projects` route with category filtering and per-project detail pages at `/projects/[slug]` (description, role, key features, stack and links).
 
 ### On the roadmap
 
-- **Projects** — a filterable grid of products and case studies, starting with static data and graduating into a small admin CMS.
 - **Contact** — a typed form backed by [Resend](https://resend.com) with availability status.
 - **Links page** — a Linktree-style hub for quick reference.
 - **AI Chat** — a floating widget powered by the [Claude API](https://www.anthropic.com/api) with streaming responses and per-IP rate limiting.
@@ -80,7 +80,10 @@ src/
 │   ├── globals.css              # design tokens (Light/Dark/Dev) and base styles
 │   └── [lang]/
 │       ├── layout.tsx           # html, fonts, ThemeProvider, metadata
-│       └── page.tsx             # composes the home sections
+│       ├── page.tsx             # composes the home sections
+│       └── projects/
+│           ├── page.tsx         # full listing with category filter
+│           └── [slug]/page.tsx  # per-project detail page
 ├── components/
 │   ├── nav.tsx
 │   ├── theme-{provider,switcher,photo}.tsx
@@ -90,6 +93,10 @@ src/
 │   ├── big-numbers.tsx
 │   ├── about.tsx
 │   ├── toolkit.tsx
+│   ├── projects.tsx
+│   ├── project-card.tsx
+│   ├── projects-filter.tsx
+│   ├── project-detail.tsx
 │   ├── socials.tsx
 │   └── footer.tsx
 ├── dictionaries/
@@ -101,7 +108,8 @@ src/
 │   ├── utils.ts                 # cn() helper
 │   ├── site.ts                  # site-wide constants
 │   ├── timeline.ts              # career timeline data
-│   └── toolkit.ts               # grouped tech stack
+│   ├── toolkit.ts               # grouped tech stack
+│   └── projects.ts              # project catalog (static, pre-CMS)
 └── proxy.ts                     # locale routing (renamed from middleware in Next 16)
 ```
 
