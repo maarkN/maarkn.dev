@@ -22,11 +22,11 @@ The project is a [Next.js 16](https://nextjs.org) application written in TypeScr
 - **Toolkit** — six grouped cards covering Frontend, Backend, Mobile, Data, Infra and Practices, with a years-of-experience badge per tag.
 - **Footer + socials** — LinkedIn, GitHub, email and WhatsApp, with inline brand SVGs for the icons that lucide v1 dropped.
 - **Selected work** — eight curated projects with stylized CSS-only covers on the home, plus a dedicated `/projects` route with category filtering and per-project detail pages at `/projects/[slug]` (description, role, key features, stack and links).
+- **Contact** — a `#contact` section on the home with a server-action-backed form (name, email, company, project type, message), inline validation, success state, honeypot anti-spam, live timezone display, and three alternate channels. Wires automatically to [Resend](https://resend.com) when `RESEND_API_KEY` is set; otherwise logs the payload server-side.
+- **Links page** — a Linktree-style hub at `/links` with a custom layout: theme-aware portrait, availability badge, vertical button stack (LinkedIn, GitHub, Email, WhatsApp, CV), and an accent glow over the grid background.
 
 ### On the roadmap
 
-- **Contact** — a typed form backed by [Resend](https://resend.com) with availability status.
-- **Links page** — a Linktree-style hub for quick reference.
 - **AI Chat** — a floating widget powered by the [Claude API](https://www.anthropic.com/api) with streaming responses and per-IP rate limiting.
 - **Blog** — headless integration with [Ghost CMS](https://ghost.org).
 - **Admin CMS** — NextAuth + Prisma + Postgres for project and content management.
@@ -70,6 +70,12 @@ npm start
 
 > Port `5050` is used because port `5000` is occupied by the macOS AirPlay Receiver and `3000` was unstable in the author's local environment. Override with `next dev -p <port>` if needed.
 
+### Environment variables
+
+| Variable | Purpose |
+|---|---|
+| `RESEND_API_KEY` | Optional. When set, the contact form sends real emails through the [Resend](https://resend.com) API. Without it, submissions are logged server-side and the success state is still shown — useful in development and previews. |
+
 ---
 
 ## Project structure
@@ -78,9 +84,11 @@ npm start
 src/
 ├── app/
 │   ├── globals.css              # design tokens (Light/Dark/Dev) and base styles
+│   ├── _actions/contact.ts      # server action for the contact form
 │   └── [lang]/
 │       ├── layout.tsx           # html, fonts, ThemeProvider, metadata
 │       ├── page.tsx             # composes the home sections
+│       ├── links/page.tsx       # Linktree-style hub
 │       └── projects/
 │           ├── page.tsx         # full listing with category filter
 │           └── [slug]/page.tsx  # per-project detail page
@@ -97,6 +105,8 @@ src/
 │   ├── project-card.tsx
 │   ├── projects-filter.tsx
 │   ├── project-detail.tsx
+│   ├── contact.tsx
+│   ├── links-hub.tsx
 │   ├── socials.tsx
 │   └── footer.tsx
 ├── dictionaries/

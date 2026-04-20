@@ -22,11 +22,11 @@ O projeto é uma aplicação [Next.js 16](https://nextjs.org) escrita em TypeScr
 - **Toolkit** — seis cards agrupados cobrindo Frontend, Backend, Mobile, Dados, Infra e Práticas, com selo de anos de experiência por tag.
 - **Footer + sociais** — LinkedIn, GitHub, email e WhatsApp, com SVGs inline para os ícones de marca que o lucide v1 removeu.
 - **Trabalhos selecionados** — oito projetos curados com capas CSS estilizadas na home, mais a rota dedicada `/projects` com filtro por categoria e páginas individuais em `/projects/[slug]` (descrição, papel desempenhado, funcionalidades-chave, stack e links).
+- **Contato** — seção `#contact` na home com formulário ligado a uma server action (nome, email, empresa, tipo de projeto, mensagem), validação inline, estado de sucesso, anti-spam por honeypot, exibição do timezone em tempo real e três canais alternativos. Conecta automaticamente ao [Resend](https://resend.com) quando `RESEND_API_KEY` está definida; senão, faz log da requisição no servidor.
+- **Página de links** — hub estilo Linktree em `/links` com layout próprio: foto theme-aware, badge de disponibilidade, pilha vertical de botões (LinkedIn, GitHub, Email, WhatsApp, CV) e glow do accent sobre o grid.
 
 ### No roadmap
 
-- **Contato** — formulário tipado integrado com [Resend](https://resend.com) e status de disponibilidade.
-- **Página de links** — hub estilo Linktree pra referência rápida.
 - **Chat com IA** — widget flutuante com a [API da Claude](https://www.anthropic.com/api), respostas em streaming e rate limiting por IP.
 - **Blog** — integração headless com [Ghost CMS](https://ghost.org).
 - **CMS administrativo** — NextAuth + Prisma + Postgres pra gerenciar projetos e conteúdo.
@@ -70,6 +70,12 @@ npm start
 
 > A porta `5050` é usada porque a `5000` é ocupada pelo AirPlay Receiver do macOS e a `3000` ficou instável no ambiente local do autor. Use `next dev -p <porta>` pra trocar.
 
+### Variáveis de ambiente
+
+| Variável | Pra que serve |
+|---|---|
+| `RESEND_API_KEY` | Opcional. Quando setada, o formulário de contato envia emails reais via API do [Resend](https://resend.com). Sem ela, o submit é logado no servidor e o estado de sucesso continua aparecendo — útil em dev e preview. |
+
 ---
 
 ## Estrutura do projeto
@@ -78,9 +84,11 @@ npm start
 src/
 ├── app/
 │   ├── globals.css              # design tokens (Claro/Escuro/Dev) e estilos base
+│   ├── _actions/contact.ts      # server action do formulário de contato
 │   └── [lang]/
 │       ├── layout.tsx           # html, fontes, ThemeProvider, metadata
 │       ├── page.tsx             # compõe as seções da home
+│       ├── links/page.tsx       # hub estilo Linktree
 │       └── projects/
 │           ├── page.tsx         # listagem completa com filtro por categoria
 │           └── [slug]/page.tsx  # página individual de cada projeto
@@ -97,6 +105,8 @@ src/
 │   ├── project-card.tsx
 │   ├── projects-filter.tsx
 │   ├── project-detail.tsx
+│   ├── contact.tsx
+│   ├── links-hub.tsx
 │   ├── socials.tsx
 │   └── footer.tsx
 ├── dictionaries/
