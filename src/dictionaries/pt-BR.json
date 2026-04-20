@@ -292,5 +292,73 @@
       "filterAll": "Todos",
       "empty": "Nada nessa categoria ainda."
     }
+  },
+  "contact": {
+    "kicker": "Vamos conversar",
+    "title": "Tem alguma coisa pra construir? Bora.",
+    "sub": "O caminho mais rápido é o formulário abaixo — eu leio toda mensagem e respondo em alguns dias úteis. Se preferir outro canal, escolhe o que te servir melhor.",
+    "channels": {
+      "linkedin": "LinkedIn",
+      "email": "Email",
+      "whatsapp": "WhatsApp"
+    },
+    "channelHints": {
+      "available": "Disponível para novos projetos",
+      "timezone": "Trabalhando de"
+    },
+    "form": {
+      "name": "Seu nome",
+      "email": "Email",
+      "company": "Empresa (opcional)",
+      "type": "Sobre o que é?",
+      "typePlaceholder": "Escolha uma opção",
+      "typeOptions": {
+        "freelance": "Projeto freelance",
+        "full-time": "Vaga full-time",
+        "consulting": "Consultoria / auditoria",
+        "audit": "Revisão de código",
+        "other": "Outra coisa"
+      },
+      "message": "Mensagem",
+      "submit": "Enviar mensagem",
+      "submitting": "Enviando…",
+      "successTitle": "Mensagem a caminho.",
+      "successBody": "Valeu por escrever. Respondo de markimkr@gmail.com em alguns dias úteis. Se for urgente, me chama no WhatsApp ou LinkedIn.",
+      "sendAnother": "Enviar outra mensagem",
+      "errorRequired": "Esse campo é obrigatório",
+      "errorInvalidEmail": "Esse email não parece válido",
+      "errorMessage": "Confere esse campo",
+      "errorTooLong": "Ficou um pouco grande — corta um trecho",
+      "errorSendFailed": "Não consegui enviar agora. Use o link de email acima."
+    }
+  },
+  "links": {
+    "eyebrow": "Me ache",
+    "name": "Marco Filho",
+    "role": "Engenheiro Fullstack Sênior · maarkn",
+    "bio": "Engenheiro fullstack sênior trabalhando remoto do Brasil. Construindo produtos que entregam, não slides que não.",
+    "available": "Aberto a novas oportunidades",
+    "links": {
+      "linkedin": {
+        "label": "LinkedIn",
+        "hint": "/in/maarkn"
+      },
+      "github": {
+        "label": "GitHub",
+        "hint": "/maarkn"
+      },
+      "email": {
+        "label": "Mande email",
+        "hint": "markimkr@gmail.com"
+      },
+      "whatsapp": {
+        "label": "WhatsApp",
+        "hint": "+55 62 98173 6748"
+      },
+      "cv": {
+        "label": "Baixar CV",
+        "hint": "PDF · Atualizado 2026"
+      }
+    }
   }
 }
