@@ -5,7 +5,8 @@
     "projects": "Projetos",
     "skills": "Ferramentas",
     "blog": "Textos",
-    "contact": "Contato"
+    "contact": "Contato",
+    "chat": "Chat"
   },
   "themes": {
     "light": "Claro",
@@ -359,6 +360,30 @@
         "label": "Baixar CV",
         "hint": "PDF · Atualizado 2026"
       }
+    }
+  },
+  "chat": {
+    "kicker": "Assistente IA",
+    "title": "Pergunta o que quiser sobre o trabalho do Marco.",
+    "sub": "Sou um assistente pequeno treinado com o currículo, projetos e textos do Marco. Vou tentar dar respostas diretas — e dizer quando eu não sei.",
+    "buttonLabel": "Falar com o assistente",
+    "panel": {
+      "title": "Assistente maarkn",
+      "subtitle": "Pergunte qualquer coisa · com IA",
+      "empty": "Oi! Sou o assistente do maarkn.dev. Pode perguntar sobre projetos, stack, disponibilidade ou como falar com o Marco.",
+      "placeholder": "Escreva uma mensagem…",
+      "send": "Enviar",
+      "stop": "Parar geração",
+      "reset": "Nova conversa",
+      "rateLimited": "Você atingiu o limite por hora. Tenta de novo mais tarde — ou mande email pra markimkr@gmail.com.",
+      "errored": "Algo deu errado. Tente enviar de novo.",
+      "suggestions": [
+        "Qual é a stack do Marco?",
+        "Me conta do projeto de Miami",
+        "Ele está aberto a oportunidades?",
+        "Como falo com ele?"
+      ],
+      "poweredBy": "Respostas são geradas por IA e podem ter erros. Pra qualquer coisa importante, fale direto com o Marco."
     }
   }
 }

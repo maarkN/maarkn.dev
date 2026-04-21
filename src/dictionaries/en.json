@@ -5,7 +5,8 @@
     "projects": "Work",
     "skills": "Toolkit",
     "blog": "Writing",
-    "contact": "Contact"
+    "contact": "Contact",
+    "chat": "Chat"
   },
   "themes": {
     "light": "Light",
@@ -359,6 +360,30 @@
         "label": "Download CV",
         "hint": "PDF · Updated 2026"
       }
+    }
+  },
+  "chat": {
+    "kicker": "AI assistant",
+    "title": "Ask anything about Marco's work.",
+    "sub": "I'm a small assistant trained on Marco's resume, projects and writing. I'll do my best to give straight answers — and tell you when I don't know.",
+    "buttonLabel": "Ask the assistant",
+    "panel": {
+      "title": "maarkn assistant",
+      "subtitle": "Ask anything · powered by AI",
+      "empty": "Hey! I'm the maarkn.dev assistant. Ask me about Marco's projects, stack, availability or how to reach him.",
+      "placeholder": "Type a message…",
+      "send": "Send",
+      "stop": "Stop generating",
+      "reset": "New chat",
+      "rateLimited": "You've reached the rate limit for this hour. Try again later — or email markimkr@gmail.com.",
+      "errored": "Something went wrong. Try sending the message again.",
+      "suggestions": [
+        "What's Marco's stack?",
+        "Tell me about the Miami project",
+        "Is he open to opportunities?",
+        "How do I reach him?"
+      ],
+      "poweredBy": "AI replies are generated and may contain mistakes. For anything important, contact Marco directly."
     }
   }
 }

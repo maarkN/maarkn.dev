@@ -3,7 +3,8 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
-import { hasLocale, locales, type Locale } from "@/i18n/config";
+import { ChatLauncher } from "@/components/chat/chat-launcher";
+import { getDictionary, hasLocale, locales, type Locale } from "@/i18n/config";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -54,6 +55,7 @@ export default async function LocaleLayout({
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 
+  const dict = await getDictionary(lang);
   const fontVars = `${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`;
 
   return (
@@ -67,7 +69,14 @@ export default async function LocaleLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className="min-h-dvh font-sans antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <ChatLauncher
+            labels={dict.chat.panel}
+            locale={lang}
+            buttonLabel={dict.chat.buttonLabel}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );
