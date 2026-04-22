@@ -25,10 +25,10 @@ The project is a [Next.js 16](https://nextjs.org) application written in TypeScr
 - **Contact** — a `#contact` section on the home with a server-action-backed form (name, email, company, project type, message), inline validation, success state, honeypot anti-spam, live timezone display, and three alternate channels. Wires automatically to [Resend](https://resend.com) when `RESEND_API_KEY` is set; otherwise logs the payload server-side.
 - **Links page** — a Linktree-style hub at `/links` with a custom layout: theme-aware portrait, availability badge, vertical button stack (LinkedIn, GitHub, Email, WhatsApp, CV), and an accent glow over the grid background.
 - **AI assistant** — a floating chat launcher (visible site-wide) plus a dedicated `/chat` route, both backed by `/api/chat` streaming token-by-token through Server-Sent Events. Uses the OpenAI Chat Completions API (`gpt-4o-mini` by default), with a curated system prompt grounded in Marco's resume and projects, an in-memory per-IP rate limit (10 messages / hour), suggested prompts, stop / new-chat controls, and an offline preview mode that produces mock streamed answers when no API key is configured.
+- **Blog** — headless integration with [Ghost CMS](https://ghost.org) over the Content API. `/blog` lists every post with a stylized cover, reading time, date and tags; `/blog/[slug]` renders the post with editorial typography (h2/h3, code blocks, blockquotes, lists). Pages use ISR with a five-minute revalidation window so new posts surface without a redeploy. When `GHOST_URL` and `GHOST_CONTENT_API_KEY` are missing, the app serves a curated set of mock posts so the UI works in development and on previews.
 
 ### On the roadmap
 
-- **Blog** — headless integration with [Ghost CMS](https://ghost.org).
 - **Admin CMS** — NextAuth + Prisma + Postgres for project and content management.
 - **SEO + Analytics** — dynamic OpenGraph, sitemap, JSON-LD schema, and Vercel Analytics.
 
@@ -77,6 +77,8 @@ npm start
 | `OPENAI_API_KEY` | Optional. When set, the AI assistant calls OpenAI's Chat Completions API. Without it, the chat endpoint streams a small set of canned answers so the UI still works in development and on previews. |
 | `OPENAI_MODEL` | Optional. Model the assistant uses. Defaults to `gpt-4o-mini`. |
 | `RESEND_API_KEY` | Optional. When set, the contact form sends real emails through the [Resend](https://resend.com) API. Without it, submissions are logged server-side and the success state is still shown — useful in development and previews. |
+| `GHOST_URL` | Optional. Base URL of the Ghost CMS instance the blog reads from (for example `https://cms.maarkn.dev`). |
+| `GHOST_CONTENT_API_KEY` | Optional. Content API key generated from a Ghost integration. Without it, `/blog` falls back to a small set of mock posts. |
 
 Copy `.env.example` to `.env.local` and fill in only the variables you need. `.env.local` is gitignored; `.env.example` is the source of truth for what the app reads at runtime.
 
@@ -95,6 +97,9 @@ src/
 │       ├── page.tsx             # composes the home sections
 │       ├── chat/page.tsx        # full-width AI assistant page
 │       ├── links/page.tsx       # Linktree-style hub
+│       ├── blog/
+│       │   ├── page.tsx         # blog listing (Ghost-powered)
+│       │   └── [slug]/page.tsx  # blog post detail
 │       └── projects/
 │           ├── page.tsx         # full listing with category filter
 │           └── [slug]/page.tsx  # per-project detail page
@@ -117,6 +122,10 @@ src/
 │   │   ├── chat-launcher.tsx    # floating button + animated panel
 │   │   ├── chat-panel.tsx       # message list, suggestions, composer
 │   │   └── use-chat-stream.ts   # SSE consumer hook
+│   ├── blog/
+│   │   ├── post-card.tsx        # listing card
+│   │   ├── post-cover.tsx       # feature image or stylized gradient
+│   │   └── post-content.tsx     # editorial-typography wrapper for Ghost HTML
 │   ├── socials.tsx
 │   └── footer.tsx
 ├── dictionaries/
@@ -131,7 +140,8 @@ src/
 │   ├── toolkit.ts               # grouped tech stack
 │   ├── projects.ts              # project catalog (static, pre-CMS)
 │   ├── chat-system-prompt.ts    # persona + context for the AI assistant
-│   └── rate-limit.ts            # in-memory per-IP limiter
+│   ├── rate-limit.ts            # in-memory per-IP limiter
+│   └── ghost.ts                 # Ghost Content API client + offline mock posts
 └── proxy.ts                     # locale routing (renamed from middleware in Next 16)
 ```
 
