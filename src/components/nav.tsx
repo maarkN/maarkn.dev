@@ -14,6 +14,7 @@ type NavLabels = {
   skills: string;
   blog: string;
   contact: string;
+  chat?: string;
 };
 
 type ThemeLabels = { light: string; dark: string; dev: string };
@@ -38,9 +39,9 @@ export function Nav({
 
   const items: { href: string; label: string }[] = [
     { href: `/${locale}`, label: nav.home },
+    { href: `/${locale}/projects`, label: nav.projects },
+    { href: `/${locale}/blog`, label: nav.blog },
     { href: `/${locale}#about`, label: nav.about },
-    { href: `/${locale}#work`, label: nav.projects },
-    { href: `/${locale}#toolkit`, label: nav.skills },
     { href: `/${locale}#contact`, label: nav.contact },
   ];
 

@@ -385,5 +385,13 @@
       ],
       "poweredBy": "AI replies are generated and may contain mistakes. For anything important, contact Marco directly."
     }
+  },
+  "blog": {
+    "kicker": "Writing",
+    "title": "Field notes from someone who ships.",
+    "sub": "Short essays on building products, working with AI, architecture choices, and the discipline of getting things into people's hands. New posts when there's something worth writing down.",
+    "readingTime": "min read",
+    "back": "Back to all posts",
+    "empty": "No posts yet. Check back soon."
   }
 }
