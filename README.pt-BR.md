@@ -26,10 +26,11 @@ O projeto é uma aplicação [Next.js 16](https://nextjs.org) escrita em TypeScr
 - **Página de links** — hub estilo Linktree em `/links` com layout próprio: foto theme-aware, badge de disponibilidade, pilha vertical de botões (LinkedIn, GitHub, Email, WhatsApp, CV) e glow do accent sobre o grid.
 - **Assistente de IA** — botão flutuante (visível no site inteiro) e rota dedicada `/chat`, ambos servidos por `/api/chat` com streaming token-a-token via Server-Sent Events. Usa a Chat Completions API da OpenAI (`gpt-4o-mini` por padrão), com system prompt curado a partir do resume e projetos do Marco, rate limit in-memory por IP (10 mensagens / hora), prompts sugeridos, controles de stop / nova conversa, e modo offline que produz respostas em streaming mockadas quando não há API key configurada.
 - **Blog** — integração headless com [Ghost CMS](https://ghost.org) via Content API. `/blog` lista todos os posts com capa estilizada, tempo de leitura, data e tags; `/blog/[slug]` renderiza o post com tipografia editorial (h2/h3, code blocks, blockquotes, listas). Páginas usam ISR com janela de revalidação de cinco minutos, então post novo aparece sem redeploy. Sem `GHOST_URL` e `GHOST_CONTENT_API_KEY`, o app serve uma seleção de posts mockados pra UI continuar funcionando em dev e preview.
+- **Painel admin (fase 7.A)** — `/admin` autenticado com [NextAuth](https://authjs.dev) + [Prisma](https://www.prisma.io) + Postgres. Login em `/admin/login`, gestão do catálogo de projetos (criar / editar / deletar) com formulário tipado (validação Zod, slug único, tags, picker de gradiente), e `npm run db:seed` importa os oito projetos iniciais e cria o usuário admin a partir do `.env.local`. A read-path pública continua lendo de `lib/projects.ts` — migrar é a fase 7.B.
 
 ### No roadmap
 
-- **CMS administrativo** — NextAuth + Prisma + Postgres pra gerenciar projetos e conteúdo.
+- **Painel admin fase 7.B** — Migra a read-path pública pro Postgres, adiciona upload de imagens via S3 e amarra configurações de conteúdo (Big Numbers, system prompt da IA, arquivo do CV).
 - **SEO + Analytics** — OpenGraph dinâmico, sitemap, JSON-LD e Vercel Analytics.
 
 Este README será atualizado conforme cada item for entregue.
@@ -79,8 +80,32 @@ npm start
 | `RESEND_API_KEY` | Opcional. Quando setada, o formulário de contato envia emails reais via API do [Resend](https://resend.com). Sem ela, o submit é logado no servidor e o estado de sucesso continua aparecendo — útil em dev e preview. |
 | `GHOST_URL` | Opcional. URL base da instância do Ghost CMS de onde o blog lê (exemplo: `https://cms.maarkn.dev`). |
 | `GHOST_CONTENT_API_KEY` | Opcional. Content API key gerada por uma integração no Ghost. Sem ela, `/blog` cai num pequeno conjunto de posts mockados. |
+| `DATABASE_URL` | Obrigatório pro painel admin em `/admin`. O valor padrão bate com o serviço Postgres do `docker-compose.yml`. |
+| `AUTH_SECRET` | Obrigatório pro painel admin. Gere com `openssl rand -base64 32`. |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Lidos pelo `prisma/seed.ts` em `npm run db:seed` pra criar o usuário admin inicial. |
 
 Copie `.env.example` pra `.env.local` e preencha só as variáveis que precisar. `.env.local` é gitignored; `.env.example` é a fonte da verdade do que o app lê em runtime.
+
+### Subindo o painel admin localmente
+
+```bash
+# 1. sobe o postgres (precisa de Docker)
+npm run db:up
+
+# 2. adicione DATABASE_URL, AUTH_SECRET, ADMIN_EMAIL e ADMIN_PASSWORD no .env.local
+# (veja o .env.example com os valores padrão que batem com o docker-compose)
+
+# 3. roda as migrations
+npm run db:migrate
+
+# 4. semeia os oito projetos iniciais + o usuário admin
+npm run db:seed
+
+# 5. inicia o dev server e logue em /admin
+npm run dev
+```
+
+`npm run db:studio` abre o Prisma Studio pra inspecionar o banco visualmente. `npm run db:down` para o container Postgres sem apagar os dados.
 
 ---
 
@@ -91,7 +116,17 @@ src/
 ├── app/
 │   ├── globals.css              # design tokens (Claro/Escuro/Dev) e estilos base
 │   ├── _actions/contact.ts      # server action do formulário de contato
+│   ├── _actions/admin-projects.ts # server actions de CRUD do admin
+│   ├── _actions/auth.ts         # server actions signIn / signOut
+│   ├── api/auth/[...nextauth]/route.ts # handler do Auth.js
 │   ├── api/chat/route.ts        # endpoint de chat com streaming (OpenAI + fallback mock)
+│   ├── admin/                   # tooling /admin protegido (sem [lang])
+│   │   ├── layout.tsx
+│   │   ├── login/page.tsx
+│   │   ├── page.tsx             # dashboard / lista de projetos
+│   │   └── projects/
+│   │       ├── new/page.tsx
+│   │       └── [id]/edit/page.tsx
 │   └── [lang]/
 │       ├── layout.tsx           # html, fontes, ThemeProvider, ChatLauncher, metadata
 │       ├── page.tsx             # compõe as seções da home
@@ -126,6 +161,12 @@ src/
 │   │   ├── post-card.tsx        # card da listagem
 │   │   ├── post-cover.tsx       # feature image ou gradiente estilizado
 │   │   └── post-content.tsx     # wrapper de tipografia editorial pro HTML do Ghost
+│   ├── admin/
+│   │   ├── admin-shell.tsx      # header + nav do /admin
+│   │   ├── login-form.tsx
+│   │   ├── project-form.tsx     # form de criar + editar
+│   │   ├── delete-project-button.tsx
+│   │   └── logout-button.tsx
 │   ├── socials.tsx
 │   └── footer.tsx
 ├── dictionaries/
@@ -141,8 +182,15 @@ src/
 │   ├── projects.ts              # catálogo de projetos (estático, pré-CMS)
 │   ├── chat-system-prompt.ts    # persona + contexto do assistente
 │   ├── rate-limit.ts            # rate limiter in-memory por IP
-│   └── ghost.ts                 # cliente da Ghost Content API + posts mockados offline
+│   ├── ghost.ts                 # cliente da Ghost Content API + posts mockados offline
+│   ├── db.ts                    # singleton do Prisma + flag db-configured
+│   ├── auth.ts                  # configuração do NextAuth (Auth.js v5)
+│   └── auth/handlers.ts         # re-export dos handlers GET / POST do Auth.js
 └── proxy.ts                     # roteamento de idioma (renomeado de middleware no Next 16)
+prisma/
+├── schema.prisma                # models User + Project
+└── seed.ts                      # semeia o usuário admin + projetos iniciais
+docker-compose.yml               # Postgres local pro painel admin
 ```
 
 ---
