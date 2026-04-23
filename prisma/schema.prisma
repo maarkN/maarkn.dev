@@ -1,0 +1,53 @@
+// Prisma schema for the maarkn.dev admin CMS.
+// Public read-path still reads from src/lib/projects.ts for now (phase 7.A).
+// Phase 7.B will migrate the read-path to read from this database.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  year          String
+  category      String
+  status        String   @default("live")
+  featured      Boolean  @default(false)
+  monogram      String
+  accentFrom    String
+  accentTo      String
+  /// JSON array of tech stack tags.
+  stack         Json
+  repoUrl       String?
+  demoUrl       String?
+  caseUrl       String?
+  /// Plain-language tagline shown on cards (locale-agnostic for now).
+  tagline       String?
+  /// Long-form description rendered on the detail page.
+  description   String?
+  /// Short paragraph describing Marco's role on the project.
+  role          String?
+  /// JSON array of bullet strings.
+  features      Json     @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([featured])
+  @@index([category])
+}
