@@ -80,7 +80,7 @@ npm start
 | `RESEND_API_KEY` | Opcional. Quando setada, o formulário de contato envia emails reais via API do [Resend](https://resend.com). Sem ela, o submit é logado no servidor e o estado de sucesso continua aparecendo — útil em dev e preview. |
 | `GHOST_URL` | Opcional. URL base da instância do Ghost CMS de onde o blog lê (exemplo: `https://cms.maarkn.dev`). |
 | `GHOST_CONTENT_API_KEY` | Opcional. Content API key gerada por uma integração no Ghost. Sem ela, `/blog` cai num pequeno conjunto de posts mockados. |
-| `DATABASE_URL` | Obrigatório pro painel admin em `/admin`. O valor padrão bate com o serviço Postgres do `docker-compose.yml`. |
+| `DATABASE_URL` | Obrigatório pro painel admin em `/admin`. Padrão `file:./dev.db` (SQLite, resolve em `prisma/dev.db`). Troque por uma connection string de Postgres e atualize o `provider` em `prisma/schema.prisma` pra migrar. |
 | `AUTH_SECRET` | Obrigatório pro painel admin. Gere com `openssl rand -base64 32`. |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Lidos pelo `prisma/seed.ts` em `npm run db:seed` pra criar o usuário admin inicial. |
 
@@ -88,24 +88,43 @@ Copie `.env.example` pra `.env.local` e preencha só as variáveis que precisar.
 
 ### Subindo o painel admin localmente
 
+O setup padrão usa **SQLite** pra você rodar o admin sem Docker e fazer deploy direto na Vercel. Postgres-via-Docker fica documentado mais abaixo como caminho de upgrade.
+
 ```bash
-# 1. sobe o postgres (precisa de Docker)
-npm run db:up
+# 1. copie o template de env e preencha AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
+cp .env.example .env.local
+# gere o AUTH_SECRET com: openssl rand -base64 32
 
-# 2. adicione DATABASE_URL, AUTH_SECRET, ADMIN_EMAIL e ADMIN_PASSWORD no .env.local
-# (veja o .env.example com os valores padrão que batem com o docker-compose)
-
-# 3. roda as migrations
+# 2. cria o banco SQLite e aplica as migrations
 npm run db:migrate
 
-# 4. semeia os oito projetos iniciais + o usuário admin
+# 3. semeia os oito projetos iniciais + o usuário admin
 npm run db:seed
 
-# 5. inicia o dev server e logue em /admin
+# 4. inicia o dev server e logue em /admin
 npm run dev
 ```
 
-`npm run db:studio` abre o Prisma Studio pra inspecionar o banco visualmente. `npm run db:down` para o container Postgres sem apagar os dados.
+`npm run db:studio` abre o Prisma Studio pra inspecionar o banco visualmente.
+
+### Deploy na Vercel
+
+O banco SQLite padrão vive dentro do artefato de deploy, então **leituras funcionam na Vercel, mas writes do admin não persistem entre requests** (o filesystem das functions é read-only). Pra um portfolio que é mostrado mais do que editado, esse é o caminho mais simples e barato. Pra habilitar writes em produção:
+
+- **Turso / libSQL** (recomendado) — mantém o schema SQLite, troca o driver do Prisma pelo libSQL adapter e aponta `DATABASE_URL` pro seu banco Turso.
+- **Postgres** — use o `docker-compose.yml` local, e em prod aponte `DATABASE_URL` pra um Postgres hospedado (Neon, Supabase, Railway). Troque `provider = "sqlite"` por `"postgresql"` no `prisma/schema.prisma`, remova os helpers de TEXT-com-JSON em `lib/json-list.ts`, e migra de novo.
+
+### Alternativa Postgres (Docker)
+
+```bash
+npm run db:up         # sobe o Postgres 17 do docker-compose.yml
+# no prisma/schema.prisma troque provider pra "postgresql"
+# no .env.local, set DATABASE_URL=postgresql://maarkn:maarkn@localhost:5432/maarkn_dev
+npm run db:migrate
+npm run db:seed
+```
+
+`npm run db:down` para o container sem apagar os dados.
 
 ---
 
