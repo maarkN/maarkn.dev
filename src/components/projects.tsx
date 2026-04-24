@@ -20,7 +20,7 @@ type Labels = {
 export function Projects({ locale, labels }: { locale: Locale; labels: Labels }) {
   return (
     <section id="work" className="relative border-t border-[var(--border)]">
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-24 md:px-12 md:py-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-16 sm:px-6 sm:py-24 md:px-12 md:py-32">
         <div className="mb-12 flex flex-col gap-6 md:mb-16 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">

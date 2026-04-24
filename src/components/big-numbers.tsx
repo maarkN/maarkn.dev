@@ -16,7 +16,7 @@ export function BigNumbers({ labels }: { labels: Labels }) {
 
   return (
     <section className="relative border-t border-[var(--border)]">
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-24 md:px-12 md:py-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-16 sm:px-6 sm:py-24 md:px-12 md:py-32">
         <div className="mb-14 max-w-2xl">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
             {labels.kicker}

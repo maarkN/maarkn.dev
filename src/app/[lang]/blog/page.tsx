@@ -31,7 +31,7 @@ export default async function BlogIndexPage({ params }: PageProps<"/[lang]/blog"
     <>
       <Nav locale={lang} nav={dict.nav} themes={dict.themes} />
       <main className="border-t border-[var(--border)]">
-        <section className="mx-auto w-full max-w-[1280px] px-6 pt-32 pb-12 md:px-12 md:pt-40">
+        <section className="mx-auto w-full max-w-[1280px] px-4 pt-24 pb-8 sm:px-6 sm:pt-32 sm:pb-12 md:px-12 md:pt-40">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
             {dict.blog.kicker}
           </p>
@@ -43,7 +43,7 @@ export default async function BlogIndexPage({ params }: PageProps<"/[lang]/blog"
           </p>
         </section>
 
-        <section className="mx-auto w-full max-w-[1280px] px-6 pb-32 md:px-12">
+        <section className="mx-auto w-full max-w-[1280px] px-4 pb-20 sm:px-6 sm:pb-32 md:px-12">
           {posts.length === 0 ? (
             <p className="border border-dashed border-[var(--border-2)] p-12 text-center text-sm text-[var(--muted)]">
               {dict.blog.empty}

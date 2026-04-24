@@ -51,7 +51,7 @@ export function ProjectDetail({
 
   return (
     <article className="border-t border-[var(--border)]">
-      <div className="mx-auto w-full max-w-[1100px] px-6 pt-32 md:px-12 md:pt-40">
+      <div className="mx-auto w-full max-w-[1100px] px-4 pt-24 sm:px-6 sm:pt-32 md:px-12 md:pt-40">
         <Link
           href={`/${locale}/projects`}
           className="group inline-flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)] transition-colors hover:text-[var(--accent)]"

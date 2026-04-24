@@ -59,8 +59,8 @@ export default async function AdminDashboard({
         </Banner>
       ) : null}
 
-      <div className="mt-10 overflow-hidden border border-[var(--border)]">
-        <table className="w-full text-left text-sm">
+      <div className="mt-10 overflow-x-auto border border-[var(--border)]">
+        <table className="w-full min-w-[520px] text-left text-sm">
           <thead className="border-b border-[var(--border)] bg-[var(--surface-2)]">
             <tr>
               <Th>Project</Th>

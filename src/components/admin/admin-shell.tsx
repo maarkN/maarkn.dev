@@ -10,7 +10,7 @@ export function AdminShell({
 }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-6 py-3 md:px-10">
+      <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3 sm:px-6 md:px-10">
         <div className="flex items-center gap-6">
           <Link
             href="/admin"
@@ -49,7 +49,7 @@ export function AdminShell({
           <LogoutButton />
         </div>
       </header>
-      <main className="flex-1 px-6 py-10 md:px-10">{children}</main>
+      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10 md:px-10">{children}</main>
     </div>
   );
 }

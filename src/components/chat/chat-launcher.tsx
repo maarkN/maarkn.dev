@@ -33,7 +33,7 @@ export function ChatLauncher({
         aria-expanded={open}
         aria-label={buttonLabel}
         className={cn(
-          "fixed bottom-5 right-5 z-50 inline-flex h-12 items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-4 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_8px_28px_var(--accent-glow)] transition-transform hover:-translate-y-0.5",
+          "fixed bottom-4 right-4 z-50 inline-flex h-12 w-12 sm:w-auto items-center justify-center gap-2 border border-[var(--accent)] bg-[var(--accent)] sm:px-4 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_8px_28px_var(--accent-glow)] transition-transform hover:-translate-y-0.5",
           open && "translate-y-0"
         )}
       >
@@ -53,7 +53,7 @@ export function ChatLauncher({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed bottom-20 right-5 z-40 w-[min(420px,calc(100vw-2.5rem))]"
+            className="fixed inset-x-4 bottom-20 z-40 sm:inset-auto sm:right-4 sm:w-[min(420px,calc(100vw-2rem))]"
           >
             <ChatPanel labels={labels} locale={locale} variant="floating" />
           </motion.div>

@@ -16,7 +16,7 @@ export function IdentityCard({ labels }: { labels: CardLabels }) {
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
-      className="relative w-full max-w-[400px] border border-[var(--border)] bg-[var(--surface)]"
+      className="relative w-full max-w-[400px] mx-auto md:mx-0 border border-[var(--border)] bg-[var(--surface)]"
     >
       <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-[var(--accent)] via-[var(--accent-2)] to-transparent" />
 

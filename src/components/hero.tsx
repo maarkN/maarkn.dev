@@ -32,7 +32,7 @@ export function Hero({
     <section className="relative isolate overflow-hidden">
       <div className="bg-grid pointer-events-none absolute inset-0 -z-10" aria-hidden />
 
-      <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-16 px-6 py-32 md:grid-cols-[1fr_400px] md:gap-20 md:px-12 md:py-40">
+      <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-12 px-4 pt-24 pb-20 sm:px-6 sm:gap-16 sm:pt-28 sm:pb-24 md:grid-cols-[1fr_400px] md:gap-20 md:px-12 md:pt-40 md:pb-32">
         <div className="max-w-[640px]">
           <motion.span
             {...fadeUp}
@@ -57,7 +57,7 @@ export function Hero({
           <motion.h1
             {...fadeUp}
             transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-            className="mt-4 font-display text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.03em]"
+            className="mt-4 font-display text-[clamp(2rem,7vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.03em]"
           >
             <span className="block text-[var(--text)]">{labels.title.line1}</span>
             <span className="block text-[var(--text)]">{labels.title.line2}</span>

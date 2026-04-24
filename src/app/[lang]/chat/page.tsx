@@ -20,7 +20,7 @@ export default async function ChatPage({ params }: PageProps<"/[lang]/chat">) {
     <>
       <Nav locale={lang} nav={dict.nav} themes={dict.themes} />
       <main className="border-t border-[var(--border)]">
-        <section className="mx-auto w-full max-w-[860px] px-6 pt-32 pb-12 md:px-12 md:pt-40">
+        <section className="mx-auto w-full max-w-[860px] px-4 pt-24 pb-8 sm:px-6 sm:pt-32 sm:pb-12 md:px-12 md:pt-40">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
             {dict.chat.kicker}
           </p>
@@ -32,7 +32,7 @@ export default async function ChatPage({ params }: PageProps<"/[lang]/chat">) {
           </p>
         </section>
 
-        <section className="mx-auto w-full max-w-[860px] px-6 pb-32 md:px-12">
+        <section className="mx-auto w-full max-w-[860px] px-4 pb-20 sm:px-6 sm:pb-32 md:px-12">
           <ChatPanel labels={dict.chat.panel} locale={lang} variant="page" />
         </section>
       </main>

@@ -18,7 +18,7 @@ export function Footer({
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-[var(--border)]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-8 px-6 py-12 md:flex-row md:items-center md:justify-between md:px-12">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-8 px-4 pt-10 pb-24 sm:px-6 sm:pb-12 md:flex-row md:items-center md:justify-between md:px-12 md:py-12">
         <div>
           <p className="font-display text-sm font-semibold tracking-tight text-[var(--text)]">
             maarkn<span className="text-[var(--accent)]">.dev</span>

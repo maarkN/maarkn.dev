@@ -20,7 +20,7 @@ export function About({ labels }: { labels: AboutLabels }) {
       id="about"
       className="relative border-t border-[var(--border)]"
     >
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-24 md:px-12 md:py-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-16 sm:px-6 sm:py-24 md:px-12 md:py-32">
         <Header kicker={labels.kicker} title={labels.title} />
 
         <div className="grid gap-16 md:grid-cols-[minmax(0,1fr)_minmax(0,420px)] md:gap-24">

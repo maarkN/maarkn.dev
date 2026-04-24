@@ -52,7 +52,7 @@ export default async function PostPage({
     <>
       <Nav locale={lang} nav={dict.nav} themes={dict.themes} />
       <main className="border-t border-[var(--border)]">
-        <article className="mx-auto w-full max-w-[860px] px-6 pt-32 pb-32 md:px-12 md:pt-40">
+        <article className="mx-auto w-full max-w-[860px] px-4 pt-24 pb-20 sm:px-6 sm:pt-32 sm:pb-32 md:px-12 md:pt-40">
           <Link
             href={`/${lang}/blog`}
             className="group inline-flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)] transition-colors hover:text-[var(--accent)]"

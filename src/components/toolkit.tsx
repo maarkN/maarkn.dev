@@ -17,7 +17,7 @@ export function Toolkit({ labels }: { labels: ToolkitLabels }) {
       id="toolkit"
       className="relative border-t border-[var(--border)] bg-[var(--bg-low)]"
     >
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-24 md:px-12 md:py-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-16 sm:px-6 sm:py-24 md:px-12 md:py-32">
         <div className="mb-16 max-w-2xl">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
             {labels.kicker}
