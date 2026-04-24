@@ -66,10 +66,16 @@ export function Nav({
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-3 px-4 sm:px-6 md:px-10 backdrop-blur-md transition-colors",
-          scrolled
-            ? "bg-[color-mix(in_oklab,var(--bg)_88%,transparent)] border-b border-[var(--border)]"
-            : "bg-[color-mix(in_oklab,var(--bg)_55%,transparent)] border-b border-transparent"
+          "fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-3 px-4 sm:px-6 md:px-10 transition-colors",
+          // The mobile sheet sits below the header (z-40) so the logo and the
+          // close button stay reachable while the menu is open. When the sheet
+          // is open we drop the backdrop blur in favor of a fully opaque bar so
+          // the boundary between header and sheet is visually crisp.
+          open
+            ? "bg-[var(--bg)] border-b border-[var(--border)]"
+            : scrolled
+              ? "bg-[color-mix(in_oklab,var(--bg)_88%,transparent)] border-b border-[var(--border)] backdrop-blur-md"
+              : "bg-[color-mix(in_oklab,var(--bg)_55%,transparent)] border-b border-transparent backdrop-blur-md"
         )}
       >
         <Link
@@ -100,16 +106,41 @@ export function Nav({
           </div>
           <button
             type="button"
-            className="md:hidden relative z-[60] inline-flex h-11 w-11 items-center justify-center border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            className={cn(
+              "md:hidden relative inline-flex h-11 w-11 items-center justify-center overflow-hidden border transition-colors",
+              open
+                ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                : "border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            )}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? (
-              <X className="h-5 w-5" strokeWidth={2.2} />
-            ) : (
-              <Menu className="h-5 w-5" strokeWidth={2.2} />
-            )}
+            <AnimatePresence initial={false} mode="wait">
+              {open ? (
+                <motion.span
+                  key="close"
+                  initial={{ opacity: 0, rotate: -90, scale: 0.7 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: 90, scale: 0.7 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <X className="h-5 w-5" strokeWidth={2.4} />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="menu"
+                  initial={{ opacity: 0, rotate: 90, scale: 0.7 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: -90, scale: 0.7 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <Menu className="h-5 w-5" strokeWidth={2.2} />
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
         </div>
       </header>
@@ -118,20 +149,30 @@ export function Nav({
         {open ? (
           <motion.div
             key="mobile-menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             style={{ backgroundColor: "var(--bg)" }}
-            className="md:hidden fixed inset-0 z-[55] flex flex-col pt-16"
+            className="md:hidden fixed inset-x-0 bottom-0 top-16 z-40 flex flex-col"
           >
-            <ul className="flex flex-col">
+            <motion.ul
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.04, delayChildren: 0.04 } },
+              }}
+              className="flex flex-col"
+            >
               {items.map((it, i) => (
                 <motion.li
                   key={it.href}
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.25, delay: 0.04 * i, ease: "easeOut" }}
+                  variants={{
+                    hidden: { opacity: 0, x: 24 },
+                    show: { opacity: 1, x: 0 },
+                  }}
+                  transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <Link
                     href={it.href}
@@ -145,9 +186,14 @@ export function Nav({
                   </Link>
                 </motion.li>
               ))}
-            </ul>
+            </motion.ul>
 
-            <div className="mt-auto border-t border-[var(--border)] px-6 py-6">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.32, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-auto border-t border-[var(--border)] px-6 py-6"
+            >
               <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
                 Theme · Language
               </p>
@@ -155,7 +201,7 @@ export function Nav({
                 <ThemeSwitcher labels={themes} />
                 <LangSwitcher current={locale} />
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
