@@ -97,7 +97,7 @@ export function About({ labels }: { labels: AboutLabels }) {
                   <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--muted)] md:order-none">
                     {entry.current ? `${labels.timelineNow} · ${entry.period}` : entry.period}
                   </p>
-                  <div className="col-span-2 mt-1 md:col-span-1 md:mt-0">
+                  <div className="col-start-2 mt-1 md:col-start-auto md:mt-0">
                     <p className="font-display text-[15px] font-semibold tracking-tight text-[var(--text)]">
                       {t.role}{" "}
                       <span className="font-normal text-[var(--muted)]">— {entry.company}</span>

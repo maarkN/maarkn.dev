@@ -63,54 +63,56 @@ export function Nav({
   ];
 
   return (
-    <header
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-3 px-4 sm:px-6 md:px-10 backdrop-blur-md transition-colors",
-        scrolled
-          ? "bg-[color-mix(in_oklab,var(--bg)_88%,transparent)] border-b border-[var(--border)]"
-          : "bg-[color-mix(in_oklab,var(--bg)_55%,transparent)] border-b border-transparent"
-      )}
-    >
-      <Link
-        href={`/${locale}`}
-        className="flex items-center font-display text-base font-bold tracking-tight text-[var(--text)]"
-        aria-label="maarkn home"
-        onClick={() => setOpen(false)}
+    <>
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-3 px-4 sm:px-6 md:px-10 backdrop-blur-md transition-colors",
+          scrolled
+            ? "bg-[color-mix(in_oklab,var(--bg)_88%,transparent)] border-b border-[var(--border)]"
+            : "bg-[color-mix(in_oklab,var(--bg)_55%,transparent)] border-b border-transparent"
+        )}
       >
-        maarkn<span className="text-[var(--accent)]">.dev</span>
-      </Link>
-
-      <nav className="hidden md:flex items-center gap-0">
-        {items.map((it) => (
-          <Link
-            key={it.href}
-            href={it.href}
-            className="relative px-4 py-2 font-display text-[12px] font-medium uppercase tracking-[0.08em] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-          >
-            {it.label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="flex items-center gap-2">
-        <div className="hidden sm:flex items-center gap-2">
-          <ThemeSwitcher labels={themes} />
-          <LangSwitcher current={locale} />
-        </div>
-        <button
-          type="button"
-          className="md:hidden inline-flex h-11 w-11 items-center justify-center border border-[var(--border)] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
+        <Link
+          href={`/${locale}`}
+          className="flex items-center font-display text-base font-bold tracking-tight text-[var(--text)]"
+          aria-label="maarkn home"
+          onClick={() => setOpen(false)}
         >
-          {open ? (
-            <X className="h-5 w-5" strokeWidth={2.2} />
-          ) : (
-            <Menu className="h-5 w-5" strokeWidth={2.2} />
-          )}
-        </button>
-      </div>
+          maarkn<span className="text-[var(--accent)]">.dev</span>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-0">
+          {items.map((it) => (
+            <Link
+              key={it.href}
+              href={it.href}
+              className="relative px-4 py-2 font-display text-[12px] font-medium uppercase tracking-[0.08em] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            >
+              {it.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
+            <ThemeSwitcher labels={themes} />
+            <LangSwitcher current={locale} />
+          </div>
+          <button
+            type="button"
+            className="md:hidden relative z-[60] inline-flex h-11 w-11 items-center justify-center border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? (
+              <X className="h-5 w-5" strokeWidth={2.2} />
+            ) : (
+              <Menu className="h-5 w-5" strokeWidth={2.2} />
+            )}
+          </button>
+        </div>
+      </header>
 
       <AnimatePresence>
         {open ? (
@@ -120,7 +122,8 @@ export function Nav({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="md:hidden fixed inset-0 top-16 z-40 flex flex-col bg-[var(--bg)]"
+            style={{ backgroundColor: "var(--bg)" }}
+            className="md:hidden fixed inset-0 z-[55] flex flex-col pt-16"
           >
             <ul className="flex flex-col">
               {items.map((it, i) => (
@@ -156,6 +159,6 @@ export function Nav({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </header>
+    </>
   );
 }
