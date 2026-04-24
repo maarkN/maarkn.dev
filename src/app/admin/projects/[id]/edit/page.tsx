@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
+import { decodeStringList } from "@/lib/json-list";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ProjectForm } from "@/components/admin/project-form";
 
@@ -48,14 +49,14 @@ export default async function EditProjectPage({
           monogram: project.monogram,
           accentFrom: project.accentFrom,
           accentTo: project.accentTo,
-          stack: Array.isArray(project.stack) ? (project.stack as string[]) : [],
+          stack: decodeStringList(project.stackJson),
           repoUrl: project.repoUrl,
           demoUrl: project.demoUrl,
           caseUrl: project.caseUrl,
           tagline: project.tagline,
           description: project.description,
           role: project.role,
-          features: Array.isArray(project.features) ? (project.features as string[]) : [],
+          features: decodeStringList(project.featuresJson),
         }}
       />
     </AdminShell>

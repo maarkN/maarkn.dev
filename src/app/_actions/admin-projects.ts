@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
+import { encodeStringList } from "@/lib/json-list";
 
 export type ActionState =
   | { status: "idle" }
@@ -105,14 +106,14 @@ export async function createProject(_prev: ActionState, formData: FormData): Pro
         monogram: data.monogram,
         accentFrom: data.accentFrom,
         accentTo: data.accentTo,
-        stack: data.stack,
+        stackJson: encodeStringList(data.stack),
         repoUrl: emptyToNull(data.repoUrl),
         demoUrl: emptyToNull(data.demoUrl),
         caseUrl: emptyToNull(data.caseUrl),
         tagline: emptyToNull(data.tagline),
         description: emptyToNull(data.description),
         role: emptyToNull(data.role),
-        features: data.features,
+        featuresJson: encodeStringList(data.features),
       },
     });
   } catch (err) {
@@ -152,14 +153,14 @@ export async function updateProject(
         monogram: data.monogram,
         accentFrom: data.accentFrom,
         accentTo: data.accentTo,
-        stack: data.stack,
+        stackJson: encodeStringList(data.stack),
         repoUrl: emptyToNull(data.repoUrl),
         demoUrl: emptyToNull(data.demoUrl),
         caseUrl: emptyToNull(data.caseUrl),
         tagline: emptyToNull(data.tagline),
         description: emptyToNull(data.description),
         role: emptyToNull(data.role),
-        features: data.features,
+        featuresJson: encodeStringList(data.features),
       },
     });
   } catch (err) {

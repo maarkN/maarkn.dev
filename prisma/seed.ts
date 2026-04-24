@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { projects as STATIC_PROJECTS } from "../src/lib/projects";
+import { encodeStringList } from "../src/lib/json-list";
 
 const db = new PrismaClient();
 
@@ -46,11 +47,11 @@ async function seedProjects() {
         monogram: p.monogram,
         accentFrom: p.accent.from,
         accentTo: p.accent.to,
-        stack: p.stack,
+        stackJson: encodeStringList(p.stack),
         repoUrl: p.links?.repo ?? null,
         demoUrl: p.links?.demo ?? null,
         caseUrl: p.links?.case ?? null,
-        features: [],
+        featuresJson: encodeStringList([]),
       },
     });
   }
