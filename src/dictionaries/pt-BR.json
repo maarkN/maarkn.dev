@@ -155,6 +155,17 @@
         "title": "Práticas & Soft skills",
         "caption": "Como trabalho com código e com pessoas."
       }
+    },
+    "metrics": {
+      "heading": "Capacidades",
+      "items": {
+        "system_design": "Design de Sistemas",
+        "api_architecture": "Arquitetura de APIs",
+        "frontend_engineering": "Engenharia Frontend",
+        "devops_infra": "DevOps & Infra",
+        "mobile_delivery": "Entrega Mobile",
+        "data_modeling": "Modelagem de Dados"
+      }
     }
   },
   "social": {

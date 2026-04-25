@@ -1,7 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { groupOrder, toolkit, type Tool, type ToolkitGroupKey } from "@/lib/toolkit";
+import {
+  groupOrder,
+  metrics,
+  toolkit,
+  type MetricKey,
+  type Tool,
+  type ToolkitGroupKey,
+} from "@/lib/toolkit";
 
 type ToolkitLabels = {
   kicker: string;
@@ -9,6 +16,10 @@ type ToolkitLabels = {
   sub: string;
   groups: Record<ToolkitGroupKey, { title: string; caption: string }>;
   yearsSuffix: string;
+  metrics: {
+    heading: string;
+    items: Record<MetricKey, string>;
+  };
 };
 
 export function Toolkit({ labels }: { labels: ToolkitLabels }) {
@@ -30,16 +41,34 @@ export function Toolkit({ labels }: { labels: ToolkitLabels }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-px overflow-hidden border border-[var(--border)] bg-[var(--border)] md:grid-cols-2 lg:grid-cols-3">
-          {groupOrder.map((g) => (
-            <Group
-              key={g}
-              groupKey={g}
-              title={labels.groups[g].title}
-              caption={labels.groups[g].caption}
-              yearsSuffix={labels.yearsSuffix}
-            />
-          ))}
+        <div className="border border-[var(--border)] bg-[var(--bg)]">
+          <div className="grid grid-cols-1 gap-px overflow-hidden bg-[var(--border)] md:grid-cols-2 lg:grid-cols-3">
+            {groupOrder.map((g) => (
+              <Group
+                key={g}
+                groupKey={g}
+                title={labels.groups[g].title}
+                caption={labels.groups[g].caption}
+                yearsSuffix={labels.yearsSuffix}
+              />
+            ))}
+          </div>
+
+          <div className="border-t border-[var(--border)] px-7 py-10 md:px-10 md:py-12">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent)]">
+              {labels.metrics.heading}
+            </p>
+            <ul className="mt-6 flex flex-col gap-5">
+              {metrics.map((m, i) => (
+                <MetricBar
+                  key={m.key}
+                  label={labels.metrics.items[m.key]}
+                  value={m.value}
+                  index={i}
+                />
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </section>
@@ -65,7 +94,7 @@ function Group({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="group relative flex flex-col gap-6 bg-[var(--bg)] p-7 transition-colors hover:bg-[var(--surface)]"
+      className="group relative flex flex-col gap-4 bg-[var(--bg)] p-7 transition-colors hover:bg-[var(--surface)]"
     >
       <header>
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted)]">
@@ -77,9 +106,9 @@ function Group({
         <p className="mt-1 text-[13px] font-light text-[var(--muted)]">{caption}</p>
       </header>
 
-      <ul className="flex flex-col gap-3">
+      <ul className="flex flex-wrap gap-1.5">
         {items.map((tool, i) => (
-          <Bar key={tool.name} tool={tool} index={i} yearsSuffix={yearsSuffix} />
+          <ToolChip key={tool.name} tool={tool} index={i} yearsSuffix={yearsSuffix} />
         ))}
       </ul>
 
@@ -91,7 +120,7 @@ function Group({
   );
 }
 
-function Bar({
+function ToolChip({
   tool,
   index,
   yearsSuffix,
@@ -102,32 +131,54 @@ function Bar({
 }) {
   return (
     <motion.li
-      initial={{ opacity: 0, y: 6 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.96 }}
+      whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.32, delay: index * 0.03, ease: "easeOut" }}
-      className="group/tool"
+      transition={{ duration: 0.32, delay: index * 0.025, ease: "easeOut" }}
+      className="group/tag relative inline-flex items-center gap-1.5 border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1.5 font-mono text-[11px] tracking-[0.02em] text-[var(--text-2)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      title={tool.years ? `${tool.years}${yearsSuffix} · ${tool.proficiency}%` : `${tool.proficiency}%`}
+    >
+      <span>{tool.name}</span>
+      {tool.years ? (
+        <span className="text-[9px] uppercase tracking-[0.08em] text-[var(--muted)] group-hover/tag:text-[var(--accent-2)]">
+          {tool.years}
+          {yearsSuffix}
+        </span>
+      ) : null}
+    </motion.li>
+  );
+}
+
+function MetricBar({
+  label,
+  value,
+  index,
+}: {
+  label: string;
+  value: number;
+  index: number;
+}) {
+  return (
+    <motion.li
+      initial={{ opacity: 0, y: 8 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.45, delay: index * 0.04, ease: "easeOut" }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-[12px] tracking-[0.02em] text-[var(--text-2)] transition-colors group-hover/tool:text-[var(--text)]">
-          {tool.name}
-          {tool.years ? (
-            <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--muted)]">
-              {tool.years}
-              {yearsSuffix}
-            </span>
-          ) : null}
+        <span className="font-display text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--text)]">
+          {label}
         </span>
-        <span className="font-mono text-[11px] tabular-nums tracking-[0.02em] text-[var(--accent)]">
-          {tool.proficiency}%
+        <span className="font-mono text-[12px] tabular-nums tracking-[0.02em] text-[var(--accent)]">
+          {value}%
         </span>
       </div>
-      <div className="relative mt-1.5 h-[3px] overflow-hidden bg-[var(--surface-3)]">
+      <div className="relative mt-2 h-[3px] overflow-hidden bg-[var(--surface-3)]">
         <motion.span
           initial={{ width: 0 }}
-          whileInView={{ width: `${tool.proficiency}%` }}
+          whileInView={{ width: `${value}%` }}
           viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: index * 0.03 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: index * 0.04 }}
           className="absolute inset-y-0 left-0 bg-[var(--accent)] dev-tool-fill"
           aria-hidden
         />

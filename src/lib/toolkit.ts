@@ -80,3 +80,27 @@ export const groupOrder: ToolkitGroupKey[] = [
   "infra",
   "practices",
 ];
+
+/**
+ * High-level capability metrics rendered as horizontal bars at the bottom of
+ * the Toolkit panel. Locale-agnostic keys; the UI looks up labels in the
+ * dictionary so EN / PT-BR can diverge.
+ */
+export type MetricKey =
+  | "system_design"
+  | "api_architecture"
+  | "frontend_engineering"
+  | "devops_infra"
+  | "mobile_delivery"
+  | "data_modeling";
+
+export type Metric = { key: MetricKey; value: number };
+
+export const metrics: Metric[] = [
+  { key: "system_design", value: 92 },
+  { key: "api_architecture", value: 95 },
+  { key: "frontend_engineering", value: 88 },
+  { key: "devops_infra", value: 82 },
+  { key: "mobile_delivery", value: 80 },
+  { key: "data_modeling", value: 86 },
+];
