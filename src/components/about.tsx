@@ -131,10 +131,12 @@ function Header({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="mb-16 max-w-2xl">
       <p className="dev-kicker font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
-        {kicker}
+        <span className="light-only-text">{kicker}</span>
+        <span className="dev-only-text">Work history</span>
       </p>
       <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
-        {title}
+        <span className="light-only-text">{title}</span>
+        <span className="dev-only-text">PROFESSIONAL_EXPERIENCE</span>
       </h2>
     </div>
   );
