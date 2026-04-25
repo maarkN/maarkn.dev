@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -33,6 +34,9 @@ export function Nav({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const pathname = usePathname();
+  const homeRoute = pathname === `/${locale}` || pathname === `/${locale}/`;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -40,6 +44,61 @@ export function Nav({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Track which anchor section is currently in view, but only when the user
+  // is browsing the home page (where #about and #contact actually exist).
+  useEffect(() => {
+    if (!homeRoute) {
+      setActiveSection(null);
+      return;
+    }
+    const ids = ["about", "work", "toolkit", "contact", "logs"] as const;
+    const nodes = ids
+      .map((id) => document.getElementById(id))
+      .filter((n): n is HTMLElement => Boolean(n));
+    if (nodes.length === 0) return;
+
+    const visible = new Map<string, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            visible.set(entry.target.id, entry.intersectionRatio);
+          } else {
+            visible.delete(entry.target.id);
+          }
+        }
+        if (visible.size === 0) return;
+        let bestId: string | null = null;
+        let bestRatio = 0;
+        for (const [id, ratio] of visible) {
+          if (ratio > bestRatio) {
+            bestId = id;
+            bestRatio = ratio;
+          }
+        }
+        setActiveSection(bestId);
+      },
+      {
+        threshold: [0.25, 0.5, 0.75],
+        rootMargin: "-30% 0px -40% 0px",
+      }
+    );
+    nodes.forEach((n) => observer.observe(n));
+    return () => observer.disconnect();
+  }, [homeRoute, pathname]);
+
+  const matchesRoute = (path: string) =>
+    pathname === path || pathname.startsWith(path + "/");
+
+  const isActive = (href: string): boolean => {
+    if (href.includes("#about")) return homeRoute && (activeSection === "about" || activeSection === null);
+    if (href.includes("#contact")) return homeRoute && activeSection === "contact";
+    if (href.endsWith("/projects")) return matchesRoute(`/${locale}/projects`);
+    if (href.endsWith("/career")) return matchesRoute(`/${locale}/career`);
+    if (href.endsWith("/blog")) return matchesRoute(`/${locale}/blog`);
+    return false;
+  };
 
   // Lock body scroll while the mobile menu is open and close on Escape.
   useEffect(() => {
@@ -90,15 +149,31 @@ export function Nav({
         </Link>
 
         <nav className="hidden md:flex items-center gap-0">
-          {items.map((it) => (
-            <Link
-              key={it.href}
-              href={it.href}
-              className="relative px-4 py-2 font-display text-[12px] font-medium uppercase tracking-[0.08em] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-            >
-              {it.label}
-            </Link>
-          ))}
+          {items.map((it) => {
+            const active = isActive(it.href);
+            return (
+              <Link
+                key={it.href}
+                href={it.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative px-4 py-2 font-display text-[12px] font-medium uppercase tracking-[0.08em] transition-colors",
+                  active
+                    ? "text-[var(--accent)]"
+                    : "text-[var(--muted)] hover:text-[var(--text)]"
+                )}
+              >
+                {it.label}
+                <span
+                  className={cn(
+                    "pointer-events-none absolute inset-x-3 -bottom-px h-px bg-[var(--accent)] transition-opacity",
+                    active ? "opacity-100" : "opacity-0"
+                  )}
+                  aria-hidden
+                />
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -167,27 +242,45 @@ export function Nav({
               }}
               className="flex flex-col"
             >
-              {items.map((it, i) => (
-                <motion.li
-                  key={it.href}
-                  variants={{
-                    hidden: { opacity: 0, x: 24 },
-                    show: { opacity: 1, x: 0 },
-                  }}
-                  transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <Link
-                    href={it.href}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center justify-between border-b border-[var(--border)] px-6 py-5 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-[var(--text)] transition-colors hover:bg-[var(--surface)] active:bg-[var(--surface-2)]"
+              {items.map((it, i) => {
+                const active = isActive(it.href);
+                return (
+                  <motion.li
+                    key={it.href}
+                    variants={{
+                      hidden: { opacity: 0, x: 24 },
+                      show: { opacity: 1, x: 0 },
+                    }}
+                    transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    {it.label}
-                    <span className="font-mono text-[10px] tracking-[0.16em] text-[var(--muted)]">
-                      0{i + 1}
-                    </span>
-                  </Link>
-                </motion.li>
-              ))}
+                    <Link
+                      href={it.href}
+                      onClick={() => setOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "relative flex items-center justify-between border-b border-[var(--border)] px-6 py-5 font-display text-[15px] font-semibold uppercase tracking-[0.06em] transition-colors hover:bg-[var(--surface)] active:bg-[var(--surface-2)]",
+                        active ? "text-[var(--accent)]" : "text-[var(--text)]"
+                      )}
+                    >
+                      {active ? (
+                        <span
+                          className="absolute inset-y-0 left-0 w-[3px] bg-[var(--accent)]"
+                          aria-hidden
+                        />
+                      ) : null}
+                      {it.label}
+                      <span
+                        className={cn(
+                          "font-mono text-[10px] tracking-[0.16em]",
+                          active ? "text-[var(--accent)]" : "text-[var(--muted)]"
+                        )}
+                      >
+                        0{i + 1}
+                      </span>
+                    </Link>
+                  </motion.li>
+                );
+              })}
             </motion.ul>
 
             <motion.div
