@@ -50,6 +50,7 @@ export default async function EditProjectPage({
           accentFrom: project.accentFrom,
           accentTo: project.accentTo,
           stack: decodeStringList(project.stackJson),
+          sourceVisibility: project.sourceVisibility,
           repoUrl: project.repoUrl,
           demoUrl: project.demoUrl,
           caseUrl: project.caseUrl,

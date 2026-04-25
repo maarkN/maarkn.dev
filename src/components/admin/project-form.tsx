@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   createProject,
   updateProject,
@@ -21,6 +21,7 @@ type ProjectInput = {
   accentFrom?: string;
   accentTo?: string;
   stack?: string[];
+  sourceVisibility?: string;
   repoUrl?: string | null;
   demoUrl?: string | null;
   caseUrl?: string | null;
@@ -32,6 +33,10 @@ type ProjectInput = {
 
 const CATEGORIES = ["web", "mobile", "ai", "backend", "client"] as const;
 const STATUSES = ["live", "internal", "nda", "archived"] as const;
+const VISIBILITIES = [
+  { value: "public", label: "Public · GitHub URL" },
+  { value: "private", label: "Private project (no source link)" },
+] as const;
 
 const initial: ActionState = { status: "idle" };
 
@@ -43,6 +48,9 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
 
   const [state, run, pending] = useActionState<ActionState, FormData>(action, initial);
   const errors = state.status === "error" ? state.errors : {};
+  const initialVisibility =
+    project?.sourceVisibility === "private" ? "private" : "public";
+  const [visibility, setVisibility] = useState<"public" | "private">(initialVisibility);
 
   return (
     <form action={run} className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -120,14 +128,41 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
         />
       </Section>
 
-      <Section title="Links" className="md:col-span-2">
-        <Field
-          name="repoUrl"
-          label="Repository URL"
-          type="url"
-          defaultValue={project?.repoUrl ?? ""}
-          error={errors.repoUrl}
-        />
+      <Section title="Source & Links" className="md:col-span-2">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="sourceVisibility" required>
+            Source visibility
+          </Label>
+          <select
+            id="sourceVisibility"
+            name="sourceVisibility"
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as "public" | "private")}
+            className={inputClass}
+          >
+            {VISIBILITIES.map((v) => (
+              <option key={v.value} value={v.value}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+          <Help>
+            Pick &ldquo;Private project&rdquo; for client work or internal builds where the source
+            code can&apos;t be shared. The detail page will show a Private project pill instead of
+            the GitHub button.
+          </Help>
+        </div>
+        {visibility === "public" ? (
+          <Field
+            name="repoUrl"
+            label="Repository URL"
+            type="url"
+            defaultValue={project?.repoUrl ?? ""}
+            error={errors.repoUrl}
+          />
+        ) : (
+          <input type="hidden" name="repoUrl" value="" />
+        )}
         <Field
           name="demoUrl"
           label="Live demo URL"

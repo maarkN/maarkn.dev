@@ -30,6 +30,7 @@ const projectSchema = z.object({
   description: z.string().max(8000).optional().or(z.literal("")),
   role: z.string().max(2000).optional().or(z.literal("")),
   features: z.array(z.string().min(1).max(280)).max(20),
+  sourceVisibility: z.enum(["public", "private"]),
 });
 
 async function requireAdmin() {
@@ -68,6 +69,9 @@ function parseForm(formData: FormData) {
     description: trim(formData.get("description")),
     role: trim(formData.get("role")),
     features: parseList(trim(formData.get("features"))),
+    sourceVisibility: (trim(formData.get("sourceVisibility")) || "public") as
+      | "public"
+      | "private",
   };
 }
 
@@ -107,13 +111,14 @@ export async function createProject(_prev: ActionState, formData: FormData): Pro
         accentFrom: data.accentFrom,
         accentTo: data.accentTo,
         stackJson: encodeStringList(data.stack),
-        repoUrl: emptyToNull(data.repoUrl),
+        repoUrl: data.sourceVisibility === "private" ? null : emptyToNull(data.repoUrl),
         demoUrl: emptyToNull(data.demoUrl),
         caseUrl: emptyToNull(data.caseUrl),
         tagline: emptyToNull(data.tagline),
         description: emptyToNull(data.description),
         role: emptyToNull(data.role),
         featuresJson: encodeStringList(data.features),
+        sourceVisibility: data.sourceVisibility,
       },
     });
   } catch (err) {
@@ -154,13 +159,14 @@ export async function updateProject(
         accentFrom: data.accentFrom,
         accentTo: data.accentTo,
         stackJson: encodeStringList(data.stack),
-        repoUrl: emptyToNull(data.repoUrl),
+        repoUrl: data.sourceVisibility === "private" ? null : emptyToNull(data.repoUrl),
         demoUrl: emptyToNull(data.demoUrl),
         caseUrl: emptyToNull(data.caseUrl),
         tagline: emptyToNull(data.tagline),
         description: emptyToNull(data.description),
         role: emptyToNull(data.role),
         featuresJson: encodeStringList(data.features),
+        sourceVisibility: data.sourceVisibility,
       },
     });
   } catch (err) {

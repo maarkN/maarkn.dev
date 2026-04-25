@@ -48,6 +48,9 @@ model Project {
   role          String?
   /// JSON-encoded array of bullet strings.
   featuresJson  String   @default("[]")
+  /// "public" exposes the repo button when repoUrl is set; "private" hides it
+  /// in favor of a "Private project" pill.
+  sourceVisibility String @default("public")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
