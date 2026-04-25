@@ -96,7 +96,8 @@ export function IdentityCard({ labels }: { labels: CardLabels }) {
               <span className="pending">{`○ egg 03 — type `}</span>
               <span className="cmd">{`/help`}</span>
               <span className="pending">{` in the chat\n`}</span>
-              <span className="pending">{`○ egg 04 — Konami:  ↑ ↑ ↓ ↓ ← → ← →  B  A  (desktop)\n\n`}</span>
+              <span className="pending">{`○ egg 04 — Konami: ↑↑↓↓←→←→ B A (desktop)\n`}</span>
+              <span className="pending">{`           shake your phone 3× (mobile)\n\n`}</span>
               <span className="dim">{`reach out\n`}</span>
               <span className="dim">{`─────────\n`}</span>
               <span className="cmd">{`markimkr@gmail.com\n`}</span>

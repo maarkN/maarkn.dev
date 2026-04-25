@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/components/theme-provider";
 
@@ -16,6 +16,15 @@ const SEQUENCE = [
   "b",
   "a",
 ] as const;
+
+/* Shake-to-summon parameters tuned for a deliberate two-handed shake.
+   Net acceleration (after gravity) needs to spike past SHAKE_PEAK at least
+   SHAKE_NEEDED times within SHAKE_WINDOW, with at least SHAKE_GAP between
+   detections so a single fast jiggle doesn't count as multiple shakes. */
+const SHAKE_PEAK = 18; // m/s²
+const SHAKE_GAP = 220; // ms between counted shakes
+const SHAKE_WINDOW = 1800; // ms rolling window
+const SHAKE_NEEDED = 3;
 
 const ASCII = String.raw`                                  _
    _ __ ___   __ _  __ _ _ __| | ___ __
@@ -34,6 +43,13 @@ export function KonamiEgg() {
   const [glitching, setGlitching] = useState(false);
   const positionRef = useRef(0);
 
+  const fire = useCallback(() => {
+    setTheme("dev");
+    setGlitching(true);
+    setOpen(true);
+    window.setTimeout(() => setGlitching(false), 1300);
+  }, [setTheme]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -46,10 +62,7 @@ export function KonamiEgg() {
         positionRef.current += 1;
         if (positionRef.current === SEQUENCE.length) {
           positionRef.current = 0;
-          setTheme("dev");
-          setGlitching(true);
-          setOpen(true);
-          window.setTimeout(() => setGlitching(false), 1300);
+          fire();
         }
       } else {
         positionRef.current = key === SEQUENCE[0] ? 1 : 0;
@@ -57,7 +70,73 @@ export function KonamiEgg() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [setTheme]);
+  }, [fire]);
+
+  // Mobile equivalent of the keyboard sequence: shake the device three times.
+  // iOS 13+ requires DeviceMotionEvent.requestPermission(), which can only run
+  // from a real user gesture, so we defer the request to the first tap.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("DeviceMotionEvent" in window)) return;
+    const isCoarse =
+      window.matchMedia?.("(hover: none) and (pointer: coarse)").matches ?? false;
+    if (!isCoarse) return;
+
+    let shakes: number[] = [];
+    let lastShake = 0;
+
+    const onMotion = (event: DeviceMotionEvent) => {
+      const a = event.accelerationIncludingGravity ?? event.acceleration;
+      if (!a) return;
+      const x = a.x ?? 0;
+      const y = a.y ?? 0;
+      const z = a.z ?? 0;
+      const magnitude = Math.sqrt(x * x + y * y + z * z);
+      // Subtract ~gravity so a phone sitting still reads near zero.
+      const net = Math.abs(magnitude - 9.8);
+      if (net < SHAKE_PEAK) return;
+      const now = performance.now();
+      if (now - lastShake < SHAKE_GAP) return;
+      lastShake = now;
+      shakes.push(now);
+      shakes = shakes.filter((t) => now - t <= SHAKE_WINDOW);
+      if (shakes.length >= SHAKE_NEEDED) {
+        shakes = [];
+        fire();
+      }
+    };
+
+    const attach = () => window.addEventListener("devicemotion", onMotion);
+
+    const requestPermission = (
+      DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }
+    ).requestPermission;
+
+    if (typeof requestPermission === "function") {
+      // Wait for the first user tap to satisfy iOS's gesture requirement.
+      const onFirstTap = async () => {
+        try {
+          const result = await requestPermission();
+          if (result === "granted") attach();
+        } catch {
+          /* permission denied or unavailable — silently fall back to tap-egg only */
+        } finally {
+          window.removeEventListener("touchstart", onFirstTap);
+          window.removeEventListener("pointerdown", onFirstTap);
+        }
+      };
+      window.addEventListener("touchstart", onFirstTap, { once: true, passive: true });
+      window.addEventListener("pointerdown", onFirstTap, { once: true, passive: true });
+      return () => {
+        window.removeEventListener("touchstart", onFirstTap);
+        window.removeEventListener("pointerdown", onFirstTap);
+        window.removeEventListener("devicemotion", onMotion);
+      };
+    }
+
+    attach();
+    return () => window.removeEventListener("devicemotion", onMotion);
+  }, [fire]);
 
   useEffect(() => {
     if (!open) return;
@@ -128,7 +207,7 @@ export function KonamiEgg() {
                 {`  whatsapp  `}<span className="cmd">+55 62 98173 6748</span>
                 <br />
                 <br />
-                <span className="dim">{`hint: try /help in the chat for more terminal toys.\n`}</span>
+                <span className="dim">{`hint: try /help in the chat — or shake the phone to reopen this on mobile.\n`}</span>
                 <span className="bright">{`maarkn@dev:~$ `}</span>
                 <span style={{ animation: "dev-blink 1s step-end infinite" }}>▮</span>
               </pre>
