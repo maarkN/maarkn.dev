@@ -53,7 +53,7 @@ export function ChatLauncher({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed inset-x-4 bottom-20 z-40 sm:inset-auto sm:right-4 sm:w-[min(420px,calc(100vw-2rem))]"
+            className="fixed inset-x-4 bottom-20 z-40 sm:inset-x-auto sm:right-4 sm:w-[min(420px,calc(100vw-2rem))]"
           >
             <ChatPanel labels={labels} locale={locale} variant="floating" />
           </motion.div>
