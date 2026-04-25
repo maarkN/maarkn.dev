@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import "../globals.css";
 import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
 import { ChatLauncher } from "@/components/chat/chat-launcher";
+import { DevMarqueeStrip } from "@/components/dev/marquee-strip";
+import { ConsoleEgg } from "@/components/dev/console-egg";
+import { KonamiEgg } from "@/components/dev/konami-egg";
 import { getDictionary, hasLocale, locales, type Locale } from "@/i18n/config";
 
 const inter = Inter({
@@ -70,12 +73,15 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-dvh font-sans antialiased">
         <ThemeProvider>
+          <DevMarqueeStrip />
           {children}
           <ChatLauncher
             labels={dict.chat.panel}
             locale={lang}
             buttonLabel={dict.chat.buttonLabel}
           />
+          <KonamiEgg />
+          <ConsoleEgg />
         </ThemeProvider>
       </body>
     </html>
