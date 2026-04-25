@@ -7,6 +7,7 @@ import { About } from "@/components/about";
 import { Toolkit } from "@/components/toolkit";
 import { Projects } from "@/components/projects";
 import { Contact } from "@/components/contact";
+import { LatestLogs } from "@/components/blog/latest-logs";
 import { Footer } from "@/components/footer";
 
 export default async function HomePage({ params }: PageProps<"/[lang]">) {
@@ -25,6 +26,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         <Projects locale={lang} labels={dict.projects} />
         <Toolkit labels={dict.toolkit} />
         <Contact labels={dict.contact} />
+        <LatestLogs locale={lang} labels={dict.latestLogs} />
       </main>
       <Footer labels={dict.footer} socials={dict.social} />
     </>
