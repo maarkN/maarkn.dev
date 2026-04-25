@@ -52,6 +52,7 @@ export function Projects({ locale, labels }: { locale: Locale; labels: Labels })
               key={p.slug}
               project={p}
               index={i}
+              locale={locale}
               labels={{
                 categories: labels.categories,
                 statuses: labels.statuses,

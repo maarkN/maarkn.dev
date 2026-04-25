@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Globe } from "lucide-react";
+import { ArrowUpRight, Globe, Lock } from "lucide-react";
 import type { Project, ProjectCategory, ProjectStatus } from "@/lib/projects";
 
 function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -25,13 +26,17 @@ type Labels = {
 export function ProjectCard({
   project,
   index,
+  locale,
   labels,
 }: {
   project: Project;
   index: number;
+  locale: string;
   labels: Labels;
 }) {
   const tagline = labels.taglines[project.slug] ?? "";
+  const detailHref = `/${locale}/projects/${project.slug}`;
+  const isPrivate = project.sourceVisibility === "private";
 
   return (
     <motion.article
@@ -71,26 +76,44 @@ export function ProjectCard({
           ))}
         </ul>
 
-        <footer className="flex items-center justify-between border-t border-[var(--border)] pt-4">
+        <footer className="relative z-10 flex items-center justify-between border-t border-[var(--border)] pt-4">
           <div className="flex items-center gap-1">
-            {project.links?.repo ? (
+            {!isPrivate && project.links?.repo ? (
               <IconLink href={project.links.repo} icon={GithubIcon} label="GitHub" />
             ) : null}
             {project.links?.demo ? (
               <IconLink href={project.links.demo} icon={Globe} label="Live demo" />
             ) : null}
-            {!project.links?.repo && !project.links?.demo ? (
+            {isPrivate && !project.links?.demo ? (
+              <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
+                <Lock className="h-3 w-3" strokeWidth={2} />
+                {labels.statuses.nda}
+              </span>
+            ) : null}
+            {!isPrivate && !project.links?.repo && !project.links?.demo ? (
               <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 {labels.statuses[project.status]}
               </span>
             ) : null}
           </div>
-          <span className="inline-flex items-center gap-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition-colors group-hover:text-[var(--accent)]">
+          <Link
+            href={detailHref}
+            className="inline-flex items-center gap-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:text-[var(--accent)] group-hover:text-[var(--accent)]"
+          >
             {labels.view}
             <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.2} />
-          </span>
+          </Link>
         </footer>
       </div>
+
+      {/* Stretched link covering the whole card except the icon links and View case
+          (which already sit at z-10 in the footer). Keeps the entire card clickable
+          while letting the inner anchors stay independently navigable. */}
+      <Link
+        href={detailHref}
+        aria-label={project.name}
+        className="absolute inset-0 z-0"
+      />
 
       <span
         className="pointer-events-none absolute bottom-0 left-0 h-px w-0 bg-[var(--accent)] transition-[width] duration-500 group-hover:w-full"
@@ -116,7 +139,7 @@ function IconLink({
       rel="noreferrer"
       aria-label={label}
       title={label}
-      className="inline-flex h-8 w-8 items-center justify-center text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
+      className="relative z-10 inline-flex h-8 w-8 items-center justify-center text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
     >
       <Icon className="h-4 w-4" strokeWidth={1.8} />
     </a>

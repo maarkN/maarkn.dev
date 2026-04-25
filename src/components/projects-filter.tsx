@@ -17,7 +17,7 @@ type Labels = {
 
 type FilterValue = "all" | ProjectCategory;
 
-export function ProjectsFilter({ labels }: { labels: Labels }) {
+export function ProjectsFilter({ labels, locale }: { labels: Labels; locale: string }) {
   const [active, setActive] = useState<FilterValue>("all");
 
   const counts = useMemo(() => {
@@ -88,6 +88,7 @@ export function ProjectsFilter({ labels }: { labels: Labels }) {
               key={p.slug}
               project={p}
               index={i}
+              locale={locale}
               labels={{
                 categories: labels.categories,
                 statuses: labels.statuses,

@@ -38,6 +38,7 @@ export default async function ProjectsIndexPage({
 
         <section className="mx-auto w-full max-w-[1280px] px-4 pb-20 sm:px-6 sm:pb-32 md:px-12">
           <ProjectsFilter
+            locale={lang}
             labels={{
               filterAll: p.page.filterAll,
               empty: p.page.empty,
