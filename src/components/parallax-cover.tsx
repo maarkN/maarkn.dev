@@ -74,12 +74,18 @@ export function ParallaxCover({
       <motion.span
         style={{ y: yMono, opacity: opacityFg }}
         aria-hidden
-        className="absolute bottom-6 left-6 font-display text-[clamp(4rem,15vw,9rem)] font-bold leading-none tracking-[-0.06em] text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+        className="pointer-events-none absolute right-4 bottom-4 sm:right-8 sm:bottom-8 font-display text-[clamp(3rem,10vw,7rem)] font-bold leading-none tracking-[-0.06em] text-white/70 drop-shadow-[0_4px_24px_rgba(0,0,0,0.4)] mix-blend-overlay"
       >
         {monogram}
       </motion.span>
 
-      <div className="relative z-10 flex h-full items-end px-4 pb-8 sm:px-6 sm:pb-12 md:px-12 md:pb-16">
+      {/* Top scrim — keeps the fixed header readable when the cover is bright. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 via-black/20 to-transparent"
+      />
+
+      <div className="relative z-10 flex h-full items-end px-4 pb-8 pt-20 sm:px-6 sm:pb-12 sm:pt-24 md:px-12 md:pb-16">
         {children}
       </div>
 
