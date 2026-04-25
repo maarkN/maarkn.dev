@@ -44,6 +44,49 @@ function LinkedinIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden {...props}>
+      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.07 11.07 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.07.78 2.16v3.21c0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+    </svg>
+  );
+}
+
+const githubHandle = (site.social.github.match(/github\.com\/([^/]+)/)?.[1] ?? "maarkn").trim();
+const linkedinHandle = (site.social.linkedin.match(/linkedin\.com\/in\/([^/]+)/)?.[1] ?? "maarkn").trim();
+const whatsappValue = (site.phone ?? "+55 62 98173 6748").replace(/^\+?/, "+");
+
+const channelsCli = [
+  {
+    href: `mailto:${site.email}`,
+    label: "EMAIL",
+    value: site.email,
+    icon: Mail,
+    monogram: "@",
+  },
+  {
+    href: site.social.linkedin,
+    label: "LINKEDIN",
+    value: `linkedin.com/in/${linkedinHandle}`,
+    icon: LinkedinIcon,
+    monogram: "in",
+  },
+  {
+    href: site.social.github,
+    label: "GITHUB",
+    value: `github.com/${githubHandle}`,
+    icon: GithubIcon,
+    monogram: "gh",
+  },
+  {
+    href: site.social.whatsapp,
+    label: "WHATSAPP",
+    value: whatsappValue,
+    icon: MessageCircle,
+    monogram: "wa",
+  },
+];
+
 export function Contact({ labels }: { labels: Labels }) {
   const [state, action, isPending] = useActionState(submitContact, initialState);
   const [tz, setTz] = useState<string>("");
@@ -71,7 +114,8 @@ export function Contact({ labels }: { labels: Labels }) {
               {labels.kicker}
             </p>
             <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
-              {labels.title}
+              <span className="light-only-text">{labels.title}</span>
+              <span className="dev-only-text">&gt; INITIATE_CONTACT</span>
             </h2>
             <p className="mt-5 max-w-xl text-[1.02rem] font-light leading-[1.75] text-[var(--text-2)]">
               {labels.sub}
@@ -90,7 +134,8 @@ export function Contact({ labels }: { labels: Labels }) {
               {labels.channelHints.timezone}: {tz || "—"}
             </p>
 
-            <ul className="mt-10 space-y-2">
+            {/* Default channels (light/dark themes). */}
+            <ul className="dev-contact-channels-default mt-10 space-y-2">
               <ChannelLink
                 href={site.social.linkedin}
                 label={labels.channels.linkedin}
@@ -106,6 +151,31 @@ export function Contact({ labels }: { labels: Labels }) {
                 label={labels.channels.whatsapp}
                 icon={MessageCircle}
               />
+            </ul>
+
+            {/* CLI channels (dev theme). */}
+            <ul className="dev-contact-channels-cli dev-contact-channels mt-10">
+              {channelsCli.map((c) => (
+                <li key={c.label}>
+                  <a
+                    href={c.href}
+                    target={c.href.startsWith("http") ? "_blank" : undefined}
+                    rel={c.href.startsWith("http") ? "noreferrer" : undefined}
+                    className="dev-contact-channel"
+                  >
+                    <span className="dev-contact-channel-icon">
+                      <c.icon className="h-4 w-4" strokeWidth={1.8} />
+                    </span>
+                    <span className="flex flex-col">
+                      <span className="dev-contact-channel-label">{c.label}</span>
+                      <span className="dev-contact-channel-value">{c.value}</span>
+                    </span>
+                    <span className="dev-contact-channel-arrow" aria-hidden>
+                      →
+                    </span>
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -123,7 +193,7 @@ export function Contact({ labels }: { labels: Labels }) {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.45, ease: "easeOut" }}
               action={action}
-              className="flex flex-col gap-4 border border-[var(--border)] bg-[var(--surface)] p-6 md:p-8"
+              className="dev-contact-form flex flex-col gap-4 border border-[var(--border)] bg-[var(--surface)] p-6 md:p-8"
               noValidate
             >
               <input
@@ -138,6 +208,7 @@ export function Contact({ labels }: { labels: Labels }) {
               <Field
                 name="name"
                 label={labels.form.name}
+                placeholder="Jane Smith"
                 error={errorMap.byField(state, "name")}
                 required
               />
@@ -145,19 +216,21 @@ export function Contact({ labels }: { labels: Labels }) {
                 name="email"
                 type="email"
                 label={labels.form.email}
+                placeholder="jane@company.com"
                 error={errorMap.byField(state, "email")}
                 required
               />
               <Field
                 name="company"
                 label={labels.form.company}
+                placeholder="Acme Corp"
                 error={errorMap.byField(state, "company")}
               />
 
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="contact-type"
-                  className="font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
+                  className="dev-contact-field-label font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
                 >
                   {labels.form.type}
                 </label>
@@ -165,7 +238,7 @@ export function Contact({ labels }: { labels: Labels }) {
                   id="contact-type"
                   name="type"
                   defaultValue=""
-                  className="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 font-sans text-[14px] text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+                  className="dev-contact-input border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 font-sans text-[14px] text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
                 >
                   <option value="">{labels.form.typePlaceholder}</option>
                   {(Object.keys(labels.form.typeOptions) as Array<keyof typeof labels.form.typeOptions>).map(
@@ -182,6 +255,7 @@ export function Contact({ labels }: { labels: Labels }) {
                 as="textarea"
                 name="message"
                 label={labels.form.message}
+                placeholder="Tell me about the project or role..."
                 error={errorMap.byField(state, "message")}
                 required
               />
@@ -196,17 +270,25 @@ export function Contact({ labels }: { labels: Labels }) {
                 type="submit"
                 disabled={isPending}
                 className={cn(
-                  "group mt-2 inline-flex items-center justify-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-3 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-white transition disabled:cursor-not-allowed disabled:opacity-60",
+                  "dev-contact-submit group mt-2 inline-flex items-center justify-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-3 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-white transition disabled:cursor-not-allowed disabled:opacity-60",
                   !isPending && "hover:opacity-90 hover:shadow-[0_8px_28px_var(--accent-glow)]"
                 )}
               >
-                {isPending ? labels.form.submitting : labels.form.submit}
-                {!isPending ? (
-                  <ArrowRight
-                    className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                    strokeWidth={2.2}
-                  />
-                ) : null}
+                {isPending ? (
+                  <>
+                    <span className="light-only-text">{labels.form.submitting}</span>
+                    <span className="dev-only-text">[ TRANSMITTING... ]</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="light-only-text">{labels.form.submit}</span>
+                    <span className="dev-only-text">[ TRANSMIT_DATA ]</span>
+                    <ArrowRight
+                      className="light-only-text h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                      strokeWidth={2.2}
+                    />
+                  </>
+                )}
               </button>
             </motion.form>
           )}
@@ -251,6 +333,7 @@ function Field({
   required,
   as = "input",
   error,
+  placeholder,
 }: {
   name: string;
   label: string;
@@ -258,10 +341,11 @@ function Field({
   required?: boolean;
   as?: "input" | "textarea";
   error?: string;
+  placeholder?: string;
 }) {
   const id = `contact-${name}`;
   const baseClass =
-    "border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 font-sans text-[14px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none";
+    "dev-contact-input border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 font-sans text-[14px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none";
   const focusClass = error
     ? "border-[var(--red)] focus:border-[var(--red)]"
     : "focus:border-[var(--accent)]";
@@ -270,10 +354,10 @@ function Field({
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={id}
-        className="flex items-center gap-1 font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
+        className="dev-contact-field-label flex items-center gap-1 font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
       >
         {label}
-        {required ? <span className="text-[var(--accent)]">*</span> : null}
+        {required ? <span className="text-[var(--accent)] dev-only-text:hidden">*</span> : null}
       </label>
       {as === "textarea" ? (
         <textarea
@@ -281,6 +365,7 @@ function Field({
           name={name}
           required={required}
           rows={5}
+          placeholder={placeholder}
           className={cn(baseClass, focusClass, "resize-y")}
         />
       ) : (
@@ -289,6 +374,7 @@ function Field({
           name={name}
           type={type}
           required={required}
+          placeholder={placeholder}
           autoComplete={
             name === "email" ? "email" : name === "name" ? "name" : "off"
           }

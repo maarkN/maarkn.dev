@@ -454,6 +454,112 @@ body {
   color: rgba(0, 255, 65, 0.45);
 }
 
+/* ════════════════════════════════════════════════
+   DEV CONTACT · CLI form skin
+   ════════════════════════════════════════════════ */
+
+/* Title swaps. Outside dev, .dev-only-text is hidden and .light-only-text shows. */
+.dev-only-text { display: none; }
+[data-theme="dev"] .light-only-text { display: none; }
+[data-theme="dev"] .dev-only-text { display: inline; }
+
+/* Channel rows: bordered icon square + label/value stack + arrow. */
+[data-theme="dev"] .dev-contact-channels {
+  border-top: 1px solid var(--border);
+}
+[data-theme="dev"] .dev-contact-channel {
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0.25rem;
+  transition: background 0.15s, padding 0.15s;
+  text-decoration: none;
+}
+[data-theme="dev"] .dev-contact-channel:hover {
+  background: rgba(0, 255, 65, 0.04);
+  padding-inline: 0.75rem;
+}
+[data-theme="dev"] .dev-contact-channel-icon {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+[data-theme="dev"] .dev-contact-channel-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+[data-theme="dev"] .dev-contact-channel-value {
+  margin-top: 0.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+[data-theme="dev"] .dev-contact-channel-arrow {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  transition: transform 0.18s;
+}
+[data-theme="dev"] .dev-contact-channel:hover .dev-contact-channel-arrow {
+  transform: translateX(3px);
+}
+
+/* Form field labels: prefix with "// " in dev. */
+[data-theme="dev"] .dev-contact-field-label::before {
+  content: "// ";
+  color: rgba(0, 255, 65, 0.55);
+}
+[data-theme="dev"] .dev-contact-field-label {
+  color: var(--accent) !important;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* Form inputs: monospace + accent focus. */
+[data-theme="dev"] .dev-contact-input {
+  background: var(--bg-low) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  font-family: var(--font-mono) !important;
+}
+[data-theme="dev"] .dev-contact-input::placeholder {
+  color: rgba(0, 255, 65, 0.35) !important;
+  font-family: var(--font-mono) !important;
+}
+[data-theme="dev"] .dev-contact-input:focus {
+  border-color: var(--accent) !important;
+}
+
+/* Submit button: outline + bracketed label. */
+[data-theme="dev"] .dev-contact-submit {
+  background: transparent !important;
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.08em;
+}
+[data-theme="dev"] .dev-contact-submit:hover {
+  background: rgba(0, 255, 65, 0.08) !important;
+}
+[data-theme="dev"] .dev-contact-form {
+  background: var(--bg) !important;
+}
+
+/* Hide the default form section divider chrome we don't want in dev. */
+[data-theme="dev"] .dev-contact-channels-default { display: none; }
+.dev-contact-channels-cli { display: none; }
+[data-theme="dev"] .dev-contact-channels-cli { display: block; }
+
 .dev-konami-overlay {
   position: fixed;
   inset: 0;
