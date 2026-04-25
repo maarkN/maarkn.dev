@@ -37,6 +37,10 @@ export default async function ProjectDetailPage({
   const detail = (p.details as Record<string, typeof p.details[keyof typeof p.details] | undefined>)[slug];
   if (!detail) notFound();
 
+  const galleryCaptions = (
+    p.gallery as Record<string, Record<string, string>> | undefined
+  )?.[slug];
+
   return (
     <>
       <Nav locale={lang} nav={dict.nav} themes={dict.themes} />
@@ -49,11 +53,18 @@ export default async function ProjectDetailPage({
             viewLive: p.viewLive,
             viewRepo: p.viewRepo,
             noLinks: p.noLinks,
+            privateLabel: (p as { privateLabel?: string }).privateLabel ?? "Private project",
+            privateNote:
+              (p as { privateNote?: string }).privateNote ??
+              "Source code is not public.",
+            galleryHeading:
+              (p as { galleryHeading?: string }).galleryHeading ?? "From the project",
             roleHeading: p.roleHeading,
             featuresHeading: p.featuresHeading,
             stackHeading: p.stackHeading,
             tagline: (p.taglines as Record<string, string>)[slug] ?? "",
             detail,
+            galleryCaptions,
             categories: p.categories,
             statuses: p.statuses,
           }}

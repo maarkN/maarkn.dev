@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, Globe } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Globe, Lock } from "lucide-react";
 import type { Project, ProjectCategory, ProjectStatus } from "@/lib/projects";
 import type { Locale } from "@/i18n/config";
+import { ParallaxCover } from "./parallax-cover";
 
 function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -25,11 +27,16 @@ type Labels = {
   viewLive: string;
   viewRepo: string;
   noLinks: string;
+  privateLabel: string;
+  privateNote: string;
+  galleryHeading: string;
   roleHeading: string;
   featuresHeading: string;
   stackHeading: string;
   tagline: string;
   detail: Detail;
+  /** Map of slug → caption key → caption string. */
+  galleryCaptions?: Record<string, string>;
   categories: Record<ProjectCategory, string>;
   statuses: Record<ProjectStatus, string>;
 };
@@ -43,127 +50,108 @@ export function ProjectDetail({
   locale: Locale;
   labels: Labels;
 }) {
-  const { from, to } = project.accent;
+  const isPrivate = project.sourceVisibility === "private";
+  const showRepoButton = !isPrivate && Boolean(project.links?.repo);
+  const showDemoButton = Boolean(project.links?.demo);
   const statusTone =
     project.status === "live"
       ? "border-[var(--green)]/50 text-[var(--green)] bg-[var(--green)]/10"
       : "border-[var(--border-2)] text-[var(--muted)] bg-[var(--surface-2)]";
 
   return (
-    <article className="border-t border-[var(--border)]">
-      <div className="mx-auto w-full max-w-[1100px] px-4 pt-24 sm:px-6 sm:pt-32 md:px-12 md:pt-40">
-        <Link
-          href={`/${locale}/projects`}
-          className="group inline-flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
-        >
-          <ArrowLeft
-            className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5"
-            strokeWidth={2.4}
-          />
-          {labels.back}
-        </Link>
-
-        <header className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_300px] md:gap-12">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--accent)]">
-                {labels.categories[project.category]}
-              </span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted)]">
-                · {project.year}
-              </span>
-              <span
-                className={
-                  "inline-flex items-center gap-2 border px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] " +
-                  statusTone
-                }
-              >
-                {labels.statuses[project.status]}
-              </span>
-            </div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="mt-4 font-display text-[clamp(2.4rem,4.4vw,4rem)] font-bold leading-[1.05] tracking-[-0.03em] text-[var(--text)]"
-            >
-              {project.name}
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-              className="mt-5 max-w-[60ch] text-[1.1rem] font-light leading-[1.7] text-[var(--text-2)]"
-            >
-              {labels.tagline}
-            </motion.p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              {project.links?.demo ? (
-                <a
-                  href={project.links.demo}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-white transition hover:opacity-90"
-                >
-                  <Globe className="h-3.5 w-3.5" strokeWidth={2.2} />
-                  {labels.viewLive}
-                  <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.2} />
-                </a>
-              ) : null}
-              {project.links?.repo ? (
-                <a
-                  href={project.links.repo}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 border border-[var(--border-2)] px-5 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--text)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                >
-                  <GithubIcon className="h-3.5 w-3.5" />
-                  {labels.viewRepo}
-                </a>
-              ) : null}
-              {!project.links?.demo && !project.links?.repo ? (
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">
-                  {labels.noLinks}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.05, ease: "easeOut" }}
-            className="relative aspect-square w-full overflow-hidden border border-[var(--border)]"
-            style={{ backgroundColor: from }}
+    <article>
+      <ParallaxCover
+        monogram={project.monogram}
+        accent={project.accent}
+        label={project.slug}
+      >
+        <div className="max-w-3xl">
+          <Link
+            href={`/${locale}/projects`}
+            className="group mb-6 inline-flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-white/85 transition-colors hover:text-white"
           >
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `radial-gradient(120% 80% at 0% 0%, ${from} 0%, transparent 60%), radial-gradient(120% 80% at 100% 100%, ${to} 0%, transparent 60%), linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
-              }}
+            <ArrowLeft
+              className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5"
+              strokeWidth={2.4}
             />
-            <div
-              className="absolute inset-0 mix-blend-overlay opacity-50"
-              style={{
-                backgroundImage:
-                  "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
-                backgroundSize: "44px 44px",
-              }}
-            />
-            <span className="absolute left-6 top-6 font-mono text-[10px] uppercase tracking-[0.16em] text-white/85">
-              {project.slug}
+            {labels.back}
+          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/85">
+              {labels.categories[project.category]}
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/70">
+              · {project.year}
             </span>
             <span
-              aria-hidden
-              className="absolute bottom-6 left-6 font-display text-[clamp(4rem,12vw,8rem)] font-bold leading-none tracking-[-0.06em] text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+              className={
+                "inline-flex items-center gap-2 border px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] " +
+                statusTone
+              }
             >
-              {project.monogram}
+              {labels.statuses[project.status]}
             </span>
-          </motion.div>
-        </header>
+          </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="mt-3 font-display text-[clamp(2rem,4vw,3.6rem)] font-bold leading-[1.05] tracking-[-0.03em] text-white"
+          >
+            {project.name}
+          </motion.h1>
+        </div>
+      </ParallaxCover>
+
+      <div className="mx-auto w-full max-w-[1100px] px-4 pt-12 pb-20 sm:px-6 sm:pt-16 sm:pb-32 md:px-12">
+        <p className="max-w-[64ch] text-[1.1rem] font-light leading-[1.75] text-[var(--text-2)]">
+          {labels.tagline}
+        </p>
+
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {showDemoButton ? (
+            <a
+              href={project.links!.demo!}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-white transition hover:opacity-90"
+            >
+              <Globe className="h-3.5 w-3.5" strokeWidth={2.2} />
+              {labels.viewLive}
+              <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.2} />
+            </a>
+          ) : null}
+
+          {showRepoButton ? (
+            <a
+              href={project.links!.repo!}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border border-[var(--border-2)] px-5 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--text)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              <GithubIcon className="h-3.5 w-3.5" />
+              {labels.viewRepo}
+            </a>
+          ) : null}
+
+          {isPrivate ? (
+            <PrivatePill label={labels.privateLabel} note={labels.privateNote} />
+          ) : null}
+
+          {!showDemoButton && !showRepoButton && !isPrivate ? (
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">
+              {labels.noLinks}
+            </span>
+          ) : null}
+        </div>
+
+        {project.gallery && project.gallery.length > 0 ? (
+          <Gallery
+            project={project}
+            heading={labels.galleryHeading}
+            captionMap={labels.galleryCaptions}
+          />
+        ) : null}
 
         <section className="mt-16 grid gap-12 border-t border-[var(--border)] pt-14 md:grid-cols-[minmax(0,1fr)_280px] md:gap-16">
           <div className="space-y-12">
@@ -182,10 +170,7 @@ export function ProjectDetail({
                     transition={{ duration: 0.4, delay: i * 0.05, ease: "easeOut" }}
                     className="flex items-baseline gap-3 text-[1rem] font-light leading-[1.65] text-[var(--text-2)]"
                   >
-                    <span
-                      className="mt-2 inline-block h-1 w-3 flex-none bg-[var(--accent)]"
-                      aria-hidden
-                    />
+                    <span className="mt-2 inline-block h-1 w-3 flex-none bg-[var(--accent)]" aria-hidden />
                     <span>{f}</span>
                   </motion.li>
                 ))}
@@ -211,7 +196,7 @@ export function ProjectDetail({
           </aside>
         </section>
 
-        <div className="mt-16 mb-32 border-t border-[var(--border)] pt-10">
+        <div className="mt-16 border-t border-[var(--border)] pt-10">
           <Link
             href={`/${locale}/projects`}
             className="group inline-flex items-center gap-2 font-display text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
@@ -245,5 +230,99 @@ function Block({ title, body }: { title?: string; body: string }) {
         {body}
       </p>
     </div>
+  );
+}
+
+function PrivatePill({ label, note }: { label: string; note: string }) {
+  return (
+    <div className="inline-flex max-w-[34ch] items-start gap-3 border border-[var(--border-2)] bg-[var(--surface-2)] px-4 py-2.5">
+      <Lock className="mt-0.5 h-4 w-4 flex-none text-[var(--muted)]" strokeWidth={2} />
+      <div>
+        <p className="font-display text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text)]">
+          {label}
+        </p>
+        <p className="mt-1 font-light text-[11px] leading-[1.55] text-[var(--muted)]">{note}</p>
+      </div>
+    </div>
+  );
+}
+
+function Gallery({
+  project,
+  heading,
+  captionMap,
+}: {
+  project: Project;
+  heading: string;
+  captionMap?: Record<string, string>;
+}) {
+  return (
+    <section className="mt-14">
+      <h2 className="font-display text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+        {heading}
+      </h2>
+      <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        {project.gallery!.map((shot, i) => {
+          const caption =
+            shot.captionKey && captionMap ? captionMap[shot.captionKey] : undefined;
+          const accent = shot.accent ?? project.accent;
+          const monogram = shot.monogram ?? project.monogram;
+          return (
+            <motion.li
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: i * 0.08, ease: "easeOut" }}
+              className="border border-[var(--border)] bg-[var(--surface)]"
+            >
+              <div
+                className="relative aspect-[4/3] overflow-hidden"
+                style={{ backgroundColor: accent.from }}
+              >
+                {shot.url ? (
+                  <Image
+                    src={shot.url}
+                    alt={caption ?? `${project.name} screenshot ${i + 1}`}
+                    fill
+                    sizes="(min-width: 1024px) 320px, 100vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <>
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `radial-gradient(120% 80% at 0% 0%, ${accent.from} 0%, transparent 60%), radial-gradient(120% 80% at 100% 100%, ${accent.to} 0%, transparent 60%), linear-gradient(135deg, ${accent.from} 0%, ${accent.to} 100%)`,
+                      }}
+                    />
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 mix-blend-overlay opacity-50"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
+                        backgroundSize: "32px 32px",
+                      }}
+                    />
+                    <span
+                      aria-hidden
+                      className="absolute bottom-3 left-4 font-display text-[2rem] font-bold leading-none tracking-[-0.04em] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]"
+                    >
+                      {monogram}
+                    </span>
+                  </>
+                )}
+              </div>
+              {caption ? (
+                <p className="border-t border-[var(--border)] px-4 py-3 font-mono text-[11px] tracking-[0.04em] text-[var(--muted)]">
+                  {caption}
+                </p>
+              ) : null}
+            </motion.li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
