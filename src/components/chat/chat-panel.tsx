@@ -63,43 +63,53 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        "flex flex-col border border-[var(--border)] bg-[var(--surface)]",
+        "dev-chat-shell flex flex-col border border-[var(--border)] bg-[var(--surface)]",
         variant === "page" ? "h-[min(76vh,720px)]" : "h-[560px] max-h-[80vh]"
       )}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface-2)] px-5 py-3">
+      <header className="dev-chat-header flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface-2)] px-5 py-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[var(--accent)]" strokeWidth={2.2} />
+          <span className="dev-chat-window-dots" aria-hidden>
+            <i /><i /><i />
+          </span>
+          <Sparkles
+            className="h-4 w-4 text-[var(--accent)] [data-theme=dev]:hidden dev-chat-sparkle"
+            strokeWidth={2.2}
+          />
           <div>
-            <p className="font-display text-[12px] font-semibold tracking-tight text-[var(--text)]">
-              {labels.title}
+            <p className="dev-chat-title font-display text-[12px] font-semibold tracking-tight text-[var(--text)]">
+              <span className="dev-chat-title-text">{labels.title}</span>
+              <span className="dev-chat-title-cli">SYS://QUERY_INTERFACE_v2.0</span>
               <span className="dev-caret">▮</span>
             </p>
-            <p className="font-mono text-[10px] tracking-[0.04em] text-[var(--muted)]">
+            <p className="dev-chat-subtitle font-mono text-[10px] tracking-[0.04em] text-[var(--muted)]">
               {labels.subtitle}
             </p>
           </div>
         </div>
-        {!empty ? (
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex items-center gap-1.5 border border-[var(--border)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            <RotateCcw className="h-3 w-3" strokeWidth={2.2} />
-            {labels.reset}
-          </button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          <span className="dev-chat-online">online</span>
+          {!empty ? (
+            <button
+              type="button"
+              onClick={reset}
+              className="inline-flex items-center gap-1.5 border border-[var(--border)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              <RotateCcw className="h-3 w-3" strokeWidth={2.2} />
+              {labels.reset}
+            </button>
+          ) : null}
+        </div>
       </header>
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-5 py-6"
+        className="dev-chat-body flex-1 overflow-y-auto px-5 py-6"
         aria-live="polite"
       >
         {empty ? (
           <div className="flex h-full flex-col items-start justify-end gap-5">
-            <p className="max-w-md font-light leading-[1.7] text-[var(--text-2)]">
+            <p className="dev-chat-empty max-w-md font-light leading-[1.7] text-[var(--text-2)]">
               {labels.empty}
             </p>
             <ul className="flex flex-wrap gap-2">
@@ -112,7 +122,7 @@ export function ChatPanel({
                       dispatch(s);
                     }}
                     disabled={status === "streaming"}
-                    className="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 font-mono text-[11px] tracking-[0.02em] text-[var(--text-2)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-50"
+                    className="dev-chat-suggestion border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 font-mono text-[11px] tracking-[0.02em] text-[var(--text-2)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-50"
                   >
                     {s}
                   </button>
@@ -141,9 +151,9 @@ export function ChatPanel({
 
       <form
         onSubmit={onSubmit}
-        className="border-t border-[var(--border)] bg-[var(--surface-2)] p-3"
+        className="dev-chat-composer border-t border-[var(--border)] bg-[var(--surface-2)] p-3"
       >
-        <div className="flex items-end gap-2 border border-[var(--border)] bg-[var(--surface)] px-3 py-2 focus-within:border-[var(--accent)]">
+        <div className="dev-chat-composer-shell flex items-end gap-2 border border-[var(--border)] bg-[var(--surface)] px-3 py-2 focus-within:border-[var(--accent)]">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -155,29 +165,31 @@ export function ChatPanel({
             }}
             placeholder={labels.placeholder}
             rows={1}
-            className="min-h-[24px] max-h-40 flex-1 resize-none bg-transparent font-sans text-[14px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none"
+            className="dev-chat-composer-input min-h-[24px] max-h-40 flex-1 resize-none bg-transparent font-sans text-[14px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none"
           />
           {status === "streaming" ? (
             <button
               type="button"
               onClick={stop}
               aria-label={labels.stop}
-              className="inline-flex h-9 w-9 items-center justify-center border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              className="dev-chat-send inline-flex h-9 w-9 items-center justify-center border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
             >
-              <Square className="h-3.5 w-3.5" strokeWidth={2.4} />
+              <Square className="dev-chat-send-icon h-3.5 w-3.5" strokeWidth={2.4} />
+              <span className="dev-chat-send-text">STOP</span>
             </button>
           ) : (
             <button
               type="submit"
               disabled={!draft.trim()}
               aria-label={labels.send}
-              className="inline-flex h-9 w-9 items-center justify-center border border-[var(--accent)] bg-[var(--accent)] text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="dev-chat-send inline-flex h-9 w-9 items-center justify-center border border-[var(--accent)] bg-[var(--accent)] text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
+              <ArrowUp className="dev-chat-send-icon h-4 w-4" strokeWidth={2.4} />
+              <span className="dev-chat-send-text">SEND</span>
             </button>
           )}
         </div>
-        <p className="mt-2 px-1 font-mono text-[10px] tracking-[0.04em] text-[var(--muted)]">
+        <p className="dev-chat-poweredby mt-2 px-1 font-mono text-[10px] tracking-[0.04em] text-[var(--muted)]">
           {labels.poweredBy}
         </p>
       </form>
@@ -196,14 +208,15 @@ function Bubble({ message, streaming }: { message: ChatMessage; streaming: boole
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className={cn("flex", isUser ? "justify-end" : "justify-start")}
+      className={cn("flex gap-2", isUser ? "justify-end" : "justify-start")}
     >
+      {!isUser ? <span className="dev-chat-avatar">AI</span> : null}
       <div
         className={cn(
           "max-w-[88%] whitespace-pre-wrap break-words border px-3.5 py-2.5 text-[14px] leading-[1.6]",
           isUser
-            ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text)]"
-            : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-2)]"
+            ? "dev-chat-bubble-user border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text)]"
+            : "dev-chat-bubble-bot border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-2)]"
         )}
       >
         {message.content}
