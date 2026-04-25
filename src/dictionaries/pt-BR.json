@@ -6,7 +6,8 @@
     "skills": "Ferramentas",
     "blog": "Textos",
     "contact": "Contato",
-    "chat": "Chat"
+    "chat": "Chat",
+    "career": "Carreira"
   },
   "themes": {
     "light": "Claro",
@@ -554,5 +555,22 @@
       "periodLabel": "Período",
       "companyLabel": "Empresa"
     }
+  },
+  "latestLogs": {
+    "kicker": "Últimos textos",
+    "title": "Últimos Logs",
+    "sub": "Notas de campo que publiquei recentemente. Abre uma ou pula pro arquivo completo.",
+    "seeAll": "Ver todos os posts",
+    "featured": "Post em destaque",
+    "readingTime": "min de leitura"
+  },
+  "careerStream": {
+    "intro": {
+      "kicker": "Toda a trajetória, em movimento",
+      "title": "Linha de carreira",
+      "sub": "Vai rolando pra baixo e você passa por seis anos construindo software, função por função. Cada painel é um recorte do que eu liderei e do que entreguei — abre o detalhe completo no fim de cada painel.",
+      "scrollHint": "role pra avançar"
+    },
+    "readFull": "Ver detalhe completo"
   }
 }

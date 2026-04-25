@@ -6,7 +6,8 @@
     "skills": "Toolkit",
     "blog": "Writing",
     "contact": "Contact",
-    "chat": "Chat"
+    "chat": "Chat",
+    "career": "Career"
   },
   "themes": {
     "light": "Light",
@@ -554,5 +555,22 @@
       "periodLabel": "Period",
       "companyLabel": "Company"
     }
+  },
+  "latestLogs": {
+    "kicker": "Latest writing",
+    "title": "Latest Logs",
+    "sub": "Field notes I've published recently. Open one or jump to the full archive.",
+    "seeAll": "See all posts",
+    "featured": "Featured post",
+    "readingTime": "min read"
+  },
+  "careerStream": {
+    "intro": {
+      "kicker": "Every role, in motion",
+      "title": "Career stream",
+      "sub": "Scroll downward and you'll move through six years of building software, role by role. Each panel is a snapshot of what I owned and what shipped — open the full case from the bottom of any panel.",
+      "scrollHint": "scroll to advance"
+    },
+    "readFull": "Read full case"
   }
 }
