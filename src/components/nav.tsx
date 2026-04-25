@@ -45,46 +45,31 @@ export function Nav({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Track which anchor section is currently in view, but only when the user
-  // is browsing the home page (where #about and #contact actually exist).
+  // Track only the contact section while the visitor is on the home page.
+  // Everywhere else on the home (hero, about, work, toolkit, logs) we keep
+  // About lit, so the nav stays predictable as people scroll the page.
   useEffect(() => {
     if (!homeRoute) {
       setActiveSection(null);
       return;
     }
-    const ids = ["about", "work", "toolkit", "contact", "logs"] as const;
-    const nodes = ids
-      .map((id) => document.getElementById(id))
-      .filter((n): n is HTMLElement => Boolean(n));
-    if (nodes.length === 0) return;
+    const node = document.getElementById("contact");
+    if (!node) return;
 
-    const visible = new Map<string, number>();
     const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            visible.set(entry.target.id, entry.intersectionRatio);
-          } else {
-            visible.delete(entry.target.id);
-          }
-        }
-        if (visible.size === 0) return;
-        let bestId: string | null = null;
-        let bestRatio = 0;
-        for (const [id, ratio] of visible) {
-          if (ratio > bestRatio) {
-            bestId = id;
-            bestRatio = ratio;
-          }
-        }
-        setActiveSection(bestId);
+      ([entry]) => {
+        // Treat contact as the active section only while it's actually
+        // dominant on screen (not just barely peeking from below).
+        const inFocus =
+          !!entry && entry.isIntersecting && entry.intersectionRatio >= 0.45;
+        setActiveSection(inFocus ? "contact" : null);
       },
       {
-        threshold: [0.25, 0.5, 0.75],
-        rootMargin: "-30% 0px -40% 0px",
+        threshold: [0, 0.25, 0.45, 0.6, 0.8],
+        rootMargin: "-20% 0px -25% 0px",
       }
     );
-    nodes.forEach((n) => observer.observe(n));
+    observer.observe(node);
     return () => observer.disconnect();
   }, [homeRoute, pathname]);
 
