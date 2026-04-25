@@ -45,22 +45,22 @@
 }
 
 [data-theme="dev"] {
-  --bg:           #050810;
-  --bg-low:       #02040a;
-  --surface:      #0a1018;
-  --surface-2:    #0f1622;
-  --surface-3:    #15203a;
-  --border:       #1a2540;
-  --border-2:     #2a3a60;
-  --text:         #d4ffea;
-  --text-2:       #88c8b6;
-  --muted:        #486478;
-  --accent:       #00ff88;
-  --accent-2:     #ff2d8e;
-  --accent-glow:  rgba(0, 255, 136, 0.2);
-  --green:        #00ff88;
-  --red:          #ff2d8e;
-  --grid-opacity: 0.18;
+  --bg:           #0c160a;
+  --bg-low:       #071106;
+  --surface:      #141e12;
+  --surface-2:    #182216;
+  --surface-3:    #222d20;
+  --border:       #2d382a;
+  --border-2:     #3b4b37;
+  --text:         #dae6d2;
+  --text-2:       #b9ccb2;
+  --muted:        #5a7a54;
+  --accent:       #00ff41;
+  --accent-2:     #00e639;
+  --accent-glow:  rgba(0, 255, 65, 0.22);
+  --green:        #00ff41;
+  --red:          #ff5577;
+  --grid-opacity: 0.22;
 }
 
 @theme inline {
@@ -160,6 +160,198 @@ body {
 
 .glow-accent {
   box-shadow: 0 8px 28px var(--accent-glow);
+}
+
+/* ════════════════════════════════════════════════
+   DEV THEME · CLI ENHANCEMENTS
+   Active only when [data-theme="dev"]. Recasts the visual
+   language as a developer's terminal: marquee strip, monospace
+   experience text, kicker prefixes, glitch on the wordmark,
+   blinking cursor on chat title.
+   ════════════════════════════════════════════════ */
+
+/* Marquee strip pinned right above the nav. Hidden in non-dev themes. */
+.dev-cli-strip { display: none; }
+[data-theme="dev"] .dev-cli-strip {
+  display: block;
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 60;
+  background: var(--bg-low);
+  border-bottom: 1px solid rgba(0, 255, 65, 0.18);
+  padding: 0.32rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: rgba(0, 255, 65, 0.55);
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  white-space: nowrap;
+}
+[data-theme="dev"] .dev-cli-strip span {
+  display: inline-block;
+  animation: marquee 28s linear infinite;
+}
+[data-theme="dev"] body { padding-top: 1.6rem; }
+[data-theme="dev"] header.site-header,
+[data-theme="dev"] header.fixed { top: 1.6rem; }
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Eyebrow (the small accent kicker) and section kicker prefixed with > and // */
+[data-theme="dev"] .dev-eyebrow::before {
+  content: "> ";
+  color: var(--accent);
+}
+[data-theme="dev"] .dev-kicker::before {
+  content: "/* ";
+  color: rgba(0, 255, 65, 0.4);
+}
+[data-theme="dev"] .dev-kicker::after {
+  content: " */";
+  color: rgba(0, 255, 65, 0.4);
+}
+
+/* Section titles as shell prompts. */
+[data-theme="dev"] .dev-section-title::before {
+  content: "$ ";
+  color: rgba(0, 255, 65, 0.5);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.7em;
+}
+
+/* Career timeline summaries read like terminal output. */
+[data-theme="dev"] .dev-mono-block {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+/* Glitch on the wordmark. */
+[data-theme="dev"] .dev-glitch {
+  position: relative;
+}
+[data-theme="dev"] .dev-glitch:hover {
+  animation: dev-glitch 0.32s steps(1) forwards;
+}
+@keyframes dev-glitch {
+  0%   { text-shadow:  2px 0   var(--accent),  -2px 0  rgba(255,80,150,0.55); }
+  25%  { text-shadow: -2px 0   var(--accent),   2px 0  rgba(80,200,255,0.55); }
+  50%  { text-shadow:  2px 2px var(--accent),  -2px -2px rgba(255,80,150,0.55); }
+  75%  { text-shadow:  0   2px var(--accent),   0  -2px rgba(80,200,255,0.55); }
+  100% { text-shadow: none; }
+}
+
+/* Blinking caret used in chat title and other CLI affordances. */
+.dev-caret { display: none; }
+[data-theme="dev"] .dev-caret {
+  display: inline-block;
+  margin-left: 0.25rem;
+  color: var(--accent);
+  animation: dev-blink 1s step-end infinite;
+}
+@keyframes dev-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* Subtle glow behind the hero headline in dev. */
+[data-theme="dev"] .dev-hero-shadow {
+  text-shadow: 0 0 36px rgba(0, 255, 65, 0.15);
+}
+
+/* Konami / glitch overlay used by the easter egg. */
+/* Toolkit fill bars get a soft glow on dev. */
+[data-theme="dev"] .dev-tool-fill {
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.dev-konami-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8999;
+  pointer-events: none;
+}
+.dev-konami-overlay.is-active {
+  animation: dev-konami 1.2s steps(1) forwards;
+}
+@keyframes dev-konami {
+  0%   { background: rgba(0,255,65,0.05); }
+  10%  { background: rgba(0,255,65,0.15); clip-path: inset(20% 0 70% 0); }
+  20%  { background: rgba(255,0,80,0.10); clip-path: inset(60% 0 10% 0); }
+  30%  { background: rgba(0,255,65,0.08); clip-path: none; }
+  50%  { background: rgba(0,255,65,0.12); }
+  70%  { background: rgba(0,255,65,0.08); clip-path: inset(10% 0 80% 0); }
+  100% { background: transparent; clip-path: none; }
+}
+
+/* Secret terminal modal shown after Konami. */
+.dev-terminal {
+  width: min(640px, 92vw);
+  background: #0a0a0a;
+  border: 1px solid #00ff41;
+  font-family: var(--font-mono);
+  box-shadow: 0 0 60px rgba(0, 255, 65, 0.32);
+  overflow: hidden;
+}
+.dev-terminal-head {
+  background: #111;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+  padding: 0.7rem 1.1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: rgba(0, 255, 65, 0.65);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.dev-terminal-head::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #00ff41;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.7); }
+}
+.dev-terminal-body {
+  padding: 1.4rem 1.5rem;
+  font-size: 0.78rem;
+  line-height: 1.8;
+  color: rgba(0, 255, 65, 0.85);
+  max-height: 70vh;
+  overflow-y: auto;
+  white-space: pre;
+}
+.dev-terminal-body .dim    { color: rgba(0,255,65,0.4); }
+.dev-terminal-body .bright { color: #00ff41; }
+.dev-terminal-body .warn   { color: #ffbd2e; }
+.dev-terminal-body .err    { color: #ff5577; }
+.dev-terminal-body .cmd    { color: #6af; }
+.dev-terminal-close {
+  display: block;
+  margin: 0 1.5rem 1.2rem auto;
+  background: transparent;
+  border: 1px solid rgba(0, 255, 65, 0.4);
+  color: rgba(0, 255, 65, 0.7);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.42rem 1rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.dev-terminal-close:hover {
+  background: rgba(0, 255, 65, 0.1);
+  color: #00ff41;
 }
 
 /* ════════════════════════════════════════════════
