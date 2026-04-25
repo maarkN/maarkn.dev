@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
 import { timeline, type TimelineKey } from "@/lib/timeline";
+import type { Locale } from "@/i18n/config";
 
 type AboutLabels = {
   kicker: string;
@@ -11,10 +14,11 @@ type AboutLabels = {
   values: { title: string; body: string }[];
   timelineTitle: string;
   timelineNow: string;
+  timelineReadMore?: string;
   timeline: Record<TimelineKey, { role: string; summary: string }>;
 };
 
-export function About({ labels }: { labels: AboutLabels }) {
+export function About({ labels, locale }: { labels: AboutLabels; locale: Locale }) {
   return (
     <section
       id="about"
@@ -105,6 +109,13 @@ export function About({ labels }: { labels: AboutLabels }) {
                     <p className="mt-1 text-[14px] font-light leading-[1.7] text-[var(--text-2)]">
                       {t.summary}
                     </p>
+                    <Link
+                      href={`/${locale}/career/${entry.slug}`}
+                      className="mt-3 inline-flex items-center gap-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
+                    >
+                      {labels.timelineReadMore ?? "Read more"}
+                      <ArrowUpRight className="h-3 w-3" strokeWidth={2.2} />
+                    </Link>
                   </div>
                 </motion.li>
               );

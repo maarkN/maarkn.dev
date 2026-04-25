@@ -21,7 +21,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       <main>
         <Hero labels={dict.hero} cardLabels={dict.card} />
         <BigNumbers labels={dict.bigNumbers} />
-        <About labels={dict.about} />
+        <About labels={dict.about} locale={lang} />
         <Projects locale={lang} labels={dict.projects} />
         <Toolkit labels={dict.toolkit} />
         <Contact labels={dict.contact} />
