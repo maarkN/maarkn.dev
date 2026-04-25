@@ -394,10 +394,10 @@
       "rateLimited": "You've reached the rate limit for this hour. Try again later — or email markimkr@gmail.com.",
       "errored": "Something went wrong. Try sending the message again.",
       "suggestions": [
+        "/help",
         "What's Marco's stack?",
         "Tell me about the Miami project",
-        "Is he open to opportunities?",
-        "How do I reach him?"
+        "Is he open to opportunities?"
       ],
       "poweredBy": "AI replies are generated and may contain mistakes. For anything important, contact Marco directly."
     }

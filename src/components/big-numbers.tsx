@@ -18,10 +18,10 @@ export function BigNumbers({ labels }: { labels: Labels }) {
     <section className="relative border-t border-[var(--border)]">
       <div className="mx-auto w-full max-w-[1280px] px-4 py-16 sm:px-6 sm:py-24 md:px-12 md:py-32">
         <div className="mb-14 max-w-2xl">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
+          <p className="dev-kicker font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
             {labels.kicker}
           </p>
-          <h2 className="mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
+          <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
             {labels.title}
           </h2>
         </div>

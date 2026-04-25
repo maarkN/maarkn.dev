@@ -30,6 +30,15 @@ export function useChatStream() {
     setStatus("idle");
   }, []);
 
+  /** Append a user/assistant pair without hitting the network. Used for slash commands. */
+  const injectLocal = useCallback((prompt: string, reply: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: uid(), role: "user", content: prompt },
+      { id: uid(), role: "assistant", content: reply },
+    ]);
+  }, []);
+
   const send = useCallback(
     async (prompt: string, opts: SendOptions) => {
       const trimmed = prompt.trim();
@@ -110,7 +119,7 @@ export function useChatStream() {
     setStatus("idle");
   }, []);
 
-  return { messages, status, send, stop, reset };
+  return { messages, status, send, stop, reset, injectLocal };
 }
 
 function parseEvent(block: string): { event: string; data: { delta?: string } } | null {

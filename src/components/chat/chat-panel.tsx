@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUp, RotateCcw, Sparkles, Square } from "lucide-react";
 import { useChatStream, type ChatMessage } from "./use-chat-stream";
+import { runSlashCommand } from "./slash-commands";
 import { cn } from "@/lib/utils";
 
 export type ChatLabels = {
@@ -29,9 +30,20 @@ export function ChatPanel({
   locale: string;
   variant?: "page" | "floating";
 }) {
-  const { messages, status, send, stop, reset } = useChatStream();
+  const { messages, status, send, stop, reset, injectLocal } = useChatStream();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const dispatch = (raw: string) => {
+    const text = raw.trim();
+    if (!text) return;
+    const local = runSlashCommand(text);
+    if (local !== null) {
+      injectLocal(text, local);
+      return;
+    }
+    void send(text, { locale });
+  };
 
   useEffect(() => {
     const node = scrollRef.current;
@@ -42,7 +54,7 @@ export function ChatPanel({
   const onSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!draft.trim() || status === "streaming") return;
-    void send(draft, { locale });
+    dispatch(draft);
     setDraft("");
   };
 
@@ -61,6 +73,7 @@ export function ChatPanel({
           <div>
             <p className="font-display text-[12px] font-semibold tracking-tight text-[var(--text)]">
               {labels.title}
+              <span className="dev-caret">▮</span>
             </p>
             <p className="font-mono text-[10px] tracking-[0.04em] text-[var(--muted)]">
               {labels.subtitle}
@@ -95,8 +108,8 @@ export function ChatPanel({
                   <button
                     type="button"
                     onClick={() => {
-                      setDraft(s);
-                      void send(s, { locale });
+                      setDraft("");
+                      dispatch(s);
                     }}
                     disabled={status === "streaming"}
                     className="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 font-mono text-[11px] tracking-[0.02em] text-[var(--text-2)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-50"

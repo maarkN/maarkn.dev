@@ -394,10 +394,10 @@
       "rateLimited": "Você atingiu o limite por hora. Tenta de novo mais tarde — ou mande email pra markimkr@gmail.com.",
       "errored": "Algo deu errado. Tente enviar de novo.",
       "suggestions": [
+        "/help",
         "Qual é a stack do Marco?",
         "Me conta do projeto de Miami",
-        "Ele está aberto a oportunidades?",
-        "Como falo com ele?"
+        "Ele está aberto a oportunidades?"
       ],
       "poweredBy": "Respostas são geradas por IA e podem ter erros. Pra qualquer coisa importante, fale direto com o Marco."
     }

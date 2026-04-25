@@ -80,7 +80,7 @@ export function Nav({
       >
         <Link
           href={`/${locale}`}
-          className="flex items-center font-display text-base font-bold tracking-tight text-[var(--text)]"
+          className="dev-glitch flex items-center font-display text-base font-bold tracking-tight text-[var(--text)]"
           aria-label="maarkn home"
           onClick={() => setOpen(false)}
         >

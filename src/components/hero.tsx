@@ -49,7 +49,7 @@ export function Hero({
           <motion.p
             {...fadeUp}
             transition={{ duration: 0.5, delay: 0.18, ease: "easeOut" }}
-            className="mt-8 font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)] before:hidden data-[dev]:before:inline data-[dev]:before:content-['>_']"
+            className="dev-eyebrow mt-8 font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]"
           >
             {labels.eyebrow}
           </motion.p>
@@ -57,7 +57,7 @@ export function Hero({
           <motion.h1
             {...fadeUp}
             transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-            className="mt-4 font-display text-[clamp(2rem,7vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.03em]"
+            className="dev-hero-shadow mt-4 font-display text-[clamp(2rem,7vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.03em]"
           >
             <span className="block text-[var(--text)]">{labels.title.line1}</span>
             <span className="block text-[var(--text)]">{labels.title.line2}</span>

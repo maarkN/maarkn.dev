@@ -106,7 +106,7 @@ export function About({ labels, locale }: { labels: AboutLabels; locale: Locale 
                       {t.role}{" "}
                       <span className="font-normal text-[var(--muted)]">— {entry.company}</span>
                     </p>
-                    <p className="mt-1 text-[14px] font-light leading-[1.7] text-[var(--text-2)]">
+                    <p className="dev-mono-block mt-1 text-[14px] font-light leading-[1.7] text-[var(--text-2)]">
                       {t.summary}
                     </p>
                     <Link
@@ -130,10 +130,10 @@ export function About({ labels, locale }: { labels: AboutLabels; locale: Locale 
 function Header({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="mb-16 max-w-2xl">
-      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
+      <p className="dev-kicker font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
         {kicker}
       </p>
-      <h2 className="mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
+      <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
         {title}
       </h2>
     </div>
