@@ -122,7 +122,8 @@
         "role": "Frontend Trainee (Hybrid)",
         "summary": "Where it all started: a Vue.js marketplace dashboard and email marketing templates with Pug and Sass."
       }
-    }
+    },
+    "timelineReadMore": "Read full case"
   },
   "toolkit": {
     "kicker": "Toolkit",
@@ -292,7 +293,22 @@
       "sub": "All projects on a single page, filtered by category. The list is hand-curated — small bets, big platforms, and a few things I'm proudest of.",
       "filterAll": "All work",
       "empty": "Nothing in this category yet."
-    }
+    },
+    "gallery": {
+      "miami-real-estate-assistant": {
+        "shot1": "Lead intake screen with WhatsApp capture",
+        "shot2": "Property catalog synced from MLS",
+        "shot3": "Admin dashboard for agents and inventory"
+      },
+      "drug-leaflet-platform": {
+        "shot1": "Astro-rendered leaflet detail page",
+        "shot2": "ANVISA crawl status pane"
+      }
+    },
+    "galleryHeading": "From the project",
+    "privateLabel": "Private project",
+    "privateNote": "Source code is private — happy to walk a recruiter or hiring panel through it on a call.",
+    "readMore": "Read more"
   },
   "contact": {
     "kicker": "Get in touch",
@@ -393,5 +409,139 @@
     "readingTime": "min read",
     "back": "Back to all posts",
     "empty": "No posts yet. Check back soon."
+  },
+  "career": {
+    "details": {
+      "self-employed-freelance": {
+        "tagline": "Building products end-to-end for clients across LatAm and the US.",
+        "context": "After ten years in product engineering inside companies, I turned to consulting: same craftsmanship, different shape of accountability. Each engagement is a thin contract focused on shipping the smallest thing that earns the next conversation.",
+        "responsibilities": [
+          "Discovery, scoping and proposal: translate a fuzzy brief into a one-page plan and an honest estimate.",
+          "Architecture and tech choice: pick the boring stack that fits the size of the team and the speed they want.",
+          "Hands-on coding across stacks (TypeScript, NestJS, Next.js, React, Flutter) and infra (Docker, AWS, GCP).",
+          "Working alongside founders and product folks during launch and the first weeks in production."
+        ],
+        "achievements": [
+          "Shipped a Miami real-estate WhatsApp assistant that captures and qualifies leads from the first message.",
+          "Designed and built a multitenant municipalities chatbot used by city halls in Brazil.",
+          "Refactored a Flutter app from Express to NestJS without breaking the live App Store / Play Store releases.",
+          "Built an automated viability-report engine for a carbon-credit platform."
+        ],
+        "outcome": "Six paid clients, every retainer renewed, and zero rollback-grade incidents in production."
+      },
+      "nectar-crm": {
+        "tagline": "Led the architecture of Nectar's first VoIP product, integrated end-to-end with the company CRM.",
+        "context": "Nectar is one of Brazil's mid-market CRM players. They wanted a VoIP that didn't feel bolted on. I joined as Senior L2 to lead the product side of that vertical from architecture down to bandwidth optimization.",
+        "responsibilities": [
+          "Designed the multitenant architecture, the billing rules engine and the real-time provisioning flow.",
+          "Owned the implementation of call recording, transcription and usage analytics.",
+          "Tuned the audio codec negotiation to reduce bandwidth costs by ~30% without losing call quality.",
+          "Partnered with product and ops on operator workflows, role-based features and onboarding."
+        ],
+        "achievements": [
+          "Shipped internal and national calling, recording and transcription as a first-class CRM feature.",
+          "Stabilized real-time provisioning of extensions and DIDs through idempotent state transitions.",
+          "Reduced incident frequency by rebuilding the cache layer with strict tenant scoping."
+        ],
+        "outcome": "VoIP became a sellable add-on for existing CRM customers and a new acquisition channel."
+      },
+      "sevencred": {
+        "tagline": "Built the backend, the mobile front and the data pipelines for an FCO loan platform.",
+        "context": "Sevencred was a fintech building a loan platform on top of FCO (a Brazilian agribusiness fund). Small team, big regulatory surface. I took ownership of the backend and the borrower-facing mobile app.",
+        "responsibilities": [
+          "Designed APIs in TypeScript + NestJS as microservices ready for fintech-grade scale and security.",
+          "Built a Flutter app for loan applications and customer onboarding.",
+          "Implemented crawlers and ETL pipelines that ingested public government data (SIGEF, RFB) into MongoDB.",
+          "Mentored a junior developer through code review and pair programming."
+        ],
+        "achievements": [
+          "Shipped a complete onboarding flow that went from public APIs to a normalized profile in seconds.",
+          "Stood up a Ghost-based public portal for SEO and content marketing.",
+          "Held the technical end of the early-stage product alongside the founders."
+        ],
+        "outcome": "Project paused pre-MVP after a funding shortfall, but the codebase was demoable and the team transitioned cleanly."
+      },
+      "ecto-digital-senior": {
+        "tagline": "Migrated Google reviews ingestion from batch to real-time and shipped a self-serve subscription system.",
+        "context": "Ecto Digital builds tools for Brazilian local businesses on top of the Google My Business API. I was promoted from fullstack to senior, then took the lead on a few cross-cutting initiatives.",
+        "responsibilities": [
+          "Architected the migration from batch routines to a real-time event-driven pipeline for review ingestion.",
+          "Introduced a code-review process and mentored two junior developers.",
+          "Built a self-serve subscription system to onboard small clients without a sales call.",
+          "Owned production deployments and on-call response for the systems I shipped."
+        ],
+        "achievements": [
+          "Cut review-to-dashboard latency from ~hourly to seconds.",
+          "Self-serve subscription brought in a long tail of small businesses that previously couldn't be reached.",
+          "Lifted code-review coverage to 100% of merged changes within two months."
+        ],
+        "outcome": "The pipeline I designed continued to run after I left, and the subscription system became the default onboarding path."
+      },
+      "vendorhub-sistemas": {
+        "tagline": "Drove UI standardization on a marketplace integration platform and built a Mercado Livre Chrome extension.",
+        "context": "VendorHub aggregates product catalogs from Mercado Livre, Magalu, Shopee and B2W into one back office. The frontend had grown organically and needed a tighter visual system.",
+        "responsibilities": [
+          "Standardized core UI patterns across the product registration flow.",
+          "Refactored the variations form so non-technical sellers could keep their listings consistent.",
+          "Co-implemented backend feature enhancements alongside the platform team.",
+          "Set up commit linting and a code-review process."
+        ],
+        "achievements": [
+          "Released a Chrome extension that analyzes Mercado Livre ad performance directly inside the marketplace UI — used by sellers to tune their listings without leaving the site."
+        ],
+        "outcome": "The Chrome extension stayed alive after my departure and the variations refactor halved the volume of seller support tickets in that area."
+      },
+      "ecto-digital-fullstack": {
+        "tagline": "Owned features, deployments and a couple of legacy Gatsby blogs at Ecto Digital's earlier stage.",
+        "context": "First role at Ecto, before the senior promotion. Wide remit on a small team — I was equally likely to be debugging a Gatsby build, deploying to production or wiring up a new GMB-backed feature.",
+        "responsibilities": [
+          "Implemented features on top of the Google My Business API for listings management.",
+          "Managed deployments and rollback procedures for the small fleet.",
+          "Maintained a couple of Gatsby-based blogs and tightened their SEO setup."
+        ],
+        "achievements": [
+          "Shipped enough sustained value to be promoted to Senior Fullstack Developer."
+        ],
+        "outcome": "Solid foundation across the team's stack and the customer success motion."
+      },
+      "collectgram-jr": {
+        "tagline": "Grew the admin dashboard for a collection-management product and shipped the referral funnel.",
+        "context": "Collectgram is a SaaS for collectors (cards, coins, the like). After the trainee year I moved to the JR slot and started taking ownership of multi-week features end-to-end.",
+        "responsibilities": [
+          "Built the referral feature with tracking and reward logic.",
+          "Designed the subscription CTA section that became the default upsell.",
+          "Fixed bugs across the admin dashboard and improved its overall responsiveness.",
+          "Maintained Vue.js + Vuex codebase and SCSS design system."
+        ],
+        "achievements": [
+          "The referral feature drove a measurable lift in monthly signups during its first quarter live."
+        ],
+        "outcome": "Closed out the year ready for a senior-track move into a larger team."
+      },
+      "collectgram-trainee": {
+        "tagline": "Where it started — a marketplace admin in Vue.js and email marketing templates with Pug and Sass.",
+        "context": "First professional role. The team trusted me with real production tickets from week one — I am still grateful for it.",
+        "responsibilities": [
+          "Implemented features across the Vue.js 2 marketplace admin dashboard.",
+          "Built email marketing templates with Pug and Sass on a Node.js pipeline.",
+          "Paired with senior engineers on code reviews and feature scoping."
+        ],
+        "achievements": [
+          "Earned the JR promotion at the end of the trainee period."
+        ],
+        "outcome": "The first set of habits — tests, code review, communication — were formed here."
+      }
+    },
+    "chrome": {
+      "kicker": "Career detail",
+      "back": "Back to about",
+      "context": "Context",
+      "responsibilities": "What I owned",
+      "achievements": "Highlights",
+      "outcome": "Outcome",
+      "stackHeading": "Stack used",
+      "periodLabel": "Period",
+      "companyLabel": "Company"
+    }
   }
 }

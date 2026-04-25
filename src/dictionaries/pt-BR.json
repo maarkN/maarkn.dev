@@ -122,7 +122,8 @@
         "role": "Trainee Frontend (Híbrido)",
         "summary": "Onde tudo começou: um dashboard de marketplace em Vue.js e templates de email marketing com Pug e Sass."
       }
-    }
+    },
+    "timelineReadMore": "Ver detalhe completo"
   },
   "toolkit": {
     "kicker": "Ferramentas",
@@ -292,7 +293,22 @@
       "sub": "Todos os projetos numa página só, filtráveis por categoria. A lista é curada à mão — apostas pequenas, plataformas grandes e algumas coisas que tenho mais orgulho.",
       "filterAll": "Todos",
       "empty": "Nada nessa categoria ainda."
-    }
+    },
+    "gallery": {
+      "miami-real-estate-assistant": {
+        "shot1": "Tela de captura de lead via WhatsApp",
+        "shot2": "Catálogo de imóveis sincronizado do MLS",
+        "shot3": "Dashboard admin pra corretores e inventário"
+      },
+      "drug-leaflet-platform": {
+        "shot1": "Página de detalhe da bula renderizada em Astro",
+        "shot2": "Painel de status do crawl da ANVISA"
+      }
+    },
+    "galleryHeading": "Do projeto",
+    "privateLabel": "Projeto privado",
+    "privateNote": "O código é privado — feliz em apresentar pra recrutador ou painel técnico numa call.",
+    "readMore": "Ver detalhes"
   },
   "contact": {
     "kicker": "Vamos conversar",
@@ -393,5 +409,139 @@
     "readingTime": "min de leitura",
     "back": "Voltar pra todos os posts",
     "empty": "Nenhum post ainda. Volte em breve."
+  },
+  "career": {
+    "details": {
+      "self-employed-freelance": {
+        "tagline": "Construindo produtos de ponta a ponta pra clientes na América Latina e nos EUA.",
+        "context": "Depois de dez anos como engenheiro de produto dentro de empresas, virei consultor: mesmo cuidado, formato de accountability diferente. Cada engagement é um contrato fino, focado em entregar a menor coisa que ganha a próxima conversa.",
+        "responsibilities": [
+          "Discovery, scoping e proposta: traduzir um briefing nebuloso num plano de uma página e uma estimativa honesta.",
+          "Arquitetura e escolha de tecnologia: stack chato que cabe no tamanho do time e na velocidade que querem.",
+          "Mão na massa em várias stacks (TypeScript, NestJS, Next.js, React, Flutter) e infra (Docker, AWS, GCP).",
+          "Lado a lado com fundadores e times de produto durante o launch e as primeiras semanas em produção."
+        ],
+        "achievements": [
+          "Entreguei um assistente WhatsApp imobiliário em Miami que captura e qualifica leads desde a primeira mensagem.",
+          "Desenhei e construí um chatbot multitenant de prefeituras usado por cidades brasileiras.",
+          "Refatorei um app Flutter de Express pra NestJS sem quebrar releases ativas na App Store e Play Store.",
+          "Construí um motor automatizado de relatórios de viabilidade pra plataforma de crédito de carbono."
+        ],
+        "outcome": "Seis clientes pagantes, todos os retainers renovados, e zero incidentes de rollback em produção."
+      },
+      "nectar-crm": {
+        "tagline": "Liderei a arquitetura do primeiro produto VoIP da Nectar, integrado de ponta a ponta ao CRM.",
+        "context": "A Nectar é um dos players de CRM mid-market do Brasil. Queriam um VoIP que não parecesse grudado. Entrei como Sênior N2 pra liderar o lado de produto dessa vertical, da arquitetura à otimização de banda.",
+        "responsibilities": [
+          "Desenhei a arquitetura multitenant, o motor de regras de tarifação e o fluxo de provisionamento em tempo real.",
+          "Liderei a implementação de gravação, transcrição e analytics de uso.",
+          "Ajustei a negociação de codecs reduzindo ~30% nos custos de banda sem perder qualidade.",
+          "Trabalhei com produto e ops nos workflows do operador, features role-based e onboarding."
+        ],
+        "achievements": [
+          "Entreguei chamadas internas e nacionais, gravação e transcrição como first-class feature do CRM.",
+          "Estabilizei o provisionamento em tempo real de ramais e DIDs com transições idempotentes.",
+          "Reduzi a frequência de incidentes reescrevendo a camada de cache com escopo estrito por tenant."
+        ],
+        "outcome": "VoIP virou um add-on vendável pros clientes existentes do CRM e um novo canal de aquisição."
+      },
+      "sevencred": {
+        "tagline": "Construí o backend, o app mobile e os pipelines de dados de uma plataforma de empréstimos FCO.",
+        "context": "Sevencred era uma fintech construindo uma plataforma de crédito sobre o FCO (fundo brasileiro de agro). Time pequeno, superfície regulatória grande. Tomei posse do backend e do app mobile do tomador.",
+        "responsibilities": [
+          "Desenhei APIs em TypeScript + NestJS como microsserviços prontos pra escala e segurança de fintech.",
+          "Construí o app Flutter pra solicitação de empréstimo e onboarding.",
+          "Implementei crawlers e ETL ingerindo dados públicos (SIGEF, RFB) pra MongoDB.",
+          "Mentorei um dev júnior via code review e pair programming."
+        ],
+        "achievements": [
+          "Entreguei um onboarding completo que ia das APIs públicas pra um perfil normalizado em segundos.",
+          "Subi um portal público em Ghost pra SEO e marketing de conteúdo.",
+          "Sustentei a ponta técnica do produto early-stage junto com os fundadores."
+        ],
+        "outcome": "Projeto pausou pré-MVP por falta de funding, mas o código estava demoable e o time transicionou limpo."
+      },
+      "ecto-digital-senior": {
+        "tagline": "Migrei a ingestão de avaliações do Google de batch pra tempo real e entreguei um sistema de assinatura self-serve.",
+        "context": "A Ecto Digital constrói ferramentas pra negócios locais no Brasil em cima da API do Google My Business. Fui promovido de fullstack pra sênior e peguei a liderança em algumas iniciativas transversais.",
+        "responsibilities": [
+          "Arquitetei a migração de rotinas batch pra um pipeline event-driven em tempo real.",
+          "Introduzi processo de code review e mentorei dois devs juniores.",
+          "Construí um sistema de assinatura self-serve pra onboardar clientes pequenos sem call de vendas.",
+          "Cuidei dos deploys de produção e do plantão pros sistemas que entreguei."
+        ],
+        "achievements": [
+          "Cortei a latência review→dashboard de horária pra segundos.",
+          "Self-serve trouxe uma long tail de pequenos negócios que antes não eram alcançáveis.",
+          "Levei a cobertura de code review pra 100% das mudanças mergeadas em dois meses."
+        ],
+        "outcome": "O pipeline que desenhei continuou rodando depois que saí e o self-serve virou o caminho default de onboarding."
+      },
+      "vendorhub-sistemas": {
+        "tagline": "Padronizei o UI de uma plataforma de integração de marketplaces e construí uma extensão Chrome pro Mercado Livre.",
+        "context": "A VendorHub agrega catálogos de Mercado Livre, Magalu, Shopee e B2W num back office único. O frontend tinha crescido organicamente e precisava de um sistema visual mais apertado.",
+        "responsibilities": [
+          "Padronizei padrões core de UI no fluxo de cadastro de produtos.",
+          "Refatorei o form de variações pra que sellers não-técnicos mantivessem consistência nos anúncios.",
+          "Coimplementei melhorias de backend junto com o time de plataforma.",
+          "Setei commit linting e processo de code review."
+        ],
+        "achievements": [
+          "Lancei uma extensão Chrome que analisa performance dos anúncios direto na UI do Mercado Livre — usada por sellers pra ajustar listings sem sair do site."
+        ],
+        "outcome": "A extensão Chrome continuou viva depois que saí e o refactor de variações cortou pela metade o volume de tickets de suporte naquela área."
+      },
+      "ecto-digital-fullstack": {
+        "tagline": "Donatário das features, deploys e dois blogs Gatsby legados na fase mais cedo da Ecto.",
+        "context": "Primeira passagem na Ecto, antes da promoção pra sênior. Mandato amplo num time pequeno — eu tanto debugava build do Gatsby quanto fazia deploy pra produção ou conectava uma feature nova baseada em GMB.",
+        "responsibilities": [
+          "Implementei features em cima da API do Google My Business pra gestão de listings.",
+          "Cuidei dos deploys e procedimentos de rollback do pequeno fleet.",
+          "Mantive uns blogs em Gatsby e melhorei o setup de SEO deles."
+        ],
+        "achievements": [
+          "Entreguei valor sustentado o suficiente pra ser promovido a Sênior Fullstack."
+        ],
+        "outcome": "Base sólida na stack do time e no movimento de customer success."
+      },
+      "collectgram-jr": {
+        "tagline": "Fiz crescer o painel admin de um produto de gestão de coleções e entreguei o funil de indicação.",
+        "context": "Collectgram é um SaaS pra colecionadores (cartas, moedas, etc.). Depois do trainee, fui pra vaga de JR e comecei a tomar posse de features de várias semanas, ponta a ponta.",
+        "responsibilities": [
+          "Construí a feature de indicação com tracking e lógica de recompensa.",
+          "Desenhei a seção de CTA de assinatura que virou o upsell default.",
+          "Corrigi bugs no painel admin e melhorei a responsividade geral.",
+          "Mantive o codebase Vue.js + Vuex e o design system em SCSS."
+        ],
+        "achievements": [
+          "A feature de indicação trouxe um lift mensurável nos signups mensais durante o primeiro trimestre no ar."
+        ],
+        "outcome": "Fechei o ano pronto pra um movimento sênior pra um time maior."
+      },
+      "collectgram-trainee": {
+        "tagline": "Onde tudo começou — admin de marketplace em Vue.js e templates de email marketing com Pug e Sass.",
+        "context": "Primeira experiência profissional. O time confiou em mim com tickets reais de produção desde a primeira semana — sou grato até hoje por isso.",
+        "responsibilities": [
+          "Implementei features no painel admin de marketplace em Vue.js 2.",
+          "Construí templates de email marketing com Pug e Sass num pipeline Node.js.",
+          "Fiz pair com seniors em code review e scoping de feature."
+        ],
+        "achievements": [
+          "Ganhei a promoção pra JR no fim do período de trainee."
+        ],
+        "outcome": "Os primeiros hábitos — testes, code review, comunicação — foram formados aqui."
+      }
+    },
+    "chrome": {
+      "kicker": "Detalhe da carreira",
+      "back": "Voltar pro sobre",
+      "context": "Contexto",
+      "responsibilities": "O que eu liderei",
+      "achievements": "Destaques",
+      "outcome": "Resultado",
+      "stackHeading": "Stack usada",
+      "periodLabel": "Período",
+      "companyLabel": "Empresa"
+    }
   }
 }
