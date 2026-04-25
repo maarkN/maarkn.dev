@@ -560,6 +560,112 @@ body {
 .dev-contact-channels-cli { display: none; }
 [data-theme="dev"] .dev-contact-channels-cli { display: block; }
 
+/* ════════════════════════════════════════════════
+   DEV · MOBILE EASTER EGG — identity card flip
+   Mobile visitors can't open DevTools, so the card
+   itself becomes the egg trigger: a periodic glitch
+   pulls the eye, tapping flips the card to reveal
+   the egg instructions.
+   ════════════════════════════════════════════════ */
+
+/* Looping glitch on the identity_card.tsx label, mobile-only and dev-only,
+   so non-dev surfaces stay still and desktop dev users still get the
+   regular hover glitch on the wordmark. Pulses for ~280ms every 2s. */
+@keyframes dev-glitch-loop {
+  0%, 100% { text-shadow: none; color: var(--muted); }
+  4%       { text-shadow: 2px 0 var(--accent), -2px 0 rgba(255, 80, 150, 0.6); color: var(--accent); }
+  7%       { text-shadow: -2px 0 var(--accent), 2px 0 rgba(80, 200, 255, 0.6); }
+  10%      { text-shadow: 2px 2px var(--accent), -2px -2px rgba(255, 80, 150, 0.6); }
+  13%      { text-shadow: 0 2px var(--accent), 0 -2px rgba(80, 200, 255, 0.6); }
+  16%      { text-shadow: none; color: var(--muted); }
+}
+
+@media (hover: none) and (max-width: 767px) {
+  [data-theme="dev"] .dev-mobile-glitch {
+    animation: dev-glitch-loop 2s steps(1) infinite;
+  }
+  [data-theme="dev"] .dev-flip-scene {
+    cursor: pointer;
+  }
+}
+
+/* Flip card primitives — perspective on the scene, preserve-3d on the
+   inner wrapper, two absolutely positioned faces with backface-visibility
+   hidden. Only the dev theme actually rotates the wrapper. */
+.dev-flip-scene {
+  perspective: 1400px;
+  width: 100%;
+}
+.dev-flip-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dev-flip-card.is-flipped {
+  transform: rotateY(180deg);
+}
+.dev-flip-face {
+  position: relative;
+  width: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.dev-flip-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  display: none;
+  background: #0a0d08;
+  border: 1px solid rgba(0, 255, 65, 0.35);
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.12);
+  font-family: var(--font-mono);
+  color: rgba(0, 255, 65, 0.92);
+  overflow-y: auto;
+}
+[data-theme="dev"] .dev-flip-back { display: flex; flex-direction: column; }
+[data-theme="dev"] .dev-flip-card { will-change: transform; }
+
+.dev-flip-back-head {
+  background: #0d120b;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: rgba(0, 255, 65, 0.65);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.dev-flip-back-head::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: #00ff41;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
+}
+.dev-flip-back-body {
+  flex: 1;
+  padding: 1rem 1.2rem 0.4rem;
+  font-size: 0.72rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+.dev-flip-back-body .dim    { color: rgba(0,255,65,0.4); }
+.dev-flip-back-body .ok     { color: #00ff41; }
+.dev-flip-back-body .pending{ color: rgba(0,255,65,0.55); }
+.dev-flip-back-body .cmd    { color: #6af; }
+.dev-flip-back-foot {
+  border-top: 1px solid rgba(0, 255, 65, 0.18);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.62rem;
+  text-align: center;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 255, 65, 0.6);
+}
+
 .dev-konami-overlay {
   position: fixed;
   inset: 0;
