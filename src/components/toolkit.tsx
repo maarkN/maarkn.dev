@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { groupOrder, toolkit, type ToolkitGroupKey } from "@/lib/toolkit";
+import { groupOrder, toolkit, type Tool, type ToolkitGroupKey } from "@/lib/toolkit";
 
 type ToolkitLabels = {
   kicker: string;
@@ -19,10 +19,10 @@ export function Toolkit({ labels }: { labels: ToolkitLabels }) {
     >
       <div className="mx-auto w-full max-w-[1280px] px-4 py-16 sm:px-6 sm:py-24 md:px-12 md:py-32">
         <div className="mb-16 max-w-2xl">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
+          <p className="dev-kicker font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">
             {labels.kicker}
           </p>
-          <h2 className="mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
+          <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
             {labels.title}
           </h2>
           <p className="mt-5 max-w-xl text-[1.02rem] font-light leading-[1.75] text-[var(--text-2)]">
@@ -65,7 +65,7 @@ function Group({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="group relative flex flex-col gap-5 bg-[var(--bg)] p-7 transition-colors hover:bg-[var(--surface)]"
+      className="group relative flex flex-col gap-6 bg-[var(--bg)] p-7 transition-colors hover:bg-[var(--surface)]"
     >
       <header>
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted)]">
@@ -77,25 +77,9 @@ function Group({
         <p className="mt-1 text-[13px] font-light text-[var(--muted)]">{caption}</p>
       </header>
 
-      <ul className="flex flex-wrap gap-1.5">
+      <ul className="flex flex-col gap-3">
         {items.map((tool, i) => (
-          <motion.li
-            key={tool.name}
-            initial={{ opacity: 0, scale: 0.96 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.35, delay: i * 0.025, ease: "easeOut" }}
-            className="group/tag relative inline-flex items-center gap-1.5 border border-[var(--border)] bg-[var(--surface-2)] px-2.5 py-1.5 font-mono text-[11px] tracking-[0.02em] text-[var(--text-2)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-            title={tool.years ? `${tool.years}${yearsSuffix}` : tool.name}
-          >
-            <span>{tool.name}</span>
-            {tool.years ? (
-              <span className="text-[9px] uppercase tracking-[0.08em] text-[var(--muted)] group-hover/tag:text-[var(--accent-2)]">
-                {tool.years}
-                {yearsSuffix}
-              </span>
-            ) : null}
-          </motion.li>
+          <Bar key={tool.name} tool={tool} index={i} yearsSuffix={yearsSuffix} />
         ))}
       </ul>
 
@@ -104,5 +88,50 @@ function Group({
         aria-hidden
       />
     </motion.article>
+  );
+}
+
+function Bar({
+  tool,
+  index,
+  yearsSuffix,
+}: {
+  tool: Tool;
+  index: number;
+  yearsSuffix: string;
+}) {
+  return (
+    <motion.li
+      initial={{ opacity: 0, y: 6 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.32, delay: index * 0.03, ease: "easeOut" }}
+      className="group/tool"
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-mono text-[12px] tracking-[0.02em] text-[var(--text-2)] transition-colors group-hover/tool:text-[var(--text)]">
+          {tool.name}
+          {tool.years ? (
+            <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--muted)]">
+              {tool.years}
+              {yearsSuffix}
+            </span>
+          ) : null}
+        </span>
+        <span className="font-mono text-[11px] tabular-nums tracking-[0.02em] text-[var(--accent)]">
+          {tool.proficiency}%
+        </span>
+      </div>
+      <div className="relative mt-1.5 h-[3px] overflow-hidden bg-[var(--surface-3)]">
+        <motion.span
+          initial={{ width: 0 }}
+          whileInView={{ width: `${tool.proficiency}%` }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: index * 0.03 }}
+          className="absolute inset-y-0 left-0 bg-[var(--accent)] dev-tool-fill"
+          aria-hidden
+        />
+      </div>
+    </motion.li>
   );
 }
