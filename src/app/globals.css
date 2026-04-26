@@ -580,9 +580,29 @@ body {
   16%      { text-shadow: none; color: var(--muted); }
 }
 
+/* Same shape, but doesn't override the element's color — the original
+   .dev-mobile-glitch is meant for muted labels (it tints them accent green
+   during the spike). For elements that already have their own brand color
+   (the identity card name, the big-numbers values) we want only the
+   RGB-shift text-shadow flicker, no color swap. */
+@keyframes dev-glitch-loop-shadow {
+  0%, 100% { text-shadow: none; }
+  4%       { text-shadow: 2px 0 var(--accent), -2px 0 rgba(255, 80, 150, 0.6); }
+  7%       { text-shadow: -2px 0 var(--accent), 2px 0 rgba(80, 200, 255, 0.6); }
+  10%      { text-shadow: 2px 2px var(--accent), -2px -2px rgba(255, 80, 150, 0.6); }
+  13%      { text-shadow: 0 2px var(--accent), 0 -2px rgba(80, 200, 255, 0.6); }
+  16%      { text-shadow: none; }
+}
+
 @media (hover: none) and (max-width: 767px) {
   [data-theme="dev"] .dev-mobile-glitch {
     animation: dev-glitch-loop 2s steps(1) infinite;
+  }
+  [data-theme="dev"] .dev-mobile-glitch-shadow {
+    animation: dev-glitch-loop-shadow 2s steps(1) infinite;
+    /* Per-element stagger — instances set --glitch-delay to ripple instead
+       of flashing in unison. Defaults to 0 when unset. */
+    animation-delay: var(--glitch-delay, 0s);
   }
   [data-theme="dev"] .dev-flip-scene {
     cursor: pointer;

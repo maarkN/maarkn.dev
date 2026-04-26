@@ -28,7 +28,7 @@ export function BigNumbers({ labels }: { labels: Labels }) {
 
         <div className="grid grid-cols-2 gap-px overflow-hidden border border-[var(--border)] bg-[var(--border)] md:grid-cols-4">
           {items.map((it, i) => (
-            <Counter key={i} value={it.value} label={it.label} />
+            <Counter key={i} value={it.value} label={it.label} index={i} />
           ))}
         </div>
       </div>
@@ -36,7 +36,15 @@ export function BigNumbers({ labels }: { labels: Labels }) {
   );
 }
 
-function Counter({ value, label }: { value: string; label: string }) {
+function Counter({
+  value,
+  label,
+  index,
+}: {
+  value: string;
+  label: string;
+  index: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { amount: 0.4, once: true });
   const numericTarget = parseInt(value.replace(/[^0-9]/g, ""), 10) || 0;
@@ -50,12 +58,19 @@ function Counter({ value, label }: { value: string; label: string }) {
     return () => controls.stop();
   }, [inView, mv, numericTarget]);
 
+  // Stagger the per-counter mobile dev glitch so the four numbers ripple
+  // (0s · 0.5s · 1.0s · 1.5s into the 2s loop) instead of flashing in unison.
+  const glitchDelay = `${index * 0.5}s`;
+
   return (
     <div
       ref={ref}
       className="group relative bg-[var(--bg)] p-7 transition-colors hover:bg-[var(--surface)]"
     >
-      <div className="flex items-baseline gap-1 font-display text-[clamp(2.6rem,5vw,4.2rem)] font-bold leading-none tracking-[-0.04em] text-[var(--accent-2)]">
+      <div
+        className="dev-mobile-glitch-shadow flex items-baseline gap-1 font-display text-[clamp(2.6rem,5vw,4.2rem)] font-bold leading-none tracking-[-0.04em] text-[var(--accent-2)]"
+        style={{ ["--glitch-delay" as never]: glitchDelay }}
+      >
         <motion.span>{display}</motion.span>
         <span className="text-[var(--accent)]">{suffix}</span>
       </div>

@@ -67,7 +67,7 @@ export function IdentityCard({ labels }: { labels: CardLabels }) {
             />
 
             <div className="border-t border-[var(--border)] bg-[var(--surface-2)] p-5">
-              <h3 className="font-display text-base font-bold tracking-tight text-[var(--text)]">
+              <h3 className="dev-mobile-glitch-shadow font-display text-base font-bold tracking-tight text-[var(--text)]">
                 {labels.name}
               </h3>
               <p className="mt-0.5 font-mono text-[11px] tracking-[0.04em] text-[var(--accent)]">
