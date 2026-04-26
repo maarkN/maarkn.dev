@@ -223,6 +223,9 @@ body {
   font-weight: 500;
   font-size: 0.7em;
 }
+/* Long underscored CLI tokens are single words to the browser; allow them
+   to break inside on narrow viewports so an overflow never clips the type. */
+[data-theme="dev"] .dev-section-title { overflow-wrap: anywhere; }
 
 /* Career timeline summaries read like terminal output. */
 [data-theme="dev"] .dev-mono-block {

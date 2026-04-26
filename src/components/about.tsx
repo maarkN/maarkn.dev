@@ -136,7 +136,8 @@ function Header({ kicker, title }: { kicker: string; title: string }) {
       </p>
       <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
         <span className="light-only-text">{title}</span>
-        <span className="dev-only-text">PROFESSIONAL_EXPERIENCE</span>
+        <span className="dev-only-text inline sm:hidden">EXPERIENCE.log</span>
+        <span className="dev-only-text hidden sm:inline">PROFESSIONAL_EXPERIENCE</span>
       </h2>
     </div>
   );

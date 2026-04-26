@@ -29,7 +29,8 @@ export function Projects({ locale, labels }: { locale: Locale; labels: Labels })
             </p>
             <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
               <span className="light-only-text">{labels.title}</span>
-              <span className="dev-only-text">PROJECT_REGISTRY</span>
+              <span className="dev-only-text inline sm:hidden">PROJECTS.db</span>
+              <span className="dev-only-text hidden sm:inline">PROJECT_REGISTRY</span>
             </h2>
             <p className="mt-5 max-w-xl text-[1.02rem] font-light leading-[1.75] text-[var(--text-2)]">
               {labels.sub}

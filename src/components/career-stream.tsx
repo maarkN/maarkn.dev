@@ -100,7 +100,8 @@ function Intro({
         </p>
         <h1 className="dev-section-title mt-3 font-display text-[clamp(2.4rem,5vw,4.5rem)] font-bold leading-[1.05] tracking-[-0.03em] text-[var(--text)]">
           <span className="light-only-text">{labels.title}</span>
-          <span className="dev-only-text">CAREER_STREAM</span>
+          <span className="dev-only-text inline sm:hidden">CAREER.log</span>
+          <span className="dev-only-text hidden sm:inline">CAREER_STREAM</span>
         </h1>
         <p className="mt-6 max-w-2xl text-[1.05rem] font-light leading-[1.75] text-[var(--text-2)]">
           {labels.sub}

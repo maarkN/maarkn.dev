@@ -115,7 +115,8 @@ export function Contact({ labels }: { labels: Labels }) {
             </p>
             <h2 className="dev-section-title mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-bold leading-[1.1] tracking-[-0.025em] text-[var(--text)]">
               <span className="light-only-text">{labels.title}</span>
-              <span className="dev-only-text">&gt; INITIATE_CONTACT</span>
+              <span className="dev-only-text inline sm:hidden">&gt; CONTACT.sh</span>
+              <span className="dev-only-text hidden sm:inline">&gt; INITIATE_CONTACT</span>
             </h2>
             <p className="mt-5 max-w-xl text-[1.02rem] font-light leading-[1.75] text-[var(--text-2)]">
               {labels.sub}
