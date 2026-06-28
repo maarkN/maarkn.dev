@@ -27,6 +27,8 @@ export const toolkit: Record<ToolkitGroupKey, Tool[]> = {
   backend: [
     { name: "Node.js", years: 6, proficiency: 95 },
     { name: "NestJS", years: 4, proficiency: 92 },
+    { name: "Go", proficiency: 76 },
+    { name: "Python", years: 3, proficiency: 66 },
     { name: "Express", years: 5, proficiency: 88 },
     { name: "REST APIs", years: 6, proficiency: 94 },
     { name: "Microservices", years: 4, proficiency: 85 },
