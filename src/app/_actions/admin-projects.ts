@@ -31,6 +31,7 @@ const projectSchema = z.object({
   role: z.string().max(2000).optional().or(z.literal("")),
   features: z.array(z.string().min(1).max(280)).max(20),
   sourceVisibility: z.enum(["public", "private"]),
+  coverImage: z.string().max(400).optional().or(z.literal("")),
 });
 
 async function requireAdmin() {
@@ -72,6 +73,7 @@ function parseForm(formData: FormData) {
     sourceVisibility: (trim(formData.get("sourceVisibility")) || "public") as
       | "public"
       | "private",
+    coverImage: trim(formData.get("coverImage")),
   };
 }
 
@@ -119,6 +121,7 @@ export async function createProject(_prev: ActionState, formData: FormData): Pro
         role: emptyToNull(data.role),
         featuresJson: encodeStringList(data.features),
         sourceVisibility: data.sourceVisibility,
+        coverImage: emptyToNull(data.coverImage),
       },
     });
   } catch (err) {
@@ -167,6 +170,7 @@ export async function updateProject(
         role: emptyToNull(data.role),
         featuresJson: encodeStringList(data.features),
         sourceVisibility: data.sourceVisibility,
+        coverImage: emptyToNull(data.coverImage),
       },
     });
   } catch (err) {

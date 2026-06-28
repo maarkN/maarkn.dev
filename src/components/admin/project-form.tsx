@@ -29,6 +29,7 @@ type ProjectInput = {
   description?: string | null;
   role?: string | null;
   features?: string[];
+  coverImage?: string | null;
 };
 
 const CATEGORIES = ["web", "mobile", "ai", "backend", "client"] as const;
@@ -126,6 +127,7 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
           help="hex, e.g. #22d3ee"
           error={errors.accentTo}
         />
+        <CoverImageUploader initial={project?.coverImage} />
       </Section>
 
       <Section title="Source & Links" className="md:col-span-2">
@@ -444,5 +446,66 @@ function Checkbox({
       />
       {label}
     </label>
+  );
+}
+
+function CoverImageUploader({ initial }: { initial?: string | null }) {
+  const [url, setUrl] = useState(initial ?? "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setErr("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error || "upload_failed");
+      setUrl(json.url);
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : "upload_failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="coverImageFile">Cover image</Label>
+      <input type="hidden" name="coverImage" value={url} />
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt="cover preview"
+          className="h-32 w-full border border-[var(--border)] object-cover"
+        />
+      ) : null}
+      <input
+        id="coverImageFile"
+        type="file"
+        accept="image/*"
+        onChange={onPick}
+        className="font-mono text-[11px] text-[var(--muted)] file:mr-3 file:border file:border-[var(--border-2)] file:bg-[var(--surface-2)] file:px-3 file:py-1.5 file:font-display file:text-[10px] file:uppercase file:tracking-[0.08em] file:text-[var(--text)]"
+      />
+      <div className="flex items-center gap-3">
+        {busy ? <Help>Uploading…</Help> : null}
+        {url && !busy ? (
+          <button
+            type="button"
+            onClick={() => setUrl("")}
+            className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:text-[var(--red)]"
+          >
+            remove
+          </button>
+        ) : null}
+        <ErrorLine msg={err || undefined} />
+      </div>
+      <Help>Optional. Replaces the stylized cover on cards. Max 8 MB.</Help>
+    </div>
   );
 }

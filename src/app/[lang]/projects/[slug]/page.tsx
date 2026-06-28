@@ -1,25 +1,23 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale, locales } from "@/i18n/config";
-import { projects } from "@/lib/projects";
+import { getDictionary, hasLocale } from "@/i18n/config";
+import { getProjectBySlug } from "@/lib/projects-repo";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { ProjectDetail } from "@/components/project-detail";
 
-export function generateStaticParams() {
-  return locales.flatMap((lang) =>
-    projects.map((p) => ({ lang, slug: p.slug }))
-  );
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/projects/[slug]">): Promise<Metadata> {
   const { lang, slug } = await params;
-  const project = projects.find((p) => p.slug === slug);
-  if (!project || !hasLocale(lang)) return {};
+  if (!hasLocale(lang)) return {};
+  const project = await getProjectBySlug(slug);
+  if (!project) return {};
   const dict = await getDictionary(lang);
-  const tagline = (dict.projects.taglines as Record<string, string>)[slug] ?? "";
+  const tagline =
+    (dict.projects.taglines as Record<string, string>)[slug] ?? project.tagline ?? "";
   return { title: project.name, description: tagline };
 }
 
@@ -29,13 +27,24 @@ export default async function ProjectDetailPage({
   const { lang, slug } = await params;
   if (!hasLocale(lang)) notFound();
 
-  const project = projects.find((p) => p.slug === slug);
+  const project = await getProjectBySlug(slug);
   if (!project) notFound();
 
   const dict = await getDictionary(lang);
   const p = dict.projects;
-  const detail = (p.details as Record<string, typeof p.details[keyof typeof p.details] | undefined>)[slug];
-  if (!detail) notFound();
+  const dictDetail = (
+    p.details as Record<
+      string,
+      { description: string; role: string; features: string[] } | undefined
+    >
+  )[slug];
+  const detail = dictDetail ?? {
+    description: project.description ?? "",
+    role: project.role ?? "",
+    features: project.features ?? [],
+  };
+  const tagline =
+    (p.taglines as Record<string, string>)[slug] ?? project.tagline ?? "";
 
   const galleryCaptions = (
     p.gallery as Record<string, Record<string, string>> | undefined
@@ -62,7 +71,7 @@ export default async function ProjectDetailPage({
             roleHeading: p.roleHeading,
             featuresHeading: p.featuresHeading,
             stackHeading: p.stackHeading,
-            tagline: (p.taglines as Record<string, string>)[slug] ?? "",
+            tagline,
             detail,
             galleryCaptions,
             categories: p.categories,

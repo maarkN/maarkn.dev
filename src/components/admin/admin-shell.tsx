@@ -33,6 +33,14 @@ export function AdminShell({
               </li>
               <li>
                 <Link
+                  href="/admin/generator"
+                  className="px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+                >
+                  Generator
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/"
                   className="px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:text-[var(--text)]"
                 >

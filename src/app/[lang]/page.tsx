@@ -6,15 +6,23 @@ import { BigNumbers } from "@/components/big-numbers";
 import { About } from "@/components/about";
 import { Toolkit } from "@/components/toolkit";
 import { Projects } from "@/components/projects";
+import { getFeaturedProjects, buildTaglines } from "@/lib/projects-repo";
 import { Contact } from "@/components/contact";
 import { LatestLogs } from "@/components/blog/latest-logs";
 import { Footer } from "@/components/footer";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
+  const featured = await getFeaturedProjects();
+  const projectsLabels = {
+    ...dict.projects,
+    taglines: buildTaglines(featured, dict.projects.taglines),
+  };
 
   return (
     <>
@@ -23,7 +31,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         <Hero labels={dict.hero} cardLabels={dict.card} />
         <BigNumbers labels={dict.bigNumbers} />
         <About labels={dict.about} locale={lang} />
-        <Projects locale={lang} labels={dict.projects} />
+        <Projects locale={lang} labels={projectsLabels} projects={featured} />
         <Toolkit labels={dict.toolkit} />
         <Contact labels={dict.contact} />
         <LatestLogs locale={lang} labels={dict.latestLogs} />

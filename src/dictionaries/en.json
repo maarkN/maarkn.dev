@@ -15,22 +15,22 @@
     "dev": "Dev"
   },
   "hero": {
-    "badgeAvailable": "Open to new opportunities",
+    "badgeAvailable": "Open to roles abroad — EU & Canada",
     "eyebrow": "Marco Filho · maarkn",
     "title": {
-      "line1": "I build digital",
-      "line2": "products that",
-      "line3": "people actually use."
+      "line1": "I build AI products",
+      "line2": "and the backends",
+      "line3": "that ship them."
     },
-    "role": "Senior fullstack engineer · 5+ years · Remote from Brazil",
-    "sub": "I help companies turn ideas into clean, fast and reliable products — from the first sketch to the version that ships and grows. Equally comfortable shaping the architecture, writing the code, and talking to the people who use it.",
+    "role": "Senior AI/LLM & Backend Engineer · 6+ years · Go · TypeScript · Open to EU & Canada",
+    "sub": "I design and build production AI/LLM systems and the backends behind them — architecture, APIs, deploy, and the messy real-world data in between. Six-plus years shipping across healthtech, govtech, fintech and SaaS, often as the sole engineer or technical lead.",
     "ctaPrimary": "See my work",
     "ctaSecondary": "Download CV"
   },
   "card": {
     "label": "identity_card.tsx",
     "name": "Marco Filho",
-    "role": "Senior Fullstack Engineer",
+    "role": "Senior AI/LLM & Backend Engineer",
     "stats": {
       "years": "Years building",
       "projects": "Products shipped",
@@ -64,10 +64,10 @@
     "kicker": "About",
     "title": "A builder who sweats the details and ships the work.",
     "bio": [
-      "I'm Marco — most people online know me as maarkn. I'm a senior fullstack engineer based in Goiânia, Brazil, working with clients and teams around the world.",
-      "I started writing software professionally in 2019 and never really stopped. Over the years I moved from frontend trainee to leading the architecture of products used by thousands — VoIP platforms, fintech apps, real-estate assistants, museum sites, agronomy chatbots, and a few things I can't talk about yet.",
-      "What I really enjoy is being involved end-to-end: understanding what people actually need, designing how the system should behave, writing the code that makes it real, and staying close while it goes live and grows. I care about clean architecture, but I care more about software that works, doesn't surprise the team that maintains it, and gives the user a smooth ride.",
-      "When I'm not coding, I'm usually studying — currently improving my English to relocate abroad, and exploring how AI agents can be useful day-to-day instead of just impressive in demos."
+      "I'm Marco — most people online know me as maarkn. I'm a senior software engineer based in Goiânia, Brazil, focused on backend and applied AI, working with teams around the world.",
+      "I've shipped software professionally since 2019. Over six-plus years I moved from frontend into backend and architecture — VoIP platforms, fintech apps, real-estate and govtech assistants, and most recently leading a CRM backend rewrite in Go. I work end to end, often as the only engineer or the technical lead.",
+      "My recent focus is applied generative AI: RAG pipelines, LLM agents and vector search wired into products people actually use — not demos. I care about clean architecture, but I care more about software that works, doesn't surprise the team that maintains it, and gives the user a smooth ride.",
+      "I'm open to senior roles abroad — Europe (Ireland, Germany, the Netherlands) and Canada — on-site, hybrid or remote. I work in English every day and I'm ready to relocate."
     ],
     "valuesTitle": "How I work",
     "values": [
@@ -364,8 +364,8 @@
   "links": {
     "eyebrow": "Find me",
     "name": "Marco Filho",
-    "role": "Senior Fullstack Engineer · maarkn",
-    "bio": "Senior fullstack engineer working remotely from Brazil. Building products that ship, not slides that don't.",
+    "role": "Senior AI/LLM & Backend Engineer · maarkn",
+    "bio": "Senior software engineer focused on backend (Go, TypeScript) and applied AI. Building products that ship — open to senior roles in the EU and Canada.",
     "available": "Open to new opportunities",
     "links": {
       "linkedin": {
@@ -426,7 +426,7 @@
     "details": {
       "self-employed-freelance": {
         "tagline": "Building products end-to-end for clients across LatAm and the US.",
-        "context": "After ten years in product engineering inside companies, I turned to consulting: same craftsmanship, different shape of accountability. Each engagement is a thin contract focused on shipping the smallest thing that earns the next conversation.",
+        "context": "After six years in product teams inside companies, I turned to consulting: same craftsmanship, different shape of accountability. Each engagement is a thin contract focused on shipping the smallest thing that earns the next conversation.",
         "responsibilities": [
           "Discovery, scoping and proposal: translate a fuzzy brief into a one-page plan and an honest estimate.",
           "Architecture and tech choice: pick the boring stack that fits the size of the team and the speed they want.",

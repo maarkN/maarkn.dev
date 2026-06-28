@@ -1,5 +1,6 @@
 import { SYSTEM_PROMPT } from "@/lib/chat-system-prompt";
 import { clientKey, consume } from "@/lib/rate-limit";
+import { retrieve, formatContext } from "@/lib/rag";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,14 @@ export async function POST(request: Request) {
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
+  // RAG: pull the most relevant slices of Marco's CV/dossiers for this question.
+  const lastUser =
+    [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const context = formatContext(await retrieve(lastUser, { k: 6, apiKey }));
+  const systemContent = context
+    ? `${SYSTEM_PROMPT}\n\n# Retrieved context\nThe excerpts below come from Marco's CV and project dossiers. Ground your answer in them and name the relevant project, metric or tech. If the answer is not in this context or the brief above, say you are not sure and point to the contact form — never invent.\n\n${context}`
+    : SYSTEM_PROMPT;
+
   const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -63,7 +72,7 @@ export async function POST(request: Request) {
       stream: true,
       temperature: 0.7,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemContent },
         ...messages,
       ],
     }),

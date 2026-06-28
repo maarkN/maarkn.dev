@@ -36,6 +36,8 @@ export type Project = {
   /** Optional gallery shown on the detail page below the hero. */
   gallery?: ProjectGalleryItem[];
   links?: { repo?: string; demo?: string; case?: string };
+  /** Optional uploaded cover image path (served by /uploads/...). */
+  coverImage?: string | null;
 };
 
 export const projects: Project[] = [

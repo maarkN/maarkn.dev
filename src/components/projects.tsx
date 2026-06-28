@@ -1,9 +1,8 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { featuredProjects } from "@/lib/projects";
 import { ProjectCard } from "./project-card";
-import type { ProjectCategory, ProjectStatus } from "@/lib/projects";
+import type { Project, ProjectCategory, ProjectStatus } from "@/lib/projects";
 import type { Locale } from "@/i18n/config";
 
 type Labels = {
@@ -17,7 +16,15 @@ type Labels = {
   taglines: Record<string, string>;
 };
 
-export function Projects({ locale, labels }: { locale: Locale; labels: Labels }) {
+export function Projects({
+  locale,
+  labels,
+  projects,
+}: {
+  locale: Locale;
+  labels: Labels;
+  projects: Project[];
+}) {
   return (
     <section id="work" className="relative border-t border-[var(--border)]">
       <div className="mx-auto w-full max-w-[1280px] px-4 py-16 sm:px-6 sm:py-24 md:px-12 md:py-32">
@@ -50,7 +57,7 @@ export function Projects({ locale, labels }: { locale: Locale; labels: Labels })
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {featuredProjects.map((p, i) => (
+          {projects.map((p, i) => (
             <ProjectCard
               key={p.slug}
               project={p}

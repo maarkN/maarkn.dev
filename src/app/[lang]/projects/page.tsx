@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
+import { getAllProjects, buildTaglines, projectCategories } from "@/lib/projects-repo";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { ProjectsFilter } from "@/components/projects-filter";
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
     "Every product Marco Filho is willing to put his name on — filtered by category.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ProjectsIndexPage({
   params,
 }: PageProps<"/[lang]/projects">) {
@@ -19,6 +22,8 @@ export default async function ProjectsIndexPage({
 
   const dict = await getDictionary(lang);
   const p = dict.projects;
+  const allProjects = await getAllProjects();
+  const taglines = buildTaglines(allProjects, p.taglines);
 
   return (
     <>
@@ -39,13 +44,15 @@ export default async function ProjectsIndexPage({
         <section className="mx-auto w-full max-w-[1280px] px-4 pb-20 sm:px-6 sm:pb-32 md:px-12">
           <ProjectsFilter
             locale={lang}
+            projects={allProjects}
+            categories={projectCategories}
             labels={{
               filterAll: p.page.filterAll,
               empty: p.page.empty,
               view: p.view,
               categories: p.categories,
               statuses: p.statuses,
-              taglines: p.taglines,
+              taglines,
             }}
           />
         </section>

@@ -1,18 +1,26 @@
+# OPTIONAL self-contained Postgres + pgvector for local dev.
+#
+# This project currently points at an existing local Postgres container
+# (database `maarkn_website`) — see .env.local / .env.example. Use this compose
+# only if you DON'T already have a local Postgres. It maps host port 5433 to
+# avoid clashing with a Postgres already on 5432; set DATABASE_URL to
+# postgresql://maarkn:maarkn@localhost:5433/maarkn_website?schema=public when using it.
 services:
   postgres:
-    image: postgres:17-alpine
+    # pgvector image = Postgres 17 + the `vector` extension for the RAG agent.
+    image: pgvector/pgvector:pg17
     container_name: maarkn-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: maarkn
       POSTGRES_PASSWORD: maarkn
-      POSTGRES_DB: maarkn_dev
+      POSTGRES_DB: maarkn_website
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - maarkn-pg-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U maarkn -d maarkn_dev"]
+      test: ["CMD-SHELL", "pg_isready -U maarkn -d maarkn_website"]
       interval: 5s
       timeout: 3s
       retries: 5

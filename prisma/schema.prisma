@@ -1,17 +1,19 @@
-// Prisma schema for the maarkn.dev admin CMS.
+// Prisma schema for the maarkn.dev admin CMS + RAG knowledge base.
 //
-// Currently SQLite for a one-step Vercel deploy. JSON fields land as TEXT and
-// are encoded/decoded in the application layer. Switching back to Postgres
-// (via the bundled docker-compose) only requires changing `provider` to
-// "postgresql" and bumping JSON columns to native Json — see README.
+// PostgreSQL with the pgvector extension. Bring up the database with
+// `npm run db:up` (docker compose, pgvector/pgvector image). The string-encoded
+// JSON columns (stackJson, featuresJson) are kept as-is for app compatibility;
+// converting them to native Json is an optional later cleanup.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 model User {
@@ -51,9 +53,44 @@ model Project {
   /// "public" exposes the repo button when repoUrl is set; "private" hides it
   /// in favor of a "Private project" pill.
   sourceVisibility String @default("public")
+  /// Optional uploaded cover image, served by the /uploads/[...] route.
+  coverImage    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@index([featured])
   @@index([category])
+}
+
+/// RAG knowledge base: chunked, embedded slices of Marco's curated CV/dossiers.
+/// The `embedding` column is a pgvector type; it is written and queried via raw
+/// SQL (Prisma cannot express vector operators), so it is typed Unsupported.
+model KnowledgeChunk {
+  id         String                       @id @default(cuid())
+  source     String // file the chunk came from, e.g. "projects/sevencred.md"
+  sourceType String                       @default("dossier")
+  title      String? // nearest heading, for citations
+  content    String
+  chunkIndex Int                          @default(0)
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime                     @default(now())
+
+  @@index([source])
+}
+
+/// History of AI-generated, job-tailored application materials (admin tool).
+model Generation {
+  id               String   @id @default(cuid())
+  company          String?
+  roleTitle        String?
+  language         String   @default("en")
+  jobDescription   String
+  resume           String
+  coverLetter      String
+  screeningAnswers String
+  /// JSON-encoded list of knowledge sources used (see lib/json-list.ts).
+  sourcesJson      String   @default("[]")
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
 }

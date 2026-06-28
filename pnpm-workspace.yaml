@@ -1,0 +1,10 @@
+# pnpm 10.4+/11 reads build-script approvals from here (not package.json#pnpm).
+# These packages have legitimate install scripts: Prisma generates its client and
+# downloads the query engine; esbuild/sharp/unrs-resolver fetch native binaries.
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver

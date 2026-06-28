@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ProjectCard } from "./project-card";
-import { projectCategories, projects, type Project, type ProjectCategory, type ProjectStatus } from "@/lib/projects";
+import type { Project, ProjectCategory, ProjectStatus } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 
 type Labels = {
@@ -17,23 +17,33 @@ type Labels = {
 
 type FilterValue = "all" | ProjectCategory;
 
-export function ProjectsFilter({ labels, locale }: { labels: Labels; locale: string }) {
+export function ProjectsFilter({
+  labels,
+  locale,
+  projects,
+  categories,
+}: {
+  labels: Labels;
+  locale: string;
+  projects: Project[];
+  categories: ProjectCategory[];
+}) {
   const [active, setActive] = useState<FilterValue>("all");
 
   const counts = useMemo(() => {
     const map = new Map<FilterValue, number>([["all", projects.length]]);
-    for (const c of projectCategories) {
+    for (const c of categories) {
       map.set(c, projects.filter((p) => p.category === c).length);
     }
     return map;
-  }, []);
+  }, [projects, categories]);
 
   const visible: Project[] =
     active === "all" ? projects : projects.filter((p) => p.category === active);
 
   const filters: { value: FilterValue; label: string }[] = [
     { value: "all", label: labels.filterAll },
-    ...projectCategories.map((c) => ({ value: c, label: labels.categories[c] })),
+    ...categories.map((c) => ({ value: c, label: labels.categories[c] })),
   ];
 
   return (

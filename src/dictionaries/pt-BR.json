@@ -15,22 +15,22 @@
     "dev": "Dev"
   },
   "hero": {
-    "badgeAvailable": "Aberto a novas oportunidades",
+    "badgeAvailable": "Aberto a vagas no exterior — UE e Canadá",
     "eyebrow": "Marco Filho · maarkn",
     "title": {
-      "line1": "Construo produtos",
-      "line2": "digitais que",
-      "line3": "as pessoas usam de verdade."
+      "line1": "Construo produtos de IA",
+      "line2": "e os backends",
+      "line3": "que os colocam no ar."
     },
-    "role": "Engenheiro fullstack sênior · 5+ anos · Remoto do Brasil",
-    "sub": "Ajudo empresas a transformar ideias em produtos limpos, rápidos e confiáveis — do primeiro esboço até a versão que chega ao usuário e cresce. Faço a arquitetura, escrevo o código e converso com quem vai usar.",
+    "role": "Engenheiro Sênior de IA/LLM & Backend · 6+ anos · Go · TypeScript · Aberto a UE e Canadá",
+    "sub": "Projeto e construo sistemas de IA/LLM em produção e os backends por trás deles — arquitetura, APIs, deploy e os dados bagunçados do mundo real no meio do caminho. Seis anos e meio entregando em healthtech, govtech, fintech e SaaS, muitas vezes como único engenheiro ou tech lead.",
     "ctaPrimary": "Ver projetos",
     "ctaSecondary": "Baixar CV"
   },
   "card": {
     "label": "identity_card.tsx",
     "name": "Marco Filho",
-    "role": "Engenheiro Fullstack Sênior",
+    "role": "Engenheiro Sênior de IA/LLM & Backend",
     "stats": {
       "years": "Anos no ofício",
       "projects": "Produtos entregues",
@@ -64,10 +64,10 @@
     "kicker": "Sobre",
     "title": "Um construtor que cuida dos detalhes e entrega o trabalho.",
     "bio": [
-      "Eu sou o Marco — na internet a maioria das pessoas me conhece como maarkn. Sou engenheiro fullstack sênior em Goiânia, atendendo clientes e times pelo mundo.",
-      "Comecei a programar profissionalmente em 2019 e nunca mais parei. Nesses anos saí de trainee de frontend para liderar a arquitetura de produtos usados por milhares de pessoas — plataformas de VoIP, apps de fintech, assistentes para imobiliárias, sites de museus, chatbots agrícolas e algumas coisas que ainda não posso comentar.",
-      "O que eu realmente curto é estar do começo ao fim: entender o que as pessoas precisam de verdade, desenhar como o sistema vai se comportar, escrever o código que dá vida a isso e seguir por perto quando entra no ar e cresce. Gosto de arquitetura limpa, mas gosto mais de software que funciona, não surpreende o time que mantém e entrega uma experiência boa pra quem usa.",
-      "Quando não estou programando, estou estudando — agora melhorando o inglês pra morar fora, e explorando como agentes de IA podem ser úteis no dia a dia em vez de só impressionar em demo."
+      "Eu sou o Marco — na internet a maioria me conhece como maarkn. Sou engenheiro de software sênior em Goiânia, focado em backend e IA aplicada, atendendo times pelo mundo.",
+      "Entrego software profissionalmente desde 2019. Em pouco mais de seis anos saí do frontend para backend e arquitetura — plataformas de VoIP, apps de fintech, assistentes para imobiliárias e govtech, e mais recentemente liderando a reescrita de um backend de CRM em Go. Trabalho de ponta a ponta, muitas vezes como único engenheiro ou tech lead.",
+      "Meu foco recente é IA generativa aplicada: pipelines de RAG, agentes de LLM e busca vetorial dentro de produtos que as pessoas usam de verdade — não demos. Gosto de arquitetura limpa, mas gosto mais de software que funciona, não surpreende o time que mantém e entrega uma boa experiência pra quem usa.",
+      "Estou aberto a vagas sênior no exterior — Europa (Irlanda, Alemanha, Holanda) e Canadá — presencial, híbrido ou remoto. Trabalho em inglês todo dia e estou pronto para me mudar."
     ],
     "valuesTitle": "Como eu trabalho",
     "values": [
@@ -364,8 +364,8 @@
   "links": {
     "eyebrow": "Me ache",
     "name": "Marco Filho",
-    "role": "Engenheiro Fullstack Sênior · maarkn",
-    "bio": "Engenheiro fullstack sênior trabalhando remoto do Brasil. Construindo produtos que entregam, não slides que não.",
+    "role": "Engenheiro Sênior de IA/LLM & Backend · maarkn",
+    "bio": "Engenheiro de software sênior focado em backend (Go, TypeScript) e IA aplicada. Construindo produtos que vão pro ar — aberto a vagas sênior na UE e no Canadá.",
     "available": "Aberto a novas oportunidades",
     "links": {
       "linkedin": {
@@ -426,7 +426,7 @@
     "details": {
       "self-employed-freelance": {
         "tagline": "Construindo produtos de ponta a ponta pra clientes na América Latina e nos EUA.",
-        "context": "Depois de dez anos como engenheiro de produto dentro de empresas, virei consultor: mesmo cuidado, formato de accountability diferente. Cada engagement é um contrato fino, focado em entregar a menor coisa que ganha a próxima conversa.",
+        "context": "Depois de seis anos em times de produto dentro de empresas, virei consultor: mesmo cuidado, formato de accountability diferente. Cada engagement é um contrato fino, focado em entregar a menor coisa que ganha a próxima conversa.",
         "responsibilities": [
           "Discovery, scoping e proposta: traduzir um briefing nebuloso num plano de uma página e uma estimativa honesta.",
           "Arquitetura e escolha de tecnologia: stack chato que cabe no tamanho do time e na velocidade que querem.",

@@ -38,6 +38,12 @@ yarn-error.log*
 prisma/dev.db
 prisma/dev.db-journal
 
+# uploaded media (served from a volume in prod)
+/uploads
+
+# one-time backup of the pre-Postgres SQLite migrations
+/prisma/migrations.sqlite.bak
+
 # vercel
 .vercel
 

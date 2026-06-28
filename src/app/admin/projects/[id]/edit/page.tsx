@@ -58,6 +58,7 @@ export default async function EditProjectPage({
           description: project.description,
           role: project.role,
           features: decodeStringList(project.featuresJson),
+          coverImage: project.coverImage,
         }}
       />
     </AdminShell>

@@ -178,6 +178,14 @@ function Cover({
           backgroundSize: "40px 40px",
         }}
       />
+      {project.coverImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={project.coverImage}
+          alt={project.name}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
       <span className="absolute left-5 top-5 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-white/85">
         <span className="h-1.5 w-1.5 rounded-full bg-white/85" />
         {project.slug}
@@ -190,12 +198,14 @@ function Cover({
       >
         {statusLabel}
       </span>
-      <span
-        aria-hidden
-        className="absolute bottom-4 left-5 font-display text-[clamp(3rem,6vw,5rem)] font-bold leading-none tracking-[-0.05em] text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
-      >
-        {project.monogram}
-      </span>
+      {!project.coverImage ? (
+        <span
+          aria-hidden
+          className="absolute bottom-4 left-5 font-display text-[clamp(3rem,6vw,5rem)] font-bold leading-none tracking-[-0.05em] text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+        >
+          {project.monogram}
+        </span>
+      ) : null}
     </div>
   );
 }
