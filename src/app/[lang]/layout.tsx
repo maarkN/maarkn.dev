@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import "../globals.css";
 import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
 import { ChatLauncher } from "@/components/chat/chat-launcher";
@@ -68,10 +69,10 @@ export default async function LocaleLayout({
       suppressHydrationWarning
       className={fontVars}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
-      </head>
       <body className="min-h-dvh font-sans antialiased">
+        <Script id="theme-boot" strategy="beforeInteractive">
+          {themeBootScript}
+        </Script>
         <ThemeProvider>
           <DevMarqueeStrip />
           {children}
