@@ -94,3 +94,28 @@ model Generation {
 
   @@index([createdAt])
 }
+
+/// Personal job-application tracker (admin-only), modeled on the CSV tracker.
+/// `source` = where the lead came from (vanhack, linkedin, company_site, ...).
+model JobApplication {
+  id           String    @id @default(cuid())
+  company      String
+  country      String?
+  city         String?
+  role         String?
+  fit          String?
+  source       String    @default("company_site")
+  status       String    @default("not_applied")
+  careersUrl   String?
+  jobUrl       String?
+  sponsorsVisa Boolean   @default(false)
+  targetSalary String?
+  appliedAt    DateTime?
+  followUp     String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status])
+  @@index([source])
+}
