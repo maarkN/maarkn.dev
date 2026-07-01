@@ -1,5 +1,5 @@
-# Production self-host stack for maarkn.dev.
-# Next app (built from Dockerfile) + Postgres/pgvector + Traefik (TLS).
+# Production self-host stack for maarkn.dev (EC2 / any Docker host).
+# Next app (built from Dockerfile) + Postgres/pgvector + Traefik v3.6 (TLS).
 #
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
@@ -12,27 +12,61 @@
 # First deploy — apply migrations before the app serves traffic:
 #   docker compose -f docker-compose.prod.yml run --rm migrate
 # (the `migrate` service reuses the build and runs `prisma migrate deploy`).
+#
+# EC2 security group: open inbound 80 (HTTP→HTTPS redirect + ACME) and 443 (HTTPS).
+# Point an A record for ${APP_DOMAIN} at the instance's public IP before `up`.
 
 services:
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.6
     restart: unless-stopped
     command:
+      # --- providers ---
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=web
+      # --- entrypoints ---
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      # global HTTP -> HTTPS redirect
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      # HSTS + modern TLS defaults on the HTTPS entrypoint
+      - --entrypoints.websecure.http.tls=true
+      # --- Let's Encrypt (TLS-ALPN-01 challenge, needs port 443) ---
       - --certificatesresolvers.le.acme.tlschallenge=true
-      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL:?set ACME_EMAIL}
       - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      # --- observability ---
+      - --accesslog=true
+      - --log.level=INFO
+      - --ping=true
+      # --- dashboard (optional): uncomment + the router labels below to expose it
+      # - --api.dashboard=true
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      # read-only socket so Traefik can watch containers but not control the host
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-letsencrypt:/letsencrypt
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    # --- optional secured dashboard at https://traefik.${APP_DOMAIN} ---
+    # Generate a hash: `echo $(htpasswd -nB admin) | sed -e s/\$/\$\$/g`
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.dashboard.rule=Host(`traefik.${APP_DOMAIN:-maarkn.dev}`)
+    #   - traefik.http.routers.dashboard.entrypoints=websecure
+    #   - traefik.http.routers.dashboard.tls.certresolver=le
+    #   - traefik.http.routers.dashboard.service=api@internal
+    #   - traefik.http.routers.dashboard.middlewares=dashboard-auth
+    #   - traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}
 
   postgres:
     image: pgvector/pgvector:pg17
@@ -43,6 +77,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-maarkn}
     volumes:
       - maarkn-pg-data:/var/lib/postgresql/data
+    networks:
+      # internal only — never reachable from Traefik / the public entrypoints
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-maarkn} -d ${POSTGRES_DB:-maarkn}"]
       interval: 5s
@@ -60,8 +97,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - web        # reachable by Traefik
+      - internal   # reaches Postgres
     labels:
       - traefik.enable=true
+      - traefik.docker.network=web
       - traefik.http.routers.maarkn.rule=Host(`${APP_DOMAIN:-maarkn.dev}`)
       - traefik.http.routers.maarkn.entrypoints=websecure
       - traefik.http.routers.maarkn.tls.certresolver=le
@@ -85,7 +126,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - internal
     command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+
+networks:
+  # public-facing: Traefik <-> app
+  web:
+    name: web
+  # private backend: app <-> postgres (no external exposure)
+  internal:
+    name: internal
+    internal: true
 
 volumes:
   maarkn-pg-data:

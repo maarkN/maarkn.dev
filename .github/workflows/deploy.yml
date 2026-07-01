@@ -1,0 +1,75 @@
+name: CI / Deploy
+
+# Push to main -> lint + build gate, then SSH into the EC2 and rebuild the stack.
+# Manual re-deploys via the "Run workflow" button (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never let two deploys run at once; queue them (don't cancel a build mid-flight).
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Lint & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm/action-setup reads the version from package.json#packageManager.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      # `next build` also type-checks; it must pass with no DB (same contract as
+      # the Docker build stage, which builds without DATABASE_URL).
+      - name: Build
+        run: pnpm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  deploy:
+    name: Deploy to EC2
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: SSH deploy (git pull + docker compose up --build)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.EC2_APP_DIR }}"
+
+            echo "==> Syncing working tree to origin/main"
+            git fetch --prune origin
+            git reset --hard origin/main   # .env is gitignored, so it survives
+
+            echo "==> Applying database migrations"
+            docker compose -f docker-compose.prod.yml up -d postgres
+            docker compose -f docker-compose.prod.yml run --rm migrate
+
+            echo "==> Building & restarting the app"
+            docker compose -f docker-compose.prod.yml up -d --build app traefik
+
+            echo "==> Pruning dangling images"
+            docker image prune -f

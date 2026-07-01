@@ -1,23 +1,33 @@
 # syntax=docker/dockerfile:1
 # Multi-stage build for the Next.js 16 standalone server + Prisma client.
+# Package manager: pnpm (via corepack), pinned by package.json#packageManager.
 
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
+# corepack provisions the pnpm@11.x declared in package.json; upgrade it first so
+# the bundled keyring can verify recent pnpm releases (avoids the "keyid" error).
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN npm install -g corepack@latest && corepack enable
 WORKDIR /app
 
-# --- deps: install with lockfile (postinstall runs `prisma generate`) ---
+# --- deps: install with frozen lockfile (postinstall runs `prisma generate`) ---
 FROM base AS deps
-COPY package.json package-lock.json ./
+# pnpm-workspace.yaml carries the build-script approvals (Prisma engine, sharp);
+# without it those postinstalls are skipped and the runtime crashes.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma
-RUN npm ci
+# node-linker=hoisted gives a flat, npm-style node_modules so the runner stage can
+# cherry-pick the Prisma client/engine below without chasing pnpm symlinks.
+RUN printf 'node-linker=hoisted\n' > .npmrc \
+    && pnpm install --frozen-lockfile
 
 # --- builder: generate Prisma client + build the standalone server ---
 FROM base AS builder
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate
-RUN npm run build
+RUN pnpm exec prisma generate
+RUN pnpm run build
 
 # --- runner: minimal runtime image ---
 FROM base AS runner
