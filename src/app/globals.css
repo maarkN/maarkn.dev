@@ -89,6 +89,29 @@
    ════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Hero entrance — pure CSS (no JS gating) so the LCP heading paints immediately.
+   .hero-rise fades + slides; .hero-rise-solid keeps opacity:1 (for the LCP h1). */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hero-slide {
+  from { transform: translateY(16px); }
+  to   { transform: translateY(0); }
+}
+.hero-rise {
+  opacity: 0;
+  animation: hero-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--hero-delay, 0s);
+}
+.hero-rise-solid {
+  animation: hero-slide 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--hero-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise, .hero-rise-solid { animation: none; opacity: 1; transform: none; }
+}
+
 html {
   scroll-behavior: smooth;
   background: var(--bg);

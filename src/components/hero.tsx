@@ -1,6 +1,4 @@
-"use client";
-
-import { motion } from "framer-motion";
+import type { CSSProperties } from "react";
 import { ArrowRight, Download } from "lucide-react";
 import { IdentityCard } from "./identity-card";
 
@@ -16,10 +14,9 @@ type HeroLabels = {
 
 type CardLabels = React.ComponentProps<typeof IdentityCard>["labels"];
 
-const fadeUp = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-};
+// Staggered CSS entrance (runs on first paint, no JS) — the LCP heading paints
+// at full opacity immediately instead of waiting for framer-motion to hydrate.
+const delay = (s: number) => ({ "--hero-delay": `${s}s` }) as CSSProperties;
 
 export function Hero({
   labels,
@@ -34,56 +31,50 @@ export function Hero({
 
       <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-12 px-4 pt-24 pb-20 sm:px-6 sm:gap-16 sm:pt-28 sm:pb-24 md:grid-cols-[1fr_400px] md:gap-20 md:px-12 md:pt-40 md:pb-32">
         <div className="max-w-[640px]">
-          <motion.span
-            {...fadeUp}
-            transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
-            className="inline-flex items-center gap-2 border border-[var(--green)]/40 bg-[color-mix(in_oklab,var(--green)_8%,transparent)] px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--green)]"
+          <span
+            style={delay(0.02)}
+            className="hero-rise inline-flex items-center gap-2 border border-[var(--green)]/40 bg-[color-mix(in_oklab,var(--green)_8%,transparent)] px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--green)]"
           >
             <span className="relative flex h-2 w-2">
               <span className="absolute inset-0 animate-ping rounded-full bg-[var(--green)] opacity-60" />
               <span className="relative h-2 w-2 rounded-full bg-[var(--green)]" />
             </span>
             {labels.badgeAvailable}
-          </motion.span>
+          </span>
 
-          <motion.p
-            {...fadeUp}
-            transition={{ duration: 0.5, delay: 0.18, ease: "easeOut" }}
-            className="dev-eyebrow mt-8 font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]"
+          <p
+            style={delay(0.08)}
+            className="hero-rise dev-eyebrow mt-8 font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]"
           >
             {labels.eyebrow}
-          </motion.p>
+          </p>
 
-          <motion.h1
-            {...fadeUp}
-            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-            className="dev-hero-shadow mt-4 font-display text-[clamp(2rem,7vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.03em]"
+          <h1
+            style={delay(0.12)}
+            className="hero-rise-solid dev-hero-shadow mt-4 font-display text-[clamp(2rem,7vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.03em]"
           >
             <span className="block text-[var(--text)]">{labels.title.line1}</span>
             <span className="block text-[var(--text)]">{labels.title.line2}</span>
             <span className="block text-[var(--accent)]">{labels.title.line3}</span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            {...fadeUp}
-            transition={{ duration: 0.5, delay: 0.45, ease: "easeOut" }}
-            className="mt-3 max-w-[560px] text-base font-light text-[var(--muted)]"
+          <p
+            style={delay(0.2)}
+            className="hero-rise mt-3 max-w-[560px] text-base font-light text-[var(--muted)]"
           >
             {labels.role}
-          </motion.p>
+          </p>
 
-          <motion.p
-            {...fadeUp}
-            transition={{ duration: 0.5, delay: 0.55, ease: "easeOut" }}
-            className="mt-8 max-w-[560px] text-[1.05rem] font-light leading-[1.75] text-[var(--text-2)]"
+          <p
+            style={delay(0.26)}
+            className="hero-rise mt-8 max-w-[560px] text-[1.05rem] font-light leading-[1.75] text-[var(--text-2)]"
           >
             {labels.sub}
-          </motion.p>
+          </p>
 
-          <motion.div
-            {...fadeUp}
-            transition={{ duration: 0.5, delay: 0.7, ease: "easeOut" }}
-            className="mt-10 flex flex-wrap items-center gap-4"
+          <div
+            style={delay(0.32)}
+            className="hero-rise mt-10 flex flex-wrap items-center gap-4"
           >
             <a
               href="#work"
@@ -102,7 +93,7 @@ export function Hero({
               <Download className="h-4 w-4" strokeWidth={2.2} />
               {labels.ctaSecondary}
             </a>
-          </motion.div>
+          </div>
         </div>
 
         <IdentityCard labels={cardLabels} />
