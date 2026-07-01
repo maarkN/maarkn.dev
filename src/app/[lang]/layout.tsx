@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { notFound } from "next/navigation";
 import Script from "next/script";
@@ -37,6 +37,11 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#0a0a0b",
+  colorScheme: "dark",
+};
+
 export async function generateMetadata({
   params,
 }: {
@@ -58,9 +63,13 @@ export async function generateMetadata({
     category: "technology",
     formatDetection: { email: false, telephone: false, address: false },
     icons: {
-      icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-      shortcut: "/icon.svg",
-      apple: "/icon.svg",
+      icon: [
+        { url: "/favicon/favicon.ico", sizes: "48x48" },
+        { url: "/favicon/favicon.svg", type: "image/svg+xml" },
+        { url: "/favicon/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+        { url: "/favicon/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      ],
+      apple: [{ url: "/favicon/apple-touch-icon.png", sizes: "180x180" }],
     },
     openGraph: {
       type: "website",
