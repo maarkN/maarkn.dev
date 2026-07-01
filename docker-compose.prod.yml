@@ -127,7 +127,8 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - internal
+      - web        # seed/ingest reach external APIs (OpenAI embeddings) via here
+      - internal   # reaches Postgres
     command: ["node_modules/.bin/prisma", "migrate", "deploy"]
 
 networks:
