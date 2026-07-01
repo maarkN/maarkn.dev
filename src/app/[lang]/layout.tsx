@@ -8,7 +8,16 @@ import { ChatLauncher } from "@/components/chat/chat-launcher";
 import { DevMarqueeStrip } from "@/components/dev/marquee-strip";
 import { ConsoleEgg } from "@/components/dev/console-egg";
 import { KonamiEgg } from "@/components/dev/konami-egg";
-import { getDictionary, hasLocale, locales, type Locale } from "@/i18n/config";
+import { getDictionary, hasLocale, locales, defaultLocale, type Locale } from "@/i18n/config";
+import {
+  SITE_URL,
+  SITE_NAME,
+  AUTHOR,
+  KEYWORDS,
+  seoByLocale,
+  websiteLd,
+  personLd,
+} from "@/lib/seo";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,25 +37,59 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://maarkn.dev"),
-  title: {
-    default: "Marco Filho · Senior Fullstack Engineer · maarkn.dev",
-    template: "%s · maarkn.dev",
-  },
-  description:
-    "I help companies turn ideas into clean, fast and reliable digital products. Senior fullstack engineer with 6 years of experience, working remotely from Brazil.",
-  openGraph: {
-    title: "Marco Filho · Senior Fullstack Engineer",
-    description:
-      "I help companies turn ideas into clean, fast and reliable digital products.",
-    url: "https://maarkn.dev",
-    siteName: "maarkn.dev",
-    type: "website",
-  },
-  twitter: { card: "summary_large_image" },
-  icons: { icon: "/favicon.ico" },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const l: Locale = hasLocale(lang) ? lang : defaultLocale;
+  const { title, description, ogLocale } = seoByLocale[l];
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: { default: title, template: "%s · maarkn.dev" },
+    description,
+    applicationName: SITE_NAME,
+    authors: [{ name: AUTHOR, url: SITE_URL }],
+    creator: AUTHOR,
+    publisher: AUTHOR,
+    keywords: KEYWORDS,
+    category: "technology",
+    formatDetection: { email: false, telephone: false, address: false },
+    icons: {
+      icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+      shortcut: "/icon.svg",
+      apple: "/icon.svg",
+    },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      title,
+      description,
+      url: `/${l}`,
+      locale: ogLocale,
+      alternateLocale: l === "en" ? ["pt_BR"] : ["en_US"],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      creator: "@maarkn",
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
+  };
+}
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -73,6 +116,12 @@ export default async function LocaleLayout({
         <Script id="theme-boot" strategy="beforeInteractive">
           {themeBootScript}
         </Script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([websiteLd(), personLd(lang as Locale)]),
+          }}
+        />
         <ThemeProvider>
           <DevMarqueeStrip />
           {children}

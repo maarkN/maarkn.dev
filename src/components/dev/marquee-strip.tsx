@@ -5,7 +5,7 @@
  */
 export function DevMarqueeStrip() {
   const message =
-    "maarkn@dev:~$ uptime 6y · 30+ projects shipped · stack: TS / NestJS / React / Flutter / AWS · status: OPEN_TO_WORK";
+    "maarkn@dev:~$ uptime 6y · 20+ products shipped · stack: Go / TS / NestJS / React / Flutter / AWS · status: OPEN_TO_WORK";
   return (
     <div className="dev-cli-strip" aria-hidden>
       <span>

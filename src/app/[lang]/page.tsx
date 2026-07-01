@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale } from "@/i18n/config";
+import { getDictionary, hasLocale, defaultLocale } from "@/i18n/config";
+import { languageAlternates } from "@/lib/seo";
 import { Nav } from "@/components/nav";
 import { Hero } from "@/components/hero";
 import { BigNumbers } from "@/components/big-numbers";
@@ -12,6 +14,16 @@ import { LatestLogs } from "@/components/blog/latest-logs";
 import { Footer } from "@/components/footer";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  const l = hasLocale(lang) ? lang : defaultLocale;
+  return {
+    alternates: { canonical: `/${l}`, languages: languageAlternates },
+  };
+}
 
 export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;

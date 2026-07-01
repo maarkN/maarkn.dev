@@ -15,15 +15,15 @@
     "dev": "Dev"
   },
   "hero": {
-    "badgeAvailable": "Aberto a vagas no exterior — UE e Canadá",
+    "badgeAvailable": "Aberto a vagas sênior — UE e Canadá",
     "eyebrow": "Marco Filho · maarkn",
     "title": {
-      "line1": "Construo produtos de IA",
-      "line2": "e os backends",
-      "line3": "que os colocam no ar."
+      "line1": "Produtos de IA,",
+      "line2": "entregues de ponta a ponta",
+      "line3": "— muitas vezes sozinho."
     },
-    "role": "Engenheiro Sênior de IA/LLM & Backend · 6+ anos · Go · TypeScript · Aberto a UE e Canadá",
-    "sub": "Projeto e construo sistemas de IA/LLM em produção e os backends por trás deles — arquitetura, APIs, deploy e os dados bagunçados do mundo real no meio do caminho. Seis anos e meio entregando em healthtech, govtech, fintech e SaaS, muitas vezes como único engenheiro ou tech lead.",
+    "role": "Engenheiro Sênior de IA/LLM & Backend · 6+ anos · 20+ produtos · Go · TypeScript · Aberto a UE e Canadá",
+    "sub": "Levo produtos de um briefing vago até produção — arquitetura, APIs, deploy e os dados bagunçados do mundo real no meio do caminho — e já fiz isso 20+ vezes em healthtech, govtech, fintech e SaaS, quase sempre como único engenheiro ou tech lead.",
     "ctaPrimary": "Ver projetos",
     "ctaSecondary": "Baixar CV"
   },
@@ -39,16 +39,16 @@
     }
   },
   "bigNumbers": {
-    "kicker": "Alguns números",
-    "title": "Seis anos construindo coisas que não quebram.",
+    "kicker": "Em números",
+    "title": "Seis anos, 20+ produtos entregues — nenhum deles frágil.",
     "items": {
       "years": {
         "value": "6",
-        "label": "Anos escrevendo software profissionalmente"
+        "label": "Anos entregando software profissionalmente"
       },
       "projects": {
         "value": "20+",
-        "label": "Produtos e plataformas entregues"
+        "label": "Produtos e plataformas entregues de ponta a ponta"
       },
       "stacks": {
         "value": "12",
@@ -56,36 +56,36 @@
       },
       "countries": {
         "value": "2",
-        "label": "Países com clientes atendidos"
+        "label": "Países pra quem já entreguei"
       }
     }
   },
   "about": {
     "kicker": "Sobre",
-    "title": "Um construtor que cuida dos detalhes e entrega o trabalho.",
+    "title": "Um engenheiro sênior que assume o todo — e entrega.",
     "bio": [
-      "Eu sou o Marco — na internet a maioria me conhece como maarkn. Sou engenheiro de software sênior em Goiânia, focado em backend e IA aplicada, atendendo times pelo mundo.",
-      "Entrego software profissionalmente desde 2019. Em pouco mais de seis anos saí do frontend para backend e arquitetura — plataformas de VoIP, apps de fintech, assistentes para imobiliárias e govtech, e mais recentemente liderando a reescrita de um backend de CRM em Go. Trabalho de ponta a ponta, muitas vezes como único engenheiro ou tech lead.",
-      "Meu foco recente é IA generativa aplicada: pipelines de RAG, agentes de LLM e busca vetorial dentro de produtos que as pessoas usam de verdade — não demos. Gosto de arquitetura limpa, mas gosto mais de software que funciona, não surpreende o time que mantém e entrega uma boa experiência pra quem usa.",
-      "Estou aberto a vagas sênior no exterior — Europa (Irlanda, Alemanha, Holanda) e Canadá — presencial, híbrido ou remoto. Trabalho em inglês todo dia e estou pronto para me mudar."
+      "Eu sou o Marco — maarkn na internet. Engenheiro de software sênior em Goiânia, focado em backend e IA aplicada, atendendo times na Europa, EUA e América Latina. Levo produtos de um briefing vago até produção e assumo cada camada no meio do caminho.",
+      "Seis anos e meio, 20+ produtos entregues. Saí do frontend para backend e arquitetura — plataformas de VoIP, apps de fintech, assistentes para imobiliárias e govtech — e mais recentemente liderei a reescrita de um backend de CRM em Go, entregue em menos de dois meses. Trabalho de ponta a ponta, quase sempre como único engenheiro ou tech lead.",
+      "Meu foco agora é IA generativa aplicada em produção: pipelines de RAG, agentes de LLM e busca vetorial dentro de produtos que as pessoas usam de verdade — não demos. Entrego a arquitetura mais simples que resolve o problema e não vai surpreender quem for manter depois.",
+      "Estou aberto a vagas sênior no exterior — Europa (Irlanda, Alemanha, Holanda) e Canadá — presencial, híbrido ou remoto. Trabalho em inglês todo dia, estou pronto pra me mudar rápido e, com 6+ anos, sou elegível ao Critical Skills Permit e ao EU Blue Card."
     ],
     "valuesTitle": "Como eu trabalho",
     "values": [
       {
         "title": "Do começo ao fim",
-        "body": "Da primeira conversa até a versão rodando em produção. Eu não entrego e sumo."
+        "body": "Da primeira conversa até a versão rodando em produção — arquitetura, código, deploy, plantão. Eu não entrego e sumo."
       },
       {
-        "title": "Comunicação clara, sem firula",
-        "body": "Traduzo entre negócio e código. Stakeholder recebe resposta direta, não jargão técnico."
+        "title": "Comunicação clara e honesta",
+        "body": "Traduzo entre negócio e código. Stakeholder recebe resposta direta e estimativa realista, não jargão."
       },
       {
-        "title": "Pragmático no lugar do perfeito",
-        "body": "Entrego a coisa mais simples que resolve, depois ajusto quando a realidade pede."
+        "title": "Pragmático, sem preciosismo",
+        "body": "Entrego a coisa mais simples que resolve, depois reforço quando a realidade cobra. Tecnologia chata que funciona ganha da esperta que não funciona."
       },
       {
-        "title": "Respeito por quem vem depois",
-        "body": "Código é mais lido do que escrito. Deixo o repositório um pouco melhor do que encontrei."
+        "title": "Feito pra ser mantido",
+        "body": "Código é mais lido do que escrito. Deixo o repositório — e o time — melhores do que encontrei."
       }
     ],
     "timelineTitle": "Linha do tempo",
@@ -128,8 +128,8 @@
   },
   "toolkit": {
     "kicker": "Ferramentas",
-    "title": "As ferramentas que eu pego no dia a dia.",
-    "sub": "São as linguagens, frameworks e ideias que mais uso. A lista não é exaustiva — aprendo o que o projeto precisar — mas é uma foto honesta de onde eu tenho fluência.",
+    "title": "As ferramentas que eu pego pra entregar, dia após dia.",
+    "sub": "As linguagens, frameworks e ideias que mais uso. Não é uma lista exaustiva — aprendo o que o projeto precisar — mas é uma foto honesta de onde eu tenho fluência de verdade.",
     "yearsSuffix": "a",
     "groups": {
       "frontend": {
@@ -182,8 +182,8 @@
   },
   "projects": {
     "kicker": "Trabalhos selecionados",
-    "title": "Coisas que entreguei e que as pessoas usam de verdade.",
-    "sub": "Uma fatia dos produtos e plataformas que construí nos últimos anos — pra clientes, empregadores e algumas apostas paralelas. Alguns eu posso mostrar em detalhe; outros ficam anônimos atrás de um NDA.",
+    "title": "Produtos que entreguei e que as pessoas usam de verdade.",
+    "sub": "Uma fatia dos 20+ produtos e plataformas que construí nos últimos anos — pra clientes, empregadores e algumas apostas paralelas. Alguns eu mostro em detalhe; outros ficam atrás de um NDA.",
     "view": "Ver case",
     "seeAll": "Ver todos os projetos",
     "categories": {
@@ -200,14 +200,14 @@
       "archived": "Arquivado"
     },
     "taglines": {
-      "miami-real-estate-assistant": "Assistente WhatsApp pra uma imobiliária em Miami que captura leads, sincroniza imóveis do MLS e responde como um corretor júnior incansável.",
-      "municipalities-chatbot": "Atendente cidade-a-cidade no WhatsApp que rastreia o site de cada prefeitura, indexa o conteúdo e responde dúvidas dos cidadãos sobre serviços, horários e documentos.",
-      "voip-platform": "Chamadas, gravações, transcrições e regras dinâmicas de tarifação num produto VoIP único, integrado ao CRM da empresa.",
-      "fintech-loan-api": "Plataforma de crédito pra um fundo agro brasileiro: APIs, app Flutter pro tomador e crawlers ingerindo dados públicos do governo.",
-      "carbon-credit-platform": "Chatbot de triagem mais um motor de relatórios automatizados que transforma dados crus em documentos de viabilidade com tom jurídico.",
-      "drug-leaflet-platform": "Referência de bulas de medicamentos com foco em SEO e performance — Astro no front, NestJS e crawler da ANVISA no back.",
-      "museum-institutional-site": "Site institucional de um museu, com CRM em Ghost, conteúdo orientado a SEO e webframes interativos pros kiosques internos.",
-      "vanilla-farming-assistant": "Assistente agronômico pra produtores de baunilha, baseado em documentação técnica vetorizada."
+      "miami-real-estate-assistant": "Assistente WhatsApp pra uma imobiliária em Miami que captura e qualifica leads já na primeira mensagem, sincroniza imóveis do MLS e nunca dorme.",
+      "municipalities-chatbot": "Assistente WhatsApp multitenant que rastreia o site de qualquer prefeitura, indexa o conteúdo e responde cidadãos sobre serviços, horários e documentos — no ar em dias, não meses.",
+      "voip-platform": "Chamadas, gravações, transcrições e tarifação dinâmica num único produto VoIP integrado direto ao CRM da empresa — uma nova vertical vendável.",
+      "fintech-loan-api": "O backend, o app Flutter e os pipelines de dados por trás de uma plataforma de crédito pra um fundo agro brasileiro — com ingestão de dados públicos.",
+      "carbon-credit-platform": "Um chatbot de triagem mais um motor que transforma dados crus de projeto em relatórios de viabilidade com padrão jurídico, prontos pra enviar.",
+      "drug-leaflet-platform": "Referência de bulas de medicamentos com foco em SEO e performance — Astro no front, NestJS e crawler da ANVISA atrás.",
+      "museum-institutional-site": "Site institucional de museu com CMS Ghost self-service e webframes interativos que alimentam os kiosques internos.",
+      "vanilla-farming-assistant": "Assistente agronômico pra produtores de baunilha, baseado em documentação técnica vetorizada — respostas reais, com citações."
     },
     "details": {
       "miami-real-estate-assistant": {
@@ -301,8 +301,8 @@
     "stackHeading": "Stack",
     "page": {
       "kicker": "Trabalhos selecionados",
-      "title": "Tudo que eu botaria meu nome.",
-      "sub": "Todos os projetos numa página só, filtráveis por categoria. A lista é curada à mão — apostas pequenas, plataformas grandes e algumas coisas que tenho mais orgulho.",
+      "title": "Todo produto que eu botaria meu nome.",
+      "sub": "Todo o trabalho numa página só, filtrável por categoria — apostas pequenas, plataformas grandes e algumas que me dão orgulho de verdade.",
       "filterAll": "Todos",
       "empty": "Nada nessa categoria ainda."
     },
@@ -319,13 +319,13 @@
     },
     "galleryHeading": "Do projeto",
     "privateLabel": "Projeto privado",
-    "privateNote": "O código é privado — feliz em apresentar pra recrutador ou painel técnico numa call.",
+    "privateNote": "O código é privado — feliz em apresentar ao vivo pra recrutador ou painel técnico numa call.",
     "readMore": "Ver detalhes"
   },
   "contact": {
     "kicker": "Vamos conversar",
-    "title": "Tem alguma coisa pra construir? Bora.",
-    "sub": "O caminho mais rápido é o formulário abaixo — eu leio toda mensagem e respondo em alguns dias úteis. Se preferir outro canal, escolhe o que te servir melhor.",
+    "title": "Contratando, construindo ou avaliando opções? Bora conversar.",
+    "sub": "O caminho mais rápido é o formulário abaixo — leio toda mensagem e respondo em alguns dias úteis. Prefere outro canal? Escolhe o que te servir.",
     "channels": {
       "linkedin": "LinkedIn",
       "email": "Email",
@@ -365,7 +365,7 @@
     "eyebrow": "Me ache",
     "name": "Marco Filho",
     "role": "Engenheiro Sênior de IA/LLM & Backend · maarkn",
-    "bio": "Engenheiro de software sênior focado em backend (Go, TypeScript) e IA aplicada. Construindo produtos que vão pro ar — aberto a vagas sênior na UE e no Canadá.",
+    "bio": "Engenheiro sênior focado em backend (Go, TypeScript) e IA aplicada (RAG, agentes de LLM). 6+ anos, 20+ produtos entregues de ponta a ponta. Aberto a vagas sênior na UE e no Canadá.",
     "available": "Aberto a novas oportunidades",
     "links": {
       "linkedin": {

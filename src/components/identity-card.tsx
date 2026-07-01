@@ -76,9 +76,9 @@ export function IdentityCard({ labels }: { labels: CardLabels }) {
 
               <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--border)] pt-4">
                 <Stat value="6" label={labels.stats.years} />
-                <Stat value="30+" label={labels.stats.projects} />
+                <Stat value="20+" label={labels.stats.projects} />
                 <Stat value="12" label={labels.stats.stack} />
-                <Stat value="4" label={labels.stats.countries} />
+                <Stat value="2" label={labels.stats.countries} />
               </dl>
             </div>
           </div>

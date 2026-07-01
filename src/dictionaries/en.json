@@ -15,15 +15,15 @@
     "dev": "Dev"
   },
   "hero": {
-    "badgeAvailable": "Open to roles abroad — EU & Canada",
+    "badgeAvailable": "Open to senior roles — EU & Canada",
     "eyebrow": "Marco Filho · maarkn",
     "title": {
-      "line1": "I build AI products",
-      "line2": "and the backends",
-      "line3": "that ship them."
+      "line1": "AI products,",
+      "line2": "shipped end-to-end",
+      "line3": "— often solo."
     },
-    "role": "Senior AI/LLM & Backend Engineer · 6+ years · Go · TypeScript · Open to EU & Canada",
-    "sub": "I design and build production AI/LLM systems and the backends behind them — architecture, APIs, deploy, and the messy real-world data in between. Six-plus years shipping across healthtech, govtech, fintech and SaaS, often as the sole engineer or technical lead.",
+    "role": "Senior AI/LLM & Backend Engineer · 6+ yrs · 20+ products · Go · TypeScript · Open to the EU & Canada",
+    "sub": "I take products from a fuzzy brief to production — architecture, APIs, deploy, and the messy real-world data in between — and I've done it 20+ times across healthtech, govtech, fintech and SaaS, usually as the only engineer or the technical lead.",
     "ctaPrimary": "See my work",
     "ctaSecondary": "Download CV"
   },
@@ -39,16 +39,16 @@
     }
   },
   "bigNumbers": {
-    "kicker": "A few numbers",
-    "title": "Six years of building things that don't break.",
+    "kicker": "By the numbers",
+    "title": "Six years, 20+ products shipped — none of them fragile.",
     "items": {
       "years": {
         "value": "6",
-        "label": "Years writing software professionally"
+        "label": "Years shipping software professionally"
       },
       "projects": {
         "value": "20+",
-        "label": "Products and platforms delivered"
+        "label": "Products and platforms shipped end-to-end"
       },
       "stacks": {
         "value": "12",
@@ -56,36 +56,36 @@
       },
       "countries": {
         "value": "2",
-        "label": "Countries with clients I've worked with"
+        "label": "Countries I've delivered for"
       }
     }
   },
   "about": {
     "kicker": "About",
-    "title": "A builder who sweats the details and ships the work.",
+    "title": "A senior engineer who owns the whole thing — and ships it.",
     "bio": [
-      "I'm Marco — most people online know me as maarkn. I'm a senior software engineer based in Goiânia, Brazil, focused on backend and applied AI, working with teams around the world.",
-      "I've shipped software professionally since 2019. Over six-plus years I moved from frontend into backend and architecture — VoIP platforms, fintech apps, real-estate and govtech assistants, and most recently leading a CRM backend rewrite in Go. I work end to end, often as the only engineer or the technical lead.",
-      "My recent focus is applied generative AI: RAG pipelines, LLM agents and vector search wired into products people actually use — not demos. I care about clean architecture, but I care more about software that works, doesn't surprise the team that maintains it, and gives the user a smooth ride.",
-      "I'm open to senior roles abroad — Europe (Ireland, Germany, the Netherlands) and Canada — on-site, hybrid or remote. I work in English every day and I'm ready to relocate."
+      "I'm Marco — maarkn online. A senior software engineer based in Goiânia, Brazil, focused on backend and applied AI, working with teams across Europe, the US and LatAm. I take products from a fuzzy brief all the way to production, and own every layer in between.",
+      "Six-plus years, 20+ products shipped. I grew from frontend into backend and architecture — VoIP platforms, fintech apps, real-estate and govtech assistants — and most recently led a CRM backend rewrite in Go, delivered in under two months. I work end to end, usually as the only engineer or the technical lead.",
+      "My focus now is applied generative AI in production: RAG pipelines, LLM agents and vector search wired into products people actually use — not demos. I ship the simplest architecture that solves the problem and won't surprise whoever maintains it next.",
+      "I'm open to senior roles abroad — Europe (Ireland, Germany, the Netherlands) and Canada — on-site, hybrid or remote. I work in English every day, I'm ready to relocate fast, and with 6+ years I'm eligible for the Critical Skills Permit and EU Blue Card."
     ],
     "valuesTitle": "How I work",
     "values": [
       {
         "title": "End-to-end ownership",
-        "body": "From the first conversation to the version running in production. I don't hand things off and disappear."
+        "body": "From the first call to the version running in production — architecture, code, deploy, on-call. I don't hand things off and disappear."
       },
       {
-        "title": "Clear, plain communication",
-        "body": "I translate between business and code. Stakeholders get straight answers, not jargon."
+        "title": "Plain, honest communication",
+        "body": "I translate between business and code. Stakeholders get straight answers and realistic estimates, not jargon."
       },
       {
-        "title": "Pragmatic over perfect",
-        "body": "I ship the simplest thing that solves the problem, then iterate when reality pushes back."
+        "title": "Pragmatic, not precious",
+        "body": "I ship the simplest thing that solves the problem, then harden it when reality pushes back. Boring tech that works beats clever tech that doesn't."
       },
       {
-        "title": "Respect for the next person",
-        "body": "Code is read more than it's written. I leave the codebase a little better than I found it."
+        "title": "Built to be maintained",
+        "body": "Code is read far more than it's written. I leave the codebase — and the team — better than I found them."
       }
     ],
     "timelineTitle": "Career timeline",
@@ -128,8 +128,8 @@
   },
   "toolkit": {
     "kicker": "Toolkit",
-    "title": "The tools I reach for, day after day.",
-    "sub": "These are the languages, frameworks and ideas I use most. The list isn't exhaustive — I learn whatever the project needs — but it's an honest snapshot of where I'm fluent.",
+    "title": "The tools I reach for to ship, day after day.",
+    "sub": "The languages, frameworks and ideas I use most. Not an exhaustive list — I learn whatever the project needs — but an honest snapshot of where I'm genuinely fluent.",
     "yearsSuffix": "y",
     "groups": {
       "frontend": {
@@ -182,8 +182,8 @@
   },
   "projects": {
     "kicker": "Selected work",
-    "title": "Things I've shipped that people actually use.",
-    "sub": "A small slice of the products and platforms I've built over the last few years — for clients, employers and a couple of side bets. Some I can show in detail, others stay anonymous behind an NDA.",
+    "title": "Products I've shipped that people actually use.",
+    "sub": "A slice of the 20+ products and platforms I've built over the last few years — for clients, employers and a couple of side bets. Some I can show in detail; others stay behind an NDA.",
     "view": "View case",
     "seeAll": "See all projects",
     "categories": {
@@ -200,14 +200,14 @@
       "archived": "Archived"
     },
     "taglines": {
-      "miami-real-estate-assistant": "A WhatsApp assistant for a Miami real-estate agency that captures leads, syncs properties from MLS and answers questions like a tireless junior agent.",
-      "municipalities-chatbot": "City-by-city WhatsApp helper that crawls each town's website, indexes it, and answers citizens' questions about services, opening hours and documents.",
-      "voip-platform": "Calls, recordings, transcriptions and dynamic billing in a single VoIP product wired into the company's CRM.",
-      "fintech-loan-api": "A loan platform for a Brazilian agribusiness fund: APIs, a Flutter app for applicants, and crawlers ingesting public government data.",
-      "carbon-credit-platform": "Triage chatbot plus an automated report engine that turns raw project data into legal-style viability documents.",
-      "drug-leaflet-platform": "A high-performance, SEO-first reference for medication leaflets — Astro on the front, NestJS and ANVISA crawling on the back.",
-      "museum-institutional-site": "Institutional site for a museum, with a Ghost-based CRM, SEO-driven content and interactive webframes for in-museum kiosks.",
-      "vanilla-farming-assistant": "An agronomic assistant for vanilla growers, grounded in vectorized technical documentation."
+      "miami-real-estate-assistant": "A WhatsApp assistant for a Miami real-estate agency that captures and qualifies leads from the first message, syncs properties from MLS, and never sleeps.",
+      "municipalities-chatbot": "A multitenant WhatsApp assistant that crawls any city's website, indexes it, and answers citizens about services, hours and documents — live in days, not months.",
+      "voip-platform": "Calls, recordings, transcriptions and dynamic billing in one VoIP product wired straight into the company CRM — a new sellable vertical.",
+      "fintech-loan-api": "The backend, Flutter app and data pipelines behind a loan platform for a Brazilian agribusiness fund — public-data ingestion included.",
+      "carbon-credit-platform": "A triage chatbot plus an engine that turns raw project data into legal-grade viability reports, ready to send.",
+      "drug-leaflet-platform": "A high-performance, SEO-first reference for medication leaflets — Astro up front, NestJS and ANVISA crawling behind it.",
+      "museum-institutional-site": "An institutional museum site with a self-serve Ghost CMS and interactive webframes powering in-museum kiosks.",
+      "vanilla-farming-assistant": "An agronomic assistant for vanilla growers, grounded in vectorized technical docs — real answers, with citations."
     },
     "details": {
       "miami-real-estate-assistant": {
@@ -302,7 +302,7 @@
     "page": {
       "kicker": "Selected work",
       "title": "Every product I'm willing to put my name on.",
-      "sub": "All projects on a single page, filtered by category. The list is hand-curated — small bets, big platforms, and a few things I'm proudest of.",
+      "sub": "All the work on one page, filtered by category — small bets, big platforms, and a few I'm genuinely proud of.",
       "filterAll": "All work",
       "empty": "Nothing in this category yet."
     },
@@ -319,13 +319,13 @@
     },
     "galleryHeading": "From the project",
     "privateLabel": "Private project",
-    "privateNote": "Source code is private — happy to walk a recruiter or hiring panel through it on a call.",
+    "privateNote": "Source code is private — happy to walk a recruiter or hiring panel through it, live, on a call.",
     "readMore": "Read more"
   },
   "contact": {
     "kicker": "Get in touch",
-    "title": "Have something you'd like to build? Let's talk.",
-    "sub": "Quickest path is the form below — I read every message and reply within a couple of working days. If you prefer a different channel, pick whatever fits.",
+    "title": "Hiring, building, or weighing your options? Let's talk.",
+    "sub": "Fastest path is the form below — I read every message and reply within a couple of working days. Prefer another channel? Take your pick.",
     "channels": {
       "linkedin": "LinkedIn",
       "email": "Email",
@@ -365,7 +365,7 @@
     "eyebrow": "Find me",
     "name": "Marco Filho",
     "role": "Senior AI/LLM & Backend Engineer · maarkn",
-    "bio": "Senior software engineer focused on backend (Go, TypeScript) and applied AI. Building products that ship — open to senior roles in the EU and Canada.",
+    "bio": "Senior engineer focused on backend (Go, TypeScript) and applied AI (RAG, LLM agents). 6+ years, 20+ products shipped end-to-end. Open to senior roles in the EU and Canada.",
     "available": "Open to new opportunities",
     "links": {
       "linkedin": {
