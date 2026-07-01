@@ -68,7 +68,7 @@ export function ChatPanel({
       )}
     >
       <header className="dev-chat-header flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface-2)] px-5 py-3">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="dev-chat-window-dots" aria-hidden>
             <i /><i /><i />
           </span>
@@ -76,24 +76,24 @@ export function ChatPanel({
             className="h-4 w-4 text-[var(--accent)] [data-theme=dev]:hidden dev-chat-sparkle"
             strokeWidth={2.2}
           />
-          <div>
-            <p className="dev-chat-title font-display text-[12px] font-semibold tracking-tight text-[var(--text)]">
+          <div className="min-w-0">
+            <p className="dev-chat-title truncate font-display text-[12px] font-semibold tracking-tight text-[var(--text)]">
               <span className="dev-chat-title-text">{labels.title}</span>
               <span className="dev-chat-title-cli">SYS://QUERY_INTERFACE_v2.0</span>
               <span className="dev-caret">▮</span>
             </p>
-            <p className="dev-chat-subtitle font-mono text-[10px] tracking-[0.04em] text-[var(--muted)]">
+            <p className="dev-chat-subtitle truncate font-mono text-[10px] tracking-[0.04em] text-[var(--muted)]">
               {labels.subtitle}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <span className="dev-chat-online">online</span>
           {!empty ? (
             <button
               type="button"
               onClick={reset}
-              className="inline-flex items-center gap-1.5 border border-[var(--border)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border border-[var(--border)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
             >
               <RotateCcw className="h-3 w-3" strokeWidth={2.2} />
               {labels.reset}
@@ -213,13 +213,13 @@ function Bubble({ message, streaming }: { message: ChatMessage; streaming: boole
       {!isUser ? <span className="dev-chat-avatar">AI</span> : null}
       <div
         className={cn(
-          "max-w-[88%] whitespace-pre-wrap break-words border px-3.5 py-2.5 text-[14px] leading-[1.6]",
+          "max-w-[88%] break-words border px-3.5 py-2.5 text-[14px] leading-[1.6]",
           isUser
-            ? "dev-chat-bubble-user border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text)]"
+            ? "dev-chat-bubble-user whitespace-pre-wrap border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text)]"
             : "dev-chat-bubble-bot border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-2)]"
         )}
       >
-        {message.content}
+        {isUser ? message.content : <Markdown text={message.content} />}
         {isStreamingThisAssistant ? (
           <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-[var(--accent)] align-middle" />
         ) : null}
@@ -250,4 +250,80 @@ function Notice({
       {children}
     </div>
   );
+}
+
+// --- lightweight markdown for assistant replies (bold / italic / code / bullets) ---
+function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const re = /(\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\n]+)\*|_([^_\n]+)_)/g;
+  let last = 0;
+  let i = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    const key = keyPrefix + i++;
+    if (m[2] !== undefined) nodes.push(<strong key={key}>{m[2]}</strong>);
+    else if (m[3] !== undefined)
+      nodes.push(
+        <code key={key} className="rounded bg-[var(--surface-3)] px-1 py-0.5 font-mono text-[0.9em]">
+          {m[3]}
+        </code>
+      );
+    else nodes.push(<em key={key}>{m[4] ?? m[5]}</em>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+function Markdown({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const out: React.ReactNode[] = [];
+  let para: string[] = [];
+  let key = 0;
+
+  const flushPara = () => {
+    if (!para.length) return;
+    const p = para;
+    para = [];
+    out.push(
+      <p key={key++} className="mb-2 last:mb-0">
+        {p.map((l, li) => (
+          <span key={li}>
+            {renderInline(l, `${key}-${li}-`)}
+            {li < p.length - 1 ? <br /> : null}
+          </span>
+        ))}
+      </p>
+    );
+  };
+
+  for (let i = 0; i < lines.length; ) {
+    const line = lines[i];
+    if (/^\s*[-*]\s+/.test(line)) {
+      flushPara();
+      const items: string[] = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*[-*]\s+/, ""));
+        i++;
+      }
+      out.push(
+        <ul key={key++} className="mb-2 list-disc space-y-1 pl-4 last:mb-0">
+          {items.map((it, li) => (
+            <li key={li}>{renderInline(it, `${key}-${li}-`)}</li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+    if (line.trim() === "") {
+      flushPara();
+      i++;
+      continue;
+    }
+    para.push(line);
+    i++;
+  }
+  flushPara();
+  return <>{out}</>;
 }
