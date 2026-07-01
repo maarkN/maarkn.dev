@@ -40,10 +40,12 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-# Prisma needs the schema, the generated client and the query engine at runtime.
+# Prisma needs the schema + the generated client & query engine at runtime.
+# Copy the whole node_modules from the builder (over the standalone's traced
+# subset): with pnpm the client/engine sit behind .pnpm symlinks that a
+# cherry-picked COPY can't resolve, and Next's tracer doesn't bundle the engine.
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=builder /app/node_modules ./node_modules
 
 # Writable directory for uploaded media (mounted as a named volume in prod).
 RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
