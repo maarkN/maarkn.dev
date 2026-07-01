@@ -323,7 +323,7 @@ function ExperiencePanel({
       <motion.span
         aria-hidden
         style={{ y: monoY, rotate: monoRotate }}
-        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none font-display text-[clamp(8rem,28vw,22rem)] font-bold leading-none tracking-[-0.06em] text-white/15 mix-blend-overlay sm:right-6 md:right-12"
+        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none font-display text-[clamp(8rem,28vw,22rem)] font-bold leading-none tracking-[-0.06em] text-[var(--muted)]/25 sm:right-6 md:right-12"
       >
         {entry.monogram}
       </motion.span>
@@ -332,24 +332,24 @@ function ExperiencePanel({
         style={{ y: contentY, opacity: contentOpacity, x: contentX }}
         className="relative z-10 mx-auto w-full max-w-[820px]"
       >
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/85">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-2)]">
           <span aria-hidden>{`0${index + 1}`.padStart(2, "0")}</span>
-          <span className="mx-2 text-white/55">/</span>
+          <span className="mx-2 text-[var(--muted)]">/</span>
           <span aria-hidden>{`0${total}`.padStart(2, "0")}</span>
-          <span className="mx-3 text-white/55">·</span>
+          <span className="mx-3 text-[var(--muted)]">·</span>
           {entry.period}
-          {entry.current ? <span className="ml-2 text-white">[ current ]</span> : null}
+          {entry.current ? <span className="ml-2 text-[var(--accent)]">[ current ]</span> : null}
         </p>
 
-        <h2 className="mt-4 font-display text-[clamp(2.2rem,4.6vw,4.2rem)] font-bold leading-[1.04] tracking-[-0.03em] text-white">
+        <h2 className="mt-4 font-display text-[clamp(2.2rem,4.6vw,4.2rem)] font-bold leading-[1.04] tracking-[-0.03em] text-[var(--text)]">
           {role}
         </h2>
-        <p className="mt-2 font-display text-[clamp(1rem,1.6vw,1.4rem)] font-medium text-white/80">
+        <p className="mt-2 font-display text-[clamp(1rem,1.6vw,1.4rem)] font-medium text-[var(--text-2)]">
           {entry.company}
         </p>
 
         {detail ? (
-          <p className="mt-6 max-w-[60ch] text-[1.06rem] font-light leading-[1.75] text-white/90">
+          <p className="mt-6 max-w-[60ch] text-[1.06rem] font-light leading-[1.75] text-[var(--text-2)]">
             {detail.tagline}
           </p>
         ) : null}
@@ -359,10 +359,10 @@ function ExperiencePanel({
             {detail.achievements.slice(0, 3).map((s, i) => (
               <li
                 key={i}
-                className="flex items-baseline gap-3 text-[0.98rem] font-light leading-[1.65] text-white/90"
+                className="flex items-baseline gap-3 text-[0.98rem] font-light leading-[1.65] text-[var(--text-2)]"
               >
                 <span
-                  className="mt-2 inline-block h-1 w-3 flex-none bg-white/85"
+                  className="mt-2 inline-block h-1 w-3 flex-none bg-[var(--accent)]"
                   aria-hidden
                 />
                 <span>{s}</span>
@@ -375,7 +375,7 @@ function ExperiencePanel({
           {entry.tech.slice(0, 5).map((t) => (
             <span
               key={t}
-              className="border border-white/30 bg-white/5 px-2.5 py-1 font-mono text-[10px] tracking-[0.04em] text-white/85"
+              className="border border-[var(--border-2)] bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[10px] tracking-[0.04em] text-[var(--text-2)]"
             >
               {t}
             </span>
@@ -384,7 +384,7 @@ function ExperiencePanel({
 
         <Link
           href={`/${locale}/career/${entry.slug}`}
-          className="group mt-10 inline-flex items-center gap-2 border border-white/40 bg-white/5 px-5 py-3 font-display text-[12px] font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-white/15"
+          className="group mt-10 inline-flex items-center gap-2 border border-[var(--border-2)] bg-[var(--surface-2)] px-5 py-3 font-display text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[var(--surface-3)] hover:text-[var(--accent)]"
         >
           {readFull}
           <ArrowRight
@@ -396,7 +396,7 @@ function ExperiencePanel({
 
       <motion.span
         style={{ opacity: contentOpacity }}
-        className="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/65 md:flex"
+        className="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted)] md:flex"
       >
         ↓ next
         <ArrowUpRight className="h-3 w-3" strokeWidth={2.2} />
