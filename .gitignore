@@ -41,6 +41,11 @@ prisma/dev.db-journal
 # uploaded media (served from a volume in prod)
 /uploads
 
+# personal knowledge base — copied straight onto the server, never committed
+# (see knowledge/README.md). Only the README stays under version control.
+/knowledge/*
+!/knowledge/README.md
+
 # one-time backup of the pre-Postgres SQLite migrations
 /prisma/migrations.sqlite.bak
 
