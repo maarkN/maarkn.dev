@@ -13,7 +13,10 @@ import { Contact } from "@/components/contact";
 import { LatestLogs } from "@/components/blog/latest-logs";
 import { Footer } from "@/components/footer";
 
-export const dynamic = "force-dynamic";
+// ISR: prerender the home and revalidate hourly instead of server-rendering on
+// every request. getFeaturedProjects falls back to the static list when the DB
+// is unavailable (e.g. at build time), so prerendering is safe.
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,

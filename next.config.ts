@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
+  experimental: {
+    // Tree-shake barrel imports from these heavy packages (smaller client JS).
+    optimizePackageImports: ["framer-motion", "lucide-react"],
+  },
 };
 
 export default nextConfig;
