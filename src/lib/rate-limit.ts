@@ -6,9 +6,18 @@
 
 type Entry = { count: number; resetAt: number };
 
+function intEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
 const STORE = new Map<string, Entry>();
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const MAX_REQUESTS = 10;
+// Mirror the DB limiter's config so the fallback behaves the same when there's
+// no database (see lib/chat-log.ts).
+const WINDOW_MS = intEnv("CHAT_RATE_WINDOW_MS", 60 * 60 * 1000); // 1 hour
+const MAX_REQUESTS = intEnv("CHAT_RATE_MAX", 10);
 
 export type RateLimitResult = {
   ok: boolean;

@@ -49,6 +49,14 @@ export function AdminShell({
               </li>
               <li>
                 <Link
+                  href="/admin/chat"
+                  className="px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+                >
+                  Chat
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/"
                   className="px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:text-[var(--text)]"
                 >

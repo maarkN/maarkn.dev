@@ -95,6 +95,31 @@ model Generation {
   @@index([createdAt])
 }
 
+/// Chat assistant usage log: one row per user turn that reaches the model
+/// (question + streamed answer). Powers the admin chat dashboard and backs the
+/// durable, DB-counted rate limiter in lib/chat-log.ts. Rate-limited attempts
+/// are NOT written here, so the row count stays an honest budget signal.
+model ChatLog {
+  id            String   @id @default(cuid())
+  /// sha256(client ip) truncated — pseudonymous visitor id, no raw IP stored.
+  clientKeyHash String
+  locale        String   @default("en")
+  model         String   @default("")
+  question      String
+  answer        String   @default("")
+  /// pending -> ok | mock | error. `pending` means the stream never finished.
+  status        String   @default("pending")
+  /// Rough token estimates (chars / 4), incl. system prompt + RAG + history on
+  /// the prompt side. 0 for the offline mock path (no real spend).
+  promptTokens  Int      @default(0)
+  answerTokens  Int      @default(0)
+  latencyMs     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([clientKeyHash, createdAt])
+}
+
 /// Personal job-application tracker (admin-only), modeled on the CSV tracker.
 /// `source` = where the lead came from (vanhack, linkedin, company_site, ...).
 model JobApplication {
