@@ -1,5 +1,14 @@
 import { SYSTEM_PROMPT } from "@/lib/chat-system-prompt";
 import { clientKey, consume } from "@/lib/rate-limit";
+import {
+  checkChatGate,
+  estimateTokens,
+  hashKey,
+  logChatFinish,
+  logChatStart,
+  type ChatGate,
+} from "@/lib/chat-log";
+import { dbConfigured } from "@/lib/db";
 import { retrieve, formatContext } from "@/lib/rag";
 
 export const runtime = "nodejs";
@@ -21,14 +30,25 @@ function sse(event: string, data: unknown): Uint8Array {
 }
 
 export async function POST(request: Request) {
-  const limit = consume(clientKey(request));
-  if (!limit.ok) {
+  const rawKey = clientKey(request);
+  const clientKeyHash = hashKey(rawKey);
+
+  // Durable, DB-counted limiter when Postgres is up; in-memory fallback for
+  // local dev / DB-less deploys so the endpoint is never left unprotected.
+  const gate: ChatGate = dbConfigured
+    ? await checkChatGate(clientKeyHash)
+    : memGate(rawKey);
+  if (!gate.ok) {
     return Response.json(
+      { error: "rate_limited", reason: gate.reason, retryAt: gate.resetAt },
       {
-        error: "rate_limited",
-        retryAt: limit.resetAt,
-      },
-      { status: 429, headers: { "Retry-After": "3600" } }
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((gate.resetAt - Date.now()) / 1000))
+          ),
+        },
+      }
     );
   }
 
@@ -44,22 +64,55 @@ export async function POST(request: Request) {
     return Response.json({ error: "empty" }, { status: 400 });
   }
 
+  const locale =
+    typeof body.locale === "string" ? body.locale.slice(0, 12) : "en";
+  const question =
+    [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.includes("replace-me")) {
-    return new Response(mockStream(messages), {
-      headers: streamHeaders(),
+    // Offline preview: no model call, so no real token spend to account for.
+    const logId = await logChatStart({
+      clientKeyHash,
+      locale,
+      model: "mock",
+      question,
+      promptTokens: 0,
     });
+    const startedAt = Date.now();
+    return new Response(
+      mockStream(messages, (answer) =>
+        logChatFinish(logId, {
+          answer,
+          status: "mock",
+          answerTokens: 0,
+          latencyMs: Date.now() - startedAt,
+        })
+      ),
+      { headers: streamHeaders() }
+    );
   }
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
   // RAG: pull the most relevant slices of Marco's CV/dossiers for this question.
-  const lastUser =
-    [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-  const context = formatContext(await retrieve(lastUser, { k: 6, apiKey }));
+  const context = formatContext(await retrieve(question, { k: 6, apiKey }));
   const systemContent = context
     ? `${SYSTEM_PROMPT}\n\n# Retrieved context\nThe excerpts below come from Marco's CV and project dossiers. Ground your answer in them and name the relevant project, metric or tech. If the answer is not in this context or the brief above, say you are not sure and point to the contact form — never invent.\n\n${context}`
     : SYSTEM_PROMPT;
+
+  const promptTokens =
+    estimateTokens(systemContent) +
+    messages.reduce((sum, m) => sum + estimateTokens(m.content), 0);
+
+  const logId = await logChatStart({
+    clientKeyHash,
+    locale,
+    model,
+    question,
+    promptTokens,
+  });
+  const startedAt = Date.now();
 
   const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -81,15 +134,35 @@ export async function POST(request: Request) {
   if (!upstream.ok || !upstream.body) {
     const detail = await upstream.text().catch(() => "");
     console.error("[chat] openai upstream failed", upstream.status, detail);
+    await logChatFinish(logId, {
+      answer: "",
+      status: "error",
+      answerTokens: 0,
+      latencyMs: Date.now() - startedAt,
+    });
     return Response.json(
       { error: "upstream_failed", status: upstream.status },
       { status: 502 }
     );
   }
 
-  return new Response(toClientStream(upstream.body), {
-    headers: streamHeaders(),
-  });
+  return new Response(
+    toClientStream(upstream.body, (answer, errored) =>
+      logChatFinish(logId, {
+        answer,
+        status: errored ? "error" : "ok",
+        answerTokens: estimateTokens(answer),
+        latencyMs: Date.now() - startedAt,
+      })
+    ),
+    { headers: streamHeaders() }
+  );
+}
+
+/** Map the in-memory fallback limiter into the DB limiter's gate shape. */
+function memGate(rawKey: string): ChatGate {
+  const r = consume(rawKey);
+  return r.ok ? { ok: true } : { ok: false, reason: "per_ip", resetAt: r.resetAt };
 }
 
 function streamHeaders() {
@@ -116,13 +189,22 @@ function sanitize(messages: ClientMessage[]): ClientMessage[] {
     .slice(-MAX_HISTORY);
 }
 
+/** Called once a stream ends, with the full assistant text and whether it errored. */
+type OnComplete = (answer: string, errored: boolean) => void | Promise<void>;
+
 /**
  * Translates OpenAI's SSE format (`data: { ... }`) into the simpler
- * { event: 'chunk' | 'done' } shape the client expects.
+ * { event: 'chunk' | 'done' } shape the client expects, accumulating the full
+ * reply so it can be persisted via `onComplete` when the stream finishes.
  */
-function toClientStream(upstream: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+function toClientStream(
+  upstream: ReadableStream<Uint8Array>,
+  onComplete: OnComplete
+): ReadableStream<Uint8Array> {
   const decoder = new TextDecoder();
   let buffer = "";
+  let answer = "";
+  let errored = false;
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -146,25 +228,33 @@ function toClientStream(upstream: ReadableStream<Uint8Array>): ReadableStream<Ui
                 choices?: { delta?: { content?: string } }[];
               };
               const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) controller.enqueue(sse("chunk", { delta }));
+              if (delta) {
+                answer += delta;
+                controller.enqueue(sse("chunk", { delta }));
+              }
             } catch {
               /* ignore malformed line */
             }
           }
         }
       } catch (err) {
+        errored = true;
         controller.enqueue(
           sse("error", { message: err instanceof Error ? err.message : "stream_error" })
         );
       } finally {
         controller.enqueue(sse("done", {}));
         controller.close();
+        await onComplete(answer, errored);
       }
     },
   });
 }
 
-function mockStream(messages: ClientMessage[]): ReadableStream<Uint8Array> {
+function mockStream(
+  messages: ClientMessage[],
+  onComplete: OnComplete
+): ReadableStream<Uint8Array> {
   const last = messages[messages.length - 1]?.content.toLowerCase() ?? "";
   const reply = pickMockReply(last);
 
@@ -178,6 +268,7 @@ function mockStream(messages: ClientMessage[]): ReadableStream<Uint8Array> {
       }
       controller.enqueue(sse("done", {}));
       controller.close();
+      await onComplete(reply, false);
     },
   });
 }
