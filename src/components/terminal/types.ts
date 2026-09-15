@@ -49,6 +49,11 @@ export type TerminalLabels = {
     label: string;
   };
   hint: string;
+  boot: {
+    /** The six lines typed by the boot overlay (`[ok]` is painted green). */
+    lines: string[];
+    skip: string;
+  };
   help: {
     heading: string;
     alsoTry: string;

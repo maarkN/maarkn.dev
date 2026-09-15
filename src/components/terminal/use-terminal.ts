@@ -48,6 +48,8 @@ export type UseTerminalOptions = {
   /** Site content for the content commands; empty when the host has none. */
   data?: TerminalData;
   initialLines?: OutputEntry[];
+  /** Runs after `reboot` wiped the screen; the host restarts the boot overlay. */
+  onReboot?: () => void;
 };
 
 /**
@@ -62,6 +64,7 @@ export function useTerminal({
   files = NO_FILES,
   data = EMPTY_TERMINAL_DATA,
   initialLines = NO_LINES,
+  onReboot,
 }: UseTerminalOptions) {
   // Re-keyed on the way in so every id on screen comes from the same counter.
   const [lines, setLines] = useState<OutputEntry[]>(() =>
@@ -168,13 +171,15 @@ export function useTerminal({
             /* popup blocked: the command prints the link anyway */
           }
         },
-        // Boot sequence arrives in a later change; until then reboot only wipes.
-        reboot: runner.clear,
+        reboot: () => {
+          runner.clear();
+          onReboot?.();
+        },
         state,
       };
       void runner.run(raw, base);
     },
-    [runner, locale, labels, data, theme, router, state],
+    [runner, locale, labels, data, theme, router, state, onReboot],
   );
 
   /* ── keyboard ───────────────────────────────────────────────── */

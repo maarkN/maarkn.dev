@@ -263,7 +263,7 @@ export function createSystemCommands(labels: TerminalLabels): Command[] {
     ],
   };
 
-  // Stub until the boot sequence lands: wipes the screen through the host.
+  // Wipes the screen and reruns the boot overlay, both through the host.
   const reboot: Command = {
     name: "reboot",
     describe: describe("reboot"),

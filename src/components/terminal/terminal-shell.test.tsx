@@ -75,6 +75,8 @@ async function enter(text: string) {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  // The boot sequence has its own tests; here the session is already booted.
+  window.sessionStorage.setItem("maarkn-booted", "1");
   mount();
 });
 
@@ -242,7 +244,7 @@ describe("terminal shell", () => {
     expect(screenText()).toContain(String(new Date().getFullYear()));
   });
 
-  it("menu buttons run the command and reboot only wipes", async () => {
+  it("menu buttons run the command and reboot wipes the screen", async () => {
     await act(async () => {
       (container.querySelector('[data-cmd="whoami"]') as HTMLButtonElement).click();
     });

@@ -600,6 +600,17 @@
       "label": "command line"
     },
     "hint": "tab autocomplete · ↑ history · type help",
+    "boot": {
+      "lines": [
+        "> booting maarkn.sh",
+        "> locating ~/marco in /goiania/br",
+        "> loading 6 years of experience... [ok]",
+        "> mounting /work, /skills, /writing",
+        "> warming up the llms... [ok]",
+        "> ready."
+      ],
+      "skip": "press any key or tap to skip"
+    },
     "help": {
       "heading": "commands",
       "alsoTry": "also try:",

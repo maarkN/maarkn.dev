@@ -328,9 +328,59 @@
   to   { opacity: 1; transform: none; }
 }
 
+/* ── boot overlay (mockup lines 63–73) ─────────────────────────── */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--bg);
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6vh clamp(20px, 8vw, 120px);
+  font-family: var(--font);
+  font-size: var(--fs, 14px);
+  line-height: 1.6;
+  transition: opacity 0.45s ease;
+}
+/* Nothing decided yet (server render): cover the shell, show no text. */
+.boot.bootPending > * {
+  visibility: hidden;
+}
+.boot.bootGone {
+  opacity: 0;
+  pointer-events: none;
+}
+.bootLines {
+  margin: 0;
+  min-height: 11em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+}
+.bootLines div {
+  min-height: 1.6em;
+}
+.bootSkip {
+  margin-top: 2.2em;
+  color: var(--comment);
+}
+.bootSkip::after {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  margin-left: 0.6ch;
+  vertical-align: -0.2em;
+  background: var(--comment);
+  animation: blink 1.1s steps(2, start) infinite;
+}
+
 /* ── mobile (≤720px): menu becomes a horizontal strip at the bottom ─ */
 @media (max-width: 720px) {
-  .term {
+  .term,
+  .boot {
     --fs: 13px;
   }
   .body {
@@ -393,7 +443,8 @@
 /* ── reduced motion: no blink, no entrance animation ───────────── */
 @media (prefers-reduced-motion: reduce) {
   .line,
-  .cursor {
+  .cursor,
+  .bootSkip::after {
     animation: none;
   }
   .term,
