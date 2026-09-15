@@ -5,10 +5,13 @@ import t from "./terminal.module.css";
 
 const quiet = clsx(t.link, t.quiet);
 
-/** One comment line with the four ways to reach out. Server component. */
+/**
+ * One comment line with the four ways to reach out, as a labelled `nav`
+ * inside the page's `<footer>` (rendered by `PageChrome`). Server component.
+ */
 export function PageFooter({ label }: { label: string }) {
   return (
-    <footer className={s.footer} aria-label={label}>
+    <nav className={s.footer} aria-label={label}>
       {"# "}
       <a href={`mailto:${site.email}`} className={quiet}>
         email
@@ -25,6 +28,6 @@ export function PageFooter({ label }: { label: string }) {
       <a href={site.cvPath} className={quiet} target="_blank" rel="noopener noreferrer">
         cv
       </a>
-    </footer>
+    </nav>
   );
 }

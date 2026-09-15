@@ -44,6 +44,13 @@
   line-height: 1.5;
 }
 
+/* Field borders: the classes use --border-2 (--sel, 1.4:1 on --surface-2),
+   below the 3:1 WCAG 1.4.11 guideline for control boundaries. Rest on the
+   comment grey (≈4.2:1 on --surface-2) instead; focus stays purple. */
+.admin-root :is(input:not([type="checkbox"]):not([type="file"]), select, textarea):not(:focus) {
+  border-color: var(--comment);
+}
+
 /* Focus: keep the border swap the classes already do and add a 1px ring so
    the focused field stands out even next to a purple label or legend. */
 .admin-root :is(input:not([type="checkbox"]):not([type="file"]), select, textarea):focus-visible {

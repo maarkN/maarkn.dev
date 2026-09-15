@@ -45,8 +45,17 @@ export function TerminalApp({
   }, [labels]);
   const fallback = useMemo(() => createAskFallback(labels), [labels]);
   // Already visible when the HTML arrives: no entrance animation, no stagger.
+  // One block, named after the command whose output it is.
   const initial = useMemo<OutputEntry[]>(
-    () => (initialLines ?? []).map((line, index) => ({ id: 0, line, index, instant: true })),
+    () =>
+      (initialLines ?? []).map((line, index) => ({
+        id: 0,
+        line,
+        index,
+        instant: true,
+        block: 0,
+        label: "whoami",
+      })),
     [initialLines],
   );
 

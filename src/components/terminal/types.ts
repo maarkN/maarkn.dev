@@ -5,7 +5,10 @@ export type { OutputLine };
 /**
  * A printed line as the shell keeps it. `index` is the position inside the
  * batch it was printed with (drives the staggered entrance delay), `instant`
- * skips the animation and `cmd` marks an echoed prompt line.
+ * skips the animation and `cmd` marks an echoed prompt line. `block` ties
+ * the line to the command run that printed it and `label` names that run
+ * (the resolved command, or the typed text until it resolves): consecutive
+ * lines of one block render as one labelled `<section>`.
  */
 export type OutputEntry = {
   id: number;
@@ -13,6 +16,8 @@ export type OutputEntry = {
   index: number;
   instant?: boolean;
   cmd?: boolean;
+  block?: number;
+  label?: string;
 };
 
 export type MenuItemName =
@@ -57,6 +62,16 @@ export type TerminalLabels = {
     /** The six lines typed by the boot overlay (`[ok]` is painted green). */
     lines: string[];
     skip: string;
+    /** The one sentence screen readers get for the whole boot (`role="status"`). */
+    status: string;
+  };
+  /** Screen-reader-only labels (skip links, output regions, breadcrumb). */
+  a11y: {
+    skipToPrompt: string;
+    skipToContent: string;
+    /** `output of {cmd}` — accessible name of each command's output block. */
+    outputOf: string;
+    breadcrumb: string;
   };
   help: {
     heading: string;

@@ -4,7 +4,9 @@
 
 /* ── frame ─────────────────────────────────────────────────────── */
 .term {
-  --fs: 14px;
+  /* rem, never px: the visitor's browser font size scales the whole shell */
+  --fs: 0.875rem;
+  position: relative;
   height: 100dvh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -15,6 +17,32 @@
   color: var(--fg);
 }
 
+/* ── skip link: visually hidden until it has focus ─────────────── */
+.skip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  padding: 6px 14px;
+  background: var(--purple);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip:not(:focus) {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
+}
+
 /* ── tmux-style status bar ─────────────────────────────────────── */
 .bar {
   display: flex;
@@ -22,7 +50,7 @@
   height: 34px;
   background: var(--bg-dim);
   border-bottom: 1px solid var(--line);
-  font-size: 13px;
+  font-size: 0.8125rem;
   white-space: nowrap;
   overflow: hidden;
   padding-right: 12px;
@@ -66,6 +94,8 @@
 .barBtn:focus-visible {
   outline: none;
   background: var(--line);
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--purple);
 }
 .barClock {
   color: var(--yellow);
@@ -92,7 +122,7 @@
 }
 .menuTitle {
   color: var(--comment);
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 0 22px 10px;
 }
 .menuItem {
@@ -125,6 +155,9 @@
   border-left-color: var(--pink);
   outline: none;
 }
+.menuItem:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--purple);
+}
 .menuItem.done kbd {
   color: var(--green);
 }
@@ -151,7 +184,8 @@
   margin: 0 0 28px;
 }
 .motdTag {
-  font-size: 17px;
+  font-size: 1.0625rem;
+  font-weight: 400;
   margin: 0 0 12px;
   max-width: 48ch;
   line-height: 1.45;
@@ -181,6 +215,7 @@
 }
 
 /* ── output lines ──────────────────────────────────────────────── */
+/* The entrance only fades: the text is in the DOM from the first render. */
 .line {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -216,6 +251,11 @@
 .r { color: var(--red); }
 .d { color: var(--comment); }
 .b { font-weight: 600; color: var(--fg); }
+/* a command or file name quoted in prose (`<code lang="en">`, see `Cmd`) */
+.cmdName {
+  font: inherit;
+  color: var(--cyan);
+}
 
 .link {
   color: var(--cyan);
@@ -226,6 +266,10 @@
 .link:focus-visible {
   border-bottom-color: var(--cyan);
   outline: none;
+}
+.link:focus-visible {
+  outline: 1px solid var(--cyan);
+  outline-offset: 2px;
 }
 .link.quiet {
   color: var(--comment);
@@ -375,7 +419,7 @@
 }
 .hint {
   color: var(--comment);
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-top: 24px;
 }
 
@@ -399,7 +443,7 @@
   justify-content: center;
   padding: 6vh clamp(20px, 8vw, 120px);
   font-family: var(--font);
-  font-size: var(--fs, 14px);
+  font-size: var(--fs, 0.875rem);
   line-height: 1.6;
   transition: opacity 0.45s ease;
 }
@@ -440,7 +484,13 @@
 @media (max-width: 720px) {
   .term,
   .boot {
-    --fs: 13px;
+    --fs: 0.8125rem;
+  }
+  /* touch targets: the bar and the menu strip are at least 44px tall. The
+     bar is border-box with a 1px bottom border, so 45px leaves its buttons
+     (height: 100%) exactly 44px. */
+  .bar {
+    height: 45px;
   }
   .body {
     grid-template-columns: 1fr;
@@ -460,7 +510,8 @@
     display: none;
   }
   .menuItem {
-    padding: 6px 10px;
+    min-height: 44px;
+    padding: 6px 12px;
     border-left: 0;
     border-radius: 4px;
     white-space: nowrap;
@@ -487,18 +538,48 @@
     flex-direction: column;
     gap: 12px;
   }
+  /* The row is tight: buttons show their value only (the label stays in
+     the accessible name), the path keeps at least 8ch and the clock steps
+     aside for it on the inner pages. */
   .barBtn {
-    padding: 0 6px;
+    padding: 0 8px;
+    min-width: 44px;
+  }
+  .barBtnLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .barTitle {
     display: none;
   }
   .barTitle.barPath {
     display: block;
+    flex: 1 1 auto;
+    min-width: 8ch;
     padding: 0 8px;
+  }
+  .barClockPath {
+    display: none;
   }
   .barUser {
     padding: 0 10px;
+  }
+}
+
+/* ── touch: the same 44px targets on any layout driven by a finger ── */
+@media (pointer: coarse) {
+  .bar {
+    height: 45px;
+  }
+  .barBtn {
+    min-width: 44px;
+  }
+  .menuItem {
+    min-height: 44px;
   }
 }
 

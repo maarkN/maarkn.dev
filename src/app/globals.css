@@ -12,7 +12,9 @@
   --bg-dim:  #21222C;
   --line:    #363949;
   --sel:     #44475A;
-  --comment: #7B7F8B;
+  /* Lifted from the mockup's #7B7F8B (3.6:1) to clear WCAG AA 4.5:1 for
+     small text on --bg; see .docs/design/tokens.md. */
+  --comment: #8F93A0;
   --fg:      #F6F6F4;
   --cyan:    #97E1F1;
   --green:   #62E884;
@@ -44,7 +46,8 @@
 
 :root[data-theme="classic"] {
   --line:    #44475A;
-  --comment: #6272A4;
+  /* Dracula's #6272A4 is 3.0:1 on --bg; same hue, lighter, 4.75:1. */
+  --comment: #8894BB;
   --fg:      #F8F8F2;
   --cyan:    #8BE9FD;
   --green:   #50FA7B;
@@ -122,9 +125,13 @@
 }
 
 html {
-  scroll-behavior: smooth;
   background: var(--bg);
   color-scheme: dark;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Terminal home: the screen scrolls, the document does not. The marker is

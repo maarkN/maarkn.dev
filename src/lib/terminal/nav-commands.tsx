@@ -106,7 +106,7 @@ export function createNavCommands(labels: TerminalLabels): Command[] {
       if (arg && !wanted) {
         return [
           <>
-            {rich(nav.langUnknown, { value: arg })} <D>{nav.langHint}</D>
+            {rich(nav.langUnknown, { value: arg })} <D>{rich(nav.langHint)}</D>
           </>,
         ];
       }

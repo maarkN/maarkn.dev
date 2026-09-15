@@ -1,5 +1,6 @@
 "use client";
 
+import type { Ref } from "react";
 import { clsx } from "clsx";
 import s from "./terminal.module.css";
 import type { MenuItemName, TerminalLabels } from "./types";
@@ -26,15 +27,18 @@ export function CommandMenu({
   done,
   active = null,
   onCommand,
+  ref,
 }: {
   labels: TerminalLabels["menu"];
   done: ReadonlySet<string>;
   /** The content command whose output is the latest on screen, if any. */
   active?: MenuItemName | null;
   onCommand: (name: MenuItemName) => void;
+  /** The `<nav>`; `Esc` in the prompt focuses its first item. */
+  ref?: Ref<HTMLElement>;
 }) {
   return (
-    <nav className={s.menu} aria-label={labels.label}>
+    <nav ref={ref} className={s.menu} aria-label={labels.label}>
       <div className={s.menuTitle}>{labels.title}</div>
       {MENU_ITEMS.map((item) => (
         <button

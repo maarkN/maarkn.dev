@@ -26,11 +26,15 @@ Cada comando SHALL produzir um bloco de saída rotulado (`output of <comando>`);
 - **THEN** o conteúdo da ajuda é anunciado uma vez e o foco continua no campo
 
 ### Requirement: Teclado
-Toda funcionalidade MUST ser operável por teclado. Como `Tab` no campo aciona o autocomplete, `Esc` MUST mover o foco para o menu de comandos. Atalhos numéricos MUST valer apenas quando digitados no prompt, nunca como teclas globais. Indicadores de foco MUST ser visíveis em todos os controles.
+Toda funcionalidade MUST ser operável por teclado. Como `Tab` no campo aciona o autocomplete, `Esc` MUST mover o foco para o menu de comandos; com o campo vazio, `Tab` SHALL mover o foco para o skip link em vez de listar todos os comandos. Atalhos numéricos MUST valer apenas quando digitados no prompt, nunca como teclas globais. Indicadores de foco MUST ser visíveis em todos os controles.
 
 #### Scenario: Sair do campo
 - **WHEN** o visitante pressiona `Esc` no campo vazio
 - **THEN** o foco vai para o primeiro item do menu
+
+#### Scenario: Tab no campo vazio
+- **WHEN** o visitante pressiona `Tab` no campo vazio
+- **THEN** o foco vai para o link `skip to command line`
 
 ### Requirement: Contraste
 Todo texto MUST atingir contraste mínimo de 4.5:1 (ou 3:1 quando ≥ 18px/negrito) sobre seu fundo nas duas paletas, incluindo o texto secundário (`comment`).

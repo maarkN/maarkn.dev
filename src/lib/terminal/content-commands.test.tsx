@@ -293,4 +293,18 @@ describe("i18n invariants", () => {
     expect(text(await h.run("ls"))).toContain("skills.sys");
     expect(text(await h.run("cat"))).toBe("cat: arquivo não informado · tente ls");
   });
+
+  it("marks command names inside pt-BR prose as English code", async () => {
+    const h = harness(pt.terminal, {}, "pt-BR");
+    // `<code lang="en" class="<hashed cmdName>">name</code>`
+    const code = (name: string) =>
+      new RegExp(`<code lang="en" class="[^"]*cmdName[^"]*">${name}</code>`);
+    const help = (await h.run("help")).join("\n");
+    expect(help).toMatch(code("whoami"));
+    expect(help).toMatch(code("theme"));
+    expect(help).toMatch(code("open &lt;n&gt;"));
+    expect((await h.run("cat")).join("")).toMatch(code("ls"));
+    expect((await h.run("open 9")).join("")).toMatch(code("projects"));
+    expect((await h.run("whoami")).join("")).toMatch(code("contact"));
+  });
 });

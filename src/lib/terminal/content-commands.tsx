@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-key -- every OutputLine is rendered on its own
    inside <Line>, never as a React child array, so keys are meaningless here. */
-import { A, B, Bar, C, D, G, O, P, Row, Y } from "@/components/terminal/primitives";
+import { A, B, Bar, C, Cmd, D, G, O, P, Row, Y } from "@/components/terminal/primitives";
 import s from "@/components/terminal/terminal.module.css";
 import type { TerminalLabels } from "@/components/terminal/types";
 import { site } from "@/lib/site";
@@ -90,8 +90,8 @@ export function whoamiLines(dict: TerminalLabels, data: TerminalData): OutputLin
     "",
     <D>
       {rich(dict.whoami.footer, {
-        experience: <C>experience</C>,
-        contact: <C>contact</C>,
+        experience: <Cmd>experience</Cmd>,
+        contact: <Cmd>contact</Cmd>,
       })}
     </D>,
   );
@@ -105,7 +105,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
     const hint = help.hints[name];
     return hint ? (
       <>
-        {text} <D>{hint}</D>
+        {text} <D>{rich(hint)}</D>
       </>
     ) : (
       text
@@ -186,7 +186,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
         ...projectsLines(data.projects, { lang: locale, ...data.projectLabels }),
         <D>
           {rich(dict.projects.footer, {
-            open: <C>open &lt;n&gt;</C>,
+            open: <Cmd>open &lt;n&gt;</Cmd>,
             link: siteLink(locale, "projects"),
           })}
         </D>,
@@ -219,7 +219,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
       if (!item) {
         return [
           <>
-            {rich(errors.openRange, { n: String(items.length) })} <D>{errors.seeProjects}</D>
+            {rich(errors.openRange, { n: String(items.length) })} <D>{rich(errors.seeProjects)}</D>
           </>,
         ];
       }
@@ -253,7 +253,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
         ...writingLines(data.posts, { lang: locale, minRead: data.minRead }),
         <D>
           {rich(dict.writing.footer, {
-            read: <C>read &lt;n&gt;</C>,
+            read: <Cmd>read &lt;n&gt;</Cmd>,
             link: siteLink(locale, "blog"),
           })}
         </D>,
@@ -273,7 +273,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
       if (!item) {
         return [
           <>
-            {rich(errors.readRange, { n: String(items.length) })} <D>{errors.seeWriting}</D>
+            {rich(errors.readRange, { n: String(items.length) })} <D>{rich(errors.seeWriting)}</D>
           </>,
         ];
       }
@@ -323,7 +323,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
           {c.timezoneValue}
         </Row>,
         "",
-        <D>{rich(dict.mail.hint, { mail: <C>mail</C> })}</D>,
+        <D>{rich(dict.mail.hint, { mail: <Cmd>mail</Cmd> })}</D>,
         <D>{c.footer}</D>,
       ];
     },
@@ -372,7 +372,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
       if (!file) {
         return [
           <>
-            {errors.catMissing} <D>{errors.tryLs}</D>
+            {errors.catMissing} <D>{rich(errors.tryLs)}</D>
           </>,
         ];
       }
@@ -381,7 +381,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
       if (!command) {
         return [
           <>
-            {rich(errors.catNoSuch, { file })} <D>{errors.tryLs}</D>
+            {rich(errors.catNoSuch, { file })} <D>{rich(errors.tryLs)}</D>
           </>,
         ];
       }

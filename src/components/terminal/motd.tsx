@@ -23,7 +23,8 @@ export function Motd({
 
   return (
     <div className={s.motd}>
-      <p className={s.motdTag}>{labels.tagline}</p>
+      {/* The page's one heading: the tagline (the shell has no other title). */}
+      <h1 className={s.motdTag}>{labels.tagline}</h1>
       <p className={s.motdMeta}>
         <b>{labels.location}</b>
         <br />

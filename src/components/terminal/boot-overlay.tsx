@@ -119,6 +119,23 @@ export function useBoot() {
   };
 }
 
+/* ── announcement ──────────────────────────────────────────────── */
+
+/**
+ * The one sentence assistive tech hears for the whole boot. A live region
+ * only announces what changes after it exists, so the region is always
+ * rendered (server included) and the sentence is written into it when the
+ * typing starts (`pending` → `booting`, and again on every `reboot`) and
+ * removed once it ends — removals are not announced.
+ */
+export function BootAnnouncement({ status, label }: { status: BootStatus; label: string }) {
+  return (
+    <p className="sr-only" role="status">
+      {status === "booting" ? label : ""}
+    </p>
+  );
+}
+
 /* ── overlay ───────────────────────────────────────────────────── */
 
 /** `[ok]` in green, by splitting the string — never through innerHTML. */
@@ -146,7 +163,9 @@ export function BootOverlay({
   /** Typing (or skip) finished: the shell may take over while we fade. */
   onDone: () => void;
 }) {
-  // What is on screen: complete lines plus the one being typed.
+  // What is on screen: complete lines plus the one being typed. Assistive
+  // tech hears none of it: the single announcement is `BootAnnouncement` in the
+  // shell, which outlives this overlay (it is remounted by `reboot`).
   const [shown, setShown] = useState<string[]>([]);
   // Kept in a ref so a new callback identity never restarts the typing.
   const onDoneRef = useRef(onDone);
@@ -164,8 +183,15 @@ export function BootOverlay({
       if (MODIFIER_KEYS.has(event.key)) return;
       skip.abort();
     };
-    window.addEventListener("keydown", onKey, { signal: skip.signal });
-    window.addEventListener("pointerdown", () => skip.abort(), { signal: skip.signal });
+    // Installed on the next task: React flushes this effect synchronously
+    // inside the discrete event that mounted the overlay (the Enter that
+    // ran `reboot`), and that event is still bubbling towards `window` —
+    // listeners added now would take it as the key that skips the boot.
+    const install = setTimeout(() => {
+      if (skip.signal.aborted) return;
+      window.addEventListener("keydown", onKey, { signal: skip.signal });
+      window.addEventListener("pointerdown", () => skip.abort(), { signal: skip.signal });
+    }, 0);
 
     // Resolves after `ms`, or at once when the visitor skips.
     const wait = (ms: number) =>
@@ -210,6 +236,7 @@ export function BootOverlay({
 
     return () => {
       cancelled = true;
+      clearTimeout(install);
       skip.abort();
     };
   }, [status, lines]);
@@ -218,18 +245,20 @@ export function BootOverlay({
     <div
       className={clsx(s.boot, status === "pending" && s.bootPending, status === "fading" && s.bootGone)}
       data-boot=""
-      aria-live="polite"
     >
       {/* Without JavaScript nothing would ever lift the overlay: hide it. */}
       <noscript>
         <style>{"[data-boot]{display:none}"}</style>
       </noscript>
-      <pre className={s.bootLines}>
+      {/* The typed lines are visual only (see `BootAnnouncement`). */}
+      <pre className={s.bootLines} aria-hidden="true">
         {shown.map((text, i) => (
           <div key={i}>{text === lines[i] ? <Painted text={text} /> : text}</div>
         ))}
       </pre>
-      <div className={s.bootSkip}>{skipLabel}</div>
+      <div className={s.bootSkip} aria-hidden="true">
+        {skipLabel}
+      </div>
     </div>
   );
 }

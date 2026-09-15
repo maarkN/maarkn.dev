@@ -88,7 +88,7 @@ export function StatusBar({
           onActivate?.();
         }}
       >
-        {labels.theme} <b>{theme}</b>
+        <span className={s.barBtnLabel}>{labels.theme}</span> <b>{theme}</b>
       </button>
       <button
         type="button"
@@ -99,7 +99,7 @@ export function StatusBar({
           onActivate?.();
         }}
       >
-        {labels.font} <b>{font}</b>
+        <span className={s.barBtnLabel}>{labels.font}</span> <b>{font}</b>
       </button>
       <button
         type="button"
@@ -110,9 +110,9 @@ export function StatusBar({
           onActivate?.();
         }}
       >
-        {labels.lang} <b>{shortLocale(locale)}</b>
+        <span className={s.barBtnLabel}>{labels.lang}</span> <b>{shortLocale(locale)}</b>
       </button>
-      <span className={s.barClock}>{time}</span>
+      <span className={clsx(s.barClock, path && s.barClockPath)}>{time}</span>
     </header>
   );
 }

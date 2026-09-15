@@ -51,6 +51,26 @@ const NO_LINES: OutputEntry[] = [];
 let seq = 0;
 const nextId = () => ++seq;
 
+/**
+ * Which command run is being printed: every line until the next echo belongs
+ * to it, so the screen can group them as `output of <command>`. The label
+ * starts as the typed text and becomes the resolved name once known.
+ */
+function createBlockTracker() {
+  let active: { id: number; label: string } | null = null;
+  return {
+    start(text: string) {
+      active = { id: nextId(), label: text.trim().split(/\s+/)[0] ?? "" };
+    },
+    relabel(name: string) {
+      if (active) active.label = name;
+    },
+    get active() {
+      return active;
+    },
+  };
+}
+
 /** Menu entries that show content; the last one run is the "current" item. */
 const CONTENT_ITEMS = new Set<string>(
   MENU_ITEMS.map((item) => item.name).filter((name) => name !== "help" && name !== "clear"),
@@ -122,22 +142,28 @@ export function useTerminal({
   const [draft, setDraft] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const screenRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
+  const skipRef = useRef<HTMLAnchorElement>(null);
   const theme = useTheme();
   const router = useRouter();
 
   /* ── output ─────────────────────────────────────────────────── */
 
+  const [blocks] = useState(createBlockTracker);
+
   const print = useCallback(
     (batch: OutputLine[], opts: { instant?: boolean; cmd?: boolean } = {}) => {
+      const group = blocks.active;
       const entries = batch.map<OutputEntry>((line, index) => ({
         id: nextId(),
         line,
         index,
         ...opts,
+        ...(group ? { block: group.id, label: group.label } : {}),
       }));
       setLines((prev) => [...prev, ...entries]);
     },
-    [],
+    [blocks],
   );
 
   const replaceLast = useCallback((line: OutputLine) => {
@@ -151,9 +177,15 @@ export function useTerminal({
   }, []);
 
   const echo = useCallback(
-    (text: string) => print([createElement(EchoLine, { text })], { instant: true, cmd: true }),
-    [print],
+    (text: string) => {
+      blocks.start(text);
+      print([createElement(EchoLine, { text })], { instant: true, cmd: true });
+    },
+    [blocks, print],
   );
+
+  /** The typed text resolved to a command: name the block after it. */
+  const relabel = useCallback((name: string) => blocks.relabel(name), [blocks]);
 
   /** Echo one line of an answer (`→ label text`, or `… text` past the first). */
   const echoAnswer = useCallback(
@@ -176,6 +208,11 @@ export function useTerminal({
 
   const focusPrompt = useCallback(() => {
     inputRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  /** `Esc` on an empty prompt: Tab is autocomplete, so this is the way out. */
+  const focusMenu = useCallback(() => {
+    menuRef.current?.querySelector<HTMLElement>("button, a, [tabindex]")?.focus();
   }, []);
 
   /* ── engine ─────────────────────────────────────────────────── */
@@ -207,6 +244,7 @@ export function useTerminal({
       replaceLast,
       clear: clearScreen,
       markDone: (name) => {
+        relabel(name);
         setActive(CONTENT_ITEMS.has(name) ? (name as MenuItemName) : null);
         if (name === "clear" || name === "cls") return;
         setDone((prev) => (prev.has(name) ? prev : new Set(prev).add(name)));
@@ -254,7 +292,7 @@ export function useTerminal({
       },
       fallback,
     });
-  }, [registry, history, echo, print, replaceLast, clearScreen, fallback]);
+  }, [registry, history, echo, relabel, print, replaceLast, clearScreen, fallback]);
 
   // Abort whatever is still streaming when the shell unmounts.
   useEffect(() => () => runner.abort(), [runner]);
@@ -448,10 +486,29 @@ export function useTerminal({
         setValue(history.down());
         return;
       }
+      case "Escape": {
+        // Like a shell: a typed line is discarded. An empty one hands the
+        // keyboard to the menu, since Tab is taken by autocomplete.
+        event.preventDefault();
+        if (value) {
+          setValue("");
+          history.reset();
+        } else {
+          focusMenu();
+        }
+        return;
+      }
       case "Tab": {
         // Shift+Tab keeps moving focus backwards for keyboard users.
         if (event.shiftKey) return;
         event.preventDefault();
+        // Nothing to complete: Tab is a Tab, and the prompt is the last stop
+        // of the page, so the focus wraps to the first one (the skip link).
+        // The prompt is focused on load, which keeps "first Tab → skip link" true.
+        if (!value.trim()) {
+          skipRef.current?.focus();
+          return;
+        }
         const result = complete(value, registry.names(), files, directories);
         if (result.kind === "replace") setValue(result.value);
         else if (result.kind === "list") {
@@ -494,6 +551,8 @@ export function useTerminal({
     continuation: draft.length > 0,
     inputRef,
     screenRef,
+    menuRef,
+    skipRef,
     focusPrompt,
     run,
     runDeepLink,

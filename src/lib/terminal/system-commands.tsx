@@ -2,9 +2,10 @@
    inside <Line>, never as a React child array, so keys are meaningless here. */
 import { Fragment } from "react";
 import { FONTS, THEMES, type Font, type Theme } from "@/components/theme-provider";
-import { A, C, D, G, O, R, Row } from "@/components/terminal/primitives";
+import { A, C, Cmd, D, G, O, R, Row } from "@/components/terminal/primitives";
 import type { TerminalLabels } from "@/components/terminal/types";
 import { site } from "@/lib/site";
+import { rich } from "./rich";
 import type { Command, CommandContext, OutputLine } from "./types";
 
 /*
@@ -67,7 +68,7 @@ async function fontAvailable(spec: string): Promise<boolean> {
 export function formatNotFound(labels: TerminalLabels, name: string): OutputLine[] {
   return [
     <>
-      bash: {name}: {labels.messages.notFound} <D>{labels.messages.typeHelp}</D>
+      bash: {name}: {labels.messages.notFound} <D>{rich(labels.messages.typeHelp)}</D>
     </>,
   ];
 }
@@ -114,7 +115,7 @@ export function createSystemCommands(labels: TerminalLabels): Command[] {
       const lines: OutputLine[] = [<D>{help.heading}</D>, ""];
       for (const c of listed) {
         lines.push(
-          <Row label={<C>{c.name}</C>} width="w12">
+          <Row label={<Cmd>{c.name}</Cmd>} width="w12">
             {c.describe}
           </Row>,
         );
@@ -123,7 +124,13 @@ export function createSystemCommands(labels: TerminalLabels): Command[] {
       if (aside.length > 0) {
         lines.push(
           <D>
-            {help.alsoTry} {aside.map((c) => c.usage ?? c.name).join(" · ")}
+            {help.alsoTry}{" "}
+            {aside.map((c, i) => (
+              <Fragment key={c.name}>
+                {i > 0 && " · "}
+                <Cmd>{c.usage ?? c.name}</Cmd>
+              </Fragment>
+            ))}
           </D>,
         );
       }
@@ -269,7 +276,7 @@ export function createSystemCommands(labels: TerminalLabels): Command[] {
     run: () => [
       messages.exit,
       <D>
-        {messages.exitJoke} <C>contact</C>
+        {messages.exitJoke} <Cmd>contact</Cmd>
       </D>,
     ],
   };
@@ -324,7 +331,7 @@ export function createSystemCommands(labels: TerminalLabels): Command[] {
     run: () => [
       <R>{messages.hackInit}</R>,
       <>
-        {messages.hackJoke} <C>contact</C>
+        {messages.hackJoke} <Cmd>contact</Cmd>
       </>,
     ],
   };

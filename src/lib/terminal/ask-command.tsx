@@ -2,7 +2,7 @@
    inside <Line>, never as a React child array, so keys are meaningless here. */
 import dynamic from "next/dynamic";
 import { useMemo, useSyncExternalStore } from "react";
-import { C, D, R } from "@/components/terminal/primitives";
+import { Cmd, D, R } from "@/components/terminal/primitives";
 import s from "@/components/terminal/terminal.module.css";
 import type { TerminalLabels } from "@/components/terminal/types";
 import { streamChat, type ChatError, type ChatTurn } from "@/lib/chat-client";
@@ -110,7 +110,7 @@ export function createAskCommand(labels: TerminalLabels): Command {
   const { messages } = labels;
 
   const contactHint = (
-    <D>{rich(t.contactHint, { contact: <C>contact</C> })}</D>
+    <D>{rich(t.contactHint, { contact: <Cmd>contact</Cmd> })}</D>
   );
 
   function formatError(error: ChatError, locale: string): OutputLine {
@@ -160,13 +160,13 @@ export function createAskCommand(labels: TerminalLabels): Command {
           <>
             {t.usage} <D>{t.example}</D>
           </>,
-          <D>{t.newHint}</D>,
+          <D>{rich(t.newHint)}</D>,
         ];
       }
       if (question.startsWith("/")) {
         return [
           <>
-            {t.noSlash} <D>{messages.typeHelp}</D>
+            {t.noSlash} <D>{rich(messages.typeHelp)}</D>
           </>,
         ];
       }

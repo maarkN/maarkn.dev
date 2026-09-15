@@ -290,6 +290,80 @@ describe("terminal shell", () => {
     expect(Math.max(...delays)).toBeLessThanOrEqual(480);
   });
 
+  describe("accessibility", () => {
+    it("exposes landmarks: header, labelled nav, main, a labelled prompt and a polite live region", () => {
+      expect(container.querySelector("header")).not.toBeNull();
+      expect(container.querySelector('nav[aria-label="commands"]')).not.toBeNull();
+      expect(container.querySelector("main")).not.toBeNull();
+      const live = container.querySelector('main [aria-live="polite"]')!;
+      expect(live.getAttribute("aria-relevant")).toBe("additions");
+      const label = container.querySelector(`label[for="${input().id}"]`)!;
+      expect(label.textContent).toBe("command line");
+    });
+
+    it("the skip link is the first focusable element and focuses the prompt", async () => {
+      const focusables = container.querySelectorAll<HTMLElement>("a[href], button, input");
+      const skip = focusables[0];
+      expect(skip.tagName).toBe("A");
+      expect(skip.textContent).toBe("skip to command line");
+      expect(skip.getAttribute("href")).toBe("#cmd");
+      await act(async () => skip.click());
+      expect(document.activeElement).toBe(input());
+    });
+
+    it("groups each command's output in a section named after the resolved command", async () => {
+      await enter("2");
+      const sections = [...container.querySelectorAll("main section")];
+      const last = sections[sections.length - 1];
+      expect(last.getAttribute("aria-label")).toBe("output of experience");
+      expect(last.textContent).toContain("maarkn@dev:~$ 2");
+      expect(last.textContent).toContain("career");
+      // The text is in the DOM before any animation finishes.
+      expect(lines().every((el) => (el.textContent ?? "").length > 0)).toBe(true);
+    });
+
+    it("an unknown command still gets its own section, named after what was typed", async () => {
+      await enter("nope");
+      const sections = [...container.querySelectorAll("main section")];
+      expect(sections[sections.length - 1].getAttribute("aria-label")).toBe("output of nope");
+    });
+
+    it("Tab on an empty prompt wraps the focus to the skip link instead of listing every command", async () => {
+      act(() => input().focus());
+      await key("Tab");
+      expect(document.activeElement?.textContent).toBe("skip to command line");
+      expect(screenText()).not.toContain("whoami  experience");
+      type("w");
+      await key("Tab");
+      expect(input().value).toBe("w");
+      expect(screenText()).toContain("whoami  writing  whereami");
+    });
+
+    it("Esc discards a typed line and, on an empty prompt, moves focus to the first menu item", async () => {
+      type("whoa");
+      await key("Escape");
+      expect(input().value).toBe("");
+      expect(document.activeElement).not.toBe(input());
+      act(() => input().focus());
+      await key("Escape");
+      expect(document.activeElement).toBe(container.querySelector('[data-cmd="whoami"]'));
+    });
+
+    it("focus stays on the prompt after a command", async () => {
+      act(() => input().focus());
+      await enter("whoami");
+      expect(document.activeElement).toBe(input());
+    });
+
+    it("help mentions Esc and names commands as English code", async () => {
+      await enter("help");
+      expect(screenText()).toContain("esc leaves the prompt");
+      const code = container.querySelector('main code[lang="en"]')!;
+      expect(code).not.toBeNull();
+      expect(code.textContent).toBe("whoami");
+    });
+  });
+
   describe("interactive prompt (ctx.ask)", () => {
     it("swaps the PS1 for the question, answers on Enter and keeps answers out of history", async () => {
       await enter("quiz");

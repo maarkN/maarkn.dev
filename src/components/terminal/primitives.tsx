@@ -47,6 +47,19 @@ export function B({ children }: Kids) {
   return <span className={s.b}>{children}</span>;
 }
 
+/**
+ * A command or file name quoted inside prose (`type help`, `try ls`): cyan
+ * like `C`, but as `<code lang="en">` so screen readers reading pt-BR text
+ * pronounce it as the English word it is. `rich()` renders `` `name` `` with it.
+ */
+export function Cmd({ children }: Kids) {
+  return (
+    <code lang="en" className={s.cmdName}>
+      {children}
+    </code>
+  );
+}
+
 /* ── Row: label column + content ───────────────────────────────── */
 
 export type RowWidth = "w4" | "w9" | "w10" | "w12" | "w18" | "w22";

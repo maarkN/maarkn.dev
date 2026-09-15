@@ -602,7 +602,7 @@
       "label": "command line",
       "askHint": "enter answers · esc cancels"
     },
-    "hint": "tab autocomplete · ↑ history · ask <anything> talks to the ai · type help",
+    "hint": "tab autocomplete · ↑ history · `ask` <anything> talks to the ai · type `help`",
     "boot": {
       "lines": [
         "> booting maarkn.sh",
@@ -612,12 +612,13 @@
         "> warming up the llms... [ok]",
         "> ready."
       ],
-      "skip": "press any key or tap to skip"
+      "skip": "press any key or tap to skip",
+      "status": "booting… press any key to skip"
     },
     "help": {
       "heading": "commands",
       "alsoTry": "also try:",
-      "shortcuts": "numbers 1–6 are shortcuts · tab autocompletes · ↑↓ walks history · ctrl+l clears",
+      "shortcuts": "numbers 1–6 are shortcuts · tab autocompletes · esc leaves the prompt · ↑↓ walks history · ctrl+l clears",
       "describe": {
         "whoami": "who I am and what I do",
         "experience": "career timeline, newest first",
@@ -654,13 +655,13 @@
         "hack": "please don't"
       },
       "hints": {
-        "projects": "· open <n> reads a case",
-        "writing": "· read <n> opens one"
+        "projects": "· `open <n>` reads a case",
+        "writing": "· `read <n>` opens one"
       }
     },
     "messages": {
       "notFound": "command not found",
-      "typeHelp": "· type help",
+      "typeHelp": "· type `help`",
       "failed": "failed",
       "noHistory": "no history yet",
       "themeSoft": "· dracula soft, the dimmed one",
@@ -684,7 +685,7 @@
     "ask": {
       "usage": "usage: ask <question>",
       "example": "· e.g. ask what did you build with LLMs?",
-      "newHint": "ask --new starts a fresh conversation · answers come from an AI trained on my CV and projects",
+      "newHint": "`ask --new` starts a fresh conversation · answers come from an AI trained on my CV and projects",
       "thinking": "thinking…",
       "newConversation": "new conversation · previous context forgotten",
       "noSlash": "ask: no slash commands here",
@@ -773,7 +774,7 @@
       "noSuchDirectory": "cd: {dir}: no such directory",
       "alreadyHome": "cd: already at ~",
       "langUnknown": "lang: {value}: unknown language",
-      "langHint": "· try lang en or lang pt",
+      "langHint": "· try `lang en` or `lang pt`",
       "langNote": {
         "en": "· english, from here on",
         "pt-BR": "· português do Brasil, daqui em diante"
@@ -782,11 +783,11 @@
     "errors": {
       "catMissing": "cat: missing file",
       "catNoSuch": "cat: {file}: no such file",
-      "tryLs": "· try ls",
+      "tryLs": "· try `ls`",
       "openRange": "open: pick a number 1–{n}",
-      "seeProjects": "· see projects",
+      "seeProjects": "· see `projects`",
       "readRange": "read: pick a number 1–{n}",
-      "seeWriting": "· see writing"
+      "seeWriting": "· see `writing`"
     },
     "pages": {
       "back": "cd ..",
@@ -837,6 +838,12 @@
           "status": "status"
         }
       }
+    },
+    "a11y": {
+      "skipToPrompt": "skip to command line",
+      "skipToContent": "skip to content",
+      "outputOf": "output of {cmd}",
+      "breadcrumb": "breadcrumb"
     }
   }
 }

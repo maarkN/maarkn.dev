@@ -1,11 +1,13 @@
 "use client";
 
-import { useId, useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
+import { useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import { clsx } from "clsx";
 import { site } from "@/lib/site";
 import s from "./terminal.module.css";
 
 export const PROMPT_USER = `${site.nick}@dev`;
+/** `id` of the command input — the skip link's target. One prompt per page. */
+export const PROMPT_INPUT_ID = "cmd";
 
 /** `maarkn@dev:~$ ` — used by the prompt and by echoed command lines. */
 export function Ps1() {
@@ -88,7 +90,7 @@ export function Prompt({
   inputMode?: "text" | "email";
   enterKeyHint?: "go" | "next" | "send";
 }) {
-  const id = useId();
+  const id = PROMPT_INPUT_ID;
   const [focused, setFocused] = useState(false);
 
   return (

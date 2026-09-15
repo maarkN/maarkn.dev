@@ -119,6 +119,39 @@ describe("boot sequence", () => {
     expect(overlay()).toBeNull();
   });
 
+  it("announces one sentence to assistive tech and hides the typed lines from it", async () => {
+    mount();
+    await tick(100);
+    const status = container.querySelector('[role="status"]')!;
+    expect(status.textContent).toBe(labels.boot.status);
+    expect(status.closest("[aria-hidden]")).toBeNull();
+    expect(status.className).toContain("sr-only");
+    expect(container.querySelector("[data-boot] pre")!.getAttribute("aria-hidden")).toBe("true");
+    expect(overlay()!.hasAttribute("aria-live")).toBe(false);
+    expect(container.querySelectorAll('[role="status"]').length).toBe(1);
+
+    await tick(5000);
+    await tick(600);
+    expect(overlay()).toBeNull();
+    expect(container.querySelector('[role="status"]')).toBe(status);
+    expect(status.textContent).toBe("");
+  });
+
+  it("reboot writes the sentence into the same live region again", async () => {
+    window.sessionStorage.setItem(BOOT_KEY, "1");
+    mount();
+    await tick(10);
+    const status = container.querySelector('[role="status"]')!;
+    expect(status.textContent).toBe("");
+
+    await enter("reboot");
+    expect(overlay()).not.toBeNull();
+    // Same node (not a remount with the text already inside), text added.
+    expect(container.querySelector('[role="status"]')).toBe(status);
+    expect(status.textContent).toBe(labels.boot.status);
+    expect(status.closest("[aria-hidden]")).toBeNull();
+  });
+
   it("also boots in pt-BR within the budget", async () => {
     mount(ptBR.terminal);
     await tick(3000);
@@ -192,6 +225,13 @@ describe("boot sequence", () => {
     expect(screenText()).not.toContain("marco");
     expect(booted()).toBeNull();
     expect(overlay()).not.toBeNull();
+    expect(shell().hasAttribute("inert")).toBe(true);
+
+    // The Enter that ran `reboot` is still bubbling when the overlay mounts:
+    // it must not count as the "any key" that skips the sequence.
+    await tick(100);
+    expect(bootLines().length).toBe(1);
+    expect(bootLines()[0].textContent!.length).toBeLessThan(labels.boot.lines[0].length);
     expect(shell().hasAttribute("inert")).toBe(true);
 
     await tick(5000);

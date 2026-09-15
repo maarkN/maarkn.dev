@@ -198,13 +198,14 @@ describe("ask", () => {
   });
 
   it("explains a rate limit with the cap and the retry time, in red", async () => {
-    const retryAt = new Date();
-    retryAt.setHours(18, 42, 0, 0);
+    // Always in the future, whatever the wall clock says when the suite runs.
+    const retryAt = new Date(Date.now() + 3600_000);
+    const minutes = String(retryAt.getMinutes()).padStart(2, "0");
     replies.push({
       status: 429,
       body: { error: "rate_limited", reason: "per_ip", retryAt: retryAt.getTime() },
       headers: {
-        "Retry-After": String(Math.max(1, Math.ceil((retryAt.getTime() - Date.now()) / 1000))),
+        "Retry-After": "3600",
         "X-RateLimit-Limit": "10",
         "X-RateLimit-Window": "3600",
       },
@@ -212,7 +213,9 @@ describe("ask", () => {
     const { screen, run } = setup();
     await run("ask one too many");
     const line = last(screen);
-    expect(text(line)).toMatch(/^rate limit: 10 messages\/hour · try again at \d{1,2}:42/);
+    expect(text(line)).toMatch(
+      new RegExp(`^rate limit: 10 messages/hour · try again at \\d{1,2}:${minutes}`),
+    );
     expect(isValidElement(line) && line.type).toBe(R);
     expect(screen).toHaveLength(2);
   });

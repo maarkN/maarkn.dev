@@ -602,7 +602,7 @@
       "label": "linha de comando",
       "askHint": "enter responde · esc cancela"
     },
-    "hint": "tab autocompleta · ↑ histórico · ask <algo> fala com a ia · digite help",
+    "hint": "tab autocompleta · ↑ histórico · `ask` <algo> fala com a ia · digite `help`",
     "boot": {
       "lines": [
         "> iniciando maarkn.sh",
@@ -612,12 +612,13 @@
         "> aquecendo as llms... [ok]",
         "> pronto."
       ],
-      "skip": "pressione uma tecla ou toque para pular"
+      "skip": "pressione uma tecla ou toque para pular",
+      "status": "iniciando… pressione uma tecla para pular"
     },
     "help": {
       "heading": "comandos",
       "alsoTry": "tente também:",
-      "shortcuts": "números 1–6 são atalhos · tab autocompleta · ↑↓ percorre o histórico · ctrl+l limpa",
+      "shortcuts": "números 1–6 são atalhos · tab autocompleta · esc sai do prompt · ↑↓ percorre o histórico · ctrl+l limpa",
       "describe": {
         "whoami": "quem sou e o que faço",
         "experience": "linha do tempo da carreira, mais recente primeiro",
@@ -654,13 +655,13 @@
         "hack": "por favor, não"
       },
       "hints": {
-        "projects": "· open <n> abre um caso",
-        "writing": "· read <n> abre um"
+        "projects": "· `open <n>` abre um caso",
+        "writing": "· `read <n>` abre um"
       }
     },
     "messages": {
       "notFound": "comando não encontrado",
-      "typeHelp": "· digite help",
+      "typeHelp": "· digite `help`",
       "failed": "falhou",
       "noHistory": "sem histórico ainda",
       "themeSoft": "· dracula soft, a versão suave",
@@ -684,7 +685,7 @@
     "ask": {
       "usage": "uso: ask <pergunta>",
       "example": "· ex.: ask o que você construiu com LLMs?",
-      "newHint": "ask --new começa uma conversa nova · as respostas vêm de uma IA treinada no meu CV e projetos",
+      "newHint": "`ask --new` começa uma conversa nova · as respostas vêm de uma IA treinada no meu CV e projetos",
       "thinking": "pensando…",
       "newConversation": "nova conversa · contexto anterior esquecido",
       "noSlash": "ask: aqui não tem comandos com barra",
@@ -773,7 +774,7 @@
       "noSuchDirectory": "cd: {dir}: diretório não existe",
       "alreadyHome": "cd: já estamos em ~",
       "langUnknown": "lang: {value}: idioma desconhecido",
-      "langHint": "· tente lang en ou lang pt",
+      "langHint": "· tente `lang en` ou `lang pt`",
       "langNote": {
         "en": "· english, from here on",
         "pt-BR": "· português do Brasil, daqui em diante"
@@ -782,11 +783,11 @@
     "errors": {
       "catMissing": "cat: arquivo não informado",
       "catNoSuch": "cat: {file}: arquivo não existe",
-      "tryLs": "· tente ls",
+      "tryLs": "· tente `ls`",
       "openRange": "open: escolha um número de 1 a {n}",
-      "seeProjects": "· veja projects",
+      "seeProjects": "· veja `projects`",
       "readRange": "read: escolha um número de 1 a {n}",
-      "seeWriting": "· veja writing"
+      "seeWriting": "· veja `writing`"
     },
     "pages": {
       "back": "cd ..",
@@ -837,6 +838,12 @@
           "status": "status"
         }
       }
+    },
+    "a11y": {
+      "skipToPrompt": "pular para a linha de comando",
+      "skipToContent": "pular para o conteúdo",
+      "outputOf": "saída de {cmd}",
+      "breadcrumb": "caminho"
     }
   }
 }

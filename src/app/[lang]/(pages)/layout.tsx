@@ -20,6 +20,7 @@ export default async function PagesLayout({ children, params }: LayoutProps<"/[l
   return (
     <PageChrome
       labels={dict.terminal.bar}
+      a11y={dict.terminal.a11y}
       backLabel={pages.back}
       footer={<PageFooter label={pages.footer} />}
     >
