@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type KeyboardEvent, type Ref } from "react";
+import { useId, useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import { clsx } from "clsx";
 import { site } from "@/lib/site";
 import s from "./terminal.module.css";
@@ -26,12 +26,54 @@ export function EchoLine({ text }: { text: string }) {
   );
 }
 
+/**
+ * The prompt of an interactive question (`ctx.ask`): `→ name: `, or the
+ * `… ` continuation of a multi-line answer.
+ */
+export function AskPs1({ label, cont = false }: { label: string; cont?: boolean }) {
+  return (
+    <span className={clsx(s.ps1, s.ask)}>
+      {cont ? (
+        <span className={s.d}>… </span>
+      ) : (
+        <>
+          <span className={s.p}>→</span> {label}{" "}
+        </>
+      )}
+    </span>
+  );
+}
+
+/** An echoed answer line. Masked answers echo as bullets. */
+export function AskEchoLine({
+  label,
+  text,
+  cont,
+  mask,
+}: {
+  label: string;
+  text: string;
+  cont?: boolean;
+  mask?: boolean;
+}) {
+  return (
+    <>
+      <AskPs1 label={label} cont={cont} />
+      {mask ? "•".repeat(text.length) : text}
+    </>
+  );
+}
+
 export function Prompt({
   value,
   onChange,
   onKeyDown,
   label,
   ref,
+  prefix,
+  mask = false,
+  inputMode = "text",
+  enterKeyHint = "go",
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -39,14 +81,20 @@ export function Prompt({
   /** Accessible name of the (visually hidden) input. */
   label: string;
   ref?: Ref<HTMLInputElement>;
+  /** What precedes the typed text; the PS1 unless a question is being asked. */
+  prefix?: ReactNode;
+  /** Show the typed text as bullets (`ctx.ask` with `mask`). */
+  mask?: boolean;
+  inputMode?: "text" | "email";
+  enterKeyHint?: "go" | "next" | "send";
 }) {
   const id = useId();
   const [focused, setFocused] = useState(false);
 
   return (
     <div className={clsx(s.prompt, !focused && s.blur)}>
-      <Ps1 />
-      <span className={s.typed}>{value}</span>
+      {prefix ?? <Ps1 />}
+      <span className={s.typed}>{mask ? "•".repeat(value.length) : value}</span>
       <span className={s.cursor} aria-hidden="true" />
       <label htmlFor={id} className="sr-only">
         {label}
@@ -55,7 +103,8 @@ export function Prompt({
         ref={ref}
         id={id}
         className={s.cmdInput}
-        type="text"
+        type={mask ? "password" : "text"}
+        inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
@@ -65,7 +114,7 @@ export function Prompt({
         autoCapitalize="off"
         autoCorrect="off"
         spellCheck={false}
-        enterKeyHint="go"
+        enterKeyHint={enterKeyHint}
       />
     </div>
   );

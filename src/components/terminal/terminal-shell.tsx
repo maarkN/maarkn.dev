@@ -8,7 +8,7 @@ import { BootOverlay, hasFinePointer, useBoot } from "./boot-overlay";
 import { CommandMenu } from "./command-menu";
 import { DeepLink } from "./deep-link";
 import { Output } from "./output";
-import { Prompt } from "./prompt";
+import { AskPs1, Prompt } from "./prompt";
 import { Screen } from "./screen";
 import { StatusBar } from "./status-bar";
 import s from "./terminal.module.css";
@@ -57,6 +57,8 @@ export function TerminalShell({
     active,
     value,
     setValue,
+    ask,
+    continuation,
     inputRef,
     screenRef,
     focusPrompt,
@@ -135,9 +137,15 @@ export function TerminalShell({
               value={value}
               onChange={setValue}
               onKeyDown={handleKeyDown}
-              label={labels.prompt.label}
+              label={ask ? ask.label : labels.prompt.label}
+              prefix={ask ? <AskPs1 label={ask.label} cont={continuation} /> : undefined}
+              mask={ask?.options.mask}
+              inputMode={ask?.options.inputMode}
+              enterKeyHint={ask?.options.enterKeyHint}
             />
-            <div className={s.hint}>{labels.hint}</div>
+            <div className={s.hint}>
+              {ask ? (ask.options.hint ?? labels.prompt.askHint) : labels.hint}
+            </div>
           </Screen>
         </div>
       </div>

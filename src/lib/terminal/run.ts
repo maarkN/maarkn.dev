@@ -1,7 +1,7 @@
 import type { History } from "./history";
 import { parse } from "./parse";
 import type { Registry } from "./registry";
-import type { CommandContext, OutputLine } from "./types";
+import type { AskOptions, CommandContext, OutputLine } from "./types";
 
 /** How printed lines enter the screen. */
 export type PrintOptions = {
@@ -21,12 +21,17 @@ export type RunnerIO = {
   clear: () => void;
   /** A command resolved and ran; the menu marks it as done. */
   markDone: (name: string) => void;
+  /**
+   * Interactive prompt (`ctx.ask`). Must reject with an `AbortError` when
+   * `signal` aborts, so a cancelled command never waits on the prompt.
+   */
+  ask?: (label: string, options: AskOptions, signal: AbortSignal) => Promise<string>;
 };
 
 /** The parts of the context the host provides; the runner fills in the rest. */
 export type BaseContext = Omit<
   CommandContext,
-  "history" | "commands" | "clear" | "print" | "replaceLast" | "signal"
+  "history" | "commands" | "clear" | "print" | "replaceLast" | "signal" | "ask"
 >;
 
 /** Messages the runner prints itself. */
@@ -120,6 +125,7 @@ export function createRunner({
     const controller = new AbortController();
     current = controller;
     const { signal } = controller;
+    const { ask } = io;
 
     const ctx: CommandContext = {
       ...base,
@@ -133,6 +139,7 @@ export function createRunner({
       replaceLast: (line) => {
         if (!signal.aborted) io.replaceLast(line);
       },
+      ask: ask ? (label, options = {}) => ask(label, options, signal) : undefined,
     };
 
     try {

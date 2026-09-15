@@ -231,6 +231,10 @@ describe("contact and cv", () => {
     expect(joined).toMatch(new RegExp(`href="${site.cvPath}"[^>]*target="_blank"`));
     expect(text(html)).toContain("● available for new projects");
     expect(text(html)).toContain("America/Sao_Paulo");
+    // The line before the footer points to `mail`.
+    const lines = text(html).split("\n");
+    expect(lines.at(-2)).toBe("→ type mail to send a message from here");
+    expect(lines.at(-1)).toBe("I read every message and reply within a couple of working days.");
   });
 
   it("cv opens the PDF in a new tab and prints the link", async () => {

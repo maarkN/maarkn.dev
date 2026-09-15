@@ -49,6 +49,8 @@ export type TerminalLabels = {
   };
   prompt: {
     label: string;
+    /** Shown under the prompt while a command asks a question (`ctx.ask`). */
+    askHint: string;
   };
   hint: string;
   boot: {
@@ -132,6 +134,34 @@ export type TerminalLabels = {
     statusNote: string;
     timezoneValue: string;
     footer: string;
+  };
+  /** `mail`: question labels, validation messages and send feedback. */
+  mail: {
+    /** Line `contact` prints, with `{mail}` for the command name. */
+    hint: string;
+    name: string;
+    email: string;
+    company: string;
+    message: string;
+    messageHint: string;
+    confirm: string;
+    invalidName: string;
+    invalidEmail: string;
+    invalidCompany: string;
+    invalidMessage: string;
+    invalidConfirm: string;
+    /** `{n}` attempts left on the field. */
+    attemptsLeft: string;
+    tooMany: string;
+    cancelled: string;
+    notSent: string;
+    sending: string;
+    sent: string;
+    failed: string;
+    /** `{email}` is the direct address. */
+    direct: string;
+    /** `{seconds}` until another message may be sent. */
+    wait: string;
   };
   neofetch: {
     host: string;

@@ -599,7 +599,8 @@
       "status": "aberto a vagas sênior — UE e Canadá"
     },
     "prompt": {
-      "label": "linha de comando"
+      "label": "linha de comando",
+      "askHint": "enter responde · esc cancela"
     },
     "hint": "tab autocompleta · ↑ histórico · ask <algo> fala com a ia · digite help",
     "boot": {
@@ -625,6 +626,7 @@
         "writing": "posts mais recentes",
         "contact": "onde me encontrar",
         "cv": "baixar o CV (pdf)",
+        "mail": "me manda uma mensagem daqui",
         "ask": "pergunte à IA sobre o meu trabalho",
         "open": "abre o projeto n da última lista",
         "read": "abre o post n da última lista",
@@ -734,6 +736,29 @@
       "statusNote": "pra novos projetos · aberto a vagas sênior na UE e no Canadá",
       "timezoneValue": "America/Sao_Paulo · UTC−3 · trabalhando em inglês todo dia",
       "footer": "Leio todas as mensagens e respondo em uns dois dias úteis."
+    },
+    "mail": {
+      "hint": "→ digite {mail} pra mandar uma mensagem daqui",
+      "name": "nome:",
+      "email": "email:",
+      "company": "empresa (opcional):",
+      "message": "mensagem:",
+      "messageHint": "shift+enter adiciona uma linha · enter continua · esc cancela",
+      "confirm": "enviar? [S/n]",
+      "invalidName": "o nome precisa ter de 2 a 80 caracteres",
+      "invalidEmail": "endereço inválido, tente de novo",
+      "invalidCompany": "empresa longa demais (máx. 120 caracteres)",
+      "invalidMessage": "um pouco mais, por favor — pelo menos 10 caracteres (máx. 4000)",
+      "invalidConfirm": "responda s ou n",
+      "attemptsLeft": "· {n} restante(s)",
+      "tooMany": "muitas tentativas inválidas",
+      "cancelled": "mail cancelado",
+      "notSent": "não enviado",
+      "sending": "enviando…",
+      "sent": "✓ enviado",
+      "failed": "✗ não foi possível enviar",
+      "direct": "me escreva direto em {email}",
+      "wait": "aguarde {seconds}s pra mandar outra mensagem"
     },
     "neofetch": {
       "host": "{city}, BR · UTC−3",

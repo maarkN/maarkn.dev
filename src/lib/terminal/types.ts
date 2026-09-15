@@ -14,11 +14,16 @@ export type OutputLine = ReactNode | "";
 /** What `Command.run` resolves to: lines to print, or nothing. */
 export type CommandResult = OutputLine[] | null | undefined | void;
 
-/** Options for the interactive prompt (`ctx.ask`), implemented in change 10. */
+/** Options for the interactive prompt (`ctx.ask`). */
 export type AskOptions = {
+  /** Echo and display the answer as bullets (passwords). */
   mask?: boolean;
   inputMode?: "text" | "email";
   enterKeyHint?: "next" | "send" | "go";
+  /** `Shift+Enter` adds a line (shown with a `… ` continuation) instead of answering. */
+  multiline?: boolean;
+  /** Replaces the hint under the prompt while this question is pending. */
+  hint?: string;
 };
 
 /**
@@ -88,7 +93,12 @@ export type CommandContext = {
   signal: AbortSignal;
   /** Mutable per-session scratch space shared by commands (e.g. last list). */
   state: Record<string, unknown>;
-  /** Interactive prompt: swaps the PS1 for `label` and resolves on Enter. */
+  /**
+   * Interactive prompt: swaps the PS1 for `→ label ` and resolves with the
+   * answer on Enter. Rejects with an `AbortError` (see `isAbortError`) when
+   * the visitor presses `Esc`/`Ctrl+C` or the command is aborted. Answers are
+   * never recorded in the history. Absent on hosts without a prompt.
+   */
   ask?: (label: string, options?: AskOptions) => Promise<string>;
 };
 

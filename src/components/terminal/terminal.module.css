@@ -201,6 +201,10 @@
 .ps1 .h {
   color: var(--purple);
 }
+/* interactive question (`ctx.ask`): `→ name: ` / `… ` continuation */
+.ps1.ask {
+  color: var(--fg);
+}
 
 /* ── primitives: colours, rows, links ──────────────────────────── */
 .c { color: var(--cyan); }

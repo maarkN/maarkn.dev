@@ -4,6 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import { createAskCommand, createAskFallback } from "@/lib/terminal/ask-command";
 import { createContentCommands } from "@/lib/terminal/content-commands";
 import { FILE_NAMES } from "@/lib/terminal/files";
+import { createMailCommand } from "@/lib/terminal/mail-command";
 import { createNavCommands, DIRECTORY_NAMES } from "@/lib/terminal/nav-commands";
 import type { OutputLine, TerminalData } from "@/lib/terminal/types";
 import { TerminalShell } from "./terminal-shell";
@@ -35,10 +36,13 @@ export function TerminalApp({
   /** Lines rendered by the server as the session's first output. */
   initialLines?: OutputLine[];
 }) {
-  const commands = useMemo(
-    () => [...createContentCommands(labels), createAskCommand(labels), ...createNavCommands(labels)],
-    [labels],
-  );
+  // `mail` sits right after `contact`/`cv` in `help`, where the visitor looks for it.
+  const commands = useMemo(() => {
+    const content = createContentCommands(labels);
+    const after = content.findIndex((c) => c.name === "cv");
+    content.splice(after + 1, 0, createMailCommand(labels));
+    return [...content, createAskCommand(labels), ...createNavCommands(labels)];
+  }, [labels]);
   const fallback = useMemo(() => createAskFallback(labels), [labels]);
   // Already visible when the HTML arrives: no entrance animation, no stagger.
   const initial = useMemo<OutputEntry[]>(

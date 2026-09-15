@@ -4,6 +4,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/dictionaries/en.json";
 import { ThemeProvider } from "@/components/theme-provider";
+import { isAbortError } from "@/lib/terminal/abort";
+import { createMailCommand, MAIL_SENT_AT_KEY } from "@/lib/terminal/mail-command";
 import type { Command } from "@/lib/terminal/types";
 import { TerminalShell } from "./terminal-shell";
 
@@ -11,6 +13,11 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => "/en",
   useSearchParams: () => new URLSearchParams(),
+}));
+// `mail` sends through a server action; the shell tests fake the transport.
+vi.mock("@/app/_actions/contact", () => ({ submitContact: vi.fn() }));
+const sendMail = vi.fn<(data: FormData) => Promise<{ status: "success" }>>(async () => ({
+  status: "success",
 }));
 
 const labels = en.terminal;
@@ -35,6 +42,21 @@ const stubs: Command[] = [
       return null;
     },
   },
+  {
+    name: "quiz",
+    describe: "two questions through ctx.ask",
+    run: async (_, ctx) => {
+      try {
+        const first = await ctx.ask!("first:", { inputMode: "email", enterKeyHint: "next" });
+        const second = await ctx.ask!("second:", { multiline: true, enterKeyHint: "send" });
+        return [`got ${first} / ${second.replace(/\n/g, "|")}`];
+      } catch (error) {
+        if (isAbortError(error)) return ["quiz cancelled"];
+        throw error;
+      }
+    },
+  },
+  createMailCommand(labels, { send: (data) => sendMail(data) }),
 ];
 
 let root: Root;
@@ -43,6 +65,7 @@ let container: HTMLDivElement;
 const input = () => container.querySelector("input")!;
 const lines = () => [...container.querySelectorAll("main .line, main [class*='line']")];
 const screenText = () => container.querySelector("main")!.textContent ?? "";
+const promptText = () => container.querySelector("[class*='prompt']")!.textContent ?? "";
 
 function mount() {
   container = document.createElement("div");
@@ -265,5 +288,157 @@ describe("terminal shell", () => {
       .map((d) => parseInt(d, 10));
     expect(delays.length).toBeGreaterThan(0);
     expect(Math.max(...delays)).toBeLessThanOrEqual(480);
+  });
+
+  describe("interactive prompt (ctx.ask)", () => {
+    it("swaps the PS1 for the question, answers on Enter and keeps answers out of history", async () => {
+      await enter("quiz");
+      expect(promptText()).toContain("→ first:");
+      expect(promptText()).not.toContain("maarkn@dev");
+      expect(input().getAttribute("inputmode")).toBe("email");
+      expect(input().getAttribute("enterkeyhint")).toBe("next");
+
+      await enter("alpha");
+      expect(screenText()).toContain("→ first: alpha");
+      expect(promptText()).toContain("→ second:");
+      expect(input().getAttribute("inputmode")).toBe("text");
+      expect(input().getAttribute("enterkeyhint")).toBe("send");
+
+      await enter("beta");
+      expect(screenText()).toContain("→ second: beta");
+      expect(screenText()).toContain("got alpha / beta");
+      expect(promptText()).toContain("maarkn@dev:~$");
+      expect(input().getAttribute("enterkeyhint")).toBe("go");
+
+      await key("ArrowUp");
+      expect(input().value).toBe("quiz");
+      await key("ArrowUp");
+      expect(input().value).toBe("quiz");
+      // Neither history nor the replayable session log keeps the answers.
+      expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!)).toEqual({
+        history: ["quiz"],
+        lastCommands: ["quiz"],
+      });
+    });
+
+    it("ignores history and autocomplete while a question is pending", async () => {
+      await enter("whoami");
+      await enter("quiz");
+      await key("ArrowUp");
+      expect(input().value).toBe("");
+      type("who");
+      await key("Tab");
+      expect(input().value).toBe("who");
+      expect(screenText()).not.toContain("whoami  writing");
+    });
+
+    it("Esc cancels the question and restores the prompt", async () => {
+      await enter("quiz");
+      type("half an answer");
+      await key("Escape");
+      expect(screenText()).toContain("quiz cancelled");
+      expect(screenText()).not.toContain("half an answer");
+      expect(promptText()).toContain("maarkn@dev:~$");
+      expect(input().value).toBe("");
+    });
+
+    it("Ctrl+C cancels the question; native copy wins with a selection", async () => {
+      await enter("quiz");
+      vi.spyOn(window, "getSelection").mockReturnValueOnce({ toString: () => "copied" } as Selection);
+      await key("c", { ctrlKey: true });
+      expect(promptText()).toContain("→ first:");
+      await key("c", { ctrlKey: true });
+      expect(screenText()).toContain("quiz cancelled");
+      expect(promptText()).toContain("maarkn@dev:~$");
+    });
+
+    it("Shift+Enter adds a continuation line to a multiline answer", async () => {
+      await enter("quiz");
+      await enter("a");
+      type("line one");
+      await key("Enter", { shiftKey: true });
+      expect(screenText()).toContain("→ second: line one");
+      expect(promptText()).toMatch(/^… /);
+      expect(input().value).toBe("");
+      await enter("line two");
+      expect(screenText()).toContain("… line two");
+      expect(screenText()).toContain("got a / line one|line two");
+    });
+
+    it("mail: the whole flow runs in the prompt, answers stay out of history, 60s cooldown", async () => {
+      sendMail.mockClear();
+      await enter("mail");
+      expect(promptText()).toContain("→ name:");
+      expect(screenText()).toContain("enter answers · esc cancels");
+      await enter("Jane Doe");
+      expect(input().getAttribute("inputmode")).toBe("email");
+      await enter("jane@");
+      expect(screenText()).toContain("not a valid address, try again · 2 left");
+      expect(promptText()).toContain("→ email:");
+      await enter("jane@acme.com");
+      await enter("");
+      expect(promptText()).toContain("→ message:");
+      expect(screenText()).toContain("shift+enter adds a line");
+      type("We're hiring a senior");
+      await key("Enter", { shiftKey: true });
+      expect(promptText()).toMatch(/^… /);
+      await enter("AI engineer in Berlin.");
+      expect(promptText()).toContain("→ send? [Y/n]");
+      expect(input().getAttribute("enterkeyhint")).toBe("send");
+      await enter("y");
+      await act(() => sleep(10));
+
+      expect(sendMail).toHaveBeenCalledTimes(1);
+      const data = sendMail.mock.calls[0]![0];
+      expect(data.get("message")).toBe("We're hiring a senior\nAI engineer in Berlin.");
+      expect(data.get("source")).toBe("terminal");
+      expect(screenText()).toContain("✓ sent · I read every message");
+      expect(promptText()).toContain("maarkn@dev:~$");
+      expect(screenText()).toContain("tab autocomplete · ↑ history");
+
+      await key("ArrowUp");
+      expect(input().value).toBe("mail");
+      await key("ArrowUp");
+      expect(input().value).toBe("mail");
+      expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!)).toEqual({
+        history: ["mail"],
+      });
+      expect(window.sessionStorage.getItem(MAIL_SENT_AT_KEY)).toMatch(/^\d+$/);
+
+      type("");
+      await enter("mail");
+      expect(screenText()).toMatch(/wait (60|59)s before sending another message/);
+      expect(promptText()).toContain("maarkn@dev:~$");
+    });
+
+    it("mail: Esc cancels with ^C · mail cancelled and nothing is sent", async () => {
+      sendMail.mockClear();
+      await enter("mail");
+      await enter("Jane Doe");
+      await enter("jane@acme.com");
+      await enter("Acme");
+      type("half a message");
+      await key("Escape");
+      expect(screenText()).toContain("^C · mail cancelled");
+      expect(screenText()).not.toContain("half a message");
+      expect(promptText()).toContain("maarkn@dev:~$");
+      expect(sendMail).not.toHaveBeenCalled();
+    });
+
+    it("Ctrl+L wipes the screen and drops the pending question", async () => {
+      await enter("quiz");
+      await key("l", { ctrlKey: true });
+      expect(screenText()).not.toContain("quiz");
+      expect(promptText()).toContain("maarkn@dev:~$");
+    });
+
+    it("a new command from the menu aborts the pending question", async () => {
+      await enter("quiz");
+      await act(async () => {
+        (container.querySelector('[data-cmd="whoami"]') as HTMLButtonElement).click();
+      });
+      expect(screenText()).toContain("marco");
+      expect(promptText()).toContain("maarkn@dev:~$");
+    });
   });
 });

@@ -323,6 +323,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
           {c.timezoneValue}
         </Row>,
         "",
+        <D>{rich(dict.mail.hint, { mail: <C>mail</C> })}</D>,
         <D>{c.footer}</D>,
       ];
     },

@@ -11,6 +11,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useTheme } from "@/components/theme-provider";
+import { abortError } from "@/lib/terminal/abort";
 import { resetConversation } from "@/lib/terminal/ask-command";
 import { complete } from "@/lib/terminal/complete";
 import { parseDeepLink } from "@/lib/terminal/deeplink";
@@ -33,12 +34,13 @@ import {
 } from "@/lib/terminal/system-commands";
 import {
   EMPTY_TERMINAL_DATA,
+  type AskOptions,
   type Command,
   type OutputLine,
   type TerminalData,
 } from "@/lib/terminal/types";
 import { MENU_ITEMS } from "./command-menu";
-import { EchoLine } from "./prompt";
+import { AskEchoLine, EchoLine } from "./prompt";
 import type { MenuItemName, OutputEntry, TerminalLabels } from "./types";
 
 const NO_COMMANDS: Command[] = [];
@@ -61,6 +63,18 @@ const endsWith = (a: readonly string[], b: readonly string[]) =>
 /** `href` is this very page, differing at most in query string or hash. */
 const isSamePage = (href: string) =>
   new URL(href, window.location.href).pathname === window.location.pathname;
+
+/**
+ * A question a command is waiting on (`ctx.ask`). While one is pending the
+ * prompt shows `→ label ` instead of the PS1, Enter answers it, `Esc`/`Ctrl+C`
+ * cancel it, and history/autocomplete stay out of the way.
+ */
+export type PendingAsk = {
+  label: string;
+  options: AskOptions;
+  answer: (text: string) => void;
+  cancel: () => void;
+};
 
 export type UseTerminalOptions = {
   labels: TerminalLabels;
@@ -103,6 +117,9 @@ export function useTerminal({
   const [done, setDone] = useState<ReadonlySet<string>>(() => new Set());
   const [active, setActive] = useState<MenuItemName | null>(null);
   const [value, setValue] = useState("");
+  const [ask, setAsk] = useState<PendingAsk | null>(null);
+  /** Lines of a multi-line answer already entered with Shift+Enter. */
+  const [draft, setDraft] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const screenRef = useRef<HTMLElement>(null);
   const theme = useTheme();
@@ -135,6 +152,16 @@ export function useTerminal({
 
   const echo = useCallback(
     (text: string) => print([createElement(EchoLine, { text })], { instant: true, cmd: true }),
+    [print],
+  );
+
+  /** Echo one line of an answer (`→ label text`, or `… text` past the first). */
+  const echoAnswer = useCallback(
+    (pending: PendingAsk, text: string, cont: boolean) =>
+      print(
+        [createElement(AskEchoLine, { label: pending.label, text, cont, mask: pending.options.mask })],
+        { instant: true },
+      ),
     [print],
   );
 
@@ -184,6 +211,38 @@ export function useTerminal({
         if (name === "clear" || name === "cls") return;
         setDone((prev) => (prev.has(name) ? prev : new Set(prev).add(name)));
       },
+      // `ctx.ask`: the promise settles from the keyboard handler (Enter answers,
+      // Esc/Ctrl+C cancel) or when the command itself is aborted.
+      ask: (label, options, signal) =>
+        new Promise<string>((resolve, reject) => {
+          if (signal.aborted) {
+            reject(abortError());
+            return;
+          }
+          const finish = () => {
+            signal.removeEventListener("abort", onAbort);
+            setAsk(null);
+            setDraft([]);
+            setValue("");
+          };
+          const onAbort = () => {
+            finish();
+            reject(abortError());
+          };
+          signal.addEventListener("abort", onAbort, { once: true });
+          setAsk({
+            label,
+            options,
+            answer: (text) => {
+              finish();
+              resolve(text);
+            },
+            cancel: () => {
+              finish();
+              reject(abortError());
+            },
+          });
+        }),
     };
     return createRunner({
       registry,
@@ -318,7 +377,58 @@ export function useTerminal({
 
   /* ── keyboard ───────────────────────────────────────────────── */
 
+  /** Keys while a command is asking a question: answer, add a line or cancel. */
+  const handleAskKeyDown = (pending: PendingAsk, event: KeyboardEvent<HTMLInputElement>) => {
+    switch (event.key) {
+      case "Enter": {
+        event.preventDefault();
+        const cont = draft.length > 0;
+        echoAnswer(pending, value, cont);
+        if (event.shiftKey && pending.options.multiline) {
+          setDraft((prev) => [...prev, value]);
+          setValue("");
+          return;
+        }
+        // `answer` resets the prompt (value, draft, PS1) before resolving.
+        pending.answer([...draft, value].join("\n"));
+        return;
+      }
+      case "Escape": {
+        event.preventDefault();
+        pending.cancel();
+        return;
+      }
+      case "c":
+      case "C": {
+        if (!event.ctrlKey) return;
+        if (window.getSelection()?.toString()) return;
+        event.preventDefault();
+        pending.cancel();
+        return;
+      }
+      case "l":
+      case "L": {
+        // Wiping the screen aborts the command, which rejects the question.
+        if (!event.ctrlKey) return;
+        event.preventDefault();
+        runner.clear();
+        return;
+      }
+      case "ArrowUp":
+      case "ArrowDown":
+        // No history while answering: the answers are not part of it either.
+        event.preventDefault();
+        return;
+      default:
+      // Tab is not autocomplete here; it moves focus as anywhere else.
+    }
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (ask) {
+      handleAskKeyDown(ask, event);
+      return;
+    }
     switch (event.key) {
       case "Enter": {
         event.preventDefault();
@@ -379,6 +489,9 @@ export function useTerminal({
     active,
     value,
     setValue,
+    /** The question being asked, if any; `draft` tells whether it is on a continuation line. */
+    ask,
+    continuation: draft.length > 0,
     inputRef,
     screenRef,
     focusPrompt,

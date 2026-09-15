@@ -1,27 +1,30 @@
 "use server";
 
+import {
+  contactSchema,
+  contactSource,
+  type ContactField,
+  type ContactSource,
+} from "@/lib/contact-schema";
 import { site } from "@/lib/site";
+
+export type { ContactField };
 
 export type ContactState =
   | { status: "idle" }
   | { status: "success" }
   | { status: "error"; errors: Partial<Record<ContactField, string>>; message?: string };
 
-export type ContactField = "name" | "email" | "company" | "type" | "message";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TYPES = new Set([
-  "freelance",
-  "full-time",
-  "consulting",
-  "audit",
-  "other",
-]);
-
 function trim(v: FormDataEntryValue | null) {
   return typeof v === "string" ? v.trim() : "";
 }
 
+/**
+ * Handles both the contact form and the terminal's `mail` command. The form
+ * sends the `website` honeypot (empty for humans); the terminal has no such
+ * field and marks itself with `source=terminal` instead, which only changes
+ * how the email is labelled — validation is the same for both.
+ */
 export async function submitContact(
   _prev: ContactState,
   formData: FormData
@@ -29,25 +32,27 @@ export async function submitContact(
   const honeypot = trim(formData.get("website"));
   if (honeypot) return { status: "success" };
 
-  const name = trim(formData.get("name"));
-  const email = trim(formData.get("email"));
-  const company = trim(formData.get("company"));
-  const type = trim(formData.get("type"));
-  const message = trim(formData.get("message"));
+  const source: ContactSource = contactSource(trim(formData.get("source")));
 
-  const errors: Partial<Record<ContactField, string>> = {};
+  const parsed = contactSchema.safeParse({
+    name: trim(formData.get("name")),
+    email: trim(formData.get("email")),
+    company: trim(formData.get("company")),
+    type: trim(formData.get("type")),
+    message: trim(formData.get("message")),
+  });
 
-  if (name.length < 2 || name.length > 80) errors.name = "required";
-  if (!EMAIL_RE.test(email)) errors.email = "invalid";
-  if (company.length > 120) errors.company = "too_long";
-  if (type && !TYPES.has(type)) errors.type = "invalid";
-  if (message.length < 10 || message.length > 4000) errors.message = "required";
-
-  if (Object.keys(errors).length > 0) {
+  if (!parsed.success) {
+    const errors: Partial<Record<ContactField, string>> = {};
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0] as ContactField | undefined;
+      if (field && !errors[field]) errors[field] = issue.message;
+    }
     return { status: "error", errors };
   }
 
-  const payload = { name, email, company, type, message };
+  const { name, email, company, type, message } = parsed.data;
+  const payload = { name, email, company, type, message, source };
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
@@ -72,6 +77,7 @@ export async function submitContact(
           `Email: ${email}`,
           `Company: ${company || "—"}`,
           `Type: ${type || "—"}`,
+          `Source: ${source}`,
           "",
           message,
         ].join("\n"),

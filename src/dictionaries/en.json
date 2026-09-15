@@ -599,7 +599,8 @@
       "status": "open to senior roles — EU & Canada"
     },
     "prompt": {
-      "label": "command line"
+      "label": "command line",
+      "askHint": "enter answers · esc cancels"
     },
     "hint": "tab autocomplete · ↑ history · ask <anything> talks to the ai · type help",
     "boot": {
@@ -625,6 +626,7 @@
         "writing": "latest posts",
         "contact": "where to find me",
         "cv": "download the CV (pdf)",
+        "mail": "send me a message from here",
         "ask": "ask the AI anything about my work",
         "open": "open the n-th project of the last list",
         "read": "open the n-th post of the last list",
@@ -734,6 +736,29 @@
       "statusNote": "for new projects · open to senior roles in the EU & Canada",
       "timezoneValue": "America/Sao_Paulo · UTC−3 · working in English every day",
       "footer": "I read every message and reply within a couple of working days."
+    },
+    "mail": {
+      "hint": "→ type {mail} to send a message from here",
+      "name": "name:",
+      "email": "email:",
+      "company": "company (optional):",
+      "message": "message:",
+      "messageHint": "shift+enter adds a line · enter continues · esc cancels",
+      "confirm": "send? [Y/n]",
+      "invalidName": "name needs 2–80 characters",
+      "invalidEmail": "not a valid address, try again",
+      "invalidCompany": "company is too long (120 characters max)",
+      "invalidMessage": "a bit more, please — at least 10 characters (4000 max)",
+      "invalidConfirm": "answer y or n",
+      "attemptsLeft": "· {n} left",
+      "tooMany": "too many invalid attempts",
+      "cancelled": "mail cancelled",
+      "notSent": "not sent",
+      "sending": "sending…",
+      "sent": "✓ sent",
+      "failed": "✗ could not send",
+      "direct": "email me directly at {email}",
+      "wait": "wait {seconds}s before sending another message"
     },
     "neofetch": {
       "host": "{city}, BR · UTC−3",
