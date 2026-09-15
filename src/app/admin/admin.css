@@ -1,0 +1,57 @@
+/* ════════════════════════════════════════════════
+   ADMIN THEME — legacy token aliases, scoped.
+   The admin panel keeps its pre-terminal classes (`--surface`, `--muted`,
+   `--accent`…). They are mapped here onto the Dracula palette from
+   globals.css and only exist under `.admin-root`, so change 12 can delete
+   the unscoped copies from globals.css without touching the admin.
+   The admin is always rendered in the `soft` palette (see admin/layout.tsx).
+   ════════════════════════════════════════════════ */
+
+.admin-root {
+  --bg-low:       var(--bg-dim);
+  --surface:      var(--bg-dim);
+  --surface-2:    #2F313E;
+  --surface-3:    var(--sel);
+  --border:       var(--line);
+  --border-2:     var(--sel);
+  --text:         var(--fg);
+  --text-2:       #D6D6D2;
+  /* Lifted from --comment (#7B7F8B, 3.2:1 on --surface-2) so labels, help
+     text and table headers clear WCAG AA 4.5:1 on every admin surface. */
+  --muted:        #A2A6B3;
+  --accent:       var(--purple);
+  --accent-2:     var(--pink);
+  --accent-glow:  color-mix(in srgb, var(--purple) 25%, transparent);
+  --grid-opacity: 0.28;
+  /* Error text sits on a red-tinted box (`bg-[var(--red)]/10`); the palette
+     red (#EE6666) lands at 4.0–4.4:1 there, so the admin lifts it. */
+  --red:          #F28B8B;
+
+  /* Everything in the admin is monospace; the legacy font names resolve to
+     the same face so no proportional font is ever requested. */
+  --font-sans:    var(--font);
+  --font-display: var(--font);
+  --font-mono:    var(--font);
+  font-family: var(--font);
+
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Dense forms in a monospace face read better with a little more air. */
+.admin-root :is(input, select, textarea) {
+  font-family: var(--font);
+  line-height: 1.5;
+}
+
+/* Focus: keep the border swap the classes already do and add a 1px ring so
+   the focused field stands out even next to a purple label or legend. */
+.admin-root :is(input:not([type="checkbox"]):not([type="file"]), select, textarea):focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  outline: none;
+}
+.admin-root :is(input[type="checkbox"], input[type="file"], button, a, summary):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

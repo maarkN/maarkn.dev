@@ -108,23 +108,23 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
           required
           maxLength={4}
           defaultValue={project?.monogram}
-          help="1–4 letters shown on the stylized cover"
+          help="1–4 letters; shown in the admin list and on the legacy cover"
           error={errors.monogram}
         />
         <Field
           name="accentFrom"
-          label="Accent from"
+          label="Accent from (legacy)"
           required
           defaultValue={project?.accentFrom ?? "#4f6ef7"}
-          help="hex, e.g. #4f6ef7"
+          help="Legacy cover gradient start — hex, e.g. #4f6ef7. Kept for existing records; the terminal site no longer renders it."
           error={errors.accentFrom}
         />
         <Field
           name="accentTo"
-          label="Accent to"
+          label="Accent to (legacy)"
           required
           defaultValue={project?.accentTo ?? "#22d3ee"}
-          help="hex, e.g. #22d3ee"
+          help="Legacy cover gradient end — hex, e.g. #22d3ee."
           error={errors.accentTo}
         />
         <CoverImageUploader initial={project?.coverImage} />
@@ -243,7 +243,7 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
           type="submit"
           disabled={pending}
           className={cn(
-            "inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-6 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition disabled:cursor-not-allowed disabled:opacity-60",
+            "inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-6 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-60",
             !pending && "hover:opacity-90"
           )}
         >
@@ -312,7 +312,7 @@ function ErrorLine({ msg }: { msg?: string }) {
 }
 
 const inputClass =
-  "border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 font-sans text-[14px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none";
+  "border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none";
 
 function Field({
   name,

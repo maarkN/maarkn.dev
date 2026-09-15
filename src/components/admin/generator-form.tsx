@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const initial: GenState = { status: "idle" };
 
 const inputClass =
-  "border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 font-sans text-[14px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none";
+  "border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none";
 
 export function GeneratorForm() {
   const [state, run, pending] = useActionState<GenState, FormData>(generate, initial);
@@ -63,7 +63,7 @@ export function GeneratorForm() {
             type="submit"
             disabled={pending}
             className={cn(
-              "inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-6 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition disabled:cursor-not-allowed disabled:opacity-60",
+              "inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-6 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-60",
               !pending && "hover:opacity-90"
             )}
           >

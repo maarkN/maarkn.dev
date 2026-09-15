@@ -126,7 +126,7 @@ export default async function AdminChatPage({
                   </Td>
                   <Td>
                     <details className="group max-w-[560px]">
-                      <summary className="cursor-pointer list-none font-sans text-[13px] font-medium text-[var(--text)] marker:hidden">
+                      <summary className="cursor-pointer list-none font-mono text-[13px] font-medium text-[var(--text)] marker:hidden">
                         <span className="line-clamp-2 group-open:line-clamp-none">
                           {r.question || "—"}
                         </span>

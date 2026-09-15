@@ -99,10 +99,11 @@ export function ApplicationsTable({ applications }: { applications: AppRow[] }) 
             Search
           </span>
           <input
+            aria-label="Search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="company or role…"
-            className="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 font-sans text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+            className="border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
           />
         </div>
         <span className="ml-auto self-center font-mono text-[11px] text-[var(--muted)]">
@@ -208,9 +209,10 @@ function FilterSelect({
         {label}
       </span>
       <select
+        aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 font-sans text-[13px] text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+        className="border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2 font-mono text-[13px] text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

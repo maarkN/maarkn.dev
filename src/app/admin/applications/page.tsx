@@ -58,7 +58,7 @@ export default async function ApplicationsPage({
         </div>
         <Link
           href="/admin/applications/new"
-          className="inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:opacity-90"
+          className="inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--bg)] transition hover:opacity-90"
         >
           <Plus className="h-4 w-4" strokeWidth={2.4} />
           New application

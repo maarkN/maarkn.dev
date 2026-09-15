@@ -34,7 +34,7 @@ export function LoginForm() {
         type="submit"
         disabled={pending}
         className={cn(
-          "mt-2 inline-flex items-center justify-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-white transition disabled:cursor-not-allowed disabled:opacity-60",
+          "mt-2 inline-flex items-center justify-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-60",
           !pending && "hover:opacity-90"
         )}
       >
@@ -67,7 +67,7 @@ function Field(props: {
         type={props.type}
         autoComplete={props.autoComplete}
         required={props.required}
-        className="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 font-sans text-[14px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+        className="border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
       />
     </div>
   );
