@@ -9,7 +9,10 @@ import type { Command } from "@/lib/terminal/types";
 import { BOOT_KEY } from "./boot-overlay";
 import { TerminalShell } from "./terminal-shell";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

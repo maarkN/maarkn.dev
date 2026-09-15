@@ -107,8 +107,11 @@ export function useTerminal({
     [print],
   );
 
-  // Keep the newest line in view.
+  // Keep the newest line in view — except for the server-rendered opening
+  // output, which the visitor reads from the top (MOTD first).
+  const opening = useRef(lines);
   useEffect(() => {
+    if (lines === opening.current) return;
     const el = screenRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [lines]);

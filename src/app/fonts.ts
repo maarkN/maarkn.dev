@@ -1,10 +1,12 @@
 import { Cascadia_Code } from "next/font/google";
 import localFont from "next/font/local";
 
-// Default monospace face (variable font, 200–700). Preloaded.
+// Default monospace face (variable font, 200–700). Preloaded. Only the
+// latin subset: every glyph the site prints (en, pt-BR) lives there, and the
+// symbols (→ ● ↗ █) are in neither subset — one less file on the LCP path.
 export const caskaydia = Cascadia_Code({
   variable: "--font-caskaydia",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   display: "swap",
 });
 

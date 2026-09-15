@@ -10,19 +10,20 @@ export const SAME_AS = [
   "https://github.com/maarkn",
 ];
 
+// The home title is the prompt's user@host, the same in both locales.
 type SeoCopy = { title: string; description: string; ogLocale: string };
 
 export const seoByLocale: Record<Locale, SeoCopy> = {
   en: {
-    title: "Marco Filho — Senior AI/LLM & Backend Engineer",
+    title: "Marco Filho — maarkn@dev",
     description:
-      "Senior software engineer (Go, TypeScript) shipping production AI/LLM systems and the backends behind them. 6+ years, 20+ products across healthtech, govtech and fintech. Open to senior roles in the EU and Canada.",
+      "Marco Filho — Senior AI/LLM & Backend Engineer. 6+ years, 20+ products shipped end-to-end. Open to senior roles in the EU and Canada.",
     ogLocale: "en_US",
   },
   "pt-BR": {
-    title: "Marco Filho — Engenheiro Sênior de IA/LLM & Backend",
+    title: "Marco Filho — maarkn@dev",
     description:
-      "Engenheiro de software sênior (Go, TypeScript) entregando sistemas de IA/LLM em produção e os backends por trás deles. 6+ anos, 20+ produtos em healthtech, govtech e fintech. Aberto a vagas sênior na UE e no Canadá.",
+      "Marco Filho — Engenheiro Sênior de IA/LLM & Backend. 6+ anos, 20+ produtos entregues de ponta a ponta. Aberto a vagas sênior na UE e no Canadá.",
     ogLocale: "pt_BR",
   },
 };

@@ -7,7 +7,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import type { Command } from "@/lib/terminal/types";
 import { TerminalShell } from "./terminal-shell";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 const labels = en.terminal;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

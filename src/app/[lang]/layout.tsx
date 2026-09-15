@@ -4,10 +4,8 @@ import Script from "next/script";
 import "../globals.css";
 import { fontVars } from "../fonts";
 import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
-import { ChatLauncher } from "@/components/chat/chat-launcher";
 import { ConsoleEgg } from "@/components/dev/console-egg";
-import { KonamiEgg } from "@/components/dev/konami-egg";
-import { getDictionary, hasLocale, locales, defaultLocale, type Locale } from "@/i18n/config";
+import { hasLocale, locales, defaultLocale, type Locale } from "@/i18n/config";
 import {
   SITE_URL,
   SITE_NAME,
@@ -92,8 +90,6 @@ export default async function LocaleLayout({
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 
-  const dict = await getDictionary(lang);
-
   return (
     <html
       lang={lang as Locale}
@@ -114,12 +110,6 @@ export default async function LocaleLayout({
         />
         <ThemeProvider>
           {children}
-          <ChatLauncher
-            labels={dict.chat.panel}
-            locale={lang}
-            buttonLabel={dict.chat.buttonLabel}
-          />
-          <KonamiEgg />
           <ConsoleEgg />
         </ThemeProvider>
       </body>

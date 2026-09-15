@@ -127,10 +127,11 @@ html {
   color-scheme: dark;
 }
 
-/* Terminal shell: the screen scrolls, the document does not. The class is
-   added to <html> by <TerminalShell> only while it is mounted. */
-html.terminal-lock,
-html.terminal-lock body {
+/* Terminal home: the screen scrolls, the document does not. The marker is
+   rendered by the `(terminal)` route-group layout, so the lock holds with or
+   without JavaScript and never applies to the inner pages. */
+html:has([data-terminal-route]),
+html:has([data-terminal-route]) body {
   overflow: hidden;
 }
 

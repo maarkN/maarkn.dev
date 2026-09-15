@@ -7,7 +7,7 @@ import { site } from "@/lib/site";
 import { FILES, FILE_NAMES } from "./files";
 import { experienceLines, projectsLines, writingLines } from "./listings";
 import { rich } from "./rich";
-import type { Command, CommandContext, OutputLine } from "./types";
+import type { Command, CommandContext, OutputLine, TerminalData } from "./types";
 
 /*
  * The commands that show who Marco is: whoami, experience, skills, projects,
@@ -52,6 +52,52 @@ function fileName(name: string) {
 
 const CV_FILE = site.cvPath.split("/").pop() ?? site.cvPath;
 
+/**
+ * What `whoami` prints: name, role, the bio paragraphs and the four numbers.
+ * Pure and server-safe — the home renders it on the server as the first
+ * output of the session (the fallback crawlers and no-JS visitors read) and
+ * the command prints the very same tree when the visitor runs it again.
+ */
+export function whoamiLines(dict: TerminalLabels, data: TerminalData): OutputLine[] {
+  const { numbers } = data;
+  const stats = dict.whoami.stats;
+  const lines: OutputLine[] = [
+    <>
+      <B>{site.name}</B> <D>· {site.nick}</D>
+    </>,
+    <>
+      <P>{dict.whoami.role}</P>{" "}
+      <D>
+        {rich(dict.whoami.location, {
+          city: site.location.city,
+          country: site.location.country,
+        })}
+      </D>
+    </>,
+  ];
+  for (const paragraph of dict.whoami.paragraphs) {
+    lines.push("", rich(paragraph, numbers));
+  }
+  lines.push("");
+  for (const key of ["years", "products", "stacks", "countries"] as const) {
+    lines.push(
+      <Row width="w4" label={<Y>{numbers[key]}</Y>}>
+        {stats[key]}
+      </Row>,
+    );
+  }
+  lines.push(
+    "",
+    <D>
+      {rich(dict.whoami.footer, {
+        experience: <C>experience</C>,
+        contact: <C>contact</C>,
+      })}
+    </D>,
+  );
+  return lines;
+}
+
 export function createContentCommands(labels: TerminalLabels): Command[] {
   const { help, messages, errors } = labels;
   const describe = (name: string) => {
@@ -76,45 +122,7 @@ export function createContentCommands(labels: TerminalLabels): Command[] {
   const whoami: Command = {
     name: "whoami",
     describe: describe("whoami"),
-    run: (_, { data, dict }) => {
-      const { numbers } = data;
-      const stats = dict.whoami.stats;
-      const lines: OutputLine[] = [
-        <>
-          <B>{site.name}</B> <D>· {site.nick}</D>
-        </>,
-        <>
-          <P>{dict.whoami.role}</P>{" "}
-          <D>
-            {rich(dict.whoami.location, {
-              city: site.location.city,
-              country: site.location.country,
-            })}
-          </D>
-        </>,
-      ];
-      for (const paragraph of dict.whoami.paragraphs) {
-        lines.push("", rich(paragraph, numbers));
-      }
-      lines.push("");
-      for (const key of ["years", "products", "stacks", "countries"] as const) {
-        lines.push(
-          <Row width="w4" label={<Y>{numbers[key]}</Y>}>
-            {stats[key]}
-          </Row>,
-        );
-      }
-      lines.push(
-        "",
-        <D>
-          {rich(dict.whoami.footer, {
-            experience: <C>experience</C>,
-            contact: <C>contact</C>,
-          })}
-        </D>,
-      );
-      return lines;
-    },
+    run: (_, { data, dict }) => whoamiLines(dict, data),
   };
 
   /* ── experience ───────────────────────────────────────────────── */
