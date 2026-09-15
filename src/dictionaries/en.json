@@ -583,7 +583,9 @@
       "theme": "theme",
       "font": "font",
       "themeTitle": "switch palette",
-      "fontTitle": "switch font"
+      "fontTitle": "switch font",
+      "lang": "lang",
+      "langTitle": "switch language"
     },
     "menu": {
       "title": "commands",
@@ -644,7 +646,9 @@
         "reboot": "start over",
         "ping": "latency check",
         "git": "remotes and public repos",
-        "pwd": "where you are",
+        "cd": "change directory: projects | career | blog | links",
+        "pwd": "where we are",
+        "lang": "switch language: en | pt",
         "hack": "please don't"
       },
       "hints": {
@@ -739,6 +743,16 @@
       "packages": "{stacks} stacks (see skills)",
       "editor": "cursor + claude code",
       "status": "open to work · EU & Canada"
+    },
+    "nav": {
+      "noSuchDirectory": "cd: {dir}: no such directory",
+      "alreadyHome": "cd: already at ~",
+      "langUnknown": "lang: {value}: unknown language",
+      "langHint": "· try lang en or lang pt",
+      "langNote": {
+        "en": "· english, from here on",
+        "pt-BR": "· português do Brasil, daqui em diante"
+      }
     },
     "errors": {
       "catMissing": "cat: missing file",

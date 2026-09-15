@@ -13,9 +13,18 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { resetConversation } from "@/lib/terminal/ask-command";
 import { complete } from "@/lib/terminal/complete";
-import { createHistory } from "@/lib/terminal/history";
+import { parseDeepLink } from "@/lib/terminal/deeplink";
+import { createHistory, readStoredHistory } from "@/lib/terminal/history";
+import { parse } from "@/lib/terminal/parse";
 import { createRegistry, TERMINAL_ALIASES } from "@/lib/terminal/registry";
-import { createRunner, type BaseContext, type Fallback, type RunnerIO } from "@/lib/terminal/run";
+import {
+  createRunner,
+  type BaseContext,
+  type Fallback,
+  type RunnerIO,
+  type RunOptions,
+} from "@/lib/terminal/run";
+import { discardSession, patchSession, readSession, recordCommand } from "@/lib/terminal/session";
 import {
   createSystemCommands,
   formatCandidates,
@@ -28,8 +37,9 @@ import {
   type OutputLine,
   type TerminalData,
 } from "@/lib/terminal/types";
+import { MENU_ITEMS } from "./command-menu";
 import { EchoLine } from "./prompt";
-import type { OutputEntry, TerminalLabels } from "./types";
+import type { MenuItemName, OutputEntry, TerminalLabels } from "./types";
 
 const NO_COMMANDS: Command[] = [];
 const NO_FILES: string[] = [];
@@ -39,6 +49,19 @@ const NO_LINES: OutputEntry[] = [];
 let seq = 0;
 const nextId = () => ++seq;
 
+/** Menu entries that show content; the last one run is the "current" item. */
+const CONTENT_ITEMS = new Set<string>(
+  MENU_ITEMS.map((item) => item.name).filter((name) => name !== "help" && name !== "clear"),
+);
+
+/** `a` ends with the whole of `b`. */
+const endsWith = (a: readonly string[], b: readonly string[]) =>
+  b.length > 0 && b.length <= a.length && b.every((line, i) => a[a.length - b.length + i] === line);
+
+/** `href` is this very page, differing at most in query string or hash. */
+const isSamePage = (href: string) =>
+  new URL(href, window.location.href).pathname === window.location.pathname;
+
 export type UseTerminalOptions = {
   labels: TerminalLabels;
   locale: string;
@@ -46,6 +69,8 @@ export type UseTerminalOptions = {
   commands?: Command[];
   /** File names `cat` accepts, for Tab completion after `cat `. */
   files?: readonly string[];
+  /** Directory names `cd` accepts, for Tab completion after `cd `. */
+  directories?: readonly string[];
   /** Reroutes input that matches no command (the `ask` fallback). Memoize. */
   fallback?: Fallback;
   /** Site content for the content commands; empty when the host has none. */
@@ -65,6 +90,7 @@ export function useTerminal({
   locale,
   commands = NO_COMMANDS,
   files = NO_FILES,
+  directories = NO_FILES,
   fallback,
   data = EMPTY_TERMINAL_DATA,
   initialLines = NO_LINES,
@@ -75,6 +101,7 @@ export function useTerminal({
     initialLines.map((entry) => ({ ...entry, id: nextId() })),
   );
   const [done, setDone] = useState<ReadonlySet<string>>(() => new Set());
+  const [active, setActive] = useState<MenuItemName | null>(null);
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const screenRef = useRef<HTMLElement>(null);
@@ -126,7 +153,9 @@ export function useTerminal({
 
   /* ── engine ─────────────────────────────────────────────────── */
 
-  const [history] = useState(() => createHistory());
+  // Picks up where the previous page of this tab left off (`↑` still works
+  // after `open 1` and the browser's back button).
+  const [history] = useState(() => createHistory({ initial: readStoredHistory() }));
   const [state] = useState<Record<string, unknown>>(() => ({}));
 
   const registry = useMemo(
@@ -134,20 +163,24 @@ export function useTerminal({
     [commands, labels],
   );
 
-  // Wiping the screen also forgets the `ask` conversation (spec: `clear` resets it).
+  // An empty screen has nothing to rebuild: the saved commands go with it,
+  // and so does the `ask` conversation (spec: `clear` resets it).
   const clearScreen = useCallback(() => {
     setLines([]);
+    setActive(null);
+    discardSession();
     resetConversation(state);
   }, [state]);
 
   const runner = useMemo(() => {
     const io: RunnerIO = {
       echo,
-      print: (batch) => print(batch),
-      printLine: (line) => print([line]),
+      print: (batch, options) => print(batch, options),
+      printLine: (line, options) => print([line], options),
       replaceLast,
       clear: clearScreen,
       markDone: (name) => {
+        setActive(CONTENT_ITEMS.has(name) ? (name as MenuItemName) : null);
         if (name === "clear" || name === "cls") return;
         setDone((prev) => (prev.has(name) ? prev : new Set(prev).add(name)));
       },
@@ -168,30 +201,119 @@ export function useTerminal({
   useEffect(() => () => runner.abort(), [runner]);
 
   // Built per call so a command sees the theme/dictionary of the moment it ran.
+  const baseContext = useCallback(
+    (): BaseContext => ({
+      locale,
+      dict: labels,
+      data,
+      theme,
+      navigate: (href) => {
+        // `cd ~` from `/en?cmd=skills`: after a hard load Next keeps the
+        // document's URL (query string included) as the canonical URL of the
+        // route it seeded the cache with, so `router.push("/en")` resolves to
+        // that entry and puts `?cmd=skills` back. The History API is wired
+        // into the router (`useSearchParams` follows it) and has no such
+        // cache, so a same-page move goes through it.
+        if (isSamePage(href)) window.history.pushState(null, "", href);
+        else router.push(href);
+      },
+      openExternal: (url) => {
+        try {
+          window.open(url, "_blank", "noopener");
+        } catch {
+          /* popup blocked: the command prints the link anyway */
+        }
+      },
+      reboot: () => {
+        runner.clear();
+        onReboot?.();
+      },
+      state,
+    }),
+    [runner, locale, labels, data, theme, router, state, onReboot],
+  );
+
+  /**
+   * What the visitor (or a deep-link) runs: recorded in the session so the
+   * screen can be rebuilt after a navigation, then handed to the engine.
+   */
+  const execute = useCallback(
+    (raw: string, options?: RunOptions) => {
+      const parsed = parse(raw);
+      if (parsed) recordCommand(raw.trim(), registry.resolve(parsed.name)?.name);
+      return runner.run(raw, baseContext(), options);
+    },
+    [runner, registry, baseContext],
+  );
+
   const run = useCallback(
     (raw: string) => {
-      const base: BaseContext = {
-        locale,
-        dict: labels,
-        data,
-        theme,
-        navigate: (href) => router.push(href),
-        openExternal: (url) => {
-          try {
-            window.open(url, "_blank", "noopener");
-          } catch {
-            /* popup blocked: the command prints the link anyway */
-          }
-        },
-        reboot: () => {
-          runner.clear();
-          onReboot?.();
-        },
-        state,
-      };
-      void runner.run(raw, base);
+      void execute(raw);
     },
-    [runner, locale, labels, data, theme, router, state, onReboot],
+    [execute],
+  );
+
+  /* ── session: rebuild the screen, then honour `?cmd=` ───────── */
+
+  // Resolves with the lines replayed on mount (empty when there was nothing).
+  const restored = useRef<Promise<string[]> | null>(null);
+  // The replay runs outside any render: it reads the engine of the moment.
+  const runnerRef = useRef(runner);
+  const baseRef = useRef(baseContext);
+  useEffect(() => {
+    runnerRef.current = runner;
+    baseRef.current = baseContext;
+  }, [runner, baseContext]);
+
+  // Replays the saved commands once, silently (no history, no animation).
+  const ensureRestored = useCallback(() => {
+    if (!restored.current) {
+      restored.current = (async () => {
+        const { lastCommands } = readSession();
+        for (const line of lastCommands) {
+          await runnerRef.current.run(line, baseRef.current(), { record: false, instant: true });
+        }
+        return lastCommands;
+      })();
+    }
+    return restored.current;
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Deferred a tick: React (dev) mounts, unmounts and mounts effects again,
+    // and the unmount aborts whatever the runner is doing at that moment.
+    queueMicrotask(() => {
+      if (!cancelled) void ensureRestored();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureRestored]);
+
+  /**
+   * `?cmd=` as the URL carries it. Sanitised against the registry and run
+   * after the screen was rebuilt — unless the rebuilt screen already ends
+   * with these very lines (the link that brought the visitor here, or the
+   * `cd ..` of a listing they had already printed).
+   */
+  const runDeepLink = useCallback(
+    (raw: string) => {
+      const link = parseDeepLink(raw, (name) => registry.resolve(name) !== undefined);
+      if (link.prefill !== undefined) setValue(link.prefill);
+      if (link.run.length === 0) return;
+
+      void (async () => {
+        const replayed = await ensureRestored();
+        const { cmd } = readSession();
+        // Remembered whether it runs or not: the back button lands on this
+        // same URL later and must find the link already consumed either way.
+        patchSession({ cmd: raw });
+        if (cmd === raw || endsWith(replayed, link.run)) return;
+        for (const line of link.run) await execute(line, { instant: true });
+      })();
+    },
+    [registry, execute, ensureRestored],
   );
 
   /* ── keyboard ───────────────────────────────────────────────── */
@@ -220,7 +342,7 @@ export function useTerminal({
         // Shift+Tab keeps moving focus backwards for keyboard users.
         if (event.shiftKey) return;
         event.preventDefault();
-        const result = complete(value, registry.names(), files);
+        const result = complete(value, registry.names(), files, directories);
         if (result.kind === "replace") setValue(result.value);
         else if (result.kind === "list") {
           echo(value);
@@ -254,12 +376,14 @@ export function useTerminal({
   return {
     lines,
     done,
+    active,
     value,
     setValue,
     inputRef,
     screenRef,
     focusPrompt,
     run,
+    runDeepLink,
     handleKeyDown,
   };
 }

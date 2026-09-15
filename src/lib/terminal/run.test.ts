@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createHistory } from "./history";
 import { createRegistry, TERMINAL_ALIASES } from "./registry";
-import { createRunner, type BaseContext, type RunnerIO } from "./run";
+import { createRunner, type BaseContext, type RunnerIO, type RunOptions } from "./run";
 import type { Command, OutputLine } from "./types";
 
 type Event =
   | { type: "echo"; text: string }
-  | { type: "print"; lines: OutputLine[] }
-  | { type: "line"; line: OutputLine }
+  | { type: "print"; lines: OutputLine[]; instant?: boolean }
+  | { type: "line"; line: OutputLine; instant?: boolean }
   | { type: "replace"; line: OutputLine }
   | { type: "clear" }
   | { type: "done"; name: string };
@@ -16,8 +16,8 @@ function setup(commands: Command[]) {
   const events: Event[] = [];
   const io: RunnerIO = {
     echo: (text) => events.push({ type: "echo", text }),
-    print: (lines) => events.push({ type: "print", lines }),
-    printLine: (line) => events.push({ type: "line", line }),
+    print: (lines, options) => events.push({ type: "print", lines, instant: options?.instant }),
+    printLine: (line, options) => events.push({ type: "line", line, instant: options?.instant }),
     replaceLast: (line) => events.push({ type: "replace", line }),
     clear: () => events.push({ type: "clear" }),
     markDone: (name) => events.push({ type: "done", name }),
@@ -34,7 +34,7 @@ function setup(commands: Command[]) {
     },
   });
   const base = {} as BaseContext;
-  const run = (raw: string) => runner.run(raw, base);
+  const run = (raw: string, options?: RunOptions) => runner.run(raw, base, options);
   return { events, history, runner: { ...runner, run, get running() { return runner.running; } } };
 }
 
@@ -107,6 +107,24 @@ describe("runner", () => {
     await runner.run("experience");
     await runner.run("history");
     expect(seen).toEqual(["experience", "history"]);
+  });
+
+  it("replays without touching the history and passes `instant` to the screen", async () => {
+    const { events, history, runner } = setup([experience, slow]);
+    await runner.run("experience", { record: false, instant: true });
+    expect(history.entries).toEqual([]);
+    expect(events).toContainEqual({ type: "print", lines: ["career"], instant: true });
+
+    const streamed = runner.run("slow", { record: false, instant: true });
+    await sleep(150);
+    expect(events).toContainEqual({ type: "line", line: "line 1", instant: true });
+    runner.abort();
+    await streamed;
+    expect(history.entries).toEqual([]);
+
+    await runner.run("experience");
+    expect(history.entries).toEqual(["experience"]);
+    expect(events.at(-1)).toEqual({ type: "print", lines: ["career"], instant: undefined });
   });
 
   it("reports a thrown error instead of crashing", async () => {

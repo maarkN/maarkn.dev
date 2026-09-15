@@ -3,14 +3,20 @@ import { parse } from "./parse";
 import type { Registry } from "./registry";
 import type { CommandContext, OutputLine } from "./types";
 
+/** How printed lines enter the screen. */
+export type PrintOptions = {
+  /** Skip the staggered entrance (rebuilding a screen, deep-links). */
+  instant?: boolean;
+};
+
 /** What the runner needs from the screen. The React hook implements it. */
 export type RunnerIO = {
   /** Echo the typed line after the PS1 (instant, no entrance animation). */
   echo: (text: string) => void;
-  /** Print a batch of lines with the staggered entrance. */
-  print: (lines: OutputLine[]) => void;
+  /** Print a batch of lines with the staggered entrance (unless `instant`). */
+  print: (lines: OutputLine[], options?: PrintOptions) => void;
   /** Append one line while a command is still running. */
-  printLine: (line: OutputLine) => void;
+  printLine: (line: OutputLine, options?: PrintOptions) => void;
   replaceLast: (line: OutputLine) => void;
   clear: () => void;
   /** A command resolved and ran; the menu marks it as done. */
@@ -36,13 +42,22 @@ export type RunnerFormat = {
  */
 export type Fallback = (text: string, ctx: BaseContext) => { line: string; notice: OutputLine[] } | null;
 
+/** Per-call switches for `Runner.run`. */
+export type RunOptions = PrintOptions & {
+  /**
+   * Add the line to the history (default). Off when the host replays lines
+   * that are already there, e.g. rebuilding the screen after a navigation.
+   */
+  record?: boolean;
+};
+
 export type Runner = {
   /**
    * Echo + parse + resolve + execute. `base` carries the late-bound values
    * (theme, dictionary, navigation) as they are at this moment. Resolves once
    * the command has finished.
    */
-  run: (raw: string, base: BaseContext) => Promise<void>;
+  run: (raw: string, base: BaseContext, options?: RunOptions) => Promise<void>;
   /** Cancel the running command (Ctrl+C). Nothing else changes on screen. */
   abort: () => void;
   /** Cancel the running command and wipe the screen (Ctrl+L, `clear`). */
@@ -75,13 +90,14 @@ export function createRunner({
     io.clear();
   };
 
-  async function run(raw: string, base: BaseContext) {
+  async function run(raw: string, base: BaseContext, { record = true, instant }: RunOptions = {}) {
+    const printOptions: PrintOptions = { instant };
     const text = raw.trim();
     io.echo(text);
 
     const parsed = parse(text);
     if (!parsed) return;
-    history.push(text);
+    if (record) history.push(text);
 
     let command = registry.resolve(parsed.name);
     let { args } = parsed;
@@ -112,7 +128,7 @@ export function createRunner({
       signal,
       clear,
       print: (line) => {
-        if (!signal.aborted) io.printLine(line);
+        if (!signal.aborted) io.printLine(line, printOptions);
       },
       replaceLast: (line) => {
         if (!signal.aborted) io.replaceLast(line);
@@ -122,7 +138,7 @@ export function createRunner({
     try {
       const result = await command.run(args, ctx);
       if (signal.aborted) return;
-      if (result && result.length > 0) io.print(result);
+      if (result && result.length > 0) io.print(result, printOptions);
     } catch (error) {
       if (signal.aborted) return;
       io.print(format.failed(command.name, error, base));

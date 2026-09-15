@@ -128,6 +128,11 @@
 .menuItem.done kbd {
   color: var(--green);
 }
+/* the content command whose output is the latest on screen */
+.menuItem[aria-current="true"] {
+  border-left-color: var(--purple);
+  color: var(--purple);
+}
 
 /* screen */
 .screen {
@@ -459,6 +464,9 @@
   }
   .menuItem span {
     display: none;
+  }
+  .menuItem[aria-current="true"] {
+    background: var(--line);
   }
   .screen {
     padding: 20px 16px 28px;

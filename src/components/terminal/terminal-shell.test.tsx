@@ -9,6 +9,7 @@ import { TerminalShell } from "./terminal-shell";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/en",
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -137,7 +138,7 @@ describe("terminal shell", () => {
     expect(screenText()).toMatch(/1 {2}whoami/);
     expect(screenText()).toMatch(/2 {2}skills/);
     expect(screenText()).toMatch(/3 {2}history/);
-    expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!)).toEqual({
+    expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!)).toMatchObject({
       history: ["whoami", "skills", "history"],
     });
   });

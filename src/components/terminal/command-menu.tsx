@@ -19,15 +19,18 @@ export const MENU_ITEMS: ReadonlyArray<{ name: MenuItemName; key: string }> = [
 /**
  * Sidebar (desktop) / bottom strip (mobile) listing the commands. Knows
  * nothing about the registry: it only asks for a command by name and shows
- * which ones the shell reports as done.
+ * which ones the shell reports as done and which one printed last.
  */
 export function CommandMenu({
   labels,
   done,
+  active = null,
   onCommand,
 }: {
   labels: TerminalLabels["menu"];
   done: ReadonlySet<string>;
+  /** The content command whose output is the latest on screen, if any. */
+  active?: MenuItemName | null;
   onCommand: (name: MenuItemName) => void;
 }) {
   return (
@@ -39,6 +42,7 @@ export function CommandMenu({
           type="button"
           className={clsx(s.menuItem, done.has(item.name) && s.done)}
           data-cmd={item.name}
+          aria-current={item.name === active ? "true" : undefined}
           onClick={() => onCommand(item.name)}
         >
           <kbd>{item.key}</kbd>

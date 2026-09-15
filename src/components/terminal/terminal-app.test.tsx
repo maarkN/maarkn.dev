@@ -8,10 +8,15 @@ import { EMPTY_TERMINAL_DATA, type TerminalData } from "@/lib/terminal/types";
 import { initialOutput } from "./initial-output";
 import { TerminalApp } from "./terminal-app";
 
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
 const push = vi.fn();
+/** What `useSearchParams` reports; tests set it before mounting. */
+let search = "";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
-  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/en",
+  useSearchParams: () => new URLSearchParams(search),
 }));
 
 const data: TerminalData = {
@@ -37,6 +42,12 @@ let container: HTMLDivElement;
 
 const input = () => container.querySelector("input")!;
 const screenText = () => container.querySelector("main")!.textContent ?? "";
+/** Printed lines only — the prompt (with whatever is typed) is not output. */
+const outputText = () =>
+  [...container.querySelectorAll("main [class*='line']")].map((el) => el.textContent).join("\n");
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Lets the mount-time replay (deferred a microtask) and async commands settle. */
+const settle = () => act(() => sleep(20));
 
 function type(text: string) {
   const el = input();
@@ -80,13 +91,24 @@ function mount(initialLines?: ReturnType<typeof initialOutput>) {
 beforeEach(() => {
   push.mockReset();
   window.sessionStorage.clear();
+  // The boot sequence has its own tests; here the session is already booted.
+  window.sessionStorage.setItem("maarkn-booted", "1");
   mount();
 });
 
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  search = "";
+  window.history.replaceState(null, "", "/");
 });
+
+/** Unmounts and mounts again, like coming back from an inner page. */
+function remount(initialLines?: ReturnType<typeof initialOutput>) {
+  act(() => root.unmount());
+  container.remove();
+  mount(initialLines);
+}
 
 describe("TerminalApp", () => {
   it("runs experience from the menu shortcut 2 and marks it done", async () => {
@@ -244,6 +266,293 @@ describe("TerminalApp", () => {
       await enter("clear");
       expect(count()).toBe(0);
       expect(container.querySelector('nav[aria-label="sitemap"]')).toBeNull();
+    });
+  });
+
+  describe("navigation commands", () => {
+    it("cd opens inner routes, refuses unknown ones and pwd knows the home", async () => {
+      await enter("cd blog");
+      expect(push).toHaveBeenCalledWith("/en/blog");
+      expect(screenText()).toContain("opening ~/blog");
+      await enter("cd ~/projects/");
+      expect(push).toHaveBeenCalledWith("/en/projects");
+      await enter("cd career");
+      expect(push).toHaveBeenCalledWith("/en/career");
+      await enter("cd links");
+      expect(push).toHaveBeenCalledWith("/en/links");
+      await enter("cd nada");
+      expect(screenText()).toContain("cd: nada: no such directory");
+      await enter("cd ..");
+      expect(screenText()).toContain("cd: already at ~");
+      expect(push).toHaveBeenCalledTimes(4);
+    });
+
+    it("cd and cd ~ go home only when somewhere else", async () => {
+      const pushState = vi.spyOn(window.history, "pushState");
+      window.history.replaceState(null, "", "/en");
+      await enter("cd");
+      expect(push).not.toHaveBeenCalled();
+      expect(pushState).not.toHaveBeenCalled();
+      // Same page, only the query string goes: the router-integrated History
+      // API, not `router.push` (which would resolve back to `?cmd=skills`).
+      window.history.replaceState(null, "", "/en?cmd=skills");
+      await enter("cd ~");
+      expect(pushState).toHaveBeenCalledWith(null, "", "/en");
+      expect(window.location.pathname + window.location.search).toBe("/en");
+      expect(push).not.toHaveBeenCalled();
+      pushState.mockRestore();
+    });
+
+    it("pwd prints the home directory and Tab completes directories after cd", async () => {
+      await enter("pwd");
+      expect(screenText()).toContain("/home/maarkn");
+      type("cd pr");
+      await key("Tab");
+      expect(input().value).toBe("cd projects ");
+    });
+
+    it("lang remembers the cookie and moves to the same screen in the other locale", async () => {
+      window.history.replaceState(null, "", "/en?cmd=skills");
+      await enter("lang pt");
+      expect(document.cookie).toContain("locale=pt-BR");
+      expect(push).toHaveBeenCalledWith("/pt-BR?cmd=skills");
+      expect(screenText()).toContain("lang → pt-BR");
+
+      await enter("lang");
+      expect(push).toHaveBeenLastCalledWith("/pt-BR?cmd=skills");
+      expect(push).toHaveBeenCalledTimes(2);
+
+      await enter("lang en");
+      expect(document.cookie).toContain("locale=en");
+      expect(push).toHaveBeenCalledTimes(2);
+      expect(screenText()).toContain("lang → en");
+
+      await enter("lang xx");
+      expect(screenText()).toContain("lang: xx: unknown language · try lang en or lang pt");
+    });
+
+    it("the status bar lang control runs the command and shows the current language", async () => {
+      const button = [...container.querySelectorAll("header button")].find((b) =>
+        b.textContent?.startsWith("lang"),
+      ) as HTMLButtonElement;
+      expect(button.textContent).toBe("lang en");
+      await act(async () => button.click());
+      expect(screenText()).toContain("maarkn@dev:~$ lang");
+      expect(push).toHaveBeenCalledWith("/pt-BR");
+    });
+
+    it("marks the last content command as current in the menu", async () => {
+      const current = () => container.querySelector("[aria-current]")?.getAttribute("data-cmd");
+      expect(current()).toBeUndefined();
+      await enter("projects");
+      expect(current()).toBe("projects");
+      await enter("skills");
+      expect(current()).toBe("skills");
+      await enter("help");
+      expect(current()).toBeUndefined();
+      await enter("2");
+      expect(current()).toBe("experience");
+      await enter("clear");
+      expect(current()).toBeUndefined();
+    });
+  });
+
+  describe("deep-links", () => {
+    it("?cmd=projects opens with the listing already printed, without animation", async () => {
+      search = "cmd=projects";
+      remount();
+      await settle();
+      expect(screenText()).toContain("maarkn@dev:~$ projects");
+      expect(screenText()).toContain("[1]alpha");
+      const printed = [...container.querySelectorAll("main [class*='line']")];
+      expect(printed.length).toBeGreaterThan(1);
+      expect(printed.every((el) => /now/.test(el.className))).toBe(true);
+      // Recorded like a typed command: ↑ brings it back…
+      await key("ArrowUp");
+      expect(input().value).toBe("projects");
+      // …and open <n> resolves against the list it printed.
+      type("");
+      await enter("open 1");
+      expect(push).toHaveBeenCalledWith("/en/projects/alpha");
+    });
+
+    it("?cmd=whoami;skills runs both, in order", async () => {
+      search = "cmd=whoami;skills";
+      remount();
+      await settle();
+      const text = screenText();
+      expect(text.indexOf("maarkn@dev:~$ whoami")).toBeLessThan(text.indexOf("maarkn@dev:~$ skills"));
+      expect(text).toContain("Marco Filho · maarkn");
+      expect(text).toContain("skills.sys");
+    });
+
+    it("?cmd=<script> and unknown names are ignored silently", async () => {
+      search = "cmd=%3Cscript%3E";
+      remount();
+      await settle();
+      expect(screenText()).not.toContain("maarkn@dev:~$ <");
+      expect(screenText()).not.toContain("command not found");
+      search = "cmd=nope;rm -rf /";
+      remount();
+      await settle();
+      expect(screenText()).not.toContain("maarkn@dev:~$ nope");
+      expect(screenText()).not.toContain("rm:");
+    });
+
+    it("?cmd=rm+-rf prints the joke, ?cmd=ask only types ask into the prompt", async () => {
+      search = "cmd=rm+-rf";
+      remount();
+      await settle();
+      expect(screenText()).toContain("rm: cannot remove '-rf': permission denied");
+      search = "cmd=ask";
+      remount();
+      await settle();
+      expect(input().value).toBe("ask ");
+      expect(outputText()).not.toContain("maarkn@dev:~$ ask");
+    });
+
+    it("runs a deep-link once per value, not again after clear + a re-render", async () => {
+      search = "cmd=projects";
+      remount();
+      await settle();
+      await enter("clear");
+      await enter("theme classic");
+      await settle();
+      expect(outputText()).not.toContain("[1]alpha");
+      await enter("theme soft");
+    });
+
+    it("an old #contact anchor becomes ?cmd=contact in place", async () => {
+      window.history.replaceState(null, "", "/en#contact");
+      remount();
+      await settle();
+      expect(window.location.hash).toBe("");
+      expect(window.location.search).toBe("?cmd=contact");
+      expect(window.location.pathname).toBe("/en");
+
+      window.history.replaceState(null, "", "/en?cmd=skills#about");
+      remount();
+      await settle();
+      expect(window.location.search).toBe("?cmd=skills");
+      window.history.replaceState(null, "", "/en#team");
+      remount();
+      await settle();
+      expect(window.location.hash).toBe("#team");
+
+      // A fragment change on the already mounted page converts too.
+      window.history.replaceState(null, "", "/en");
+      await act(async () => {
+        window.location.hash = "#projects";
+      });
+      await settle();
+      expect(window.location.hash).toBe("");
+      expect(window.location.search).toBe("?cmd=projects");
+    });
+  });
+
+  describe("state across pages", () => {
+    it("rebuilds the screen and the history after a navigation", async () => {
+      await enter("whoami");
+      await enter("projects");
+      await enter("open 1");
+      expect(push).toHaveBeenCalledTimes(1);
+
+      remount();
+      expect(screenText()).not.toContain("[1]alpha");
+      await settle();
+      const text = screenText();
+      expect(text).toContain("maarkn@dev:~$ whoami");
+      expect(text).toContain("Marco Filho · maarkn");
+      expect(text.indexOf("maarkn@dev:~$ whoami")).toBeLessThan(text.indexOf("maarkn@dev:~$ projects"));
+      expect(text).toContain("[1]alpha");
+      // `open 1` navigated: it is not replayed, but the history keeps it.
+      expect(text).not.toContain("maarkn@dev:~$ open 1");
+      expect(push).toHaveBeenCalledTimes(1);
+      await key("ArrowUp");
+      expect(input().value).toBe("open 1");
+      await key("ArrowUp");
+      expect(input().value).toBe("projects");
+      // Rebuilt without the entrance animation, and the menu reflects it.
+      const printed = [...container.querySelectorAll("main [class*='line']")];
+      expect(printed.every((el) => /now/.test(el.className))).toBe(true);
+      expect(container.querySelector('[data-cmd="projects"]')!.className).toMatch(/done/);
+      expect(container.querySelector("[aria-current]")?.getAttribute("data-cmd")).toBe("projects");
+      // And `open` still resolves against the rebuilt list.
+      type("");
+      await enter("open 2");
+      expect(push).toHaveBeenLastCalledWith("/en/projects/bravo");
+    });
+
+    it("keeps at most ten commands", async () => {
+      for (let i = 0; i < 12; i++) await enter(`echo line ${i}`);
+      remount();
+      await settle();
+      expect(screenText()).not.toContain("line 1\n");
+      expect(screenText()).not.toContain("maarkn@dev:~$ echo line 1line");
+      expect(screenText()).toContain("maarkn@dev:~$ echo line 2");
+      expect(screenText()).toContain("maarkn@dev:~$ echo line 11");
+      expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!).lastCommands).toHaveLength(10);
+    });
+
+    it("clear discards the saved screen; a reload after it starts blank", async () => {
+      await enter("whoami");
+      await enter("clear");
+      expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!).lastCommands).toEqual([]);
+      remount();
+      await settle();
+      expect(screenText()).not.toContain("maarkn@dev:~$ whoami");
+      expect(screenText()).not.toContain("Marco Filho");
+      // The history survives, as in any shell.
+      await key("ArrowUp");
+      expect(input().value).toBe("clear");
+    });
+
+    it("does not print a deep-link twice when the rebuilt screen already ends with it", async () => {
+      search = "cmd=projects";
+      remount();
+      await settle();
+      await enter("open 1");
+      remount();
+      await settle();
+      expect((screenText().match(/maarkn@dev:~\$ projects/g) ?? []).length).toBe(1);
+
+      // A listing the visitor printed, then `cd ..` from the inner page.
+      search = "";
+      remount();
+      await settle();
+      await enter("clear");
+      await enter("whoami");
+      await enter("projects");
+      search = "cmd=projects";
+      remount();
+      await settle();
+      expect((screenText().match(/maarkn@dev:~\$ projects/g) ?? []).length).toBe(1);
+      expect(screenText()).toContain("maarkn@dev:~$ whoami");
+    });
+
+    it("remembers a skipped deep-link so the back button does not run it either", async () => {
+      // `projects`, `cd projects`, then `cd ..` from the inner page: the link
+      // is skipped because the rebuilt screen ends with the listing…
+      await enter("projects");
+      await enter("cd projects");
+      expect(push).toHaveBeenLastCalledWith("/en/projects");
+      search = "cmd=projects";
+      remount();
+      await settle();
+      expect((screenText().match(/maarkn@dev:~\$ projects/g) ?? []).length).toBe(1);
+      expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!).cmd).toBe("projects");
+
+      // …and the back button after `whoami` + `open 1` lands on that same
+      // `/en?cmd=projects` entry: the screen is rebuilt, the link not re-run.
+      await enter("whoami");
+      await enter("open 1");
+      remount();
+      await settle();
+      const text = screenText();
+      expect((text.match(/maarkn@dev:~\$ projects/g) ?? []).length).toBe(1);
+      expect(text).toContain("maarkn@dev:~$ whoami");
+      expect(text.indexOf("maarkn@dev:~$ projects")).toBeLessThan(text.indexOf("maarkn@dev:~$ whoami"));
+      expect(text).not.toContain("maarkn@dev:~$ open 1");
     });
   });
 });

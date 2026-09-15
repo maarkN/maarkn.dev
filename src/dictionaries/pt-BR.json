@@ -583,7 +583,9 @@
       "theme": "tema",
       "font": "fonte",
       "themeTitle": "trocar paleta",
-      "fontTitle": "trocar fonte"
+      "fontTitle": "trocar fonte",
+      "lang": "idioma",
+      "langTitle": "trocar idioma"
     },
     "menu": {
       "title": "comandos",
@@ -644,7 +646,9 @@
         "reboot": "começa de novo",
         "ping": "teste de latência",
         "git": "remotes e repositórios públicos",
-        "pwd": "onde você está",
+        "cd": "muda de diretório: projects | career | blog | links",
+        "pwd": "onde estamos",
+        "lang": "troca o idioma: en | pt",
         "hack": "por favor, não"
       },
       "hints": {
@@ -739,6 +743,16 @@
       "packages": "{stacks} stacks (veja skills)",
       "editor": "cursor + claude code",
       "status": "aberto a propostas · UE e Canadá"
+    },
+    "nav": {
+      "noSuchDirectory": "cd: {dir}: diretório não existe",
+      "alreadyHome": "cd: já estamos em ~",
+      "langUnknown": "lang: {value}: idioma desconhecido",
+      "langHint": "· tente lang en ou lang pt",
+      "langNote": {
+        "en": "· english, from here on",
+        "pt-BR": "· português do Brasil, daqui em diante"
+      }
     },
     "errors": {
       "catMissing": "cat: arquivo não informado",

@@ -1,7 +1,7 @@
 /**
  * Tab completion. The first word completes against command names; after
- * `cat ` the last word completes against file names. Any other position is
- * left alone.
+ * `cat ` the last word completes against file names and after `cd ` against
+ * directory names. Any other position is left alone.
  */
 
 export type Completion =
@@ -25,6 +25,7 @@ export function complete(
   input: string,
   commands: readonly string[],
   files: readonly string[] = [],
+  directories: readonly string[] = [],
 ): Completion {
   const parts = input.split(/\s+/);
 
@@ -36,8 +37,8 @@ export function complete(
     pool = commands;
     prefix = parts[0] ?? "";
     base = "";
-  } else if (parts[0] === "cat") {
-    pool = files;
+  } else if (parts[0] === "cat" || parts[0] === "cd") {
+    pool = parts[0] === "cat" ? files : directories;
     prefix = parts[parts.length - 1];
     base = parts.slice(0, -1).join(" ") + " ";
   } else {

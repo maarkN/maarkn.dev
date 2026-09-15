@@ -31,11 +31,12 @@ export function PageChrome({
 }) {
   const pathname = usePathname();
   const route = describeRoute(pathname);
+  const locale = pathname.split("/").filter(Boolean)[0] ?? "en";
 
   return (
     <div className={s.page}>
       <div className={s.top}>
-        <StatusBar labels={labels} path={route.path} />
+        <StatusBar labels={labels} locale={locale} path={route.path} />
       </div>
 
       <div className={s.body}>

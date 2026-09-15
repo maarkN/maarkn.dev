@@ -33,6 +33,8 @@ export type TerminalLabels = {
     font: string;
     themeTitle: string;
     fontTitle: string;
+    lang: string;
+    langTitle: string;
   };
   menu: {
     title: string;
@@ -154,6 +156,17 @@ export type TerminalLabels = {
         status: string;
       };
     };
+  };
+  /** `cd`, `pwd` and `lang` (`lib/terminal/nav-commands.tsx`). */
+  nav: {
+    /** `cd: {dir}: no such directory` */
+    noSuchDirectory: string;
+    alreadyHome: string;
+    /** `lang: {value}: unknown language` */
+    langUnknown: string;
+    langHint: string;
+    /** Dim aside after `lang → <locale>`, keyed by locale. */
+    langNote: Record<string, string>;
   };
   errors: {
     catMissing: string;

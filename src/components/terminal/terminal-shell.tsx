@@ -1,13 +1,14 @@
 "use client";
 
 import { Suspense, useEffect, type ReactNode } from "react";
+import { anchorRedirect } from "@/lib/terminal/anchors";
 import type { Fallback } from "@/lib/terminal/run";
 import type { Command, TerminalData } from "@/lib/terminal/types";
 import { BootOverlay, hasFinePointer, useBoot } from "./boot-overlay";
 import { CommandMenu } from "./command-menu";
+import { DeepLink } from "./deep-link";
 import { Output } from "./output";
 import { Prompt } from "./prompt";
-import { PromptPrefill } from "./prompt-prefill";
 import { Screen } from "./screen";
 import { StatusBar } from "./status-bar";
 import s from "./terminal.module.css";
@@ -28,6 +29,7 @@ export function TerminalShell({
   motd,
   commands,
   files,
+  directories,
   fallback,
   data,
   initialLines,
@@ -40,6 +42,8 @@ export function TerminalShell({
   commands?: Command[];
   /** File names `cat` accepts, for Tab completion. */
   files?: readonly string[];
+  /** Directory names `cd` accepts, for Tab completion. */
+  directories?: readonly string[];
   /** Reroutes input that matches no command (the `ask` fallback). */
   fallback?: Fallback;
   /** Site content the content commands format (`ctx.data`). */
@@ -47,17 +51,50 @@ export function TerminalShell({
   initialLines?: OutputEntry[];
 }) {
   const boot = useBoot();
-  const { lines, done, value, setValue, inputRef, screenRef, focusPrompt, run, handleKeyDown } =
-    useTerminal({
-      labels,
-      locale,
-      commands,
-      files,
-      fallback,
-      data,
-      initialLines,
-      onReboot: boot.reboot,
-    });
+  const {
+    lines,
+    done,
+    active,
+    value,
+    setValue,
+    inputRef,
+    screenRef,
+    focusPrompt,
+    run,
+    runDeepLink,
+    handleKeyDown,
+  } = useTerminal({
+    labels,
+    locale,
+    commands,
+    files,
+    directories,
+    fallback,
+    data,
+    initialLines,
+    onReboot: boot.reboot,
+  });
+
+  // Old `/#contact`-style links become `?cmd=contact` in place — on arrival
+  // and on a later fragment change of this same document; the router picks
+  // the change up and `DeepLink` runs it like any other deep-link. Deferred a
+  // task: Next patches `history.replaceState` (so `useSearchParams` follows
+  // it) in an effect of the app router, which runs after this one.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const convert = () => {
+      const target = anchorRedirect(window.location.href);
+      if (!target) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => window.history.replaceState(null, "", target), 0);
+    };
+    convert();
+    window.addEventListener("hashchange", convert);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("hashchange", convert);
+    };
+  }, []);
 
   // Once the shell is usable, hand it the keyboard — but only where there is
   // a real one: focusing on a touch device would pop the virtual keyboard.
@@ -72,12 +109,18 @@ export function TerminalShell({
   return (
     <>
       <div className={s.term} aria-hidden={covered || undefined} inert={covered}>
-        <StatusBar labels={labels.bar} onActivate={focusPrompt} />
+        <StatusBar
+          labels={labels.bar}
+          locale={locale}
+          onLang={() => run("lang")}
+          onActivate={focusPrompt}
+        />
 
         <div className={s.body}>
           <CommandMenu
             labels={labels.menu}
             done={done}
+            active={active}
             onCommand={(name) => {
               run(name);
               focusPrompt();
@@ -100,7 +143,7 @@ export function TerminalShell({
       </div>
 
       <Suspense fallback={null}>
-        <PromptPrefill onPrefill={setValue} />
+        <DeepLink ready={boot.interactive} onCommand={runDeepLink} />
       </Suspense>
 
       {boot.status !== "done" && (
