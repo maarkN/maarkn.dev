@@ -10,9 +10,8 @@
     "career": "Career"
   },
   "themes": {
-    "light": "Light",
-    "dark": "Dark",
-    "dev": "Dev"
+    "soft": "Soft",
+    "classic": "Classic"
   },
   "hero": {
     "badgeAvailable": "Open to senior roles — EU & Canada",

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ThemePhoto } from "./theme-photo";
-import { useTheme } from "./theme-provider";
 import { cn } from "@/lib/utils";
 
 type CardLabels = {
@@ -14,9 +13,10 @@ type CardLabels = {
 };
 
 export function IdentityCard({ labels }: { labels: CardLabels }) {
-  const { theme } = useTheme();
   const [flipped, setFlipped] = useState(false);
-  const isDev = theme === "dev";
+  // The card-flip easter egg belonged to the retired dev theme; kept inert
+  // until change 12 removes this component.
+  const isDev = false;
 
   const onCardClick = () => {
     if (!isDev) return;

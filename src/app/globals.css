@@ -1,87 +1,96 @@
 @import "tailwindcss";
 
 /* ════════════════════════════════════════════════
-   THEME TOKENS — fusion of V1 (Digital Construct)
-   + V2 (Professional OS). Dark · Light · Dev.
+   THEME TOKENS — Dracula. `soft` is the default palette,
+   `classic` the original one. Selected via data-theme on <html>;
+   the monospace font via data-font (caskaydia | daddytime).
+   Reference: .docs/design/maarkn-terminal.html
    ════════════════════════════════════════════════ */
 
-:root,
-[data-theme="dark"] {
-  --bg:           #0a0a0b;
-  --bg-low:       #060608;
-  --surface:      #131317;
-  --surface-2:    #1a1a1f;
-  --surface-3:    #222228;
-  --border:       #2a2a30;
-  --border-2:     #3a3a42;
-  --text:         #f0f0f5;
-  --text-2:       #c3c6d7;
-  --muted:        #7a7a90;
-  --accent:       #4f6ef7;
-  --accent-2:     #7b93ff;
-  --accent-glow:  rgba(79, 110, 247, 0.25);
-  --green:        #22c55e;
-  --red:          #ff2d55;
+:root {
+  --bg:      #282A36;
+  --bg-dim:  #21222C;
+  --line:    #363949;
+  --sel:     #44475A;
+  --comment: #7B7F8B;
+  --fg:      #F6F6F4;
+  --cyan:    #97E1F1;
+  --green:   #62E884;
+  --orange:  #FDC38E;
+  --pink:    #F286C4;
+  --purple:  #BF9EEE;
+  --red:     #EE6666;
+  --yellow:  #E7EE98;
+
+  --font: var(--font-caskaydia), "Cascadia Code", ui-monospace, Menlo, Consolas, monospace;
+  --fs:   0.875rem;
+
+  /* Legacy aliases — consumed by the pre-terminal pages and the admin until
+     changes 08/14 migrate them. Do not use in new terminal code. */
+  --bg-low:       var(--bg-dim);
+  --surface:      var(--bg-dim);
+  --surface-2:    #2F313E;
+  --surface-3:    var(--sel);
+  --border:       var(--line);
+  --border-2:     var(--sel);
+  --text:         var(--fg);
+  --text-2:       #D6D6D2;
+  --muted:        var(--comment);
+  --accent:       var(--purple);
+  --accent-2:     var(--pink);
+  --accent-glow:  color-mix(in srgb, var(--purple) 25%, transparent);
   --grid-opacity: 0.28;
 }
 
-[data-theme="light"] {
-  --bg:           #f0f4ff;
-  --bg-low:       #e6ecff;
-  --surface:      #ffffff;
-  --surface-2:    #f6f8ff;
-  --surface-3:    #ecf0fa;
-  --border:       #d4dcf0;
-  --border-2:     #b5c1e2;
-  --text:         #0f172a;
-  --text-2:       #1e2a4a;
-  --muted:        #5b6478;
-  --accent:       #2547d8;
-  --accent-2:     #1d3ac0;
-  --accent-glow:  rgba(37, 71, 216, 0.18);
-  --green:        #16a34a;
-  --red:          #dc2626;
-  --grid-opacity: 0.55;
+:root[data-theme="classic"] {
+  --line:    #44475A;
+  --comment: #6272A4;
+  --fg:      #F8F8F2;
+  --cyan:    #8BE9FD;
+  --green:   #50FA7B;
+  --orange:  #FFB86C;
+  --pink:    #FF79C6;
+  --purple:  #BD93F9;
+  --red:     #FF5555;
+  --yellow:  #F1FA8C;
 }
 
-[data-theme="dev"] {
-  --bg:           #0c160a;
-  --bg-low:       #071106;
-  --surface:      #141e12;
-  --surface-2:    #182216;
-  --surface-3:    #222d20;
-  --border:       #2d382a;
-  --border-2:     #3b4b37;
-  --text:         #dae6d2;
-  --text-2:       #b9ccb2;
-  --muted:        #5a7a54;
-  --accent:       #00ff41;
-  --accent-2:     #00e639;
-  --accent-glow:  rgba(0, 255, 65, 0.22);
-  --green:        #00ff41;
-  --red:          #ff5577;
-  --grid-opacity: 0.22;
+:root[data-font="daddytime"] {
+  --font: var(--font-daddytime), "DaddyTimeMono", ui-monospace, Menlo, Consolas, monospace;
 }
 
 @theme inline {
-  --color-bg:          var(--bg);
-  --color-bg-low:      var(--bg-low);
-  --color-surface:     var(--surface);
-  --color-surface-2:   var(--surface-2);
-  --color-surface-3:   var(--surface-3);
-  --color-border:      var(--border);
-  --color-border-2:    var(--border-2);
-  --color-text:        var(--text);
-  --color-text-2:      var(--text-2);
-  --color-muted:       var(--muted);
-  --color-accent:      var(--accent);
-  --color-accent-2:    var(--accent-2);
-  --color-green:       var(--green);
-  --color-red:         var(--red);
+  --color-bg:       var(--bg);
+  --color-bg-dim:   var(--bg-dim);
+  --color-line:     var(--line);
+  --color-sel:      var(--sel);
+  --color-comment:  var(--comment);
+  --color-fg:       var(--fg);
+  --color-cyan:     var(--cyan);
+  --color-green:    var(--green);
+  --color-orange:   var(--orange);
+  --color-pink:     var(--pink);
+  --color-purple:   var(--purple);
+  --color-red:      var(--red);
+  --color-yellow:   var(--yellow);
 
-  --font-sans:    var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-mono:    var(--font-jetbrains-mono), ui-monospace, monospace;
+  /* legacy color utilities (see aliases above) */
+  --color-bg-low:    var(--bg-low);
+  --color-surface:   var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border:    var(--border);
+  --color-border-2:  var(--border-2);
+  --color-text:      var(--text);
+  --color-text-2:    var(--text-2);
+  --color-muted:     var(--muted);
+  --color-accent:    var(--accent);
+  --color-accent-2:  var(--accent-2);
+
+  /* Everything is monospace now; the three names survive for existing classes. */
+  --font-sans:    var(--font);
+  --font-display: var(--font);
+  --font-mono:    var(--font);
 }
 
 /* ════════════════════════════════════════════════
@@ -117,13 +126,11 @@ html {
   background: var(--bg);
   color-scheme: dark;
 }
-html[data-theme="light"] { color-scheme: light; }
-html[data-theme="dev"]   { color-scheme: dark; }
 
 body {
   background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans);
+  color: var(--fg);
+  font-family: var(--font);
   font-weight: 400;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -131,27 +138,10 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* DEV mode adds subtle scanlines */
-[data-theme="dev"] body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 255, 136, 0.018) 2px,
-    rgba(0, 255, 136, 0.018) 4px
-  );
-  pointer-events: none;
-  z-index: 9999;
-}
-
 ::selection {
-  background: var(--accent);
-  color: #fff;
+  background: var(--sel);
+  color: var(--fg);
 }
-[data-theme="dev"] ::selection { color: #000; }
 
 /* Subtle scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -186,531 +176,22 @@ body {
 }
 
 /* ════════════════════════════════════════════════
-   DEV THEME · CLI ENHANCEMENTS
-   Active only when [data-theme="dev"]. Recasts the visual
-   language as a developer's terminal: marquee strip, monospace
-   experience text, kicker prefixes, glitch on the wordmark,
-   blinking cursor on chat title.
+   LEGACY · dev-theme leftovers
+   The dev theme is gone. These unscoped rules only keep its
+   dev-only elements hidden (and the Konami modal styled) until
+   change 12 deletes the components that reference them.
    ════════════════════════════════════════════════ */
+.dev-cli-strip,
+.dev-caret,
+.dev-chat-avatar,
+.dev-chat-send-text,
+.dev-only-text,
+.dev-contact-channels-cli,
+.dev-flip-back { display: none; }
 
-/* Marquee strip pinned right above the nav. Hidden in non-dev themes. */
-.dev-cli-strip { display: none; }
-[data-theme="dev"] .dev-cli-strip {
-  display: block;
-  position: fixed;
-  inset-inline: 0;
-  top: 0;
-  z-index: 60;
-  background: var(--bg-low);
-  border-bottom: 1px solid rgba(0, 255, 65, 0.18);
-  padding: 0.32rem 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  color: rgba(0, 255, 65, 0.55);
-  letter-spacing: 0.04em;
-  overflow: hidden;
-  white-space: nowrap;
-}
-[data-theme="dev"] .dev-cli-strip span {
-  display: inline-block;
-  animation: marquee 28s linear infinite;
-}
-[data-theme="dev"] body { padding-top: 1.6rem; }
-[data-theme="dev"] header.site-header,
-[data-theme="dev"] header.fixed { top: 1.6rem; }
-
-@keyframes marquee {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-/* Eyebrow (the small accent kicker) and section kicker prefixed with > and // */
-[data-theme="dev"] .dev-eyebrow::before {
-  content: "> ";
-  color: var(--accent);
-}
-[data-theme="dev"] .dev-kicker::before {
-  content: "/* ";
-  color: rgba(0, 255, 65, 0.4);
-}
-[data-theme="dev"] .dev-kicker::after {
-  content: " */";
-  color: rgba(0, 255, 65, 0.4);
-}
-
-/* Section titles as shell prompts. */
-[data-theme="dev"] .dev-section-title::before {
-  content: "$ ";
-  color: rgba(0, 255, 65, 0.5);
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 0.7em;
-}
-/* Long underscored CLI tokens are single words to the browser; allow them
-   to break inside on narrow viewports so an overflow never clips the type. */
-[data-theme="dev"] .dev-section-title { overflow-wrap: anywhere; }
-
-/* Career timeline summaries read like terminal output. */
-[data-theme="dev"] .dev-mono-block {
-  font-family: var(--font-mono);
-  font-size: 0.86rem;
-  line-height: 1.7;
-  color: var(--text-2);
-}
-
-/* Glitch on the wordmark. */
-[data-theme="dev"] .dev-glitch {
-  position: relative;
-}
-[data-theme="dev"] .dev-glitch:hover {
-  animation: dev-glitch 0.32s steps(1) forwards;
-}
-@keyframes dev-glitch {
-  0%   { text-shadow:  2px 0   var(--accent),  -2px 0  rgba(255,80,150,0.55); }
-  25%  { text-shadow: -2px 0   var(--accent),   2px 0  rgba(80,200,255,0.55); }
-  50%  { text-shadow:  2px 2px var(--accent),  -2px -2px rgba(255,80,150,0.55); }
-  75%  { text-shadow:  0   2px var(--accent),   0  -2px rgba(80,200,255,0.55); }
-  100% { text-shadow: none; }
-}
-
-/* Blinking caret used in chat title and other CLI affordances. */
-.dev-caret { display: none; }
-[data-theme="dev"] .dev-caret {
-  display: inline-block;
-  margin-left: 0.25rem;
-  color: var(--accent);
-  animation: dev-blink 1s step-end infinite;
-}
-@keyframes dev-blink {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0; }
-}
-
-/* Subtle glow behind the hero headline in dev. */
-[data-theme="dev"] .dev-hero-shadow {
-  text-shadow: 0 0 36px rgba(0, 255, 65, 0.15);
-}
-
-/* Konami / glitch overlay used by the easter egg. */
-/* Toolkit fill bars get a soft glow on dev. */
-[data-theme="dev"] .dev-tool-fill {
-  box-shadow: 0 0 8px var(--accent);
-}
-
-/* ════════════════════════════════════════════════
-   DEV CHAT · CLI shell
-   Re-skins the floating chat panel and the /chat page
-   into a terminal: window dots, mono prompts, USR>/SYS>
-   speaker labels, monochrome bubbles.
-   ════════════════════════════════════════════════ */
-
-[data-theme="dev"] .dev-chat-shell {
-  background: #0a0d08 !important;
-  border-color: rgba(0, 255, 65, 0.35) !important;
-  box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
-}
-[data-theme="dev"] .dev-chat-header {
-  background: #0d120b !important;
-  border-bottom: 1px solid rgba(0, 255, 65, 0.25) !important;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-}
-[data-theme="dev"] .dev-chat-window-dots {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-[data-theme="dev"] .dev-chat-window-dots i {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-[data-theme="dev"] .dev-chat-window-dots i:nth-child(1) { background: #ff5f57; }
-[data-theme="dev"] .dev-chat-window-dots i:nth-child(2) { background: #ffbd2e; }
-[data-theme="dev"] .dev-chat-window-dots i:nth-child(3) { background: #28ca41; }
-[data-theme="dev"] .dev-chat-title {
-  color: var(--accent) !important;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-}
-[data-theme="dev"] .dev-chat-title-text {
-  display: none;
-}
-[data-theme="dev"] .dev-chat-title-cli {
-  display: inline;
-}
-[data-theme="dev"] .dev-chat-online {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(0, 255, 65, 0.85);
-}
-[data-theme="dev"] .dev-chat-online::before {
-  content: "•";
-  color: var(--accent);
-  font-size: 1.1em;
-}
-[data-theme="dev"] .dev-chat-subtitle { display: none; }
-
-[data-theme="dev"] .dev-chat-body {
-  background: #0a0d08 !important;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-}
-
-[data-theme="dev"] .dev-chat-bubble-user {
-  border-color: transparent !important;
-  background: transparent !important;
-  color: var(--accent) !important;
-  font-family: var(--font-mono);
-  padding: 0 !important;
-}
-[data-theme="dev"] .dev-chat-bubble-user::before {
-  content: "USR> ";
-  color: rgba(0, 255, 65, 0.55);
-  font-weight: 600;
-}
-[data-theme="dev"] .dev-chat-bubble-user::after {
-  content: " you";
-  color: rgba(0, 255, 65, 0.4);
-  margin-left: 0.5rem;
-  font-size: 0.7em;
-}
-[data-theme="dev"] .dev-chat-bubble-bot {
-  border: 1px solid rgba(0, 255, 65, 0.12) !important;
-  background: rgba(0, 255, 65, 0.03) !important;
-  color: rgba(0, 255, 65, 0.92) !important;
-  font-family: var(--font-mono);
-  padding: 0.7rem 0.85rem !important;
-  position: relative;
-}
-[data-theme="dev"] .dev-chat-bubble-bot::before {
-  content: "SYS> ";
-  color: var(--accent);
-  font-weight: 600;
-}
-[data-theme="dev"] .dev-chat-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid rgba(0, 255, 65, 0.5);
-  background: rgba(0, 255, 65, 0.06);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.04em;
-  flex: none;
-  align-self: flex-start;
-  margin-top: 0.15rem;
-}
-.dev-chat-avatar { display: none; }
-
-[data-theme="dev"] .dev-chat-empty {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: rgba(0, 255, 65, 0.7);
-  white-space: pre-wrap;
-}
-[data-theme="dev"] .dev-chat-suggestion {
-  border-color: rgba(0, 255, 65, 0.25) !important;
-  background: rgba(0, 255, 65, 0.04) !important;
-  color: rgba(0, 255, 65, 0.85) !important;
-  font-family: var(--font-mono) !important;
-  letter-spacing: 0 !important;
-}
-[data-theme="dev"] .dev-chat-suggestion:hover {
-  border-color: var(--accent) !important;
-  color: var(--accent) !important;
-}
-
-[data-theme="dev"] .dev-chat-composer {
-  background: #0d120b !important;
-  border-top: 1px solid rgba(0, 255, 65, 0.18) !important;
-}
-[data-theme="dev"] .dev-chat-composer-shell {
-  background: #050805 !important;
-  border-color: rgba(0, 255, 65, 0.22) !important;
-}
-[data-theme="dev"] .dev-chat-composer-shell::before {
-  content: ">";
-  align-self: flex-end;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-weight: 600;
-  margin-right: 0.4rem;
-  margin-bottom: 0.1rem;
-}
-[data-theme="dev"] .dev-chat-composer-input {
-  font-family: var(--font-mono) !important;
-  color: rgba(0, 255, 65, 0.92) !important;
-}
-[data-theme="dev"] .dev-chat-composer-input::placeholder {
-  color: rgba(0, 255, 65, 0.4) !important;
-}
-[data-theme="dev"] .dev-chat-send {
-  background: transparent !important;
-  border-color: rgba(0, 255, 65, 0.4) !important;
-  color: var(--accent) !important;
-  font-family: var(--font-mono) !important;
-  font-size: 0.72rem !important;
-  letter-spacing: 0.08em;
-  width: auto !important;
-  padding: 0 0.85rem !important;
-}
-[data-theme="dev"] .dev-chat-send:hover {
-  background: var(--accent) !important;
-  color: #000 !important;
-}
-[data-theme="dev"] .dev-chat-send-icon { display: none; }
-[data-theme="dev"] .dev-chat-send-text { display: inline; }
-.dev-chat-send-text { display: none; }
-
-[data-theme="dev"] .dev-chat-poweredby {
-  font-family: var(--font-mono);
-  color: rgba(0, 255, 65, 0.45);
-}
-
-/* ════════════════════════════════════════════════
-   DEV CONTACT · CLI form skin
-   ════════════════════════════════════════════════ */
-
-/* Title swaps. Outside dev, .dev-only-text is hidden and .light-only-text shows. */
-.dev-only-text { display: none; }
-[data-theme="dev"] .light-only-text { display: none; }
-[data-theme="dev"] .dev-only-text { display: inline; }
-
-/* Channel rows: bordered icon square + label/value stack + arrow. */
-[data-theme="dev"] .dev-contact-channels {
-  border-top: 1px solid var(--border);
-}
-[data-theme="dev"] .dev-contact-channel {
-  border-bottom: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: 40px 1fr auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 0.25rem;
-  transition: background 0.15s, padding 0.15s;
-  text-decoration: none;
-}
-[data-theme="dev"] .dev-contact-channel:hover {
-  background: rgba(0, 255, 65, 0.04);
-  padding-inline: 0.75rem;
-}
-[data-theme="dev"] .dev-contact-channel-icon {
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border-2);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-  font-family: var(--font-mono);
-}
-[data-theme="dev"] .dev-contact-channel-label {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-[data-theme="dev"] .dev-contact-channel-value {
-  margin-top: 0.2rem;
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--text);
-}
-[data-theme="dev"] .dev-contact-channel-arrow {
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
-  transition: transform 0.18s;
-}
-[data-theme="dev"] .dev-contact-channel:hover .dev-contact-channel-arrow {
-  transform: translateX(3px);
-}
-
-/* Form field labels: prefix with "// " in dev. */
-[data-theme="dev"] .dev-contact-field-label::before {
-  content: "// ";
-  color: rgba(0, 255, 65, 0.55);
-}
-[data-theme="dev"] .dev-contact-field-label {
-  color: var(--accent) !important;
-  font-family: var(--font-mono) !important;
-  letter-spacing: 0.06em !important;
-}
-
-/* Form inputs: monospace + accent focus. */
-[data-theme="dev"] .dev-contact-input {
-  background: var(--bg-low) !important;
-  border-color: var(--border) !important;
-  color: var(--text) !important;
-  font-family: var(--font-mono) !important;
-}
-[data-theme="dev"] .dev-contact-input::placeholder {
-  color: rgba(0, 255, 65, 0.35) !important;
-  font-family: var(--font-mono) !important;
-}
-[data-theme="dev"] .dev-contact-input:focus {
-  border-color: var(--accent) !important;
-}
-
-/* Submit button: outline + bracketed label. */
-[data-theme="dev"] .dev-contact-submit {
-  background: transparent !important;
-  color: var(--accent) !important;
-  border-color: var(--accent) !important;
-  font-family: var(--font-mono) !important;
-  letter-spacing: 0.08em;
-}
-[data-theme="dev"] .dev-contact-submit:hover {
-  background: rgba(0, 255, 65, 0.08) !important;
-}
-[data-theme="dev"] .dev-contact-form {
-  background: var(--bg) !important;
-}
-
-/* Hide the default form section divider chrome we don't want in dev. */
-[data-theme="dev"] .dev-contact-channels-default { display: none; }
-.dev-contact-channels-cli { display: none; }
-[data-theme="dev"] .dev-contact-channels-cli { display: block; }
-
-/* ════════════════════════════════════════════════
-   DEV · MOBILE EASTER EGG — identity card flip
-   Mobile visitors can't open DevTools, so the card
-   itself becomes the egg trigger: a periodic glitch
-   pulls the eye, tapping flips the card to reveal
-   the egg instructions.
-   ════════════════════════════════════════════════ */
-
-/* Looping glitch on the identity_card.tsx label, mobile-only and dev-only,
-   so non-dev surfaces stay still and desktop dev users still get the
-   regular hover glitch on the wordmark. Pulses for ~280ms every 2s. */
-@keyframes dev-glitch-loop {
-  0%, 100% { text-shadow: none; color: var(--muted); }
-  4%       { text-shadow: 2px 0 var(--accent), -2px 0 rgba(255, 80, 150, 0.6); color: var(--accent); }
-  7%       { text-shadow: -2px 0 var(--accent), 2px 0 rgba(80, 200, 255, 0.6); }
-  10%      { text-shadow: 2px 2px var(--accent), -2px -2px rgba(255, 80, 150, 0.6); }
-  13%      { text-shadow: 0 2px var(--accent), 0 -2px rgba(80, 200, 255, 0.6); }
-  16%      { text-shadow: none; color: var(--muted); }
-}
-
-/* Same shape, but doesn't override the element's color — the original
-   .dev-mobile-glitch is meant for muted labels (it tints them accent green
-   during the spike). For elements that already have their own brand color
-   (the identity card name, the big-numbers values) we want only the
-   RGB-shift text-shadow flicker, no color swap. */
-@keyframes dev-glitch-loop-shadow {
-  0%, 100% { text-shadow: none; }
-  4%       { text-shadow: 2px 0 var(--accent), -2px 0 rgba(255, 80, 150, 0.6); }
-  7%       { text-shadow: -2px 0 var(--accent), 2px 0 rgba(80, 200, 255, 0.6); }
-  10%      { text-shadow: 2px 2px var(--accent), -2px -2px rgba(255, 80, 150, 0.6); }
-  13%      { text-shadow: 0 2px var(--accent), 0 -2px rgba(80, 200, 255, 0.6); }
-  16%      { text-shadow: none; }
-}
-
-@media (hover: none) and (max-width: 767px) {
-  [data-theme="dev"] .dev-mobile-glitch {
-    animation: dev-glitch-loop 2s steps(1) infinite;
-  }
-  [data-theme="dev"] .dev-mobile-glitch-shadow {
-    animation: dev-glitch-loop-shadow 2s steps(1) infinite;
-    /* Per-element stagger — instances set --glitch-delay to ripple instead
-       of flashing in unison. Defaults to 0 when unset. */
-    animation-delay: var(--glitch-delay, 0s);
-  }
-  [data-theme="dev"] .dev-flip-scene {
-    cursor: pointer;
-  }
-}
-
-/* Flip card primitives — perspective on the scene, preserve-3d on the
-   inner wrapper, two absolutely positioned faces with backface-visibility
-   hidden. Only the dev theme actually rotates the wrapper. */
-.dev-flip-scene {
-  perspective: 1400px;
-  width: 100%;
-}
-.dev-flip-card {
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.dev-flip-card.is-flipped {
-  transform: rotateY(180deg);
-}
-.dev-flip-face {
-  position: relative;
-  width: 100%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.dev-flip-back {
-  position: absolute;
-  inset: 0;
-  transform: rotateY(180deg);
-  display: none;
-  background: #0a0d08;
-  border: 1px solid rgba(0, 255, 65, 0.35);
-  box-shadow: 0 0 30px rgba(0, 255, 65, 0.12);
-  font-family: var(--font-mono);
-  color: rgba(0, 255, 65, 0.92);
-  overflow-y: auto;
-}
-[data-theme="dev"] .dev-flip-back { display: flex; flex-direction: column; }
-[data-theme="dev"] .dev-flip-card { will-change: transform; }
-
-.dev-flip-back-head {
-  background: #0d120b;
-  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
-  padding: 0.55rem 0.9rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  color: rgba(0, 255, 65, 0.65);
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-.dev-flip-back-head::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  background: #00ff41;
-  border-radius: 50%;
-  animation: pulse-dot 1.5s infinite;
-}
-.dev-flip-back-body {
-  flex: 1;
-  padding: 1rem 1.2rem 0.4rem;
-  font-size: 0.72rem;
-  line-height: 1.65;
-  white-space: pre-wrap;
-}
-.dev-flip-back-body .dim    { color: rgba(0,255,65,0.4); }
-.dev-flip-back-body .ok     { color: #00ff41; }
-.dev-flip-back-body .pending{ color: rgba(0,255,65,0.55); }
-.dev-flip-back-body .cmd    { color: #6af; }
-.dev-flip-back-foot {
-  border-top: 1px solid rgba(0, 255, 65, 0.18);
-  padding: 0.6rem 0.9rem;
-  font-size: 0.62rem;
-  text-align: center;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(0, 255, 65, 0.6);
-}
+.dev-flip-scene { perspective: 1400px; width: 100%; }
+.dev-flip-card { position: relative; }
+.dev-flip-face { position: relative; width: 100%; }
 
 .dev-konami-overlay {
   position: fixed;
@@ -718,35 +199,28 @@ body {
   z-index: 8999;
   pointer-events: none;
 }
-.dev-konami-overlay.is-active {
-  animation: dev-konami 1.2s steps(1) forwards;
-}
+.dev-konami-overlay.is-active { animation: dev-konami 1.2s steps(1) forwards; }
 @keyframes dev-konami {
-  0%   { background: rgba(0,255,65,0.05); }
-  10%  { background: rgba(0,255,65,0.15); clip-path: inset(20% 0 70% 0); }
-  20%  { background: rgba(255,0,80,0.10); clip-path: inset(60% 0 10% 0); }
-  30%  { background: rgba(0,255,65,0.08); clip-path: none; }
-  50%  { background: rgba(0,255,65,0.12); }
-  70%  { background: rgba(0,255,65,0.08); clip-path: inset(10% 0 80% 0); }
+  0%   { background: color-mix(in srgb, var(--purple) 8%, transparent); }
+  20%  { background: color-mix(in srgb, var(--pink) 12%, transparent); clip-path: inset(60% 0 10% 0); }
+  50%  { background: color-mix(in srgb, var(--purple) 14%, transparent); clip-path: none; }
   100% { background: transparent; clip-path: none; }
 }
-
-/* Secret terminal modal shown after Konami. */
 .dev-terminal {
   width: min(640px, 92vw);
-  background: #0a0a0a;
-  border: 1px solid #00ff41;
-  font-family: var(--font-mono);
-  box-shadow: 0 0 60px rgba(0, 255, 65, 0.32);
+  background: var(--bg-dim);
+  border: 1px solid var(--purple);
+  font-family: var(--font);
+  box-shadow: 0 0 60px var(--accent-glow);
   overflow: hidden;
 }
 .dev-terminal-head {
-  background: #111;
-  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
   padding: 0.7rem 1.1rem;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
-  color: rgba(0, 255, 65, 0.65);
+  color: var(--comment);
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -756,7 +230,7 @@ body {
   display: inline-block;
   width: 8px;
   height: 8px;
-  background: #00ff41;
+  background: var(--green);
   border-radius: 50%;
   animation: pulse-dot 1.5s infinite;
 }
@@ -768,32 +242,29 @@ body {
   padding: 1.4rem 1.5rem;
   font-size: 0.78rem;
   line-height: 1.8;
-  color: rgba(0, 255, 65, 0.85);
+  color: var(--fg);
   max-height: 70vh;
   overflow-y: auto;
   white-space: pre;
 }
-.dev-terminal-body .dim    { color: rgba(0,255,65,0.4); }
-.dev-terminal-body .bright { color: #00ff41; }
-.dev-terminal-body .warn   { color: #ffbd2e; }
-.dev-terminal-body .err    { color: #ff5577; }
-.dev-terminal-body .cmd    { color: #6af; }
+.dev-terminal-body .dim    { color: var(--comment); }
+.dev-terminal-body .bright { color: var(--green); }
+.dev-terminal-body .warn   { color: var(--orange); }
+.dev-terminal-body .err    { color: var(--red); }
+.dev-terminal-body .cmd    { color: var(--cyan); }
 .dev-terminal-close {
   display: block;
   margin: 0 1.5rem 1.2rem auto;
   background: transparent;
-  border: 1px solid rgba(0, 255, 65, 0.4);
-  color: rgba(0, 255, 65, 0.7);
-  font-family: var(--font-mono);
+  border: 1px solid var(--line);
+  color: var(--comment);
+  font-family: var(--font);
   font-size: 0.7rem;
   padding: 0.42rem 1rem;
   letter-spacing: 0.08em;
   cursor: pointer;
 }
-.dev-terminal-close:hover {
-  background: rgba(0, 255, 65, 0.1);
-  color: #00ff41;
-}
+.dev-terminal-close:hover { border-color: var(--purple); color: var(--fg); }
 
 /* ════════════════════════════════════════════════
    POST PROSE — editorial typography for blog HTML

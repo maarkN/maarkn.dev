@@ -10,9 +10,8 @@
     "career": "Carreira"
   },
   "themes": {
-    "light": "Claro",
-    "dark": "Escuro",
-    "dev": "Dev"
+    "soft": "Soft",
+    "classic": "Classic"
   },
   "hero": {
     "badgeAvailable": "Aberto a vagas sênior — UE e Canadá",

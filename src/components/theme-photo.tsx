@@ -5,9 +5,8 @@ import { useTheme } from "./theme-provider";
 import { cn } from "@/lib/utils";
 
 const SRC = {
-  light: "/photos/marco-light.png",
-  dark: "/photos/marco-dark.png",
-  dev: "/photos/marco-dev.png",
+  soft: "/photos/marco-dark.png",
+  classic: "/photos/marco-light.png",
 } as const;
 
 export function ThemePhoto({
@@ -25,13 +24,13 @@ export function ThemePhoto({
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
-      {(["light", "dark", "dev"] as const).map((t) => (
+      {(["soft", "classic"] as const).map((t) => (
         <Image
           key={t}
           src={SRC[t]}
           alt={alt}
           fill
-          priority={priority && t === "dark"}
+          priority={priority && t === "soft"}
           sizes={sizes}
           className={cn(
             "object-cover object-top transition-opacity duration-500",

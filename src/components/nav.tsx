@@ -21,7 +21,7 @@ type NavLabels = {
   career?: string;
 };
 
-type ThemeLabels = { light: string; dark: string; dev: string };
+type ThemeLabels = { soft: string; classic: string };
 
 export function Nav({
   locale,

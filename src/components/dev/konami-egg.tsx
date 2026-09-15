@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useTheme } from "@/components/theme-provider";
 
 const SEQUENCE = [
   "ArrowUp",
@@ -38,17 +37,15 @@ const ASCII = String.raw`                                  _
  * terminal modal with ASCII art and contact info.
  */
 export function KonamiEgg() {
-  const { setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [glitching, setGlitching] = useState(false);
   const positionRef = useRef(0);
 
   const fire = useCallback(() => {
-    setTheme("dev");
     setGlitching(true);
     setOpen(true);
     window.setTimeout(() => setGlitching(false), 1300);
-  }, [setTheme]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
+import { fontVars } from "../fonts";
 import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
 import { ChatLauncher } from "@/components/chat/chat-launcher";
-import { DevMarqueeStrip } from "@/components/dev/marquee-strip";
 import { ConsoleEgg } from "@/components/dev/console-egg";
 import { KonamiEgg } from "@/components/dev/konami-egg";
 import { getDictionary, hasLocale, locales, defaultLocale, type Locale } from "@/i18n/config";
@@ -19,26 +18,8 @@ import {
   personLd,
 } from "@/lib/seo";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export const viewport: Viewport = {
-  themeColor: "#0a0a0b",
+  themeColor: "#282A36",
   colorScheme: "dark",
 };
 
@@ -112,16 +93,16 @@ export default async function LocaleLayout({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
-  const fontVars = `${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`;
 
   return (
     <html
       lang={lang as Locale}
-      data-theme="dark"
+      data-theme="soft"
+      data-font="caskaydia"
       suppressHydrationWarning
       className={fontVars}
     >
-      <body className="min-h-dvh font-sans antialiased">
+      <body className="min-h-dvh antialiased">
         <Script id="theme-boot" strategy="beforeInteractive">
           {themeBootScript}
         </Script>
@@ -132,7 +113,6 @@ export default async function LocaleLayout({
           }}
         />
         <ThemeProvider>
-          <DevMarqueeStrip />
           {children}
           <ChatLauncher
             labels={dict.chat.panel}
