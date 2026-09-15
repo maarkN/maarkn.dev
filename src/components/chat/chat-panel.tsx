@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUp, RotateCcw, Sparkles, Square } from "lucide-react";
+import { Markdown } from "@/components/terminal/markdown";
 import { useChatStream, type ChatMessage } from "./use-chat-stream";
-import { runSlashCommand } from "./slash-commands";
 import { cn } from "@/lib/utils";
 
 export type ChatLabels = {
@@ -30,18 +30,13 @@ export function ChatPanel({
   locale: string;
   variant?: "page" | "floating";
 }) {
-  const { messages, status, send, stop, reset, injectLocal } = useChatStream();
+  const { messages, status, send, stop, reset } = useChatStream();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const dispatch = (raw: string) => {
     const text = raw.trim();
     if (!text) return;
-    const local = runSlashCommand(text);
-    if (local !== null) {
-      injectLocal(text, local);
-      return;
-    }
     void send(text, { locale });
   };
 
@@ -250,80 +245,4 @@ function Notice({
       {children}
     </div>
   );
-}
-
-// --- lightweight markdown for assistant replies (bold / italic / code / bullets) ---
-function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
-  const re = /(\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\n]+)\*|_([^_\n]+)_)/g;
-  let last = 0;
-  let i = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    if (m.index > last) nodes.push(text.slice(last, m.index));
-    const key = keyPrefix + i++;
-    if (m[2] !== undefined) nodes.push(<strong key={key}>{m[2]}</strong>);
-    else if (m[3] !== undefined)
-      nodes.push(
-        <code key={key} className="rounded bg-[var(--surface-3)] px-1 py-0.5 font-mono text-[0.9em]">
-          {m[3]}
-        </code>
-      );
-    else nodes.push(<em key={key}>{m[4] ?? m[5]}</em>);
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) nodes.push(text.slice(last));
-  return nodes;
-}
-
-function Markdown({ text }: { text: string }) {
-  const lines = text.split("\n");
-  const out: React.ReactNode[] = [];
-  let para: string[] = [];
-  let key = 0;
-
-  const flushPara = () => {
-    if (!para.length) return;
-    const p = para;
-    para = [];
-    out.push(
-      <p key={key++} className="mb-2 last:mb-0">
-        {p.map((l, li) => (
-          <span key={li}>
-            {renderInline(l, `${key}-${li}-`)}
-            {li < p.length - 1 ? <br /> : null}
-          </span>
-        ))}
-      </p>
-    );
-  };
-
-  for (let i = 0; i < lines.length; ) {
-    const line = lines[i];
-    if (/^\s*[-*]\s+/.test(line)) {
-      flushPara();
-      const items: string[] = [];
-      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
-        items.push(lines[i].replace(/^\s*[-*]\s+/, ""));
-        i++;
-      }
-      out.push(
-        <ul key={key++} className="mb-2 list-disc space-y-1 pl-4 last:mb-0">
-          {items.map((it, li) => (
-            <li key={li}>{renderInline(it, `${key}-${li}-`)}</li>
-          ))}
-        </ul>
-      );
-      continue;
-    }
-    if (line.trim() === "") {
-      flushPara();
-      i++;
-      continue;
-    }
-    para.push(line);
-    i++;
-  }
-  flushPara();
-  return <>{out}</>;
 }

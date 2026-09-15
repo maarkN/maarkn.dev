@@ -82,6 +82,30 @@ export type TerminalLabels = {
     exit: string;
     exitJoke: string;
     opening: string;
+    pingHealthy: string;
+    hackInit: string;
+    hackJoke: string;
+  };
+  /** `ask` — the assistant inside the terminal. */
+  ask: {
+    usage: string;
+    example: string;
+    newHint: string;
+    thinking: string;
+    newConversation: string;
+    noSlash: string;
+    /** `{limit}`, `{window}` (hour/day/minutes) and `{time}` (HH:mm). */
+    rateLimit: string;
+    windowHour: string;
+    windowDay: string;
+    /** `{n}` minutes. */
+    windowMinutes: string;
+    unavailable: string;
+    networkError: string;
+    /** `{contact}` is the command name, in cyan. */
+    contactHint: string;
+    /** Dim suffix after "command not found" when the input goes to the assistant. */
+    forwarded: string;
   };
   /*
    * Content commands. Templates use `{name}` for values the command fills in

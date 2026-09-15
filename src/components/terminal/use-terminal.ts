@@ -11,10 +11,11 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useTheme } from "@/components/theme-provider";
+import { resetConversation } from "@/lib/terminal/ask-command";
 import { complete } from "@/lib/terminal/complete";
 import { createHistory } from "@/lib/terminal/history";
 import { createRegistry, TERMINAL_ALIASES } from "@/lib/terminal/registry";
-import { createRunner, type BaseContext, type RunnerIO } from "@/lib/terminal/run";
+import { createRunner, type BaseContext, type Fallback, type RunnerIO } from "@/lib/terminal/run";
 import {
   createSystemCommands,
   formatCandidates,
@@ -45,6 +46,8 @@ export type UseTerminalOptions = {
   commands?: Command[];
   /** File names `cat` accepts, for Tab completion after `cat `. */
   files?: readonly string[];
+  /** Reroutes input that matches no command (the `ask` fallback). Memoize. */
+  fallback?: Fallback;
   /** Site content for the content commands; empty when the host has none. */
   data?: TerminalData;
   initialLines?: OutputEntry[];
@@ -62,6 +65,7 @@ export function useTerminal({
   locale,
   commands = NO_COMMANDS,
   files = NO_FILES,
+  fallback,
   data = EMPTY_TERMINAL_DATA,
   initialLines = NO_LINES,
   onReboot,
@@ -130,7 +134,11 @@ export function useTerminal({
     [commands, labels],
   );
 
-  const clearScreen = useCallback(() => setLines([]), []);
+  // Wiping the screen also forgets the `ask` conversation (spec: `clear` resets it).
+  const clearScreen = useCallback(() => {
+    setLines([]);
+    resetConversation(state);
+  }, [state]);
 
   const runner = useMemo(() => {
     const io: RunnerIO = {
@@ -152,8 +160,9 @@ export function useTerminal({
         notFound: (name, ctx) => formatNotFound(ctx.dict, name),
         failed: (name, error, ctx) => formatFailed(ctx.dict, name, error),
       },
+      fallback,
     });
-  }, [registry, history, echo, print, replaceLast, clearScreen]);
+  }, [registry, history, echo, print, replaceLast, clearScreen, fallback]);
 
   // Abort whatever is still streaming when the shell unmounts.
   useEffect(() => () => runner.abort(), [runner]);

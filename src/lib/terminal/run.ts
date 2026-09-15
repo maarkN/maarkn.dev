@@ -29,6 +29,13 @@ export type RunnerFormat = {
   failed: (name: string, error: unknown, ctx: BaseContext) => OutputLine[];
 };
 
+/**
+ * Second chance for input that resolves to no command: return the line to
+ * run instead (e.g. `ask <the whole input>`) and the notice to print before
+ * it, or `null` to get the usual "command not found".
+ */
+export type Fallback = (text: string, ctx: BaseContext) => { line: string; notice: OutputLine[] } | null;
+
 export type Runner = {
   /**
    * Echo + parse + resolve + execute. `base` carries the late-bound values
@@ -48,11 +55,13 @@ export function createRunner({
   history,
   io,
   format,
+  fallback,
 }: {
   registry: Registry;
   history: History;
   io: RunnerIO;
   format: RunnerFormat;
+  fallback?: Fallback;
 }): Runner {
   let current: AbortController | null = null;
 
@@ -74,10 +83,19 @@ export function createRunner({
     if (!parsed) return;
     history.push(text);
 
-    const command = registry.resolve(parsed.name);
+    let command = registry.resolve(parsed.name);
+    let { args } = parsed;
     if (!command) {
-      io.print(format.notFound(parsed.name, base));
-      return;
+      const alt = fallback?.(text, base);
+      const rerouted = alt ? parse(alt.line) : null;
+      const target = rerouted ? registry.resolve(rerouted.name) : undefined;
+      if (!alt || !rerouted || !target) {
+        io.print(format.notFound(parsed.name, base));
+        return;
+      }
+      io.print(alt.notice);
+      command = target;
+      args = rerouted.args;
     }
     io.markDone(command.name);
 
@@ -102,7 +120,7 @@ export function createRunner({
     };
 
     try {
-      const result = await command.run(parsed.args, ctx);
+      const result = await command.run(args, ctx);
       if (signal.aborted) return;
       if (result && result.length > 0) io.print(result);
     } catch (error) {

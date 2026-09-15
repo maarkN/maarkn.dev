@@ -599,7 +599,7 @@
     "prompt": {
       "label": "linha de comando"
     },
-    "hint": "tab autocompleta · ↑ histórico · digite help",
+    "hint": "tab autocompleta · ↑ histórico · ask <algo> fala com a ia · digite help",
     "boot": {
       "lines": [
         "> iniciando maarkn.sh",
@@ -623,6 +623,7 @@
         "writing": "posts mais recentes",
         "contact": "onde me encontrar",
         "cv": "baixar o CV (pdf)",
+        "ask": "pergunte à IA sobre o meu trabalho",
         "open": "abre o projeto n da última lista",
         "read": "abre o post n da última lista",
         "ls": "lista os arquivos",
@@ -640,7 +641,11 @@
         "sudo": "executa como root",
         "rm": "remove arquivos",
         "exit": "sai do shell",
-        "reboot": "começa de novo"
+        "reboot": "começa de novo",
+        "ping": "teste de latência",
+        "git": "remotes e repositórios públicos",
+        "pwd": "onde você está",
+        "hack": "por favor, não"
       },
       "hints": {
         "projects": "· open <n> abre um caso",
@@ -665,7 +670,26 @@
       "rmNiceTry": "· boa tentativa",
       "exit": "logout",
       "exitJoke": "…brincadeira. não tem saída — tente",
-      "opening": "abrindo"
+      "opening": "abrindo",
+      "pingHealthy": "2 pacotes transmitidos, 2 recebidos, 0% de perda — tudo saudável.",
+      "hackInit": "iniciando vetor de ataque…",
+      "hackJoke": "brincadeira. a única coisa injetada aqui é oportunidade — diga oi via"
+    },
+    "ask": {
+      "usage": "uso: ask <pergunta>",
+      "example": "· ex.: ask o que você construiu com LLMs?",
+      "newHint": "ask --new começa uma conversa nova · as respostas vêm de uma IA treinada no meu CV e projetos",
+      "thinking": "pensando…",
+      "newConversation": "nova conversa · contexto anterior esquecido",
+      "noSlash": "ask: aqui não tem comandos com barra",
+      "rateLimit": "limite de uso: {limit} mensagens/{window} · tente de novo às {time}",
+      "windowHour": "hora",
+      "windowDay": "dia",
+      "windowMinutes": "{n} min",
+      "unavailable": "o assistente está indisponível agora",
+      "networkError": "não consegui falar com o assistente",
+      "contactHint": "· tente de novo em instantes, ou fale comigo direto via {contact}",
+      "forwarded": "· perguntando ao assistente"
     },
     "whoami": {
       "role": "Engenheiro Sênior de IA/LLM & Backend",

@@ -1,6 +1,7 @@
 import { SYSTEM_PROMPT } from "@/lib/chat-system-prompt";
 import { clientKey, consume } from "@/lib/rate-limit";
 import {
+  CHAT_LIMITS,
   checkChatGate,
   estimateTokens,
   hashKey,
@@ -41,14 +42,7 @@ export async function POST(request: Request) {
   if (!gate.ok) {
     return Response.json(
       { error: "rate_limited", reason: gate.reason, retryAt: gate.resetAt },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(
-            Math.max(1, Math.ceil((gate.resetAt - Date.now()) / 1000))
-          ),
-        },
-      }
+      { status: 429, headers: rateLimitHeaders(gate) }
     );
   }
 
@@ -157,6 +151,23 @@ export async function POST(request: Request) {
     ),
     { headers: streamHeaders() }
   );
+}
+
+/**
+ * Headers a client needs to explain a 429 without parsing the body:
+ * `Retry-After` (seconds), the cap that was hit (`X-RateLimit-Limit`) and
+ * its window in seconds (`X-RateLimit-Window`: 3600 for the hourly per-visitor
+ * cap, 86400 for the site-wide daily one).
+ */
+function rateLimitHeaders(gate: Extract<ChatGate, { ok: false }>): Record<string, string> {
+  const daily = gate.reason === "daily";
+  return {
+    "Retry-After": String(Math.max(1, Math.ceil((gate.resetAt - Date.now()) / 1000))),
+    "X-RateLimit-Limit": String(daily ? CHAT_LIMITS.dailyMax : CHAT_LIMITS.perIpMax),
+    "X-RateLimit-Window": String(
+      daily ? 24 * 60 * 60 : Math.round(CHAT_LIMITS.perIpWindowMs / 1000)
+    ),
+  };
 }
 
 /** Map the in-memory fallback limiter into the DB limiter's gate shape. */

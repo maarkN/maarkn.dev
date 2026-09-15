@@ -599,7 +599,7 @@
     "prompt": {
       "label": "command line"
     },
-    "hint": "tab autocomplete · ↑ history · type help",
+    "hint": "tab autocomplete · ↑ history · ask <anything> talks to the ai · type help",
     "boot": {
       "lines": [
         "> booting maarkn.sh",
@@ -623,6 +623,7 @@
         "writing": "latest posts",
         "contact": "where to find me",
         "cv": "download the CV (pdf)",
+        "ask": "ask the AI anything about my work",
         "open": "open the n-th project of the last list",
         "read": "open the n-th post of the last list",
         "ls": "list the files",
@@ -640,7 +641,11 @@
         "sudo": "run as root",
         "rm": "remove files",
         "exit": "leave the shell",
-        "reboot": "start over"
+        "reboot": "start over",
+        "ping": "latency check",
+        "git": "remotes and public repos",
+        "pwd": "where you are",
+        "hack": "please don't"
       },
       "hints": {
         "projects": "· open <n> reads a case",
@@ -665,7 +670,26 @@
       "rmNiceTry": "· nice try",
       "exit": "logout",
       "exitJoke": "…just kidding. there's no exit — try",
-      "opening": "opening"
+      "opening": "opening",
+      "pingHealthy": "2 packets transmitted, 2 received, 0% packet loss — looking healthy.",
+      "hackInit": "initiating attack vector…",
+      "hackJoke": "jk. the only thing being injected here is opportunity — say hi via"
+    },
+    "ask": {
+      "usage": "usage: ask <question>",
+      "example": "· e.g. ask what did you build with LLMs?",
+      "newHint": "ask --new starts a fresh conversation · answers come from an AI trained on my CV and projects",
+      "thinking": "thinking…",
+      "newConversation": "new conversation · previous context forgotten",
+      "noSlash": "ask: no slash commands here",
+      "rateLimit": "rate limit: {limit} messages/{window} · try again at {time}",
+      "windowHour": "hour",
+      "windowDay": "day",
+      "windowMinutes": "{n} min",
+      "unavailable": "the assistant is unavailable right now",
+      "networkError": "couldn't reach the assistant",
+      "contactHint": "· try again in a moment, or reach me directly via {contact}",
+      "forwarded": "· asking the assistant instead"
     },
     "whoami": {
       "role": "Senior AI/LLM & Backend Engineer",

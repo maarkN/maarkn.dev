@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, type ReactNode } from "react";
+import type { Fallback } from "@/lib/terminal/run";
 import type { Command, TerminalData } from "@/lib/terminal/types";
 import { BootOverlay, hasFinePointer, useBoot } from "./boot-overlay";
 import { CommandMenu } from "./command-menu";
@@ -27,6 +28,7 @@ export function TerminalShell({
   motd,
   commands,
   files,
+  fallback,
   data,
   initialLines,
 }: {
@@ -38,13 +40,24 @@ export function TerminalShell({
   commands?: Command[];
   /** File names `cat` accepts, for Tab completion. */
   files?: readonly string[];
+  /** Reroutes input that matches no command (the `ask` fallback). */
+  fallback?: Fallback;
   /** Site content the content commands format (`ctx.data`). */
   data?: TerminalData;
   initialLines?: OutputEntry[];
 }) {
   const boot = useBoot();
   const { lines, done, value, setValue, inputRef, screenRef, focusPrompt, run, handleKeyDown } =
-    useTerminal({ labels, locale, commands, files, data, initialLines, onReboot: boot.reboot });
+    useTerminal({
+      labels,
+      locale,
+      commands,
+      files,
+      fallback,
+      data,
+      initialLines,
+      onReboot: boot.reboot,
+    });
 
   // Once the shell is usable, hand it the keyboard — but only where there is
   // a real one: focusing on a touch device would pop the virtual keyboard.

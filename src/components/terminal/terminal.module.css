@@ -247,6 +247,56 @@
 .w18 { --rl: 18ch; }
 .w22 { --rl: 22ch; }
 
+/* ── markdown (assistant replies printed by `ask`) ─────────────── */
+.md {
+  white-space: normal;
+}
+.mdP {
+  margin: 0 0 0.8em;
+}
+.md > :last-child {
+  margin-bottom: 0;
+}
+.md em {
+  font-style: italic;
+  color: var(--orange);
+}
+.mdList {
+  list-style: none;
+  margin: 0 0 0.8em;
+  padding: 0 0 0 2ch;
+}
+.mdList li {
+  text-indent: -2ch;
+}
+.mdCode {
+  font: inherit;
+  color: var(--green);
+  background: var(--bg-dim);
+  padding: 0 0.4ch;
+  border-radius: 3px;
+}
+.mdPre {
+  font: inherit;
+  color: var(--comment);
+  background: var(--bg-dim);
+  border-left: 2px solid var(--line);
+  margin: 0 0 0.8em;
+  padding: 6px 1.5ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* streaming answer: dim `thinking…` first, then the text with a live cursor */
+.askCursor {
+  display: inline-block;
+  width: 0.62em;
+  height: 1.1em;
+  background: var(--purple);
+  vertical-align: -0.15em;
+  margin-left: 0.2ch;
+  animation: blink 1.1s steps(2, start) infinite;
+}
+
 /* ── neofetch: art beside the info table, palette swatches ─────── */
 .nf {
   display: flex;
@@ -444,6 +494,7 @@
 @media (prefers-reduced-motion: reduce) {
   .line,
   .cursor,
+  .askCursor,
   .bootSkip::after {
     animation: none;
   }

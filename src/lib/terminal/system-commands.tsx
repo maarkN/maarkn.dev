@@ -2,8 +2,9 @@
    inside <Line>, never as a React child array, so keys are meaningless here. */
 import { Fragment } from "react";
 import { FONTS, THEMES, type Font, type Theme } from "@/components/theme-provider";
-import { C, D, O, R, Row } from "@/components/terminal/primitives";
+import { A, C, D, G, O, R, Row } from "@/components/terminal/primitives";
 import type { TerminalLabels } from "@/components/terminal/types";
+import { site } from "@/lib/site";
 import type { Command, CommandContext, OutputLine } from "./types";
 
 /*
@@ -20,6 +21,16 @@ const FONT_LABEL: Record<Font, string> = {
 
 const isTheme = (v: string | undefined): v is Theme => THEMES.includes(v as Theme);
 const isFont = (v: string | undefined): v is Font => FONTS.includes(v as Font);
+
+/** Lines `ping` prints, with a short pause between the replies. */
+const PING_LINES = [
+  `PING ${site.domain} (127.0.0.1): 56 data bytes`,
+  "64 bytes from 127.0.0.1: icmp_seq=0 ttl=64 time=0.018 ms",
+  "64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.012 ms",
+];
+const PING_STEP_MS = 160;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /* ── font availability ─────────────────────────────────────────── */
 
@@ -263,6 +274,61 @@ export function createSystemCommands(labels: TerminalLabels): Command[] {
     ],
   };
 
+  /* ── the old chat's slash commands, now regular (hidden) commands ── */
+
+  const ping: Command = {
+    name: "ping",
+    describe: describe("ping"),
+    hidden: true,
+    run: async (_, ctx) => {
+      for (const line of PING_LINES) {
+        ctx.print(line);
+        await sleep(PING_STEP_MS);
+        if (ctx.signal.aborted) return null;
+      }
+      return [<D>--- {site.domain} ping statistics ---</D>, <G>{messages.pingHealthy}</G>];
+    },
+  };
+
+  const git: Command = {
+    name: "git",
+    describe: describe("git"),
+    hidden: true,
+    run: () => [
+      <Row width="w10" label="origin">
+        <D>git@github.com:{site.nick}/{site.domain}.git</D>
+      </Row>,
+      <Row width="w10" label="github">
+        <A href={site.social.github} />
+      </Row>,
+      <Row width="w10" label="linkedin">
+        <A href={site.social.linkedin} />
+      </Row>,
+      <Row width="w10" label="email">
+        <A href={`mailto:${site.email}`}>{site.email}</A>
+      </Row>,
+    ],
+  };
+
+  const pwd: Command = {
+    name: "pwd",
+    describe: describe("pwd"),
+    hidden: true,
+    run: () => [`/home/${site.nick}`],
+  };
+
+  const hack: Command = {
+    name: "hack",
+    describe: describe("hack"),
+    hidden: true,
+    run: () => [
+      <R>{messages.hackInit}</R>,
+      <>
+        {messages.hackJoke} <C>contact</C>
+      </>,
+    ],
+  };
+
   // Wipes the screen and reruns the boot overlay, both through the host.
   const reboot: Command = {
     name: "reboot",
@@ -290,5 +356,9 @@ export function createSystemCommands(labels: TerminalLabels): Command[] {
     clear,
     { ...clear, name: "cls", secret: true },
     reboot,
+    ping,
+    git,
+    pwd,
+    hack,
   ];
 }
