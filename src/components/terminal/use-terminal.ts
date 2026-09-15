@@ -21,7 +21,12 @@ import {
   formatFailed,
   formatNotFound,
 } from "@/lib/terminal/system-commands";
-import type { Command, OutputLine } from "@/lib/terminal/types";
+import {
+  EMPTY_TERMINAL_DATA,
+  type Command,
+  type OutputLine,
+  type TerminalData,
+} from "@/lib/terminal/types";
 import { EchoLine } from "./prompt";
 import type { OutputEntry, TerminalLabels } from "./types";
 
@@ -40,6 +45,8 @@ export type UseTerminalOptions = {
   commands?: Command[];
   /** File names `cat` accepts, for Tab completion after `cat `. */
   files?: readonly string[];
+  /** Site content for the content commands; empty when the host has none. */
+  data?: TerminalData;
   initialLines?: OutputEntry[];
 };
 
@@ -53,6 +60,7 @@ export function useTerminal({
   locale,
   commands = NO_COMMANDS,
   files = NO_FILES,
+  data = EMPTY_TERMINAL_DATA,
   initialLines = NO_LINES,
 }: UseTerminalOptions) {
   // Re-keyed on the way in so every id on screen comes from the same counter.
@@ -150,6 +158,7 @@ export function useTerminal({
       const base: BaseContext = {
         locale,
         dict: labels,
+        data,
         theme,
         navigate: (href) => router.push(href),
         openExternal: (url) => {
@@ -165,7 +174,7 @@ export function useTerminal({
       };
       void runner.run(raw, base);
     },
-    [runner, locale, labels, theme, router, state],
+    [runner, locale, labels, data, theme, router, state],
   );
 
   /* ── keyboard ───────────────────────────────────────────────── */

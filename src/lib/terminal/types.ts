@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 import type { ThemeApi } from "@/components/theme-provider";
 import type { TerminalLabels } from "@/components/terminal/types";
+import type {
+  ExperienceItem,
+  ProjectListItem,
+  ProjectListLabels,
+  WritingItem,
+} from "./listings";
 
 /** One line a command prints. `""` renders as a blank line. */
 export type OutputLine = ReactNode | "";
@@ -16,6 +22,45 @@ export type AskOptions = {
 };
 
 /**
+ * Site content the content commands format, resolved for the locale on the
+ * server (`lib/terminal/data.ts`) and handed to the shell as a serialisable
+ * prop: only strings, numbers and plain arrays, never functions or dates.
+ */
+export type TerminalData = {
+  /** `dict.bigNumbers.items` values, as displayed on the home. */
+  numbers: { years: string; products: string; stacks: string; countries: string };
+  /** Timeline merged with the dictionary copy, newest first. */
+  experience: ExperienceItem[];
+  skills: {
+    /** Toolkit groups in `groupOrder`; `key` is the locale-agnostic label. */
+    groups: { key: string; items: string[] }[];
+    /** Capability metrics with their translated label. */
+    metrics: { label: string; value: number }[];
+  };
+  /** Featured projects with the tagline already resolved. */
+  projects: ProjectListItem[];
+  projectLabels: ProjectListLabels;
+  /** Latest posts (at most 6); empty when the CMS has nothing. */
+  posts: WritingItem[];
+  /** `dict.blog.readingTime`, e.g. "min read". */
+  minRead: string;
+};
+
+/** What the shell uses when no data is provided (tests, previews). */
+export const EMPTY_TERMINAL_DATA: TerminalData = {
+  numbers: { years: "", products: "", stacks: "", countries: "" },
+  experience: [],
+  skills: { groups: [], metrics: [] },
+  projects: [],
+  projectLabels: {
+    categories: { web: "web", mobile: "mobile", ai: "ai", backend: "backend", client: "client" },
+    statuses: { live: "live", internal: "internal", nda: "nda", archived: "archived" },
+  },
+  posts: [],
+  minRead: "min read",
+};
+
+/**
  * Everything a command may touch. Commands never see React state: they get
  * data (`locale`, `dict`, `history`), controls (`theme`, `navigate`, `clear`)
  * and an output channel (`print`/`replaceLast`) that lets long-running
@@ -25,6 +70,8 @@ export type AskOptions = {
 export type CommandContext = {
   locale: string;
   dict: TerminalLabels;
+  /** Site content for the content commands (whoami, projects, …). */
+  data: TerminalData;
   theme: ThemeApi;
   navigate: (href: string) => void;
   openExternal: (url: string) => void;

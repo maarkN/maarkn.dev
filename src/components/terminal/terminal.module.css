@@ -247,6 +247,29 @@
 .w18 { --rl: 18ch; }
 .w22 { --rl: 22ch; }
 
+/* ── neofetch: art beside the info table, palette swatches ─────── */
+.nf {
+  display: flex;
+  gap: 3ch;
+  align-items: flex-start;
+  white-space: normal;
+}
+.nf .art {
+  margin: 0;
+  font: inherit;
+  line-height: 1.25;
+  color: var(--purple);
+  white-space: pre;
+}
+.sw {
+  display: inline-block;
+  width: 2.6ch;
+  height: 1.15em;
+  margin-right: 0.5ch;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
 /* ── prompt ────────────────────────────────────────────────────── */
 .prompt {
   position: relative;
@@ -347,6 +370,10 @@
   .row.w4 {
     grid-template-columns: 4ch minmax(0, 1fr);
     gap: 0 2ch;
+  }
+  .nf {
+    flex-direction: column;
+    gap: 12px;
   }
   .barBtn {
     padding: 0 6px;

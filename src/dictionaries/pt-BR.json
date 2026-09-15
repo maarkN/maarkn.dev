@@ -605,6 +605,18 @@
       "alsoTry": "tente também:",
       "shortcuts": "números 1–6 são atalhos · tab autocompleta · ↑↓ percorre o histórico · ctrl+l limpa",
       "describe": {
+        "whoami": "quem sou e o que faço",
+        "experience": "linha do tempo da carreira, mais recente primeiro",
+        "skills": "a stack em que sou fluente",
+        "projects": "trabalhos selecionados",
+        "writing": "posts mais recentes",
+        "contact": "onde me encontrar",
+        "cv": "baixar o CV (pdf)",
+        "open": "abre o projeto n da última lista",
+        "read": "abre o post n da última lista",
+        "ls": "lista os arquivos",
+        "cat": "imprime um arquivo",
+        "neofetch": "info do sistema, estilo terminal",
         "help": "esta lista",
         "clear": "limpa a tela",
         "theme": "troca a paleta: soft | classic",
@@ -618,6 +630,10 @@
         "rm": "remove arquivos",
         "exit": "sai do shell",
         "reboot": "começa de novo"
+      },
+      "hints": {
+        "projects": "· open <n> abre um caso",
+        "writing": "· read <n> abre um"
       }
     },
     "messages": {
@@ -637,7 +653,66 @@
       "rmDenied": "rm: não foi possível remover '{target}': permissão negada",
       "rmNiceTry": "· boa tentativa",
       "exit": "logout",
-      "exitJoke": "…brincadeira. não tem saída — tente"
+      "exitJoke": "…brincadeira. não tem saída — tente",
+      "opening": "abrindo"
+    },
+    "whoami": {
+      "role": "Engenheiro Sênior de IA/LLM & Backend",
+      "location": "· {city}, {country} · trabalhando com times na Europa, nos EUA e na LatAm",
+      "paragraphs": [
+        "Levo produtos de um briefing vago até a produção — arquitetura, APIs, deploy e os dados bagunçados do mundo real no meio do caminho. Já fiz isso {products} vezes em healthtech, govtech, fintech e SaaS, quase sempre como único engenheiro ou líder técnico.",
+        "Agora o foco é IA generativa aplicada em produção: pipelines de RAG, agentes LLM e busca vetorial dentro de produtos que as pessoas realmente usam — não demos. Entrego a arquitetura mais simples que resolve o problema e não vai surpreender quem mantiver depois.",
+        "Uso agentes de código com IA {{(Claude, Cursor, Codex)}} pra entregar mais rápido sem cortar caminho: eles ficam com o boilerplate, eu fico com a arquitetura, os casos de borda e cada linha que vai pra produção.",
+        "Aberto a vagas sênior fora do Brasil — Europa {{(Irlanda, Alemanha, Holanda)}} e Canadá — presencial, híbrido ou remoto. Elegível ao Critical Skills Permit e ao EU Blue Card."
+      ],
+      "stats": {
+        "years": "anos construindo",
+        "products": "produtos entregues de ponta a ponta",
+        "stacks": "stacks no dia a dia",
+        "countries": "países pra quem já entreguei"
+      },
+      "footer": "→ {experience} pra ver a linha do tempo · {contact} pra falar comigo"
+    },
+    "experience": {
+      "footer": "todo o resto em {link}"
+    },
+    "skills": {
+      "header": "skills.sys · onde sou fluente, não tudo que já toquei"
+    },
+    "projects": {
+      "header": "projects.db · {count} de {total} · alguns ficam sob NDA",
+      "footer": "{open} abre o caso · todos em {link}"
+    },
+    "writing": {
+      "empty": "writing.md está vazio por enquanto · novas notas de campo chegam em breve",
+      "footer": "{read} abre um post · arquivo em {link}"
+    },
+    "contact": {
+      "header": "contact.sh",
+      "timezone": "fuso",
+      "available": "● disponível",
+      "unavailable": "● ocupado",
+      "statusNote": "pra novos projetos · aberto a vagas sênior na UE e no Canadá",
+      "timezoneValue": "America/Sao_Paulo · UTC−3 · trabalhando em inglês todo dia",
+      "footer": "Leio todas as mensagens e respondo em uns dois dias úteis."
+    },
+    "neofetch": {
+      "host": "{city}, BR · UTC−3",
+      "uptime": "{years} anos, {products} produtos",
+      "shell": "go · typescript",
+      "kernel": "nestjs · react · flutter",
+      "packages": "{stacks} stacks (veja skills)",
+      "editor": "cursor + claude code",
+      "status": "aberto a propostas · UE e Canadá"
+    },
+    "errors": {
+      "catMissing": "cat: arquivo não informado",
+      "catNoSuch": "cat: {file}: arquivo não existe",
+      "tryLs": "· tente ls",
+      "openRange": "open: escolha um número de 1 a {n}",
+      "seeProjects": "· veja projects",
+      "readRange": "read: escolha um número de 1 a {n}",
+      "seeWriting": "· veja writing"
     },
     "pages": {
       "back": "cd ..",

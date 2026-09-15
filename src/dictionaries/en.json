@@ -605,6 +605,18 @@
       "alsoTry": "also try:",
       "shortcuts": "numbers 1–6 are shortcuts · tab autocompletes · ↑↓ walks history · ctrl+l clears",
       "describe": {
+        "whoami": "who I am and what I do",
+        "experience": "career timeline, newest first",
+        "skills": "the stack I'm fluent in",
+        "projects": "selected work",
+        "writing": "latest posts",
+        "contact": "where to find me",
+        "cv": "download the CV (pdf)",
+        "open": "open the n-th project of the last list",
+        "read": "open the n-th post of the last list",
+        "ls": "list the files",
+        "cat": "print a file",
+        "neofetch": "system info, terminal style",
         "help": "this list",
         "clear": "wipe the screen",
         "theme": "switch palette: soft | classic",
@@ -618,6 +630,10 @@
         "rm": "remove files",
         "exit": "leave the shell",
         "reboot": "start over"
+      },
+      "hints": {
+        "projects": "· open <n> reads a case",
+        "writing": "· read <n> opens one"
       }
     },
     "messages": {
@@ -637,7 +653,66 @@
       "rmDenied": "rm: cannot remove '{target}': permission denied",
       "rmNiceTry": "· nice try",
       "exit": "logout",
-      "exitJoke": "…just kidding. there's no exit — try"
+      "exitJoke": "…just kidding. there's no exit — try",
+      "opening": "opening"
+    },
+    "whoami": {
+      "role": "Senior AI/LLM & Backend Engineer",
+      "location": "· {city}, {country} · working with teams across Europe, the US and LatAm",
+      "paragraphs": [
+        "I take products from a fuzzy brief to production — architecture, APIs, deploy, and the messy real-world data in between. Done it {products} times across healthtech, govtech, fintech and SaaS, usually as the only engineer or the technical lead.",
+        "Right now the focus is applied generative AI in production: RAG pipelines, LLM agents and vector search wired into products people actually use — not demos. I ship the simplest architecture that solves the problem and won't surprise whoever maintains it next.",
+        "I lean hard on AI coding agents {{(Claude, Cursor, Codex)}} to ship faster without cutting corners: they take the boilerplate, I take the architecture, the edge cases, and every line that goes to production.",
+        "Open to senior roles abroad — Europe {{(Ireland, Germany, the Netherlands)}} and Canada — on-site, hybrid or remote. Eligible for the Critical Skills Permit and EU Blue Card."
+      ],
+      "stats": {
+        "years": "years building",
+        "products": "products shipped end-to-end",
+        "stacks": "tech stacks in daily use",
+        "countries": "countries I've delivered for"
+      },
+      "footer": "→ {experience} for the timeline · {contact} to reach me"
+    },
+    "experience": {
+      "footer": "everything else at {link}"
+    },
+    "skills": {
+      "header": "skills.sys · where I'm fluent, not everything I've touched"
+    },
+    "projects": {
+      "header": "projects.db · {count} of {total} · some stay behind an NDA",
+      "footer": "{open} reads the case · all of them at {link}"
+    },
+    "writing": {
+      "empty": "writing.md is empty right now · new field notes land here soon",
+      "footer": "{read} opens a post · archive at {link}"
+    },
+    "contact": {
+      "header": "contact.sh",
+      "timezone": "timezone",
+      "available": "● available",
+      "unavailable": "● heads down",
+      "statusNote": "for new projects · open to senior roles in the EU & Canada",
+      "timezoneValue": "America/Sao_Paulo · UTC−3 · working in English every day",
+      "footer": "I read every message and reply within a couple of working days."
+    },
+    "neofetch": {
+      "host": "{city}, BR · UTC−3",
+      "uptime": "{years} years, {products} products",
+      "shell": "go · typescript",
+      "kernel": "nestjs · react · flutter",
+      "packages": "{stacks} stacks (see skills)",
+      "editor": "cursor + claude code",
+      "status": "open to work · EU & Canada"
+    },
+    "errors": {
+      "catMissing": "cat: missing file",
+      "catNoSuch": "cat: {file}: no such file",
+      "tryLs": "· try ls",
+      "openRange": "open: pick a number 1–{n}",
+      "seeProjects": "· see projects",
+      "readRange": "read: pick a number 1–{n}",
+      "seeWriting": "· see writing"
     },
     "pages": {
       "back": "cd ..",

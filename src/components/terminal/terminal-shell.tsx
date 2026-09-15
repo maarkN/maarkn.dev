@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import type { Command } from "@/lib/terminal/types";
+import type { Command, TerminalData } from "@/lib/terminal/types";
 import { CommandMenu } from "./command-menu";
 import { Output } from "./output";
 import { Prompt } from "./prompt";
@@ -25,6 +25,7 @@ export function TerminalShell({
   motd,
   commands,
   files,
+  data,
   initialLines,
 }: {
   labels: TerminalLabels;
@@ -35,10 +36,12 @@ export function TerminalShell({
   commands?: Command[];
   /** File names `cat` accepts, for Tab completion. */
   files?: readonly string[];
+  /** Site content the content commands format (`ctx.data`). */
+  data?: TerminalData;
   initialLines?: OutputEntry[];
 }) {
   const { lines, done, value, setValue, inputRef, screenRef, focusPrompt, run, handleKeyDown } =
-    useTerminal({ labels, locale, commands, files, initialLines });
+    useTerminal({ labels, locale, commands, files, data, initialLines });
 
   // Only the terminal route locks the document; inner pages keep scrolling.
   useEffect(() => {

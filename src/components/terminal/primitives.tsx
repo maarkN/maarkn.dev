@@ -92,18 +92,21 @@ const isHttp = (href: string) => /^https?:\/\//i.test(href);
 export function A({
   href,
   quiet,
+  external,
   children,
 }: {
   href: string;
   /** Dim variant (mockup `a.q`). */
   quiet?: boolean;
+  /** Open in a new tab even for a same-origin path (static files like the CV). */
+  external?: boolean;
   /** Defaults to the href without its protocol. */
   children?: ReactNode;
 }) {
   const className = clsx(s.link, quiet && s.quiet);
   const label = children ?? href.replace(/^https?:\/\//i, "");
 
-  if (href.startsWith("/")) {
+  if (href.startsWith("/") && !external) {
     return (
       <Link href={href} className={className}>
         {label}
@@ -115,7 +118,7 @@ export function A({
     <a
       href={href}
       className={className}
-      {...(isHttp(href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      {...(isHttp(href) || external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
     >
       {label}
     </a>

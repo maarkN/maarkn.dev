@@ -82,14 +82,15 @@ export type ExperienceItem = {
 
 /**
  * `period │ role · company` / summary / `read full case ↗`, newest first
- * as given. Each entry carries `id=<slug>` so `/career#<slug>` lands on it.
+ * as given. Each entry carries `id=<slug>` so `/career#<slug>` lands on it;
+ * the terminal passes `anchors: false` since it may print the list twice.
  */
 export function experienceLines(
   items: ExperienceItem[],
-  { lang, readCase }: { lang: string; readCase: string },
+  { lang, readCase, anchors = true }: { lang: string; readCase: string; anchors?: boolean },
 ): ReactNode[] {
   return items.map((job) => (
-    <div key={job.slug} id={job.slug} style={{ scrollMarginTop: 48 }}>
+    <div key={job.slug} id={anchors ? job.slug : undefined} style={{ scrollMarginTop: 48 }}>
       <Row width="w18" entry label={job.period}>
         <B>{job.role}</B> <D>· {job.company}</D>
         <br />
