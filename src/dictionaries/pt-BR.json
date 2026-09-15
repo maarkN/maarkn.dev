@@ -595,6 +595,45 @@
     "prompt": {
       "label": "linha de comando"
     },
-    "hint": "tab autocompleta · ↑ histórico · digite help"
+    "hint": "tab autocompleta · ↑ histórico · digite help",
+    "help": {
+      "heading": "comandos",
+      "alsoTry": "tente também:",
+      "shortcuts": "números 1–6 são atalhos · tab autocompleta · ↑↓ percorre o histórico · ctrl+l limpa",
+      "describe": {
+        "help": "esta lista",
+        "clear": "limpa a tela",
+        "theme": "troca a paleta: soft | classic",
+        "font": "troca a fonte: caskaydia | daddytime",
+        "history": "o que você rodou nesta sessão",
+        "uptime": "há quanto tempo isto está no ar",
+        "echo": "imprime os argumentos",
+        "date": "data e hora atuais",
+        "whereami": "onde estou agora",
+        "sudo": "executa como root",
+        "rm": "remove arquivos",
+        "exit": "sai do shell",
+        "reboot": "começa de novo"
+      }
+    },
+    "messages": {
+      "notFound": "comando não encontrado",
+      "typeHelp": "· digite help",
+      "failed": "falhou",
+      "noHistory": "sem histórico ainda",
+      "themeSoft": "· dracula soft, a versão suave",
+      "themeClassic": "· dracula classic, a original",
+      "fontUnavailable": "DaddyTimeMono não está disponível aqui — a fonte monoespaçada de reserva é usada no lugar.",
+      "uptime": "no ar há 6 anos, 20+ produtos entregues, 0 frágeis",
+      "uptimeLoad": "· load average: go, typescript, llm",
+      "whereami": "Goiânia, Brasil · UTC−3 · mas entregando para o mundo todo",
+      "sudoPassword": "[sudo] senha para maarkn:",
+      "sudoDenied": "maarkn não está no arquivo sudoers.",
+      "sudoReported": "Este incidente será reportado.",
+      "rmDenied": "rm: não foi possível remover '{target}': permissão negada",
+      "rmNiceTry": "· boa tentativa",
+      "exit": "logout",
+      "exitJoke": "…brincadeira. não tem saída — tente"
+    }
   }
 }

@@ -1,7 +1,6 @@
-import type { ReactNode } from "react";
+import type { OutputLine } from "@/lib/terminal/types";
 
-/** One line a command prints. `""` renders as a blank line. */
-export type OutputLine = ReactNode | "";
+export type { OutputLine };
 
 /**
  * A printed line as the shell keeps it. `index` is the position inside the
@@ -50,4 +49,30 @@ export type TerminalLabels = {
     label: string;
   };
   hint: string;
+  help: {
+    heading: string;
+    alsoTry: string;
+    shortcuts: string;
+    /** Per-command description, keyed by command name. */
+    describe: Record<string, string>;
+  };
+  messages: {
+    notFound: string;
+    typeHelp: string;
+    failed: string;
+    noHistory: string;
+    themeSoft: string;
+    themeClassic: string;
+    fontUnavailable: string;
+    uptime: string;
+    uptimeLoad: string;
+    whereami: string;
+    sudoPassword: string;
+    sudoDenied: string;
+    sudoReported: string;
+    rmDenied: string;
+    rmNiceTry: string;
+    exit: string;
+    exitJoke: string;
+  };
 };

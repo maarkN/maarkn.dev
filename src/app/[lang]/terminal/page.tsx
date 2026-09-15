@@ -22,6 +22,7 @@ export default async function TerminalPreviewPage({
   return (
     <TerminalShell
       labels={dict.terminal}
+      locale={lang}
       motd={<Motd labels={dict.terminal.motd} numbers={dict.bigNumbers.items} />}
     />
   );

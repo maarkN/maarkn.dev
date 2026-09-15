@@ -16,6 +16,16 @@ export function Ps1() {
   );
 }
 
+/** An echoed command line: PS1 followed by the text, verbatim. */
+export function EchoLine({ text }: { text: string }) {
+  return (
+    <>
+      <Ps1 />
+      {text}
+    </>
+  );
+}
+
 export function Prompt({
   value,
   onChange,

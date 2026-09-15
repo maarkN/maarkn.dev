@@ -595,6 +595,45 @@
     "prompt": {
       "label": "command line"
     },
-    "hint": "tab autocomplete · ↑ history · type help"
+    "hint": "tab autocomplete · ↑ history · type help",
+    "help": {
+      "heading": "commands",
+      "alsoTry": "also try:",
+      "shortcuts": "numbers 1–6 are shortcuts · tab autocompletes · ↑↓ walks history · ctrl+l clears",
+      "describe": {
+        "help": "this list",
+        "clear": "wipe the screen",
+        "theme": "switch palette: soft | classic",
+        "font": "switch font: caskaydia | daddytime",
+        "history": "what you ran this session",
+        "uptime": "how long this has been up",
+        "echo": "print the arguments",
+        "date": "current date and time",
+        "whereami": "where I am right now",
+        "sudo": "run as root",
+        "rm": "remove files",
+        "exit": "leave the shell",
+        "reboot": "start over"
+      }
+    },
+    "messages": {
+      "notFound": "command not found",
+      "typeHelp": "· type help",
+      "failed": "failed",
+      "noHistory": "no history yet",
+      "themeSoft": "· dracula soft, the dimmed one",
+      "themeClassic": "· dracula classic, the original",
+      "fontUnavailable": "DaddyTimeMono isn't available here — the fallback monospace face is shown instead.",
+      "uptime": "up 6 years, 20+ products shipped, 0 fragile",
+      "uptimeLoad": "· load average: go, typescript, llm",
+      "whereami": "Goiânia, Brazil · UTC−3 · but shipping worldwide",
+      "sudoPassword": "[sudo] password for maarkn:",
+      "sudoDenied": "maarkn is not in the sudoers file.",
+      "sudoReported": "This incident will be reported.",
+      "rmDenied": "rm: cannot remove '{target}': permission denied",
+      "rmNiceTry": "· nice try",
+      "exit": "logout",
+      "exitJoke": "…just kidding. there's no exit — try"
+    }
   }
 }

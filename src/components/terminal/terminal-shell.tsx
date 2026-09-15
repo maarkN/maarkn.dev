@@ -1,46 +1,44 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, type ReactNode } from "react";
+import type { Command } from "@/lib/terminal/types";
 import { CommandMenu } from "./command-menu";
 import { Output } from "./output";
-import { Prompt, Ps1 } from "./prompt";
+import { Prompt } from "./prompt";
 import { Screen } from "./screen";
 import { StatusBar } from "./status-bar";
 import s from "./terminal.module.css";
-import type { OutputEntry, OutputLine, TerminalLabels } from "./types";
+import type { OutputEntry, TerminalLabels } from "./types";
+import { useTerminal } from "./use-terminal";
 
 /** Class on `<html>` that stops the page from scrolling while the shell is up. */
 const LOCK_CLASS = "terminal-lock";
 
 /**
  * The terminal frame: status bar on top, command menu + scrollable screen
- * below, full viewport height. Owns the printed lines, the prompt value and
- * which menu items ran. Command execution itself arrives with the engine
- * (change 03); until then a requested command is only echoed at the prompt.
+ * below, full viewport height. All interaction (printing, history,
+ * autocomplete, shortcuts, menu state) is handled by `useTerminal`.
  */
 export function TerminalShell({
   labels,
+  locale,
   motd,
-  initialLines = [],
+  commands,
+  files,
+  initialLines,
 }: {
   labels: TerminalLabels;
+  locale: string;
   /** Server-rendered MOTD, placed above the output. */
   motd: ReactNode;
+  /** Commands beyond the built-in system ones (content, AI, mail…). */
+  commands?: Command[];
+  /** File names `cat` accepts, for Tab completion. */
+  files?: readonly string[];
   initialLines?: OutputEntry[];
 }) {
-  const [lines, setLines] = useState<OutputEntry[]>(initialLines);
-  const [done, setDone] = useState<ReadonlySet<string>>(() => new Set());
-  const [value, setValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const screenRef = useRef<HTMLElement>(null);
-  const nextId = useRef(initialLines.length);
+  const { lines, done, value, setValue, inputRef, screenRef, focusPrompt, run, handleKeyDown } =
+    useTerminal({ labels, locale, commands, files, initialLines });
 
   // Only the terminal route locks the document; inner pages keep scrolling.
   useEffect(() => {
@@ -51,62 +49,7 @@ export function TerminalShell({
 
   useEffect(() => {
     inputRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  // Keep the newest line in view.
-  useEffect(() => {
-    const el = screenRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [lines]);
-
-  const focusPrompt = useCallback(() => {
-    inputRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  const print = useCallback(
-    (batch: OutputLine[], opts: { instant?: boolean; cmd?: boolean } = {}) => {
-      const entries = batch.map<OutputEntry>((line, index) => ({
-        id: nextId.current++,
-        line,
-        index,
-        ...opts,
-      }));
-      setLines((prev) => [...prev, ...entries]);
-    },
-    [],
-  );
-
-  // Placeholder for the command engine: echo the line, remember the menu item.
-  const requestCommand = useCallback(
-    (raw: string) => {
-      const cmd = raw.trim();
-      if (cmd === "clear") {
-        setLines([]);
-        return;
-      }
-      print(
-        [
-          <>
-            <Ps1 />
-            {cmd}
-          </>,
-        ],
-        { instant: true, cmd: true },
-      );
-      if (cmd) {
-        setDone((prev) => (prev.has(cmd) ? prev : new Set(prev).add(cmd)));
-      }
-    },
-    [print],
-  );
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    const submitted = value;
-    setValue("");
-    requestCommand(submitted);
-  };
+  }, [inputRef]);
 
   return (
     <div className={s.term}>
@@ -117,7 +60,7 @@ export function TerminalShell({
           labels={labels.menu}
           done={done}
           onCommand={(name) => {
-            requestCommand(name);
+            run(name);
             focusPrompt();
           }}
         />
