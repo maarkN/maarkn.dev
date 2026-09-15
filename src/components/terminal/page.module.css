@@ -1,0 +1,186 @@
+/* Inner-page chrome — the same terminal frame as the shell, but the document
+   scrolls normally: sticky status bar, `ps1 + command` breadcrumb, a content
+   column of at most 82ch, `cd ..` and a one-line footer. Colours and the row/
+   link primitives come from terminal.module.css. */
+
+.page {
+  --fs: 14px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.body {
+  flex: 1;
+  padding: 26px 30px 44px;
+}
+.inner {
+  max-width: 82ch;
+}
+
+/* ── breadcrumb: maarkn@dev:~$ cat projects/<slug>.md ─────────── */
+.crumb {
+  margin: 0 0 22px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── cd .. ─────────────────────────────────────────────────────── */
+.back {
+  margin-top: 36px;
+  white-space: pre-wrap;
+}
+.cd {
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.cd:hover,
+.cd:focus-visible {
+  border-bottom-color: var(--fg);
+  outline: none;
+}
+
+/* ── footer: # email · linkedin · github · cv ──────────────────── */
+.footer {
+  margin-top: 40px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--comment);
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── page typography ───────────────────────────────────────────── */
+.h1 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--fg);
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.h1:focus {
+  outline: none;
+}
+.lead {
+  color: var(--comment);
+  margin: 0 0 22px;
+  max-width: 64ch;
+}
+.meta {
+  color: var(--comment);
+  margin: 0 0 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.h2 {
+  font-size: 1.1em;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--purple);
+  margin: 0 0 8px;
+}
+.h2::before {
+  content: "## ";
+  content: "## " / "";
+  color: var(--comment);
+  font-weight: 400;
+}
+.section {
+  margin-top: 26px;
+}
+.table {
+  margin: 0 0 22px;
+}
+
+/* status dot + text (● live) */
+.status {
+  white-space: nowrap;
+}
+
+/* filter: all · ai · web … */
+.filter {
+  margin: 0 0 18px;
+  color: var(--comment);
+  white-space: pre-wrap;
+}
+.filterOn {
+  color: var(--pink);
+  border-bottom: 1px solid var(--pink);
+}
+
+/* anchors from /career#<slug> land below the sticky bar */
+.anchor {
+  scroll-margin-top: 48px;
+}
+
+/* ── gallery: plain figures with a caption ─────────────────────── */
+.gallery {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.gallery figure {
+  margin: 0;
+}
+.gallery img,
+.shot {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  background: var(--bg-dim);
+}
+.shot {
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: flex-end;
+  padding: 12px 14px;
+  color: var(--comment);
+  font-size: 13px;
+}
+.gallery figcaption {
+  margin-top: 6px;
+  color: var(--comment);
+  font-size: 13px;
+}
+
+/* ── mobile ────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .page {
+    --fs: 13px;
+  }
+  .body {
+    padding: 20px 16px 28px;
+  }
+  .h1 {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd {
+    transition: none;
+  }
+}

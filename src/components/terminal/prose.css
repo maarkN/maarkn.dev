@@ -1,0 +1,270 @@
+/* .prose-term — monospace prose for long-form content: Ghost post HTML
+   (`/blog/[slug]`) and the description/role/features blocks of project and
+   career pages. Global on purpose: the CMS markup cannot carry module class
+   names. Colours come from the palette tokens in globals.css.
+
+   Heading prefixes (`## `) are decorative: the `/ ""` alt keeps them out of
+   the accessibility tree where the syntax is supported. */
+
+.prose-term {
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.prose-term > * + * {
+  margin-top: 1.1em;
+}
+.prose-term > :first-child {
+  margin-top: 0;
+}
+
+/* headings */
+.prose-term h1,
+.prose-term h2,
+.prose-term h3,
+.prose-term h4 {
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 0.5em;
+}
+.prose-term h1,
+.prose-term h2 {
+  color: var(--purple);
+  font-size: 1.1em;
+  margin-top: 2em;
+}
+.prose-term h3 {
+  color: var(--pink);
+  margin-top: 1.8em;
+}
+.prose-term h4 {
+  color: var(--cyan);
+  margin-top: 1.5em;
+}
+.prose-term h1::before,
+.prose-term h2::before,
+.prose-term h3::before,
+.prose-term h4::before {
+  color: var(--comment);
+  font-weight: 400;
+}
+.prose-term h1::before { content: "# "; content: "# " / ""; }
+.prose-term h2::before { content: "## "; content: "## " / ""; }
+.prose-term h3::before { content: "### "; content: "### " / ""; }
+.prose-term h4::before { content: "#### "; content: "#### " / ""; }
+
+/* inline */
+.prose-term p {
+  margin-bottom: 0;
+}
+.prose-term strong,
+.prose-term b {
+  font-weight: 600;
+  color: var(--fg);
+}
+.prose-term em,
+.prose-term i {
+  font-style: italic;
+  color: var(--yellow);
+}
+.prose-term a {
+  color: var(--cyan);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent);
+}
+.prose-term a:hover,
+.prose-term a:focus-visible {
+  border-bottom-color: var(--cyan);
+  outline: none;
+}
+.prose-term code {
+  font-family: inherit;
+  font-size: 0.95em;
+  color: var(--green);
+  background: var(--bg-dim);
+  border: 1px solid var(--line);
+  padding: 0 0.45ch;
+}
+.prose-term kbd {
+  font-family: inherit;
+  color: var(--purple);
+  border: 1px solid var(--line);
+  padding: 0 0.45ch;
+}
+
+/* code blocks */
+.prose-term pre {
+  background: var(--bg-dim);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--purple);
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.55;
+  color: var(--fg);
+  white-space: pre;
+  max-width: 100%;
+}
+.prose-term pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* quotes */
+.prose-term blockquote {
+  margin: 1.1em 0;
+  padding: 2px 0 2px 2ch;
+  border-left: 2px solid var(--comment);
+  color: var(--comment);
+}
+.prose-term blockquote > * + * {
+  margin-top: 0.8em;
+}
+.prose-term blockquote p {
+  margin: 0;
+}
+
+/* lists */
+.prose-term ul,
+.prose-term ol {
+  padding-left: 3ch;
+  margin-bottom: 0;
+}
+.prose-term ul {
+  list-style: none;
+}
+.prose-term ol {
+  list-style: decimal;
+}
+.prose-term ul > li {
+  position: relative;
+}
+.prose-term ul > li::before {
+  content: "-";
+  position: absolute;
+  left: -2ch;
+  color: var(--purple);
+}
+.prose-term ol > li::marker {
+  color: var(--purple);
+}
+.prose-term li + li {
+  margin-top: 0.35em;
+}
+.prose-term li > ul,
+.prose-term li > ol {
+  margin-top: 0.35em;
+}
+
+/* rules and tables */
+.prose-term hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 2em 0;
+}
+.prose-term table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  max-width: 100%;
+}
+.prose-term th,
+.prose-term td {
+  border: 1px solid var(--line);
+  padding: 4px 1ch;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-term th {
+  color: var(--purple);
+  font-weight: 600;
+}
+
+/* media */
+.prose-term img,
+.prose-term video,
+.prose-term iframe {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+}
+.prose-term figure {
+  margin: 1.4em 0;
+}
+.prose-term figcaption {
+  margin-top: 6px;
+  color: var(--comment);
+  font-size: 0.93em;
+}
+.prose-term figcaption::before {
+  content: "└ ";
+  content: "└ " / "";
+}
+
+/* Ghost editor cards (kg-*): the ones that show up most; the rest degrade to
+   the plain-element rules above. */
+.prose-term .kg-width-wide,
+.prose-term .kg-width-full {
+  max-width: 100%;
+}
+.prose-term .kg-code-card pre {
+  margin: 0;
+}
+.prose-term .kg-callout-card {
+  display: flex;
+  gap: 1ch;
+  padding: 10px 14px;
+  background: var(--bg-dim);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cyan);
+}
+.prose-term .kg-callout-card p {
+  margin: 0;
+}
+.prose-term .kg-bookmark-card a,
+.prose-term .kg-bookmark-container {
+  display: block;
+  border: 1px solid var(--line);
+  border-bottom-width: 1px;
+  padding: 10px 14px;
+  color: var(--fg);
+}
+.prose-term .kg-bookmark-title {
+  color: var(--cyan);
+}
+.prose-term .kg-bookmark-description,
+.prose-term .kg-bookmark-metadata {
+  color: var(--comment);
+  font-size: 0.93em;
+}
+.prose-term .kg-bookmark-thumbnail,
+.prose-term .kg-bookmark-icon {
+  display: none;
+}
+.prose-term .kg-gallery-container {
+  display: grid;
+  gap: 12px;
+}
+.prose-term .kg-gallery-row {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.prose-term .kg-gallery-image img {
+  width: 100%;
+  height: auto;
+}
+.prose-term .kg-embed-card iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+.prose-term .kg-button-card a {
+  display: inline-block;
+  border: 1px solid var(--cyan);
+  padding: 2px 1ch;
+}

@@ -387,6 +387,10 @@
       "cv": {
         "label": "Baixar CV",
         "hint": "PDF · Atualizado 2026"
+      },
+      "instagram": {
+        "label": "Instagram",
+        "hint": "/maarkn"
       }
     }
   },
@@ -634,6 +638,56 @@
       "rmNiceTry": "· boa tentativa",
       "exit": "logout",
       "exitJoke": "…brincadeira. não tem saída — tente"
+    },
+    "pages": {
+      "back": "cd ..",
+      "footer": "links",
+      "projects": {
+        "header": "projects.db · {count} projects · alguns ficam sob NDA",
+        "headerFiltered": "projects.db · {count} de {total} · {category}",
+        "filter": "filtro",
+        "all": "todos",
+        "labels": {
+          "year": "ano",
+          "category": "categoria",
+          "status": "status",
+          "stack": "stack",
+          "links": "links"
+        },
+        "openLive": "abrir site ↗",
+        "viewRepo": "ver repo ↗",
+        "privateRepo": "repo privado",
+        "gallery": "galeria"
+      },
+      "career": {
+        "title": "Carreira",
+        "sub": "Seis anos construindo software, função por função. Abra qualquer posição pra ver o caso completo.",
+        "header": "experience.log · mais recente primeiro",
+        "readCase": "ler caso completo ↗",
+        "labels": {
+          "period": "período",
+          "company": "empresa",
+          "role": "cargo",
+          "tech": "tech"
+        },
+        "current": "atual"
+      },
+      "writing": {
+        "header": "writing.md · notas de campo, mais recente primeiro",
+        "count": "{count} posts"
+      },
+      "links": {
+        "header": "links.sh",
+        "labels": {
+          "email": "email",
+          "linkedin": "linkedin",
+          "github": "github",
+          "whatsapp": "whatsapp",
+          "cv": "cv",
+          "instagram": "instagram",
+          "status": "status"
+        }
+      }
     }
   }
 }

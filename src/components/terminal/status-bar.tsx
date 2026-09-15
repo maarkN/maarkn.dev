@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { clsx } from "clsx";
 import { useTheme } from "@/components/theme-provider";
 import { PROMPT_USER } from "./prompt";
 import s from "./terminal.module.css";
@@ -42,9 +43,15 @@ function useClock() {
 
 export function StatusBar({
   labels,
+  path,
   onActivate,
 }: {
   labels: TerminalLabels["bar"];
+  /**
+   * Inner pages show their location (`~/projects/<slug>`) instead of the
+   * profile title; it stays visible on narrow screens.
+   */
+  path?: string;
   /** Called after a control is used, so the shell can refocus the prompt. */
   onActivate?: () => void;
 }) {
@@ -54,7 +61,7 @@ export function StatusBar({
   return (
     <header className={s.bar}>
       <span className={s.barUser}>{PROMPT_USER}</span>
-      <span className={s.barTitle}>{labels.title}</span>
+      <span className={clsx(s.barTitle, path && s.barPath)}>{path ?? labels.title}</span>
       <button
         type="button"
         className={s.barBtn}

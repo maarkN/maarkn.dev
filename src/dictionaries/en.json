@@ -387,6 +387,10 @@
       "cv": {
         "label": "Download CV",
         "hint": "PDF · Updated 2026"
+      },
+      "instagram": {
+        "label": "Instagram",
+        "hint": "/maarkn"
       }
     }
   },
@@ -634,6 +638,56 @@
       "rmNiceTry": "· nice try",
       "exit": "logout",
       "exitJoke": "…just kidding. there's no exit — try"
+    },
+    "pages": {
+      "back": "cd ..",
+      "footer": "links",
+      "projects": {
+        "header": "projects.db · {count} projects · some stay behind an NDA",
+        "headerFiltered": "projects.db · {count} of {total} · {category}",
+        "filter": "filter",
+        "all": "all",
+        "labels": {
+          "year": "year",
+          "category": "category",
+          "status": "status",
+          "stack": "stack",
+          "links": "links"
+        },
+        "openLive": "open live ↗",
+        "viewRepo": "view repo ↗",
+        "privateRepo": "private repo",
+        "gallery": "gallery"
+      },
+      "career": {
+        "title": "Career",
+        "sub": "Six years of building software, role by role. Open any position for the full case.",
+        "header": "experience.log · newest first",
+        "readCase": "read full case ↗",
+        "labels": {
+          "period": "period",
+          "company": "company",
+          "role": "role",
+          "tech": "tech"
+        },
+        "current": "current"
+      },
+      "writing": {
+        "header": "writing.md · field notes, newest first",
+        "count": "{count} posts"
+      },
+      "links": {
+        "header": "links.sh",
+        "labels": {
+          "email": "email",
+          "linkedin": "linkedin",
+          "github": "github",
+          "whatsapp": "whatsapp",
+          "cv": "cv",
+          "instagram": "instagram",
+          "status": "status"
+        }
+      }
     }
   }
 }

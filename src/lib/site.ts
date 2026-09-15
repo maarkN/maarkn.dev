@@ -12,4 +12,6 @@ export const site = {
     whatsapp: "https://wa.me/5562981736748",
   },
   available: true,
+  /** Résumé PDF served from public/ (file added in change 04). */
+  cvPath: "/cv/marco-filho.pdf",
 } as const;

@@ -354,6 +354,10 @@
   .barTitle {
     display: none;
   }
+  .barTitle.barPath {
+    display: block;
+    padding: 0 8px;
+  }
   .barUser {
     padding: 0 10px;
   }
