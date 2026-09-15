@@ -55,3 +55,6 @@ prisma/dev.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local planning docs (task breakdowns, design references) — not versioned
+/.docs
