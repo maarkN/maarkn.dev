@@ -1,0 +1,374 @@
+/* Terminal shell — ported from .docs/design/maarkn-terminal.html (lines 76–165).
+   Scoped as a CSS module so the mockup's one-letter classes (.c .g .p …) never
+   leak into the rest of the site; colours come from the tokens in globals.css. */
+
+/* ── frame ─────────────────────────────────────────────────────── */
+.term {
+  --fs: 14px;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* ── tmux-style status bar ─────────────────────────────────────── */
+.bar {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  background: var(--bg-dim);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  padding-right: 12px;
+}
+.barUser {
+  background: var(--purple);
+  color: var(--bg);
+  font-weight: 600;
+  padding: 0 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.barTitle {
+  color: var(--comment);
+  padding: 0 14px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.barBtn {
+  background: none;
+  border: 0;
+  color: var(--comment);
+  cursor: pointer;
+  padding: 0 10px;
+  height: 100%;
+  flex: none;
+  font: inherit;
+}
+.barBtn b {
+  font-weight: 400;
+  color: var(--cyan);
+}
+.barBtn:hover b,
+.barBtn:focus-visible b {
+  color: var(--fg);
+}
+.barBtn:focus-visible {
+  outline: none;
+  background: var(--line);
+}
+.barClock {
+  color: var(--yellow);
+  padding-left: 10px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+/* ── body: menu | screen ───────────────────────────────────────── */
+.body {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* command menu */
+.menu {
+  border-right: 1px solid var(--line);
+  padding: 22px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+}
+.menuTitle {
+  color: var(--comment);
+  font-size: 12px;
+  padding: 0 22px 10px;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  color: var(--fg);
+  text-align: left;
+  padding: 5px 20px;
+  cursor: pointer;
+  font: inherit;
+}
+.menuItem kbd {
+  font: inherit;
+  color: var(--purple);
+  width: 1ch;
+  text-align: center;
+  flex: none;
+}
+.menuItem span {
+  margin-left: auto;
+  color: var(--comment);
+}
+.menuItem:hover,
+.menuItem:focus-visible {
+  background: var(--line);
+  border-left-color: var(--pink);
+  outline: none;
+}
+.menuItem.done kbd {
+  color: var(--green);
+}
+
+/* screen */
+.screen {
+  overflow-y: auto;
+  padding: 26px 30px 44px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.inner {
+  max-width: 82ch;
+}
+
+/* ── motd ──────────────────────────────────────────────────────── */
+.motd {
+  margin: 0 0 28px;
+}
+.motdTag {
+  font-size: 17px;
+  margin: 0 0 12px;
+  max-width: 48ch;
+  line-height: 1.45;
+}
+.motdMeta {
+  margin: 0;
+  color: var(--comment);
+  line-height: 1.75;
+}
+.motdMeta b {
+  font-weight: 400;
+  color: var(--fg);
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--green);
+}
+.status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent);
+}
+
+/* ── output lines ──────────────────────────────────────────────── */
+.line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  animation: in 0.16s ease-out both;
+}
+.line.now {
+  animation: none;
+}
+.line.cmd {
+  margin-top: 16px;
+}
+.ps1 {
+  white-space: pre;
+}
+.ps1 .u {
+  color: var(--green);
+}
+.ps1 .h {
+  color: var(--purple);
+}
+
+/* ── primitives: colours, rows, links ──────────────────────────── */
+.c { color: var(--cyan); }
+.g { color: var(--green); }
+.p { color: var(--purple); }
+.o { color: var(--orange); }
+.k { color: var(--pink); }
+.y { color: var(--yellow); }
+.r { color: var(--red); }
+.d { color: var(--comment); }
+.b { font-weight: 600; color: var(--fg); }
+
+.link {
+  color: var(--cyan);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent);
+}
+.link:hover,
+.link:focus-visible {
+  border-bottom-color: var(--cyan);
+  outline: none;
+}
+.link.quiet {
+  color: var(--comment);
+  border-bottom-color: color-mix(in srgb, var(--comment) 40%, transparent);
+}
+.link.quiet:hover {
+  color: var(--fg);
+  border-bottom-color: var(--fg);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--rl, 18ch) minmax(0, 1fr);
+  gap: 0 2ch;
+  padding: 1px 0;
+  white-space: normal;
+}
+.row .rl {
+  color: var(--comment);
+}
+.row.entry {
+  margin-bottom: 12px;
+}
+.w4  { --rl: 4ch; }
+.w9  { --rl: 9ch; }
+.w10 { --rl: 10ch; }
+.w12 { --rl: 12ch; }
+.w18 { --rl: 18ch; }
+.w22 { --rl: 22ch; }
+
+/* ── prompt ────────────────────────────────────────────────────── */
+.prompt {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-top: 16px;
+  min-height: 1.6em;
+}
+.typed {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.cursor {
+  display: inline-block;
+  width: 0.62em;
+  height: 1.2em;
+  background: var(--fg);
+  vertical-align: -0.2em;
+  animation: blink 1.1s steps(2, start) infinite;
+}
+.prompt.blur .cursor {
+  animation: none;
+  background: transparent;
+  outline: 1px solid var(--comment);
+  outline-offset: -1px;
+}
+.cmdInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  color: transparent;
+  caret-color: transparent;
+  font: inherit;
+}
+.cmdInput:focus {
+  outline: none;
+}
+.hint {
+  color: var(--comment);
+  font-size: 12px;
+  margin-top: 24px;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+@keyframes in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── mobile (≤720px): menu becomes a horizontal strip at the bottom ─ */
+@media (max-width: 720px) {
+  .term {
+    --fs: 13px;
+  }
+  .body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .menu {
+    order: 2;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    flex-direction: row;
+    padding: 8px 10px;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .menuTitle {
+    display: none;
+  }
+  .menuItem {
+    padding: 6px 10px;
+    border-left: 0;
+    border-radius: 4px;
+    white-space: nowrap;
+    gap: 8px;
+  }
+  .menuItem span {
+    display: none;
+  }
+  .screen {
+    padding: 20px 16px 28px;
+  }
+  .row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .row.w4 {
+    grid-template-columns: 4ch minmax(0, 1fr);
+    gap: 0 2ch;
+  }
+  .barBtn {
+    padding: 0 6px;
+  }
+  .barTitle {
+    display: none;
+  }
+  .barUser {
+    padding: 0 10px;
+  }
+}
+
+/* ── reduced motion: no blink, no entrance animation ───────────── */
+@media (prefers-reduced-motion: reduce) {
+  .line,
+  .cursor {
+    animation: none;
+  }
+  .term,
+  .barBtn,
+  .menuItem,
+  .link {
+    transition: none;
+  }
+}

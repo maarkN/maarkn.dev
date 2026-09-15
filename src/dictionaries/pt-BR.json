@@ -572,5 +572,29 @@
       "scrollHint": "role pra avançar"
     },
     "readFull": "Ver detalhe completo"
+  },
+  "terminal": {
+    "bar": {
+      "title": "engenheiro sênior de ia/llm & backend · 6a",
+      "theme": "tema",
+      "font": "fonte",
+      "themeTitle": "trocar paleta",
+      "fontTitle": "trocar fonte"
+    },
+    "menu": {
+      "title": "comandos",
+      "label": "comandos"
+    },
+    "motd": {
+      "tagline": "Produtos de IA, entregues de ponta a ponta — muitas vezes sozinho.",
+      "location": "Goiânia · BR",
+      "summary": "{years} anos entregando · {products} produtos",
+      "languages": "pt · en",
+      "status": "aberto a vagas sênior — UE e Canadá"
+    },
+    "prompt": {
+      "label": "linha de comando"
+    },
+    "hint": "tab autocompleta · ↑ histórico · digite help"
   }
 }

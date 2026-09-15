@@ -572,5 +572,29 @@
       "scrollHint": "scroll to advance"
     },
     "readFull": "Read full case"
+  },
+  "terminal": {
+    "bar": {
+      "title": "senior ai/llm & backend engineer · 6y",
+      "theme": "theme",
+      "font": "font",
+      "themeTitle": "switch palette",
+      "fontTitle": "switch font"
+    },
+    "menu": {
+      "title": "commands",
+      "label": "commands"
+    },
+    "motd": {
+      "tagline": "AI products, shipped end-to-end — often solo.",
+      "location": "Goiânia · BR",
+      "summary": "{years} years shipping · {products} products",
+      "languages": "pt · en",
+      "status": "open to senior roles — EU & Canada"
+    },
+    "prompt": {
+      "label": "command line"
+    },
+    "hint": "tab autocomplete · ↑ history · type help"
   }
 }

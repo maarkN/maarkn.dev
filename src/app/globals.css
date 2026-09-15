@@ -127,6 +127,13 @@ html {
   color-scheme: dark;
 }
 
+/* Terminal shell: the screen scrolls, the document does not. The class is
+   added to <html> by <TerminalShell> only while it is mounted. */
+html.terminal-lock,
+html.terminal-lock body {
+  overflow: hidden;
+}
+
 body {
   background: var(--bg);
   color: var(--fg);
