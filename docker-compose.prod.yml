@@ -90,6 +90,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Build-time flag (inlined into the client bundle): forward unknown
+        # terminal input with 3+ words to the AI assistant. Off by default.
+        NEXT_PUBLIC_TERMINAL_ASK_FALLBACK: ${NEXT_PUBLIC_TERMINAL_ASK_FALLBACK:-false}
     restart: unless-stopped
     env_file: .env
     volumes:

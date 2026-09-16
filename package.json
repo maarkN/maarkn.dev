@@ -14,6 +14,7 @@
     "build": "next build",
     "start": "next start -p 5050",
     "lint": "eslint && tsx scripts/check-dictionaries.ts",
+    "docs:commands": "tsx scripts/check-commands-doc.ts",
     "test": "vitest run",
     "postinstall": "prisma generate",
     "db:up": "docker compose up -d",

@@ -1,39 +1,86 @@
 # maarkn.dev
 
-> Personal portfolio of **Marco Filho** — senior fullstack engineer working remotely from Brazil.
+> Personal portfolio of **Marco Filho** — senior AI/LLM & backend engineer working from Brazil with teams across Europe, the US and LatAm.
 
-`maarkn.dev` is the digital business card of [@maarkn](https://github.com/maarkn): a place where recruiters, hiring managers and potential clients can quickly understand who I am, what I've built, and how to reach me. The site is also a small playground where I try ideas — animated transitions, theming, AI-powered chat, design tokens — instead of just reading about them.
+`maarkn.dev` is the digital business card of [@maarkn](https://github.com/maarkn). The home page is an interactive terminal: it boots, prints a `whoami`, and then hands you a prompt where every command prints something about me — career, stack, projects, posts, contact — or talks to an AI assistant trained on my CV. Recruiters and clients get the whole story in a couple of commands; everyone else gets a toy that is fun to poke at.
 
 [Read this in Portuguese · Leia em português →](./README.pt-BR.md)
+
+![Terminal home: boot, help, projects, open 1](./docs/media/terminal-home.gif)
 
 ---
 
 ## What's inside
 
-The project is a [Next.js 16](https://nextjs.org) application written in TypeScript, styled with [Tailwind CSS v4](https://tailwindcss.com) and animated with [Framer Motion](https://www.framer.com/motion/). It ships as a fully static, internationalized site with three themes (Light, Dark and a neon Dev mode) and is designed to grow into a small CMS over time.
+A [Next.js 16](https://nextjs.org) application in TypeScript, styled with CSS tokens + [Tailwind CSS v4](https://tailwindcss.com), fully internationalized (English and Brazilian Portuguese), self-hosted behind Traefik with Postgres.
 
-### Currently shipped
+### The terminal (home)
 
-- **Internationalization** — English (default) and Brazilian Portuguese, served from `[lang]` segment routes with locale detection by `Accept-Language`.
-- **Three-theme design system** — Light, Dark and Dev (neon green with subtle scanlines), persisted in `localStorage` with a pre-hydration boot script that avoids the dark-to-light flash.
-- **Hero** — availability badge, three-line headline in plain language, primary and secondary CTAs, and a side identity card that crossfades between three portraits depending on the active theme.
-- **Big Numbers** — four counters that animate the first time the section enters the viewport.
-- **About** — bio in non-technical language, four working values and an animated vertical career timeline.
-- **Toolkit** — six grouped cards covering Frontend, Backend, Mobile, Data, Infra and Practices, with a years-of-experience badge per tag.
-- **Footer + socials** — LinkedIn, GitHub, email and WhatsApp, with inline brand SVGs for the icons that lucide v1 dropped.
-- **Selected work** — eight curated projects with stylized CSS-only covers on the home, plus a dedicated `/projects` route with category filtering and per-project detail pages at `/projects/[slug]` (description, role, key features, stack and links).
-- **Contact** — a `#contact` section on the home with a server-action-backed form (name, email, company, project type, message), inline validation, success state, honeypot anti-spam, live timezone display, and three alternate channels. Wires automatically to [Resend](https://resend.com) when `RESEND_API_KEY` is set; otherwise logs the payload server-side.
-- **Links page** — a Linktree-style hub at `/links` with a custom layout: theme-aware portrait, availability badge, vertical button stack (LinkedIn, GitHub, Email, WhatsApp, CV), and an accent glow over the grid background.
-- **AI assistant** — a floating chat launcher (visible site-wide) plus a dedicated `/chat` route, both backed by `/api/chat` streaming token-by-token through Server-Sent Events. Uses the OpenAI Chat Completions API (`gpt-4o-mini` by default), with a curated system prompt grounded in Marco's resume and projects, an in-memory per-IP rate limit (10 messages / hour), suggested prompts, stop / new-chat controls, and an offline preview mode that produces mock streamed answers when no API key is configured.
-- **Blog** — headless integration with [Ghost CMS](https://ghost.org) over the Content API. `/blog` lists every post with a stylized cover, reading time, date and tags; `/blog/[slug]` renders the post with editorial typography (h2/h3, code blocks, blockquotes, lists). Pages use ISR with a five-minute revalidation window so new posts surface without a redeploy. When `GHOST_URL` and `GHOST_CONTENT_API_KEY` are missing, the app serves a curated set of mock posts so the UI works in development and on previews.
-- **Admin CMS (phase 7.A)** — Authenticated `/admin` panel powered by [NextAuth](https://authjs.dev) + [Prisma](https://www.prisma.io) + Postgres. Sign in at `/admin/login`, manage the project catalog (create / edit / delete) with a typed form (Zod validation, slug uniqueness, tag list, cover gradient pickers), and run `npm run db:seed` to import the eight starter projects and create the admin user from `.env.local`. The public read-path keeps reading from `lib/projects.ts` — moving it to Postgres is phase 7.B.
+- **Boot sequence** — six lines typed character by character on the first visit of a browser session (3–5 s), skippable with any key or tap, skipped entirely under `prefers-reduced-motion`. `reboot` runs it again.
+- **Shell** — tmux-style status bar (`maarkn@dev · title · theme · font · lang · clock`), a command menu with numeric shortcuts (`1`–`6`, `?`, `⌫`), a scrollable screen and a prompt `maarkn@dev:~$` with a synthetic cursor. On phones the menu becomes a horizontal strip at the bottom.
+- **Command engine** — case-insensitive resolution with aliases (`about` → `whoami`, `work` → `projects`, `resume` → `cv`…), history with `↑`/`↓`, `Tab` autocomplete (commands, `cat <file>`, `cd <dir>`), `Ctrl+C` / `Ctrl+L`, async commands that can append or repaint lines while running, and an interactive prompt commands can take over to ask questions.
+- **Content commands** — `whoami`, `experience`, `skills`, `projects` + `open <n>`, `writing` + `read <n>`, `contact`, `cv`, `ls` / `cat <file>`, `neofetch`. They only *format* what the rest of the site already knows: projects from the repository (Postgres with a static fallback), timeline and toolkit from `lib/`, posts from Ghost (mocked when the CMS is missing). Nothing is duplicated inside the terminal.
+- **`ask <question>`** — the site's RAG assistant inside the terminal: streamed token by token, markdown rendered in the terminal's typography, conversation context kept for the session (`ask --new` forgets it), `Ctrl+C` aborts. Backed by `/api/chat` with a per-IP and daily rate limit, an admin log, and canned demo replies when no API key is configured. An optional flag forwards unknown three-word-plus input to the assistant.
+- **`mail`** — the contact form as a conversation: name → email → company → message → `send? [Y/n]`, validated inline with the same Zod schema as the server action, `Esc` / `Ctrl+C` cancel, answers never enter the history, one message per minute per tab.
+- **Navigation** — `cd projects|career|blog|links`, `cd ~` back home, `pwd`, `lang en|pt`, and deep-links such as `/en?cmd=projects` or `/pt-BR?cmd=whoami;skills`. The screen is rebuilt when you come back from an inner page; old anchors (`/#contact`, `/#projects`, `/#about`) still land on the right command.
+- **Palettes and fonts** — two Dracula palettes, `soft` (default) and `classic`, and two monospace faces, Cascadia Code (default) and DaddyTimeMono, switchable from the bar or with `theme` / `font`. Applied before the first paint, persisted in `localStorage`.
+- **Works without JavaScript** — the server renders the MOTD, the `whoami` output and a sitemap line, so crawlers and no-JS visitors still get the bio and every link. The shell adopts those lines when it hydrates.
+- **Accessible** — WCAG 2.1 AA: semantic landmarks, skip link to the prompt, one boot announcement for screen readers, each command's output grouped as `output of <command>`, `Esc` to leave the prompt, 4.5:1 contrast in both palettes, `rem` sizing, 44 px touch targets.
 
-### On the roadmap
+### Inner pages
 
-- **Admin CMS phase 7.B** — Migrate the public read-path to Postgres, add S3 image uploads for project covers, and wire content settings (Big Numbers, AI system prompt, CV file).
-- **SEO + Analytics** — dynamic OpenGraph, sitemap, JSON-LD schema, and Vercel Analytics.
+Every inner route survived the redesign with the same URLs, metadata and content; they just wear the terminal chrome now (status bar with the path, a `maarkn@dev:~$ cat projects/<slug>.md` breadcrumb, an 82ch column, a `cd ..` link back).
 
-This README will be updated as each item ships.
+| Route | What it is |
+|---|---|
+| `/[lang]/projects` | All public projects in the `projects` command format, filtered by `?cat=` |
+| `/[lang]/projects/[slug]` | Project detail: metadata table, description, role, features, gallery |
+| `/[lang]/career` · `/career/[slug]` | The `experience` output with anchors, and the full case per position |
+| `/[lang]/blog` · `/blog/[slug]` | Ghost CMS posts (ISR, 5 min) rendered in monospace prose |
+| `/[lang]/links` | `cat links.sh`: email, LinkedIn, GitHub, WhatsApp, CV, Instagram, availability |
+| `/[lang]/chat` | Permanent redirect to `/[lang]?cmd=ask` |
+
+### Admin
+
+`/admin` (no locale prefix) is a NextAuth-protected panel pinned to the `soft` palette: project CRUD with cover upload, a job-application tracker, a CV / cover-letter generator that draws on the knowledge base, and the chat log of the assistant. Sign in at `/admin/login`.
+
+### SEO and performance
+
+Terminal-style OpenGraph images per route and per language, sitemap (no `/chat`), `hreflang` on every public route, JSON-LD for person and website, a single `h1` per page. The home ships about 24 kB of page-specific JavaScript (gzip, budget 60 kB), the markdown renderer loads on the first `ask`, `zod` on the first `mail`, and the alternative font is downloaded only when selected. Lighthouse mobile on the home after the migration (local, median of 3 runs): performance 96–97, accessibility 100, SEO 100, LCP 1.5 s with devtools throttling, CLS 0.
+
+---
+
+## Commands
+
+What `help` prints, plus the ones it only mentions under *also try* and the easter eggs it does not mention at all.
+
+| Command | Aliases | What it does |
+|---|---|---|
+| `whoami` | `1`, `about` | Name, role, bio and the four headline numbers |
+| `experience` | `2`, `career` | Career timeline, newest first, with links to each case |
+| `skills` | `3`, `stack` | Toolkit groups and capability bars |
+| `projects` | `4`, `work` | Featured projects, numbered; `open <n>` opens one |
+| `writing` | `5`, `blog`, `posts` | Latest posts; `read <n>` opens one |
+| `contact` | `6` | Email, LinkedIn, GitHub, WhatsApp, CV, availability, timezone |
+| `cv` | `resume` | Opens the PDF in a new tab |
+| `mail` | | Send a message from the prompt (interactive) |
+| `ask <question>` | | Talk to the AI assistant; `ask --new` starts over |
+| `open <n>` · `read <n>` | | Open the n-th project / post of the last list |
+| `ls` · `cat <file>` | | The fake filesystem: `whoami.txt`, `skills.sys`, `cv.pdf`… |
+| `neofetch` | | System info with the monogram and the palette swatches |
+| `help` | `?`, `h` | The list |
+| `clear` | `cls`, `Ctrl+L` | Wipe the screen (also forgets the `ask` conversation) |
+| `theme [soft\|classic]` | | Switch or set the palette |
+| `font [caskaydia\|daddytime]` | | Switch or set the font |
+| `lang [en\|pt]` | | Switch the language (persisted in the locale cookie) |
+| `cd <dir>` · `pwd` | | Navigate to `projects`, `career`, `blog`, `links`; `cd` or `cd ~` returns home |
+| `history` · `uptime` · `date` · `echo` · `whereami` | | The usual |
+| `ping` · `git` · `reboot` | | Latency check, remotes, run the boot again |
+| `sudo` · `rm` · `exit` · `logout` · `hack` | | Try them |
+
+The full spec of every command (arguments, output, errors) lives in `.docs/design/commands.md` (local design notes, not versioned).
+
+![neofetch](./docs/media/neofetch.png)
 
 ---
 
@@ -41,90 +88,73 @@ This README will be updated as each item ships.
 
 | Layer | Choice |
 |---|---|
-| Framework | Next.js 16 (App Router, Turbopack) on React 19 |
+| Framework | Next.js 16 (App Router, Turbopack, `output: standalone`) on React 19 |
 | Language | TypeScript 5 |
-| Styling | Tailwind CSS v4 + custom CSS tokens |
-| Animation | Framer Motion |
-| Icons | lucide-react v1 + inline SVG for brand icons |
-| Fonts | Inter, Space Grotesk, JetBrains Mono via `next/font` |
-| i18n | Next.js native dictionary pattern (`getDictionary`) |
-
-The full implementation status (including the rest of the planned stack: PostgreSQL, Prisma, Ghost CMS, NextAuth, S3, Traefik, EC2) lives in the project's PRD outside this repository.
+| Styling | CSS custom properties (Dracula `soft` / `classic`) + CSS Modules + Tailwind CSS v4 (admin) |
+| Fonts | Cascadia Code via `next/font/google` · DaddyTimeMono via `next/font/local` (self-hosted, OFL) |
+| Animation | CSS only (`@keyframes` for the boot, line entrance and cursor) |
+| i18n | Next.js dictionary pattern (`getDictionary`), locale routing in `src/proxy.ts` |
+| Data | Postgres + pgvector via Prisma 6 (projects, applications, knowledge chunks, chat log) |
+| Auth | NextAuth (Auth.js v5) with Credentials |
+| AI | OpenAI Chat Completions + embeddings (RAG over `knowledge/`), SSE streaming |
+| Blog | Ghost CMS Content API (headless, ISR) |
+| Email | Resend (optional) |
+| Tests | Vitest (pure modules + a few jsdom component tests) |
+| Infra | Docker multi-stage image, Traefik v3 (TLS), GitHub Actions deploy to EC2 |
 
 ---
 
 ## Running locally
 
 ```bash
-# install dependencies
-npm install
+# install dependencies (Node 22, pnpm via corepack)
+pnpm install
 
 # start the dev server (http://localhost:5050)
-npm run dev
+pnpm dev
 
-# production build
-npm run build
-
-# serve the production build
-npm start
+# lint (eslint + dictionary parity check), tests, production build
+pnpm lint
+pnpm test
+pnpm build && pnpm start
 ```
 
-> Port `5050` is used because port `5000` is occupied by the macOS AirPlay Receiver and `3000` was unstable in the author's local environment. Override with `next dev -p <port>` if needed.
+> Port `5050` is used because `5000` is taken by the macOS AirPlay Receiver and `3000` was unstable locally. Override with `next dev -p <port>`.
 
 ### Environment variables
 
 | Variable | Purpose |
 |---|---|
-| `OPENAI_API_KEY` | Optional. When set, the AI assistant calls OpenAI's Chat Completions API. Without it, the chat endpoint streams a small set of canned answers so the UI still works in development and on previews. |
-| `OPENAI_MODEL` | Optional. Model the assistant uses. Defaults to `gpt-4o-mini`. |
-| `RESEND_API_KEY` | Optional. When set, the contact form sends real emails through the [Resend](https://resend.com) API. Without it, submissions are logged server-side and the success state is still shown — useful in development and previews. |
-| `GHOST_URL` | Optional. Base URL of the Ghost CMS instance the blog reads from (for example `https://cms.maarkn.dev`). |
-| `GHOST_CONTENT_API_KEY` | Optional. Content API key generated from a Ghost integration. Without it, `/blog` falls back to a small set of mock posts. |
-| `DATABASE_URL` | Required for the admin CMS at `/admin`. Defaults to `file:./dev.db` (SQLite, resolved at `prisma/dev.db`). Swap for a Postgres connection string and update `prisma/schema.prisma`'s `provider` to migrate. |
-| `AUTH_SECRET` | Required for the admin CMS. Generate one with `openssl rand -base64 32`. |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Read by `prisma/seed.ts` when running `npm run db:seed` to create the initial admin user. |
+| `OPENAI_API_KEY` | Optional. Enables the real assistant behind `ask` (and the admin generator). Without it, `ask` streams a few canned demo replies. |
+| `OPENAI_MODEL` | Optional. Chat model, defaults to `gpt-4o-mini`. |
+| `OPENAI_EMBEDDING_MODEL` | Optional. Embedding model for the knowledge base, defaults to `text-embedding-3-small`. |
+| `OPENAI_GENERATOR_MODEL` | Optional. Model for the CV / cover-letter generator in the admin; falls back to `OPENAI_MODEL`. |
+| `NEXT_PUBLIC_TERMINAL_ASK_FALLBACK` | Optional, default `false`. When `true`, unknown input with three or more words (not starting with `/`) is forwarded to `ask` after a notice. Public: inlined at build time, so rebuild after changing it. |
+| `CHAT_RATE_MAX` / `CHAT_RATE_WINDOW_MS` / `CHAT_DAILY_MAX` | Optional. Assistant limits: messages per visitor per window (10 / 1 h) and per day site-wide (300). |
+| `RESEND_API_KEY` | Optional. When set, `mail` sends real emails. Without it, the payload is logged server-side and the success line is still shown. |
+| `GHOST_URL` / `GHOST_CONTENT_API_KEY` | Optional. Ghost instance for `writing` and `/blog`. Without them, mock posts are served. |
+| `DATABASE_URL` | Postgres (with pgvector) connection string. Required for the admin, the knowledge base and DB-backed rate limiting; every public read path falls back to static content when it is missing. |
+| `AUTH_SECRET` | Required for the admin. Generate with `openssl rand -base64 32`. |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Read by `prisma/seed.ts` (`pnpm db:seed`) to create the admin user. |
+| `UPLOAD_DIR` | Optional. Where admin uploads are written; the Docker image sets `/data/uploads`. |
 
-Copy `.env.example` to `.env.local` and fill in only the variables you need. `.env.local` is gitignored; `.env.example` is the source of truth for what the app reads at runtime.
+Copy `.env.example` to `.env.local` and fill in only what you need. `.env.local` is gitignored; `.env.example` documents everything the app reads at runtime.
 
-### Bringing up the admin CMS locally
-
-The default setup uses **SQLite** so you can run the admin without Docker and deploy directly to Vercel. Postgres-via-Docker is documented further down as the upgrade path.
-
-```bash
-# 1. copy the env template and fill AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
-cp .env.example .env.local
-# generate AUTH_SECRET with: openssl rand -base64 32
-
-# 2. create the SQLite database and apply migrations
-npm run db:migrate
-
-# 3. seed the eight starter projects and the admin user
-npm run db:seed
-
-# 4. start the dev server and sign in at /admin
-npm run dev
-```
-
-`npm run db:studio` opens Prisma Studio if you want to inspect the database visually.
-
-### Deploying to Vercel
-
-The default SQLite database lives in the deployment artifact, which means **reads work fine on Vercel but admin writes do not persist between requests** (Vercel functions have a read-only filesystem). For a portfolio that's primarily showcased — not edited live — this is the simpler, cheaper path. To enable live writes in production, choose one of:
-
-- **Turso / libSQL** (recommended drop-in) — keep the SQLite schema, swap the Prisma client for the libSQL driver adapter and point `DATABASE_URL` at your Turso database.
-- **Postgres** — use the bundled `docker-compose.yml` locally, then point `DATABASE_URL` at a hosted Postgres (Neon, Supabase, Railway). Change `provider = "sqlite"` to `"postgresql"` in `prisma/schema.prisma`, drop the JSON-encoded TEXT helpers in `lib/json-list.ts`, and re-migrate.
-
-### Postgres alternative (Docker)
+### Database, seed and knowledge base
 
 ```bash
-npm run db:up         # boots the Postgres 17 service from docker-compose.yml
-# in prisma/schema.prisma, change provider to "postgresql"
-# in .env.local, set DATABASE_URL=postgresql://maarkn:maarkn@localhost:5432/maarkn_dev
-npm run db:migrate
-npm run db:seed
+pnpm db:up        # local pgvector container on port 5433 (or point DATABASE_URL at your own Postgres)
+pnpm db:migrate   # prisma migrate dev
+pnpm db:seed      # admin user + starter projects
+pnpm db:ingest    # embed knowledge/**/*.md into pgvector (needs OPENAI_API_KEY)
+pnpm db:studio    # Prisma Studio
 ```
 
-`npm run db:down` stops the container without removing data.
+`knowledge/` holds the CV and project dossiers the assistant answers from; only its README is versioned (see [`knowledge/README.md`](./knowledge/README.md)).
+
+### Deploying
+
+The production stack (Docker image, Traefik, Postgres, GitHub Actions → EC2) is documented in [`DEPLOY.md`](./DEPLOY.md).
 
 ---
 
@@ -133,98 +163,66 @@ npm run db:seed
 ```
 src/
 ├── app/
-│   ├── globals.css              # design tokens (Light/Dark/Dev) and base styles
-│   ├── _actions/contact.ts      # server action for the contact form
-│   ├── _actions/admin-projects.ts # CRUD server actions for the admin
-│   ├── _actions/auth.ts         # signIn / signOut server actions
-│   ├── api/auth/[...nextauth]/route.ts # Auth.js handler
-│   ├── api/chat/route.ts        # streaming chat endpoint (OpenAI + mock fallback)
-│   ├── admin/                   # protected /admin tooling (no [lang])
-│   │   ├── layout.tsx
-│   │   ├── login/page.tsx
-│   │   ├── page.tsx             # dashboard / project list
-│   │   └── projects/
-│   │       ├── new/page.tsx
-│   │       └── [id]/edit/page.tsx
+│   ├── globals.css                 # Dracula tokens (soft/classic), fonts, base styles
+│   ├── fonts.ts · fonts/           # Cascadia Code (Google) + DaddyTimeMono (self-hosted, OFL)
+│   ├── manifest.ts · robots.ts · sitemap.ts
+│   ├── _actions/                   # server actions: contact, auth, admin CRUD, generator
+│   ├── api/chat/route.ts           # streaming assistant (RAG + rate limit + mock fallback)
+│   ├── api/admin/upload/route.ts   # cover uploads
+│   ├── admin/                      # protected panel (no [lang]): projects, applications, generator, chat log
 │   └── [lang]/
-│       ├── layout.tsx           # html, fonts, ThemeProvider, ChatLauncher, metadata
-│       ├── page.tsx             # composes the home sections
-│       ├── chat/page.tsx        # full-width AI assistant page
-│       ├── links/page.tsx       # Linktree-style hub
-│       ├── blog/
-│       │   ├── page.tsx         # blog listing (Ghost-powered)
-│       │   └── [slug]/page.tsx  # blog post detail
-│       └── projects/
-│           ├── page.tsx         # full listing with category filter
-│           └── [slug]/page.tsx  # per-project detail page
+│       ├── layout.tsx              # html, fonts, ThemeProvider, metadata, JSON-LD
+│       ├── (terminal)/page.tsx     # the home: loads TerminalData, renders MOTD + whoami on the server
+│       ├── (pages)/                # inner routes with the terminal chrome
+│       │   ├── projects/ · career/ · blog/ · links/
+│       │   └── */opengraph-image.tsx
+│       └── chat/route.ts           # 308 → /[lang]?cmd=ask
 ├── components/
-│   ├── nav.tsx
-│   ├── theme-{provider,switcher,photo}.tsx
-│   ├── lang-switcher.tsx
-│   ├── hero.tsx
-│   ├── identity-card.tsx
-│   ├── big-numbers.tsx
-│   ├── about.tsx
-│   ├── toolkit.tsx
-│   ├── projects.tsx
-│   ├── project-card.tsx
-│   ├── projects-filter.tsx
-│   ├── project-detail.tsx
-│   ├── contact.tsx
-│   ├── links-hub.tsx
-│   ├── chat/
-│   │   ├── chat-launcher.tsx    # floating button + animated panel
-│   │   ├── chat-panel.tsx       # message list, suggestions, composer
-│   │   └── use-chat-stream.ts   # SSE consumer hook
-│   ├── blog/
-│   │   ├── post-card.tsx        # listing card
-│   │   ├── post-cover.tsx       # feature image or stylized gradient
-│   │   └── post-content.tsx     # editorial-typography wrapper for Ghost HTML
-│   ├── admin/
-│   │   ├── admin-shell.tsx      # header + nav for the /admin tree
-│   │   ├── login-form.tsx
-│   │   ├── project-form.tsx     # create + edit form
-│   │   ├── delete-project-button.tsx
-│   │   └── logout-button.tsx
-│   ├── socials.tsx
-│   └── footer.tsx
-├── dictionaries/
-│   ├── en.json
-│   └── pt-BR.json
-├── i18n/
-│   └── config.ts                # getDictionary + hasLocale helpers
+│   ├── terminal/
+│   │   ├── terminal-app.tsx        # registers content + mail + ask + nav commands, mounts the shell
+│   │   ├── terminal-shell.tsx      # bar + menu + screen + prompt + boot overlay
+│   │   ├── use-terminal.ts         # React adapter: lines, history, autocomplete, shortcuts, session
+│   │   ├── boot-overlay.tsx · status-bar.tsx · command-menu.tsx · screen.tsx · prompt.tsx
+│   │   ├── output.tsx · line.tsx · primitives.tsx · markdown.tsx · motd.tsx · initial-output.tsx
+│   │   ├── page-chrome.tsx · page-footer.tsx · route-chrome.ts · route-focus.ts
+│   │   └── terminal.module.css · page.module.css · prose.css
+│   ├── theme-provider.tsx          # palette + font state, pre-hydration boot script
+│   └── admin/                      # admin shell and forms
 ├── lib/
-│   ├── utils.ts                 # cn() helper
-│   ├── site.ts                  # site-wide constants
-│   ├── timeline.ts              # career timeline data
-│   ├── toolkit.ts               # grouped tech stack
-│   ├── projects.ts              # project catalog (static, pre-CMS)
-│   ├── chat-system-prompt.ts    # persona + context for the AI assistant
-│   ├── rate-limit.ts            # in-memory per-IP limiter
-│   ├── ghost.ts                 # Ghost Content API client + offline mock posts
-│   ├── db.ts                    # Prisma client singleton + db-configured flag
-│   ├── auth.ts                  # NextAuth (Auth.js v5) configuration
-│   └── auth/handlers.ts         # re-export of the Auth.js GET / POST handlers
-└── proxy.ts                     # locale routing (renamed from middleware in Next 16)
-prisma/
-├── schema.prisma                # User + Project models
-└── seed.ts                      # seeds admin user + starter projects
-docker-compose.yml               # local Postgres for the admin CMS
+│   ├── terminal/
+│   │   ├── types.ts · registry.ts · parse.ts · complete.ts · history.ts · run.ts
+│   │   ├── content-commands.tsx    # whoami … neofetch
+│   │   ├── system-commands.tsx     # help, clear, theme, font, history, jokes
+│   │   ├── nav-commands.tsx        # cd, pwd, lang
+│   │   ├── ask-command.tsx · mail-command.tsx
+│   │   ├── data.ts                 # assembles TerminalData on the server
+│   │   ├── deeplink.ts · session.ts · anchors.ts · locale.ts · files.ts · listings.tsx · rich.tsx
+│   ├── projects-repo.ts · projects.ts · timeline.ts · toolkit.ts · site.ts · ghost.ts
+│   ├── chat-client.ts · chat-system-prompt.ts · chat-log.ts · rag.ts · embeddings.ts · rate-limit.ts
+│   ├── contact-schema.ts · seo.ts · og.tsx · db.ts · auth.ts · uploads.ts
+├── dictionaries/en.json · pt-BR.json
+├── i18n/config.ts
+└── proxy.ts                        # locale routing (Next 16's middleware)
+prisma/                             # schema, migrations, seed
+scripts/                            # check-dictionaries, ingest-knowledge, check-commands-doc
+knowledge/                          # CV + project dossiers for the assistant (gitignored)
 ```
 
 ---
 
 ## Conventions
 
-- Commits follow the [Conventional Commits](https://www.conventionalcommits.org) spec, validated by commitlint.
-- Copy aimed at recruiters and clients is written in plain language; developer jargon stays in code, tags and section titles.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org).
+- Command and file names in the terminal stay in English in both languages; only descriptions and messages are translated, and `pnpm lint` fails when the two dictionaries drift.
+- No `innerHTML`: every output line is a React node, and everything a visitor types is displayed literally.
+- Content lives in `lib/` and the dictionaries; `lib/terminal` only formats it.
 - Animations respect `prefers-reduced-motion`.
 
 ---
 
 ## License
 
-Source code is released under the [MIT License](./LICENSE). The portrait photographs and the personal copy are © Marco Filho — please do not reuse them without permission.
+Source code is released under the MIT License. The personal copy, the CV and the knowledge base are © Marco Filho — please do not reuse them without permission. Fonts: Cascadia Code (OFL 1.1) and DaddyTimeMono (OFL 1.1), licenses next to the files in `src/app/fonts/`.
 
 ---
 

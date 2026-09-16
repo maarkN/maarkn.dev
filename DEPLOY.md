@@ -34,17 +34,30 @@ AUTH_SECRET=<openssl rand -base64 32>
 ADMIN_EMAIL=you@maarkn.dev
 ADMIN_PASSWORD=<strong-admin-password>
 
-# --- AI (RAG chat + résumé/job generator) ---
+# --- AI (the terminal's `ask` command + résumé/job generator) ---
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 # OPENAI_GENERATOR_MODEL=gpt-4o   # optional: nicer generator output
+# CHAT_RATE_MAX=10                # optional: `ask` messages per visitor per window
+# CHAT_RATE_WINDOW_MS=3600000     # optional: that window (1 h)
+# CHAT_DAILY_MAX=300              # optional: `ask` messages per day, site-wide
+
+# --- terminal (build-time; see the note below) ---
+NEXT_PUBLIC_TERMINAL_ASK_FALLBACK=false
 
 # --- optional ---
 RESEND_API_KEY=
 GHOST_URL=
 GHOST_CONTENT_API_KEY=
 ```
+
+`NEXT_PUBLIC_TERMINAL_ASK_FALLBACK` (`true` forwards unknown terminal input with
+three or more words to the AI assistant) is a **build-time** value: Next inlines
+`NEXT_PUBLIC_*` into the client bundle, and `.env` is not part of the Docker build
+context. `docker-compose.prod.yml` forwards it to the image as a build arg, so it
+takes effect on the next `up --build`, not on a restart. Leave it `false` unless
+you want typos to spend the assistant's quota.
 
 Generate `AUTH_SECRET` with `openssl rand -base64 32`. Use the **same** password in
 `POSTGRES_PASSWORD` and inside `DATABASE_URL`.
@@ -63,19 +76,19 @@ Creates the admin user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` plus the 8 starter
 projects. (If you skip projects, the public site falls back to the built-in list
 until you add some in `/admin`.) **Change the admin password after first login.**
 
-## 5. Index the knowledge base (for the AI chat)
+## 5. Index the knowledge base (for the terminal's `ask` command)
 ```bash
 docker compose -f docker-compose.prod.yml run --rm --entrypoint sh migrate -c "npm run db:ingest"
 ```
-Embeds `app/knowledge/**` into pgvector. Re-run whenever you edit `knowledge/`.
+Embeds `app/knowledge/**` into pgvector — what `ask` and the admin generator answer from. Re-run whenever you edit `knowledge/`.
 
 ## 6. Start the app + Traefik
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 Traefik obtains a Let's Encrypt certificate for `APP_DOMAIN` automatically.
-- Site: `https://maarkn.dev`
-- Admin: `https://maarkn.dev/admin` · Generator: `/admin/generator`
+- Site: `https://maarkn.dev` (the terminal; `?cmd=projects` deep-links work)
+- Admin: `https://maarkn.dev/admin` · Generator: `/admin/generator` · Chat log: `/admin/chat`
 
 ## Updating (new code)
 Once CI/CD is set up ([§8](#8-ci-cd-github-actions)) every push to `main` deploys
@@ -151,6 +164,13 @@ under repo → Settings → Environments. Leave it unprotected for auto-deploy, 
   natively — no manual install needed.
 
 ## Notes
+- **Fonts.** The site is monospace only: Cascadia Code comes from Google Fonts
+  through `next/font/google` and is **downloaded by the builder stage at build
+  time** (the build host needs outbound HTTPS; there is no runtime request to
+  Google). DaddyTimeMono is self-hosted from `src/app/fonts/` via
+  `next/font/local`. Both end up in `.next/static/media`, which the Dockerfile
+  already copies next to `public/` — there is no `public/fonts` folder to mount
+  or copy.
 - Local dev uses an isolated pgvector container on host port **5433**
   (`npm run db:up`) + `npm run dev`; the database is `maarkn_website`.
 - The slim runtime image has no Prisma CLI / tsx by design — migrations, seed and

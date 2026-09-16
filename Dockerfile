@@ -24,6 +24,11 @@ RUN printf 'node-linker=hoisted\n' > .npmrc \
 # --- builder: generate Prisma client + build the standalone server ---
 FROM base AS builder
 ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* values are inlined into the client bundle at build time, and
+# .env is not part of the build context, so the terminal's ask fallback flag
+# comes in as a build arg (docker-compose.prod.yml forwards it from .env).
+ARG NEXT_PUBLIC_TERMINAL_ASK_FALLBACK=false
+ENV NEXT_PUBLIC_TERMINAL_ASK_FALLBACK=$NEXT_PUBLIC_TERMINAL_ASK_FALLBACK
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm exec prisma generate
@@ -39,6 +44,9 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# .next/static also carries the fonts next/font emitted at build time: Cascadia
+# Code (fetched from Google Fonts by the builder) and the self-hosted
+# DaddyTimeMono from src/app/fonts/.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Prisma needs the schema + the generated client & query engine at runtime.
 # Copy the whole node_modules from the builder (over the standalone's traced
