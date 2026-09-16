@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { Locale } from "@/i18n/config";
 
 // Single source of truth for SEO metadata, structured data and social cards.
@@ -11,19 +12,21 @@ const SAME_AS = [
 ];
 
 // The home title is the prompt's user@host, the same in both locales.
-type SeoCopy = { title: string; description: string; ogLocale: string };
+type SeoCopy = { title: string; description: string; jobTitle: string; ogLocale: string };
 
 export const seoByLocale: Record<Locale, SeoCopy> = {
   en: {
     title: "Marco Filho — maarkn@dev",
     description:
       "Marco Filho — Senior AI/LLM & Backend Engineer. 6+ years, 20+ products shipped end-to-end. Open to senior roles in the EU and Canada.",
+    jobTitle: "Senior AI/LLM & Backend Engineer",
     ogLocale: "en_US",
   },
   "pt-BR": {
     title: "Marco Filho — maarkn@dev",
     description:
       "Marco Filho — Engenheiro Sênior de IA/LLM & Backend. 6+ anos, 20+ produtos entregues de ponta a ponta. Aberto a vagas sênior na UE e no Canadá.",
+    jobTitle: "Engenheiro Sênior de IA/LLM & Backend",
     ogLocale: "pt_BR",
   },
 };
@@ -58,12 +61,21 @@ export const KEYWORDS = [
   "govtech",
 ];
 
-// hreflang map (relative paths resolved against metadataBase).
-export const languageAlternates: Record<string, string> = {
-  en: "/en",
-  "pt-BR": "/pt-BR",
-  "x-default": "/en",
-};
+/**
+ * `alternates` of a public route: canonical + `hreflang` for both locales and
+ * `x-default` (English). `path` is the locale-less path, e.g. `/projects/x`
+ * or `` for the home.
+ */
+export function routeAlternates(locale: Locale, path = ""): NonNullable<Metadata["alternates"]> {
+  return {
+    canonical: `/${locale}${path}`,
+    languages: {
+      en: `/en${path}`,
+      "pt-BR": `/pt-BR${path}`,
+      "x-default": `/en${path}`,
+    },
+  };
+}
 
 // --- JSON-LD (schema.org) ---
 
@@ -75,7 +87,7 @@ export function personLd(locale: Locale) {
     alternateName: "maarkn",
     url: `${SITE_URL}/${locale}`,
     image: `${SITE_URL}/${locale}/opengraph-image`,
-    jobTitle: "Senior AI/LLM & Backend Engineer",
+    jobTitle: seoByLocale[locale].jobTitle,
     description: seoByLocale[locale].description,
     email: "mailto:markimkr@gmail.com",
     address: {

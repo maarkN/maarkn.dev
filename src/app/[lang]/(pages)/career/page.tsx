@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
+import { routeAlternates } from "@/lib/seo";
 import { timeline } from "@/lib/timeline";
 import { experienceLines } from "@/lib/terminal/listings";
 import s from "@/components/terminal/page.module.css";
 
-export const metadata: Metadata = {
-  title: "Career — every role at a glance",
-  description:
-    "Every role Marco Filho has shipped from, in chronological order — open any position for the full case.",
-};
+export async function generateMetadata({ params }: PageProps<"/[lang]/career">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!hasLocale(lang)) return {};
+  return {
+    title: "Career — every role at a glance",
+    description:
+      "Every role Marco Filho has shipped from, in chronological order — open any position for the full case.",
+    alternates: routeAlternates(lang, "/career"),
+  };
+}
 
 /** `ls career/` — the `experience` command as a page, one anchor per role. */
 export default async function CareerIndexPage({ params }: PageProps<"/[lang]/career">) {

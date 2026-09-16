@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // Tree-shake barrel imports from these heavy packages (smaller client JS).
-    optimizePackageImports: ["framer-motion", "lucide-react"],
+    optimizePackageImports: ["lucide-react"],
   },
 };
 

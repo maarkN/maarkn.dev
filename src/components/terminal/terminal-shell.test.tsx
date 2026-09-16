@@ -442,6 +442,8 @@ describe("terminal shell", () => {
     it("mail: the whole flow runs in the prompt, answers stay out of history, 60s cooldown", async () => {
       sendMail.mockClear();
       await enter("mail");
+      // The field schemas (zod) are loaded on demand before the first question.
+      await act(() => sleep(20));
       expect(promptText()).toContain("→ name:");
       expect(screenText()).toContain("enter answers · esc cancels");
       await enter("Jane Doe");

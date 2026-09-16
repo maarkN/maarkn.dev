@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { clsx } from "clsx";
 import { getDictionary, hasLocale } from "@/i18n/config";
+import { routeAlternates } from "@/lib/seo";
 import { getAllProjects, buildTaglines, projectCategories } from "@/lib/projects-repo";
 import type { ProjectCategory } from "@/lib/projects";
 import { projectsLines } from "@/lib/terminal/listings";
@@ -10,11 +11,17 @@ import { D } from "@/components/terminal/primitives";
 import s from "@/components/terminal/page.module.css";
 import t from "@/components/terminal/terminal.module.css";
 
-export const metadata: Metadata = {
-  title: "Selected work",
-  description:
-    "Every product Marco Filho is willing to put his name on — filtered by category.",
-};
+export async function generateMetadata({ params }: PageProps<"/[lang]/projects">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!hasLocale(lang)) return {};
+  return {
+    title: "Selected work",
+    description:
+      "Every product Marco Filho is willing to put his name on — filtered by category.",
+    // `?cat=` filters are views of the same page: one canonical, one hreflang set.
+    alternates: routeAlternates(lang, "/projects"),
+  };
+}
 
 export const dynamic = "force-dynamic";
 

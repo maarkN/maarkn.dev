@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
+import { routeAlternates } from "@/lib/seo";
 import { site } from "@/lib/site";
 import { A, D, G, P, Row } from "@/components/terminal/primitives";
 import s from "@/components/terminal/page.module.css";
 import t from "@/components/terminal/terminal.module.css";
 
-export const metadata: Metadata = {
-  title: "Links",
-  description: "All the ways to find and reach Marco Filho on the internet.",
-};
+export async function generateMetadata({ params }: PageProps<"/[lang]/links">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!hasLocale(lang)) return {};
+  return {
+    title: "Links",
+    description: "All the ways to find and reach Marco Filho on the internet.",
+    alternates: routeAlternates(lang, "/links"),
+  };
+}
 
 const strip = (url: string) => url.replace(/^https?:\/\//i, "");
 

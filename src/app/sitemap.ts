@@ -1,26 +1,62 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/seo";
 import { locales } from "@/i18n/config";
-import { projects } from "@/lib/projects";
+import { getPosts } from "@/lib/ghost";
+import { projects as staticProjects } from "@/lib/projects";
+import { getAllProjects } from "@/lib/projects-repo";
+import { timeline } from "@/lib/timeline";
 
-// Static sitemap generated at build time. Localized + hreflang alternates for
-// every stable route plus each project case. (Blog/career detail slugs are
-// intentionally left out to keep the sitemap independent of the DB / Ghost.)
-export const dynamic = "force-static";
+/*
+ * Every public route in both locales with hreflang alternates: home, the four
+ * listings, each project case, each career entry and each post. `/chat` is a
+ * redirect to the terminal and stays out. Projects come from the same
+ * DB-first loader as the pages (`getAllProjects` replaces the static list
+ * once the admin has rows, so listing and sitemap always agree); career is
+ * the static timeline; posts come from Ghost through the same cached loader
+ * as the blog. The sitemap is regenerated hourly instead of frozen at build
+ * time.
+ */
+export const revalidate = 3600;
 
-export default function sitemap(): MetadataRoute.Sitemap {
+type Entry = { path: string; changeFrequency: "weekly" | "monthly"; priority: number };
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const staticPaths = ["", "/projects", "/blog", "/career", "/links"];
-  const projectPaths = projects.map((p) => `/projects/${p.slug}`);
-  const paths = [...staticPaths, ...projectPaths];
+  const [posts, projects] = await Promise.all([
+    getPosts(50).catch(() => []),
+    getAllProjects().catch(() => staticProjects),
+  ]);
 
-  return paths.flatMap((path) =>
+  const entries: Entry[] = [
+    { path: "", changeFrequency: "weekly", priority: 1 },
+    ...["/projects", "/career", "/blog", "/links"].map((path) => ({
+      path,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
+    ...projects.map((p) => ({
+      path: `/projects/${p.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+    ...timeline.map((t) => ({
+      path: `/career/${t.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    })),
+    ...posts.map((post) => ({
+      path: `/blog/${post.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    })),
+  ];
+
+  return entries.flatMap(({ path, changeFrequency, priority }) =>
     locales.map((l) => ({
       url: `${SITE_URL}/${l}${path}`,
       lastModified: now,
-      changeFrequency:
-        path === "" ? ("weekly" as const) : ("monthly" as const),
-      priority: path === "" ? 1 : path.startsWith("/projects/") ? 0.6 : 0.8,
+      changeFrequency,
+      priority,
       alternates: {
         languages: Object.fromEntries(
           locales.map((ll) => [ll, `${SITE_URL}/${ll}${path}`]),

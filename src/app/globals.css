@@ -24,7 +24,7 @@
   --red:     #EE6666;
   --yellow:  #E7EE98;
 
-  --font: var(--font-caskaydia), "Cascadia Code", ui-monospace, Menlo, Consolas, monospace;
+  --font: var(--font-caskaydia), "Cascadia Code Fallback", ui-monospace, Menlo, Consolas, monospace;
   --fs:   0.875rem;
 }
 
@@ -44,6 +44,35 @@
 
 :root[data-font="daddytime"] {
   --font: var(--font-daddytime), "DaddyTimeMono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* Fallback shown while Cascadia Code (font-display: swap) is still loading:
+   the platform's monospace face scaled to Cascadia's metrics (advance 0.586em,
+   ascent 0.928em, descent 0.234em) so the swap moves nothing (CLS 0). Menlo and
+   DejaVu Sans Mono advance 0.602em (97.32% is exact); Roboto Mono, Liberation
+   Mono and Courier New advance 0.600em (0.3% off). local() needs the face's full
+   or PostScript name, hence the pairs. Consolas (0.55em) is last so Windows
+   prefers Courier New's matching width. */
+@font-face {
+  font-family: "Cascadia Code Fallback";
+  src:
+    local("Menlo Regular"),
+    local("Menlo-Regular"),
+    local("DejaVu Sans Mono"),
+    local("DejaVuSansMono"),
+    local("Roboto Mono Regular"),
+    local("RobotoMono-Regular"),
+    local("Droid Sans Mono"),
+    local("DroidSansMono"),
+    local("Liberation Mono"),
+    local("LiberationMono"),
+    local("Courier New"),
+    local("CourierNewPSMT"),
+    local("Consolas");
+  size-adjust: 97.32%;
+  ascent-override: 95.33%;
+  descent-override: 24.08%;
+  line-gap-override: 0%;
 }
 
 @theme inline {

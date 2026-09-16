@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
 import { getProjectBySlug } from "@/lib/projects-repo";
+import { routeAlternates } from "@/lib/seo";
 import { projectStatus } from "@/lib/terminal/listings";
 import { A, D, Row } from "@/components/terminal/primitives";
 import s from "@/components/terminal/page.module.css";
@@ -21,7 +22,11 @@ export async function generateMetadata({
   const dict = await getDictionary(lang);
   const tagline =
     (dict.projects.taglines as Record<string, string>)[slug] ?? project.tagline ?? "";
-  return { title: project.name, description: tagline };
+  return {
+    title: project.name,
+    description: tagline,
+    alternates: routeAlternates(lang, `/projects/${slug}`),
+  };
 }
 
 /**

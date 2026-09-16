@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale, defaultLocale } from "@/i18n/config";
-import { languageAlternates } from "@/lib/seo";
+import { routeAlternates } from "@/lib/seo";
 import { loadTerminalData } from "@/lib/terminal/data";
 import { initialOutput } from "@/components/terminal/initial-output";
 import { Motd } from "@/components/terminal/motd";
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]">): Promis
   const { lang } = await params;
   const l = hasLocale(lang) ? lang : defaultLocale;
   return {
-    alternates: { canonical: `/${l}`, languages: languageAlternates },
+    alternates: routeAlternates(l),
   };
 }
 

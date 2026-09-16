@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
+import { routeAlternates } from "@/lib/seo";
 import { getPosts } from "@/lib/ghost";
 import { writingLines } from "@/lib/terminal/listings";
 import { D } from "@/components/terminal/primitives";
@@ -8,11 +9,16 @@ import s from "@/components/terminal/page.module.css";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Writing",
-  description:
-    "Field notes from Marco Filho on building products, AI, architecture and the discipline of shipping.",
-};
+export async function generateMetadata({ params }: PageProps<"/[lang]/blog">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!hasLocale(lang)) return {};
+  return {
+    title: "Writing",
+    description:
+      "Field notes from Marco Filho on building products, AI, architecture and the discipline of shipping.",
+    alternates: routeAlternates(lang, "/blog"),
+  };
+}
 
 /** `ls blog/` — the same list the `writing` command prints, every post. */
 export default async function BlogIndexPage({ params }: PageProps<"/[lang]/blog">) {

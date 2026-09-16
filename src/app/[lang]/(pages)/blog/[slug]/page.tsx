@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
 import { getPostBySlug } from "@/lib/ghost";
+import { routeAlternates } from "@/lib/seo";
 import { D } from "@/components/terminal/primitives";
 import s from "@/components/terminal/page.module.css";
 
@@ -16,12 +17,14 @@ const DATE_LOCALE: Record<string, string> = {
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/blog/[slug]">): Promise<Metadata> {
-  const { slug } = await params;
+  const { lang, slug } = await params;
+  if (!hasLocale(lang)) return {};
   const post = await getPostBySlug(slug);
   if (!post) return {};
   return {
     title: post.title,
     description: post.excerpt,
+    alternates: routeAlternates(lang, `/blog/${slug}`),
     openGraph: {
       title: post.title,
       description: post.excerpt,

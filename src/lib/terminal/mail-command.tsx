@@ -4,13 +4,7 @@ import { submitContact, type ContactState } from "@/app/_actions/contact";
 import { A, D, G, O, R } from "@/components/terminal/primitives";
 import s from "@/components/terminal/terminal.module.css";
 import type { TerminalLabels } from "@/components/terminal/types";
-import {
-  companySchema,
-  emailSchema,
-  messageSchema,
-  nameSchema,
-  type ContactInput,
-} from "@/lib/contact-schema";
+import type { ContactInput } from "@/lib/contact-schema";
 import { site } from "@/lib/site";
 import { isAbortError } from "./abort";
 import { rich } from "./rich";
@@ -89,6 +83,13 @@ const NO = new Set(["n", "no", "não", "nao"]);
 
 type Parse<T> = (raw: string) => { value: T } | null;
 
+/**
+ * The field schemas are loaded when `mail` first runs: they pull in zod
+ * (~50 kB gzipped), which the home has no reason to ship before a visitor
+ * decides to write.
+ */
+const loadSchemas = () => import("@/lib/contact-schema");
+
 const viaSchema =
   (schema: { safeParse: (v: string) => { success: boolean; data?: string } }): Parse<string> =>
   (raw) => {
@@ -152,6 +153,7 @@ export function createMailCommand(labels: TerminalLabels, deps: MailDeps = {}): 
 
   /** The questions, in order. `null` when the visitor answered `n` at the end. */
   async function interview(ctx: CommandContext): Promise<Answers | null> {
+    const { nameSchema, emailSchema, companySchema, messageSchema } = await loadSchemas();
     const next = { enterKeyHint: "next" } as const;
     const name = await askValid(ctx, m.name, viaSchema(nameSchema), m.invalidName, next);
     const email = await askValid(ctx, m.email, viaSchema(emailSchema), m.invalidEmail, {

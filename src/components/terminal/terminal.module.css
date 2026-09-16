@@ -100,6 +100,11 @@
 .barClock {
   color: var(--yellow);
   padding-left: 10px;
+  /* `--:--` on the server and `HH:mm` on the client are both five cells;
+     a fixed box + tabular digits mean the swap never moves the bar (CLS 0). */
+  box-sizing: content-box;
+  width: 5ch;
+  text-align: right;
   font-variant-numeric: tabular-nums;
   flex: none;
 }

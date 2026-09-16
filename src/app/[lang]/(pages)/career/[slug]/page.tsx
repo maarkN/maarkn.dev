@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale, locales } from "@/i18n/config";
+import { routeAlternates } from "@/lib/seo";
 import { timeline, timelineBySlug } from "@/lib/timeline";
 import { D, G, Row } from "@/components/terminal/primitives";
 import s from "@/components/terminal/page.module.css";
@@ -38,6 +39,7 @@ export async function generateMetadata({
   return {
     title: `${entry.company} — Career`,
     description: detail?.tagline,
+    alternates: routeAlternates(lang, `/career/${slug}`),
   };
 }
 
