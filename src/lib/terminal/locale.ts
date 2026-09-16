@@ -6,11 +6,11 @@
  * server-only i18n config.
  */
 
-export const LOCALES = ["en", "pt-BR"] as const;
+const LOCALES = ["en", "pt-BR"] as const;
 export type TerminalLocale = (typeof LOCALES)[number];
 
 /** Cookie name the proxy honours; one year, whole site. */
-export const LOCALE_COOKIE = "locale";
+const LOCALE_COOKIE = "locale";
 const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 const SHORT: Record<TerminalLocale, string> = { en: "en", "pt-BR": "pt" };

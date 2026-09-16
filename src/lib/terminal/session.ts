@@ -17,7 +17,7 @@ export const LAST_COMMANDS_MAX = 10;
  * screen: never part of the rebuilt output. Names, not raw lines — aliases
  * (`resume` → `cv`) are resolved before the check.
  */
-export const NON_REPLAYABLE = new Set([
+const NON_REPLAYABLE = new Set([
   "open",
   "read",
   "ask",

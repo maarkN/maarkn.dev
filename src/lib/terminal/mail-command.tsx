@@ -29,7 +29,7 @@ export const MAIL_COOLDOWN_MS = 60_000;
 /** `sessionStorage` key holding the epoch ms of the last successful send. */
 export const MAIL_SENT_AT_KEY = "maarkn-mail-at";
 /** Invalid answers tolerated on one field before the flow is cancelled. */
-export const MAIL_MAX_ATTEMPTS = 3;
+const MAIL_MAX_ATTEMPTS = 3;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
@@ -44,7 +44,7 @@ export type MailDeps = {
 type Answers = Pick<ContactInput, "name" | "email" | "company" | "message">;
 
 /** A field refused `MAIL_MAX_ATTEMPTS` times in a row. */
-export class TooManyAttemptsError extends Error {
+class TooManyAttemptsError extends Error {
   constructor() {
     super("too many invalid attempts");
     this.name = "TooManyAttemptsError";
@@ -62,7 +62,7 @@ function defaultStorage(): StorageLike | null {
 }
 
 /** Milliseconds until another message may be sent; `0` when allowed now. */
-export function cooldownLeft(now: number, storage: StorageLike | null): number {
+function cooldownLeft(now: number, storage: StorageLike | null): number {
   if (!storage) return 0;
   try {
     const at = Number(storage.getItem(MAIL_SENT_AT_KEY));
@@ -103,7 +103,7 @@ const parseConfirm: Parse<boolean> = (raw) => {
   return null;
 };
 
-export function toFormData(answers: Answers): FormData {
+function toFormData(answers: Answers): FormData {
   const data = new FormData();
   data.set("name", answers.name);
   data.set("email", answers.email);

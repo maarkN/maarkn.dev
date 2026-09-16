@@ -11,7 +11,7 @@ import s from "./page.module.css";
 import type { TerminalLabels } from "./types";
 
 /** `id` of the page content — the skip link's target. */
-export const CONTENT_ID = "content";
+const CONTENT_ID = "content";
 
 /**
  * Frame for the inner pages (`/projects`, `/blog`, `/career`, `/links`):

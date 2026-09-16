@@ -7,7 +7,7 @@ import { groupOrder, metrics, toolkit } from "@/lib/toolkit";
 import type { TerminalData } from "./types";
 
 /** How many posts `writing` lists. */
-export const WRITING_LIMIT = 6;
+const WRITING_LIMIT = 6;
 
 /**
  * Assembles `TerminalData` from the same sources the inner pages use:

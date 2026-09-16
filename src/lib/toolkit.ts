@@ -88,7 +88,7 @@ export const groupOrder: ToolkitGroupKey[] = [
  * the Toolkit panel. Locale-agnostic keys; the UI looks up labels in the
  * dictionary so EN / PT-BR can diverge.
  */
-export type MetricKey =
+type MetricKey =
   | "system_design"
   | "api_architecture"
   | "frontend_engineering"

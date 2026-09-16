@@ -4,7 +4,7 @@ import type { OutputEntry } from "./types";
 type Group = { key: string; label?: string; entries: OutputEntry[] };
 
 /** Consecutive lines printed by the same command run, in order. */
-export function groupByBlock(lines: OutputEntry[]): Group[] {
+function groupByBlock(lines: OutputEntry[]): Group[] {
   const groups: Group[] = [];
   let current: Group | undefined;
   let block: number | undefined;

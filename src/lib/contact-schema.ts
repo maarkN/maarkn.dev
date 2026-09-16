@@ -9,13 +9,12 @@ import { z } from "zod";
  * the action.
  */
 
-export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const CONTACT_TYPES = ["freelance", "full-time", "consulting", "audit", "other"] as const;
+const CONTACT_TYPES = ["freelance", "full-time", "consulting", "audit", "other"] as const;
 
 /** Where the message was written; anything else counts as the form. */
-export const CONTACT_SOURCES = ["form", "terminal"] as const;
-export type ContactSource = (typeof CONTACT_SOURCES)[number];
+export type ContactSource = "form" | "terminal";
 
 /* Error codes are the ones the contact form translates: required | invalid | too_long. */
 export const nameSchema = z.string().trim().min(2, "required").max(80, "required");

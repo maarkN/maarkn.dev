@@ -4,7 +4,7 @@
  * Used by the terminal's `ask` command and by the (legacy) chat panel hook.
  */
 
-export type ChatRole = "user" | "assistant";
+type ChatRole = "user" | "assistant";
 
 export type ChatTurn = { role: ChatRole; content: string };
 
@@ -69,7 +69,7 @@ export type StreamChatResult =
   | { status: "aborted"; text: string }
   | { status: "error"; text: string; error: ChatError };
 
-export const CHAT_ENDPOINT = "/api/chat";
+const CHAT_ENDPOINT = "/api/chat";
 
 /**
  * Streams one assistant reply. Resolves when the stream ends, is aborted or

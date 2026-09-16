@@ -24,10 +24,10 @@ import type { Command, OutputLine } from "./types";
 export const CHAT_STATE_KEY = "chat";
 
 /** Minimum time between two repaints of the streaming answer. */
-export const REPAINT_MS = 32;
+const REPAINT_MS = 32;
 
 /** Unknown input needs at least this many words to be forwarded to the assistant. */
-export const FALLBACK_MIN_WORDS = 3;
+const FALLBACK_MIN_WORDS = 3;
 
 type ChatState = { messages: ChatTurn[] };
 

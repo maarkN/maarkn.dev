@@ -1,6 +1,6 @@
 import "server-only";
 
-export type Tag = { name: string; slug: string };
+type Tag = { name: string; slug: string };
 
 export type Post = {
   slug: string;
@@ -122,11 +122,6 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     console.error("[ghost] slug threw", err);
     return MOCK_POSTS.find((p) => p.slug === slug) ?? null;
   }
-}
-
-export async function getAllSlugs(): Promise<string[]> {
-  const posts = await getPosts(100);
-  return posts.map((p) => p.slug);
 }
 
 /* ────────────────────────────────────────────────────────────

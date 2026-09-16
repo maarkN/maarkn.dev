@@ -2,8 +2,8 @@
    ADMIN THEME — legacy token aliases, scoped.
    The admin panel keeps its pre-terminal classes (`--surface`, `--muted`,
    `--accent`…). They are mapped here onto the Dracula palette from
-   globals.css and only exist under `.admin-root`, so change 12 can delete
-   the unscoped copies from globals.css without touching the admin.
+   globals.css and only exist under `.admin-root`; globals.css carries no
+   copy of them.
    The admin is always rendered in the `soft` palette (see admin/layout.tsx).
    ════════════════════════════════════════════════ */
 
@@ -61,4 +61,15 @@
 .admin-root :is(input[type="checkbox"], input[type="file"], button, a, summary):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Faded grid behind the login card (legacy primitive, admin-only). */
+.admin-root .bg-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  opacity: var(--grid-opacity);
+  mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
 }

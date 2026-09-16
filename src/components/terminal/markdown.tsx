@@ -54,7 +54,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
   return nodes;
 }
 
-export function Markdown({ text }: { text: string }) {
+function Markdown({ text }: { text: string }) {
   const lines = text.split("\n");
   const out: ReactNode[] = [];
   let para: string[] = [];

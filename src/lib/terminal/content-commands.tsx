@@ -19,7 +19,7 @@ import type { Command, CommandContext, OutputLine, TerminalData } from "./types"
  */
 
 /** Numbered list the visitor saw last; `open`/`read` resolve indexes against it. */
-export type LastList = {
+type LastList = {
   kind: "projects" | "writing";
   items: { slug: string; label: string }[];
 };

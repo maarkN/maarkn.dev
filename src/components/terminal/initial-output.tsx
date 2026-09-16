@@ -15,7 +15,7 @@ import type { TerminalLabels } from "./types";
 const INNER_ROUTES = ["projects", "career", "blog", "links"] as const;
 
 /** One dim comment line: `# projects · career · … · github`. Server-safe. */
-export function Sitemap({ locale }: { locale: string }) {
+function Sitemap({ locale }: { locale: string }) {
   const cvFile = site.cvPath.split("/").pop() ?? site.cvPath;
   return (
     <nav aria-label="sitemap">

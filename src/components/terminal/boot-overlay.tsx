@@ -30,7 +30,7 @@ const HOLD_MS = 380;
 /** After a skip the full text is shown only briefly before the fade. */
 const SKIP_HOLD_MS = 150;
 /** Must match `transition` on `.boot` in terminal.module.css. */
-export const FADE_MS = 450;
+const FADE_MS = 450;
 
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "AltGraph", "CapsLock", "OS"]);
 
@@ -39,7 +39,7 @@ const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "AltGraph", "C
 const media = (query: string): boolean =>
   typeof matchMedia === "function" && matchMedia(query).matches;
 
-export const prefersReducedMotion = () => media(REDUCE_MOTION);
+const prefersReducedMotion = () => media(REDUCE_MOTION);
 export const hasFinePointer = () => media(FINE_POINTER);
 
 const readBooted = () => {

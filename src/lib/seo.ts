@@ -5,7 +5,7 @@ export const SITE_URL = "https://maarkn.dev";
 export const SITE_NAME = "maarkn.dev";
 export const AUTHOR = "Marco Filho";
 
-export const SAME_AS = [
+const SAME_AS = [
   "https://www.linkedin.com/in/maarkn",
   "https://github.com/maarkn",
 ];

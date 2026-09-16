@@ -26,10 +26,6 @@ export function P({ children }: Kids) {
 export function O({ children }: Kids) {
   return <span className={s.o}>{children}</span>;
 }
-/** pink */
-export function K({ children }: Kids) {
-  return <span className={s.k}>{children}</span>;
-}
 /** yellow */
 export function Y({ children }: Kids) {
   return <span className={s.y}>{children}</span>;

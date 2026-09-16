@@ -4,7 +4,7 @@ import type { Registry } from "./registry";
 import type { AskOptions, CommandContext, OutputLine } from "./types";
 
 /** How printed lines enter the screen. */
-export type PrintOptions = {
+type PrintOptions = {
   /** Skip the staggered entrance (rebuilding a screen, deep-links). */
   instant?: boolean;
 };

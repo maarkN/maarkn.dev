@@ -1,4 +1,4 @@
-export type TimelineKey =
+type TimelineKey =
   | "freelance"
   | "nectar"
   | "sevencred"

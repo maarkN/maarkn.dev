@@ -8,7 +8,7 @@ export type ProjectCategory =
 export type ProjectStatus = "live" | "internal" | "nda" | "archived";
 export type SourceVisibility = "public" | "private";
 
-export type ProjectGalleryItem = {
+type ProjectGalleryItem = {
   /** Public URL or path served by /public. Stylized placeholders are fine. */
   url: string;
   /** Optional caption key, looked up in the project's dictionary entry. */
@@ -152,8 +152,6 @@ export const projects: Project[] = [
     links: {},
   },
 ];
-
-export const featuredProjects = projects.filter((p) => p.featured);
 
 export const projectCategories: ProjectCategory[] = [
   "web",

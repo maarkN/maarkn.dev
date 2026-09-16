@@ -8,8 +8,6 @@ import {
 } from "@/lib/contact-schema";
 import { site } from "@/lib/site";
 
-export type { ContactField };
-
 export type ContactState =
   | { status: "idle" }
   | { status: "success" }

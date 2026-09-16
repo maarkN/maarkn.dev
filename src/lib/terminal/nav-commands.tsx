@@ -21,7 +21,7 @@ import type { Command } from "./types";
  */
 
 /** What `pwd` prints — `~` in the PS1 stands for it. */
-export const HOME_DIR = "/home/maarkn";
+const HOME_DIR = "/home/maarkn";
 
 /** Directory names the visitor may `cd` into, resolved to inner routes. */
 const DIRECTORIES: Readonly<Record<string, string>> = {

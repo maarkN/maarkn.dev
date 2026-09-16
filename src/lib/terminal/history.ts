@@ -5,7 +5,7 @@
  */
 
 export const HISTORY_STORAGE_KEY = "maarkn-term";
-export const HISTORY_MAX = 100;
+const HISTORY_MAX = 100;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 

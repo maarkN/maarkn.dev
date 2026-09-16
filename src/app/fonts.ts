@@ -13,7 +13,7 @@ export const caskaydia = Cascadia_Code({
 // Alternative face, opt-in via data-font="daddytime". Not preloaded so it is
 // only fetched once the visitor actually switches to it. OFL 1.1 — see
 // ./fonts/DaddyTimeMono-LICENSE.md.
-export const daddytime = localFont({
+const daddytime = localFont({
   src: "./fonts/DaddyTimeMono.otf",
   variable: "--font-daddytime",
   weight: "400",

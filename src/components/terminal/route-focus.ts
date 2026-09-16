@@ -17,8 +17,3 @@ export function arrivedByNavigation(pathname: string): boolean {
 export function rememberRoute(pathname: string): void {
   last = pathname;
 }
-
-/** Tests only. */
-export function resetRouteMemory(): void {
-  last = null;
-}

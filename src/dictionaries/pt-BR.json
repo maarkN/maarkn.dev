@@ -1,45 +1,5 @@
 {
-  "nav": {
-    "home": "Início",
-    "about": "Sobre",
-    "projects": "Projetos",
-    "skills": "Ferramentas",
-    "blog": "Textos",
-    "contact": "Contato",
-    "chat": "Chat",
-    "career": "Carreira"
-  },
-  "themes": {
-    "soft": "Soft",
-    "classic": "Classic"
-  },
-  "hero": {
-    "badgeAvailable": "Aberto a vagas sênior — UE e Canadá",
-    "eyebrow": "Marco Filho · maarkn",
-    "title": {
-      "line1": "Produtos de IA,",
-      "line2": "entregues de ponta a ponta",
-      "line3": "— muitas vezes sozinho."
-    },
-    "role": "Engenheiro Sênior de IA/LLM & Backend · 6+ anos · 20+ produtos · Go · TypeScript · Aberto a UE e Canadá",
-    "sub": "Levo produtos de um briefing vago até produção — arquitetura, APIs, deploy e os dados bagunçados do mundo real no meio do caminho — e já fiz isso 20+ vezes em healthtech, govtech, fintech e SaaS, quase sempre como único engenheiro ou tech lead.",
-    "ctaPrimary": "Ver projetos",
-    "ctaSecondary": "Baixar CV"
-  },
-  "card": {
-    "label": "identity_card.tsx",
-    "name": "Marco Filho",
-    "role": "Engenheiro Sênior de IA/LLM & Backend",
-    "stats": {
-      "years": "Anos no ofício",
-      "projects": "Produtos entregues",
-      "stack": "Stacks de tecnologia",
-      "countries": "Países atendidos"
-    }
-  },
   "bigNumbers": {
-    "kicker": "Em números",
-    "title": "Seis anos, 20+ produtos entregues — nenhum deles frágil.",
     "items": {
       "years": {
         "value": "6",
@@ -60,36 +20,6 @@
     }
   },
   "about": {
-    "kicker": "Sobre",
-    "title": "Um engenheiro sênior que assume o todo — e entrega.",
-    "bio": [
-      "Eu sou o Marco — maarkn na internet. Engenheiro de software sênior em Goiânia, focado em backend e IA aplicada, atendendo times na Europa, EUA e América Latina. Levo produtos de um briefing vago até produção e assumo cada camada no meio do caminho.",
-      "Seis anos e meio, 20+ produtos entregues. Saí do frontend para backend e arquitetura — plataformas de VoIP, apps de fintech, assistentes para imobiliárias e govtech — e mais recentemente liderei a reescrita de um backend de CRM em Go, entregue em menos de dois meses. Trabalho de ponta a ponta, quase sempre como único engenheiro ou tech lead.",
-      "Meu foco agora é IA generativa aplicada em produção: pipelines de RAG, agentes de LLM e busca vetorial dentro de produtos que as pessoas usam de verdade — não demos. Entrego a arquitetura mais simples que resolve o problema e não vai surpreender quem for manter depois.",
-      "Também uso pesado de agentes de IA pra código — Claude, Cursor, Codex — pra entregar mais rápido sem abrir mão da qualidade. Eles cuidam do boilerplate e do trabalho braçal; eu foco na arquitetura, nos casos-limite difíceis e em revisar cada linha que vai pra produção.",
-      "Estou aberto a vagas sênior no exterior — Europa (Irlanda, Alemanha, Holanda) e Canadá — presencial, híbrido ou remoto. Trabalho em inglês todo dia, estou pronto pra me mudar rápido e, com 6+ anos, sou elegível ao Critical Skills Permit e ao EU Blue Card."
-    ],
-    "valuesTitle": "Como eu trabalho",
-    "values": [
-      {
-        "title": "Do começo ao fim",
-        "body": "Da primeira conversa até a versão rodando em produção — arquitetura, código, deploy, plantão. Eu não entrego e sumo."
-      },
-      {
-        "title": "Comunicação clara e honesta",
-        "body": "Traduzo entre negócio e código. Stakeholder recebe resposta direta e estimativa realista, não jargão."
-      },
-      {
-        "title": "Pragmático, sem preciosismo",
-        "body": "Entrego a coisa mais simples que resolve, depois reforço quando a realidade cobra. Tecnologia chata que funciona ganha da esperta que não funciona."
-      },
-      {
-        "title": "Feito pra ser mantido",
-        "body": "Código é mais lido do que escrito. Deixo o repositório — e o time — melhores do que encontrei."
-      }
-    ],
-    "timelineTitle": "Linha do tempo",
-    "timelineNow": "Atual",
     "timeline": {
       "freelance": {
         "role": "Desenvolvedor Fullstack & Consultor",
@@ -123,42 +53,10 @@
         "role": "Trainee Frontend (Híbrido)",
         "summary": "Onde tudo começou: um dashboard de marketplace em Vue.js e templates de email marketing com Pug e Sass."
       }
-    },
-    "timelineReadMore": "Ver detalhe completo"
+    }
   },
   "toolkit": {
-    "kicker": "Ferramentas",
-    "title": "As ferramentas que eu pego pra entregar, dia após dia.",
-    "sub": "As linguagens, frameworks e ideias que mais uso. Não é uma lista exaustiva — aprendo o que o projeto precisar — mas é uma foto honesta de onde eu tenho fluência de verdade.",
-    "yearsSuffix": "a",
-    "groups": {
-      "frontend": {
-        "title": "Frontend",
-        "caption": "Interfaces que dá vontade de usar."
-      },
-      "backend": {
-        "title": "Backend & APIs",
-        "caption": "O encanamento que tem que funcionar sempre."
-      },
-      "mobile": {
-        "title": "Mobile",
-        "caption": "Apps que vão pra loja de verdade."
-      },
-      "data": {
-        "title": "Dados & Armazenamento",
-        "caption": "Onde as coisas moram e como são achadas."
-      },
-      "infra": {
-        "title": "Infra & DevOps",
-        "caption": "Levar o código pro usuário, com segurança."
-      },
-      "practices": {
-        "title": "Práticas & Soft skills",
-        "caption": "Como trabalho com código e com pessoas."
-      }
-    },
     "metrics": {
-      "heading": "Capacidades",
       "items": {
         "system_design": "Design de Sistemas",
         "api_architecture": "Arquitetura de APIs",
@@ -169,23 +67,7 @@
       }
     }
   },
-  "social": {
-    "linkedin": "LinkedIn",
-    "github": "GitHub",
-    "email": "Mande email",
-    "whatsapp": "WhatsApp"
-  },
-  "footer": {
-    "available": "Disponível para novos projetos",
-    "location": "Goiânia, Brasil · Atendendo o mundo",
-    "rights": "Todos os direitos reservados."
-  },
   "projects": {
-    "kicker": "Trabalhos selecionados",
-    "title": "Produtos que entreguei e que as pessoas usam de verdade.",
-    "sub": "Uma fatia dos 20+ produtos e plataformas que construí nos últimos anos — pra clientes, empregadores e algumas apostas paralelas. Alguns eu mostro em detalhe; outros ficam atrás de um NDA.",
-    "view": "Ver case",
-    "seeAll": "Ver todos os projetos",
     "categories": {
       "web": "Web app",
       "mobile": "Mobile",
@@ -292,18 +174,12 @@
         ]
       }
     },
-    "back": "Voltar pra todos os projetos",
-    "viewLive": "Ver site no ar",
-    "viewRepo": "Ver código no GitHub",
     "noLinks": "Sem links públicos",
     "roleHeading": "Meu papel",
     "featuresHeading": "Funcionalidades-chave",
-    "stackHeading": "Stack",
     "page": {
-      "kicker": "Trabalhos selecionados",
       "title": "Todo produto que eu botaria meu nome.",
       "sub": "Todo o trabalho numa página só, filtrável por categoria — apostas pequenas, plataformas grandes e algumas que me dão orgulho de verdade.",
-      "filterAll": "Todos",
       "empty": "Nada nessa categoria ainda."
     },
     "gallery": {
@@ -318,112 +194,39 @@
       }
     },
     "galleryHeading": "Do projeto",
-    "privateLabel": "Projeto privado",
-    "privateNote": "O código é privado — feliz em apresentar ao vivo pra recrutador ou painel técnico numa call.",
-    "readMore": "Ver detalhes"
-  },
-  "contact": {
-    "kicker": "Vamos conversar",
-    "title": "Contratando, construindo ou avaliando opções? Bora conversar.",
-    "sub": "O caminho mais rápido é o formulário abaixo — leio toda mensagem e respondo em alguns dias úteis. Prefere outro canal? Escolhe o que te servir.",
-    "channels": {
-      "linkedin": "LinkedIn",
-      "email": "Email",
-      "whatsapp": "WhatsApp"
-    },
-    "channelHints": {
-      "available": "Disponível para novos projetos",
-      "timezone": "Trabalhando de"
-    },
-    "form": {
-      "name": "Seu nome",
-      "email": "Email",
-      "company": "Empresa (opcional)",
-      "type": "Sobre o que é?",
-      "typePlaceholder": "Escolha uma opção",
-      "typeOptions": {
-        "freelance": "Projeto freelance",
-        "full-time": "Vaga full-time",
-        "consulting": "Consultoria / auditoria",
-        "audit": "Revisão de código",
-        "other": "Outra coisa"
-      },
-      "message": "Mensagem",
-      "submit": "Enviar mensagem",
-      "submitting": "Enviando…",
-      "successTitle": "Mensagem a caminho.",
-      "successBody": "Valeu por escrever. Respondo de markimkr@gmail.com em alguns dias úteis. Se for urgente, me chama no WhatsApp ou LinkedIn.",
-      "sendAnother": "Enviar outra mensagem",
-      "errorRequired": "Esse campo é obrigatório",
-      "errorInvalidEmail": "Esse email não parece válido",
-      "errorMessage": "Confere esse campo",
-      "errorTooLong": "Ficou um pouco grande — corta um trecho",
-      "errorSendFailed": "Não consegui enviar agora. Use o link de email acima."
-    }
+    "privateNote": "O código é privado — feliz em apresentar ao vivo pra recrutador ou painel técnico numa call."
   },
   "links": {
-    "eyebrow": "Me ache",
     "name": "Marco Filho",
     "role": "Engenheiro Sênior de IA/LLM & Backend · maarkn",
     "bio": "Engenheiro sênior focado em backend (Go, TypeScript) e IA aplicada (RAG, agentes de LLM). 6+ anos, 20+ produtos entregues de ponta a ponta. Aberto a vagas sênior na UE e no Canadá.",
     "available": "Aberto a novas oportunidades",
     "links": {
       "linkedin": {
-        "label": "LinkedIn",
-        "hint": "/in/maarkn"
+        "label": "LinkedIn"
       },
       "github": {
-        "label": "GitHub",
-        "hint": "/maarkn"
+        "label": "GitHub"
       },
       "email": {
-        "label": "Mande email",
-        "hint": "markimkr@gmail.com"
+        "label": "Mande email"
       },
       "whatsapp": {
-        "label": "WhatsApp",
-        "hint": "+55 62 98173 6748"
+        "label": "WhatsApp"
       },
       "cv": {
         "label": "Baixar CV",
         "hint": "PDF · Atualizado 2026"
       },
       "instagram": {
-        "label": "Instagram",
-        "hint": "/maarkn"
+        "label": "Instagram"
       }
     }
   },
-  "chat": {
-    "kicker": "Assistente IA",
-    "title": "Pergunta o que quiser sobre o trabalho do Marco.",
-    "sub": "Sou um assistente pequeno treinado com o currículo, projetos e textos do Marco. Vou tentar dar respostas diretas — e dizer quando eu não sei.",
-    "buttonLabel": "Falar com o assistente",
-    "panel": {
-      "title": "Assistente maarkn",
-      "subtitle": "Pergunte qualquer coisa · com IA",
-      "empty": "Oi! Sou o assistente do maarkn.dev. Pode perguntar sobre projetos, stack, disponibilidade ou como falar com o Marco.",
-      "placeholder": "Escreva uma mensagem…",
-      "send": "Enviar",
-      "stop": "Parar geração",
-      "reset": "Nova conversa",
-      "rateLimited": "Você atingiu o limite por hora. Tenta de novo mais tarde — ou mande email pra markimkr@gmail.com.",
-      "errored": "Algo deu errado. Tente enviar de novo.",
-      "suggestions": [
-        "/help",
-        "Qual é a stack do Marco?",
-        "Me conta do projeto de Miami",
-        "Ele está aberto a oportunidades?"
-      ],
-      "poweredBy": "Respostas são geradas por IA e podem ter erros. Pra qualquer coisa importante, fale direto com o Marco."
-    }
-  },
   "blog": {
-    "kicker": "Textos",
     "title": "Notas de campo de quem entrega.",
     "sub": "Ensaios curtos sobre construir produtos, trabalhar com IA, escolhas de arquitetura e a disciplina de fazer chegar nas mãos das pessoas. Posts novos quando tiver algo que valha registrar.",
     "readingTime": "min de leitura",
-    "back": "Voltar pra todos os posts",
     "empty": "Nenhum post ainda. Volte em breve."
   },
   "career": {
@@ -549,33 +352,11 @@
       }
     },
     "chrome": {
-      "kicker": "Detalhe da carreira",
-      "back": "Voltar pro sobre",
       "context": "Contexto",
       "responsibilities": "O que eu liderei",
       "achievements": "Destaques",
-      "outcome": "Resultado",
-      "stackHeading": "Stack usada",
-      "periodLabel": "Período",
-      "companyLabel": "Empresa"
+      "outcome": "Resultado"
     }
-  },
-  "latestLogs": {
-    "kicker": "Últimos textos",
-    "title": "Últimos Logs",
-    "sub": "Notas de campo que publiquei recentemente. Abre uma ou pula pro arquivo completo.",
-    "seeAll": "Ver todos os posts",
-    "featured": "Post em destaque",
-    "readingTime": "min de leitura"
-  },
-  "careerStream": {
-    "intro": {
-      "kicker": "Toda a trajetória, em movimento",
-      "title": "Linha de carreira",
-      "sub": "Vai rolando pra baixo e você passa por seis anos construindo software, função por função. Cada painel é um recorte do que eu liderei e do que entreguei — abre o detalhe completo no fim de cada painel.",
-      "scrollHint": "role pra avançar"
-    },
-    "readFull": "Ver detalhe completo"
   },
   "terminal": {
     "bar": {

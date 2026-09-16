@@ -43,9 +43,3 @@ export const SOURCE_LABELS: Record<ApplicationSource, string> = {
   other: "Other",
 };
 
-export function statusLabel(s: string): string {
-  return (STATUS_LABELS as Record<string, string>)[s] ?? s;
-}
-export function sourceLabel(s: string): string {
-  return (SOURCE_LABELS as Record<string, string>)[s] ?? s;
-}
