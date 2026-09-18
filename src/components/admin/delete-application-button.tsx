@@ -1,24 +1,120 @@
 "use client";
 
-import { useTransition } from "react";
-import { Trash2 } from "lucide-react";
-import { deleteApplication } from "@/app/_actions/applications";
+/**
+ * Exclusão de candidatura com confirmação forte (§6 do `src/app/admin/AGENTS.md`):
+ * o usuário digita o nome exato da empresa. Nada de `window.confirm`.
+ *
+ * Renderizado direto de dentro do `rows.map()` do Server Component — só recebe
+ * props serializáveis (`id`, `company`) e importa a Server Action ele mesmo.
+ */
 
-export function DeleteApplicationButton({ id, company }: { id: string; company: string }) {
-  const [pending, start] = useTransition();
+import { useState, useTransition } from "react";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { deleteApplication } from "@/app/_actions/applications";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export function DeleteApplicationButton({
+  id,
+  company,
+  folderName,
+}: {
+  id: string;
+  company: string;
+  /** Chave natural — mostrada porque duas candidaturas podem ter o mesmo nome
+   * de empresa (mercados diferentes) e a confirmação por nome seria ambígua. */
+  folderName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const matches = typed.trim() === company.trim();
+
   return (
-    <button
-      type="button"
-      onClick={() => {
-        if (!window.confirm(`Delete "${company}"? This cannot be undone.`)) return;
-        start(() => deleteApplication(id));
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setTyped("");
       }}
-      disabled={pending}
-      className="inline-flex h-8 w-8 items-center justify-center border border-[var(--border)] text-[var(--muted)] transition-colors hover:border-[var(--red)] hover:text-[var(--red)] disabled:opacity-50"
-      aria-label="Delete"
-      title="Delete"
     >
-      <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-    </button>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Excluir a candidatura de ${company}`}
+          title="Excluir"
+        >
+          <Trash2 className="size-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir candidatura</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação é irreversível. Documentos, eventos e checklist desta
+            candidatura vão junto; a empresa e a vaga permanecem.
+            {folderName && (
+              <>
+                {" "}
+                Chave: <code className="font-mono text-xs">{folderName}</code>.
+              </>
+            )}{" "}
+            Para confirmar, digite <strong>{company}</strong> abaixo.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="space-y-1.5 py-2">
+          <Label htmlFor={`confirm-delete-${id}`}>Nome da empresa</Label>
+          <Input
+            id={`confirm-delete-${id}`}
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            autoComplete="off"
+            placeholder={company}
+          />
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!matches || isPending}
+            onClick={(event) => {
+              // O AlertDialogAction fecha o dialog no clique; segure para
+              // mostrar o estado pendente sem a UI sumir embaixo.
+              event.preventDefault();
+              startTransition(async () => {
+                // A action não lança (contrato `ActionResult`, AGENTS.md §2):
+                // o único sinal de falha é `ok: false`.
+                const res = await deleteApplication(id);
+                if (!res.ok) {
+                  toast.error(res.message);
+                  return;
+                }
+                setOpen(false);
+                toast.success(
+                  res.message ?? `Candidatura “${company}” excluída.`,
+                );
+              });
+            }}
+          >
+            {isPending ? "Excluindo…" : "Excluir definitivamente"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

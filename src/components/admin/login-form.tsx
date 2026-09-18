@@ -1,74 +1,67 @@
 "use client";
 
+/**
+ * Sign-in form. This is the one place `useActionState` is still the right tool
+ * (AGENTS.md §5): it is a full-page form with no dialog and no toast, and the
+ * happy path never returns — `loginAction` calls `signIn(..., { redirectTo })`,
+ * which throws Next's redirect control-flow exception.
+ */
+
 import { useActionState } from "react";
 import { ArrowRight } from "lucide-react";
 import { loginAction, type LoginState } from "@/app/_actions/auth";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const initial: LoginState = { status: "idle" };
+
+/** `loginAction` returns machine keys; the pt-BR copy lives here. */
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_credentials: "E-mail ou senha incorretos.",
+  auth_error: "Não foi possível entrar. Tente de novo.",
+};
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initial);
 
   return (
-    <form action={action} className="flex flex-col gap-4">
-      <Field id="email" name="email" type="email" label="Email" autoComplete="email" required />
-      <Field
-        id="password"
-        name="password"
-        type="password"
-        label="Password"
-        autoComplete="current-password"
-        required
-      />
+    <form action={action} className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="email">E-mail</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          aria-invalid={state.status === "error"}
+          required
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="password">Senha</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          aria-invalid={state.status === "error"}
+          required
+        />
+      </div>
 
       {state.status === "error" ? (
-        <p className="border border-[var(--red)]/40 bg-[var(--red)]/10 px-3 py-2 font-mono text-[11px] tracking-[0.04em] text-[var(--red)]">
-          {state.message === "invalid_credentials"
-            ? "Wrong email or password."
-            : "Couldn't sign you in. Try again."}
+        <p className="text-xs text-destructive">
+          {ERROR_MESSAGES[state.message] ??
+            "Não foi possível entrar. Tente de novo."}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className={cn(
-          "mt-2 inline-flex items-center justify-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-60",
-          !pending && "hover:opacity-90"
-        )}
-      >
-        {pending ? "Signing in…" : "Sign in"}
-        {!pending ? <ArrowRight className="h-4 w-4" strokeWidth={2.2} /> : null}
-      </button>
+      <Button type="submit" className="w-full" disabled={pending}>
+        {pending ? "Entrando…" : "Entrar"}
+        {pending ? null : <ArrowRight className="size-4" />}
+      </Button>
     </form>
-  );
-}
-
-function Field(props: {
-  id: string;
-  name: string;
-  type: string;
-  label: string;
-  autoComplete?: string;
-  required?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label
-        htmlFor={props.id}
-        className="font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
-      >
-        {props.label}
-      </label>
-      <input
-        id={props.id}
-        name={props.name}
-        type={props.type}
-        autoComplete={props.autoComplete}
-        required={props.required}
-        className="border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
-      />
-    </div>
   );
 }

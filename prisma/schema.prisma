@@ -4,6 +4,39 @@
 // `npm run db:up` (docker compose, pgvector/pgvector image). The string-encoded
 // JSON columns (stackJson, featuresJson) are kept as-is for app compatibility;
 // converting them to native Json is an optional later cleanup.
+//
+// ---------------------------------------------------------------------------
+// Convencoes deste arquivo (F1 — backoffice de carreira)
+// ---------------------------------------------------------------------------
+// * Nomes de model em PascalCase e colunas em camelCase, como os 6 models
+//   legados. O documento de referencia (PROMPT_Backoffice_ultracode, secao F1)
+//   descreve as tabelas em snake_case (`job_tech`, `application_event`, ...);
+//   a traducao e 1:1 (`JobTech`, `ApplicationEvent`). Os *enums* mantem o nome
+//   snake_case no Postgres via `@@map`, porque aparecem em SQL cru (casts
+//   `'ready'::funnel_stage`) do RAG e do MCP.
+// * `Visibility` tem default `private` em TODA tabela que alimenta o RAG. A
+//   particao e aplicada na query SQL do retrieval, nunca por instrucao de
+//   prompt. Migration `backoffice_core` adiciona CHECKs que tornam algumas
+//   tabelas (Contact, ProfessionalReference, SalaryExpectation, FramingRule,
+//   HonestyNote) private-only no nivel do banco.
+// * Toda entidade sincronizavel por MCP tem chave natural UNIQUE (a lista
+//   canonica esta em `notesForNextAgent`/README do F3): Application.folderName,
+//   Job.sourceUrl, Document.filePath, Experience.slug, CareerProject.slug,
+//   Company.folderName, Post.slug, Skill.slug, ResumeTemplate.key.
+//   Entidades-filhas recebem `sourceKey String? @unique` — chave estavel
+//   fornecida pela skill (ex.: "epilot#event#3") para upsert idempotente.
+// * Sync state canonico vive em `SyncState` (sourcePath UNIQUE, contentSha256,
+//   embeddedAt, chunkCount, lastSeenAt); as entidades carregam uma copia
+//   desnormalizada dos mesmos campos para consulta barata no admin.
+// * Proveniencia por fato vive em `Provenance` (entityType, entityId, field,
+//   sourcePath, mcpTool, apiKeyId, syncRunId, before/after) — e o que permite
+//   auditar e desfazer uma rodada de sincronizacao (`SyncRun`).
+// * `lastSyncRunId`/`lastApiKeyId` sao colunas soltas (sem FK) de proposito:
+//   26 FKs para `SyncRun` gerariam 26 back-relations inuteis. A integridade
+//   referencial de auditoria fica em `Provenance`, que tem a FK de verdade.
+// * Arrays nativos do Postgres (`String[]`) sao permitidos nos models NOVOS.
+//   `Project.stackJson`/`featuresJson` continuam String-JSON — mudar o formato
+//   agora quebraria `src/lib/json-list.ts` e as telas migradas no F0.
 
 generator client {
   provider        = "prisma-client-js"
@@ -27,36 +60,41 @@ model User {
 }
 
 model Project {
-  id            String   @id @default(cuid())
-  slug          String   @unique
-  name          String
-  year          String
-  category      String
-  status        String   @default("live")
-  featured      Boolean  @default(false)
-  monogram      String
-  accentFrom    String
-  accentTo      String
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  year             String
+  category         String
+  status           String   @default("live")
+  featured         Boolean  @default(false)
+  monogram         String
+  accentFrom       String
+  accentTo         String
   /// JSON-encoded array of tech stack tags. See lib/json-list.ts.
-  stackJson     String   @default("[]")
-  repoUrl       String?
-  demoUrl       String?
-  caseUrl       String?
+  stackJson        String   @default("[]")
+  repoUrl          String?
+  demoUrl          String?
+  caseUrl          String?
   /// Plain-language tagline shown on cards.
-  tagline       String?
+  tagline          String?
   /// Long-form description rendered on the detail page.
-  description   String?
+  description      String?
   /// Short paragraph describing Marco's role on the project.
-  role          String?
+  role             String?
   /// JSON-encoded array of bullet strings.
-  featuresJson  String   @default("[]")
+  featuresJson     String   @default("[]")
   /// "public" exposes the repo button when repoUrl is set; "private" hides it
   /// in favor of a "Private project" pill.
-  sourceVisibility String @default("public")
+  sourceVisibility String   @default("public")
   /// Optional uploaded cover image, served by the /uploads/[...] route.
-  coverImage    String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  coverImage       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  /// F1: vitrine publica opcionalmente ancorada no dossie privado equivalente.
+  /// A coluna de FK vive em `CareerProject.portfolioProjectId`; este lado e so
+  /// metadado de relacao (nao adiciona coluna nem altera nenhuma query atual).
+  careerProject CareerProject?
 
   @@index([featured])
   @@index([category])
@@ -75,7 +113,23 @@ model KnowledgeChunk {
   embedding  Unsupported("vector(1536)")?
   createdAt  DateTime                     @default(now())
 
+  // --- F1: particao publico/privado + proveniencia ---
+  /// Default `private`: tudo que entrar por MCP nasce invisivel para o chat
+  /// publico. O retrieval de F3 PRECISA filtrar `visibility = 'public'` no SQL.
+  /// A migration `backoffice_core` faz backfill das linhas existentes (corpus
+  /// curado de `app/knowledge/**`, ja servido a visitantes anonimos) para
+  /// `public`, preservando o comportamento atual.
+  visibility    Visibility @default(private)
+  /// Entidade de origem do chunk ("Document", "Experience", "CareerProject"...).
+  entityType    String?
+  entityId      String?
+  contentSha256 String?
+  embeddedAt    DateTime?
+  syncRunId     String?
+
   @@index([source])
+  @@index([visibility])
+  @@index([entityType, entityId])
 }
 
 /// History of AI-generated, job-tailored application materials (admin tool).
@@ -120,27 +174,1401 @@ model ChatLog {
   @@index([clientKeyHash, createdAt])
 }
 
-/// Personal job-application tracker (admin-only), modeled on the CSV tracker.
-/// `source` = where the lead came from (vanhack, linkedin, company_site, ...).
-model JobApplication {
-  id           String    @id @default(cuid())
-  company      String
-  country      String?
-  city         String?
-  role         String?
-  fit          String?
-  source       String    @default("company_site")
-  status       String    @default("not_applied")
-  careersUrl   String?
-  jobUrl       String?
-  sponsorsVisa Boolean   @default(false)
-  targetSalary String?
-  appliedAt    DateTime?
-  followUp     String?
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+// O model `JobApplication` (tracker plano, sem chave natural) foi REMOVIDO no
+// F2a. Ele era o segundo modelo paralelo de candidatura e nao tinha como
+// coexistir com `Application`: duas telas gravando em tabelas diferentes
+// significa que a "verdade" depende de por onde o dado entrou. A migration
+// `20260816170000_application_cutover` converte cada linha antiga em
+// `Company` + `Job` + `Application` (chave natural derivada e UNIQUE), guarda o
+// registro original inteiro em `Provenance.after` (auditavel e reversivel) e
+// so entao dropa a tabela. Nao existe tabela de backup renomeada de proposito:
+// uma tabela orfa convida a um segundo caminho de leitura voltar a existir.
 
+// ===========================================================================
+// F1 — modelo normalizado de carreira (vault -> banco, escrito SO pelo MCP)
+// ===========================================================================
+// Fonte da verdade: o BANCO e canonico para candidaturas. O Obsidian e a
+// origem editorial; a skill do usuario empurra as mudancas pelo MCP. Nada
+// volta do banco para o vault (nao e bidirecional).
+// ===========================================================================
+
+// --------------------------- enums nativos ---------------------------------
+
+/// Particao publico/privado do RAG. Default sempre `private`: promover para
+/// `public` e acao explicita de humano na UI do admin, nunca do agente.
+enum Visibility {
+  private
+  public
+
+  @@map("visibility")
+}
+
+/// Funil de candidatura. Os 7 canonicos do Tracker (Ready, Applied, Screening,
+/// Interview, Offer, Rejected, Skipped) aparecem aqui normalizados em
+/// snake_case minusculo (`ready`, `applied`, ...) — o rotulo capitalizado e
+/// apresentacao, o conjunto e que e canonico. Os demais sao estagios que hoje
+/// so existem em prosa nas notas do vault.
+/// ATENCAO: este e um dos TRES vocabularios paralelos e nao deve ser colapsado
+/// com os outros dois (`Document.status` e `DescriptionVerification.verdict`).
+enum FunnelStage {
+  // — so em prosa (pre-envio) —
+  radar
+  shortlisted
+  package_drafting
+  package_ready
+  awaiting_my_send
+  // — canonico do Tracker —
+  ready
+  applied
+  // — so em prosa (pos-envio) —
+  recruiter_contact
+  // — canonico —
+  screening
+  // — so em prosa —
+  assessment
+  technical_challenge
+  // — canonico —
+  interview
+  // — so em prosa —
+  final_interview
+  reference_check     @map("references")
+  // — canonico —
+  offer
+  // — so em prosa —
+  accepted
+  // — canonico —
+  rejected
+  // — so em prosa —
+  withdrawn
+  no_response
+  ghosted
+  // — canonico —
+  skipped
+
+  @@map("funnel_stage")
+}
+
+/// Sinal de patrocinio/autorizacao observado na vaga. `not_applicable_b2b` e o
+/// caso da rota remota contractor (o alvo primario hoje) — nao trate tudo como
+/// "precisa de sponsorship", isso descarta justamente o alvo atual.
+enum SponsorshipSignal {
+  explicit_support // epilot
+  silent
+  requires_authorization
+  explicit_no_sponsorship // Nearform
+  requires_citizenship // C-CORE
+  country_residency_required
+  not_applicable_b2b // ABCloudz
+  newcomer_friendly // NU Stream, Korah, VPC
+
+  @@map("sponsorship_signal")
+}
+
+/// Tipos de arquivo por pasta de candidatura no vault.
+enum DocKind {
+  cv
+  cover_letter
+  job_data
+  job_info
+  notes
+  email
+  screening_answers
+  recruiter_reply
+  challenge_prep
+  practice
+  english_eval_script
+  mini_spec
+
+  @@map("doc_kind")
+}
+
+/// Nivel de cobertura de um requisito da vaga (os simbolos das matrizes:
+/// ✅forte = strong, ✅ = has, ⚠️ = shallow, ❌ = gap, ⭐ = advantage).
+enum CoverageLevel {
+  strong
+  has
+  shallow
+  gap
+  advantage
+
+  @@map("coverage_level")
+}
+
+/// Duas geracoes de frontmatter convivem no vault (lote de julho sem
+/// "Dados da Vaga", lote de 04/08 com). Quem preenche e a skill.
+enum SourceGeneration {
+  jul_2026 @map("jul-2026")
+  ago_2026 @map("ago-2026")
+
+  @@map("source_generation")
+}
+
+/// Direcao de um evento de candidatura. Nulo quando o evento nao e uma
+/// comunicacao (ex.: "pacote pronto").
+enum EventDirection {
+  inbound
+  outbound
+
+  @@map("event_direction")
+}
+
+/// As tres camadas paralelas de bullet que o gerador precisa saber escolher:
+/// (a) dossie, prosa longa pt-BR com metricas; (b) LinkedIn/Strider, prosa
+/// media ja lapidada em ingles; (c) CV Mestre, X-Y-Z curto.
+enum BulletLayer {
+  dossier
+  linkedin_strider
+  cv_master_xyz
+
+  @@map("bullet_layer")
+}
+
+/// Familias de template de CV. Prioridade: CA -> IE -> DE.
+enum TemplateFamily {
+  north_america // Canada; serve tambem US remoto
+  europe // Irlanda primeiro, Alemanha depois
+
+  @@map("template_family")
+}
+
+// --------------------------- infra de sync ---------------------------------
+
+/// Uma rodada de sincronizacao pelo MCP. Existe para tornar "desfazer a ultima
+/// sync" uma operacao real (via `Provenance.before`), nao um pg_restore.
+model SyncRun {
+  id              String    @id @default(cuid())
+  startedAt       DateTime  @default(now())
+  finishedAt      DateTime?
+  /// running | ok | failed | reverted
+  status          String    @default("running")
+  /// Chave de API do MCP que abriu a rodada (FK logica para a tabela ApiKey de
+  /// F3, que ainda nao existe — proposital, para nao bloquear F3).
+  apiKeyId        String?
+  toolCalls       Int       @default(0)
+  filesSeen       Int       @default(0)
+  filesSent       Int       @default(0)
+  entitiesWritten Int       @default(0)
+  failures        Int       @default(0)
+  note            String?
+  revertedAt      DateTime?
+
+  provenances Provenance[]
+  syncStates  SyncState[]
+
+  @@index([startedAt])
   @@index([status])
-  @@index([source])
+}
+
+/// Estado de sincronizacao por arquivo do vault. Base do `check_sync_state`
+/// de F3: a skill calcula o sha256 localmente, pergunta o que mudou e so
+/// entao envia o corpo dos arquivos alterados (zero embedding para o resto).
+model SyncState {
+  id            String    @id @default(cuid())
+  /// Caminho relativo dentro do vault. CHAVE NATURAL.
+  sourcePath    String    @unique
+  contentSha256 String
+  sizeBytes     Int?
+  embeddedAt    DateTime?
+  chunkCount    Int       @default(0)
+  lastSeenAt    DateTime  @default(now())
+  /// Entidade que este arquivo produziu, para navegacao reversa.
+  entityType    String?
+  entityId      String?
+  lastSyncRunId String?
+  lastSyncRun   SyncRun?  @relation(fields: [lastSyncRunId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([lastSeenAt])
+  @@index([entityType, entityId])
+  @@index([lastSyncRunId])
+}
+
+/// Proveniencia por FATO: de qual arquivo veio, quando, por qual tool/chave de
+/// MCP, e o valor anterior. Sem isto nao ha como auditar o que um agente
+/// escreveu nem desfazer uma rodada ruim.
+model Provenance {
+  id               String            @id @default(cuid())
+  entityType       String
+  entityId         String
+  /// Campo especifico, quando a proveniencia e por atributo (ex.: "stage").
+  field            String?
+  sourcePath       String?
+  sourceGeneration SourceGeneration?
+  /// Nome da tool do MCP (ex.: "upsert_application").
+  mcpTool          String?
+  apiKeyId         String?
+  /// `McpAuditLog.id` da chamada que produziu este fato. Sem FK de proposito:
+  /// a auditoria e escrita ANTES da tool rodar e sobrevive a ela; uma FK com
+  /// `onDelete: Restrict` impediria expurgar auditoria antiga e uma com
+  /// `SetNull` daria a ilusao de que o fato nao teve origem. E a coluna que
+  /// fecha a correlacao escrita <-> chamada (bloqueador do F3b): `Provenance`
+  /// diz O QUE mudou, `McpAuditLog` diz QUEM chamou, com que argumentos,
+  /// quanto demorou e se falhou. Nulo quando o fato nao veio do MCP (ex.: a
+  /// migration de cutover `JobApplication` -> `Application`).
+  auditId          String?
+  syncRunId        String?
+  syncRun          SyncRun?          @relation(fields: [syncRunId], references: [id], onDelete: SetNull)
+  /// Snapshot antes/depois, para rollback por rodada.
+  before           Json?
+  after            Json?
+  recordedAt       DateTime          @default(now())
+
+  @@index([entityType, entityId])
+  @@index([syncRunId])
+  @@index([sourcePath])
+  @@index([recordedAt])
+  @@index([auditId])
+}
+
+// --------------------------- empresas e vagas ------------------------------
+
+/// Empregador ou body shop. `folderName` DIFERE de `name`: a pasta do vault e
+/// `epilot`, a razao social e `epilot GmbH`.
+model Company {
+  id              String    @id @default(cuid())
+  /// CHAVE NATURAL de sync (pasta do vault).
+  folderName      String    @unique
+  /// Nome real / razao social.
+  name            String
+  /// Alias anonimizado usado em superficie publica quando ha NDA.
+  publicName      String?
+  /// Quando true, o nome real nao pode ir para o indice publico (CHECK no banco
+  /// impede `visibility = 'public'` com `ndaProtected = true`).
+  ndaProtected    Boolean   @default(false)
+  website         String?
+  careersUrl      String?
+  linkedinUrl     String?
+  country         String?
+  city            String?
+  /// Mercado alvo normalizado: CA | US | IE | DE | BR | remote-*, etc.
+  market          String?
+  industry        String?
+  sizeBucket      String?
+  /// Body shop / intermediaria: Huckleberry.vendorCompany -> Devlane.
+  vendorCompanyId String?
+  vendorCompany   Company?  @relation("CompanyVendor", fields: [vendorCompanyId], references: [id], onDelete: SetNull)
+  vendorClients   Company[] @relation("CompanyVendor")
+  notesMd         String?
+
+  visibility       Visibility        @default(private)
+  sourcePath       String?
+  contentSha256    String?
+  sourceGeneration SourceGeneration?
+  lastSeenAt       DateTime?
+  lastSyncRunId    String?
+  lastMcpTool      String?
+  lastApiKeyId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs           Job[]
+  applications   Application[]
+  contacts       Contact[]
+  experiences    Experience[]
+  careerProjects CareerProject[]
+
+  @@index([market])
+  @@index([visibility])
+  @@index([vendorCompanyId])
+}
+
+/// Vaga observada (radar ou candidatura). `sourceUrl` e a chave de dedupe.
+model Job {
+  id             String            @id @default(cuid())
+  /// CHAVE NATURAL de sync.
+  sourceUrl      String            @unique
+  companyId      String?
+  company        Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  title          String
+  seniority      String?
+  /// CA | US-remote | IE | DE | BR ...
+  market         String?
+  locationText   String?
+  /// remote | hybrid | onsite
+  workMode       String?
+  /// full_time | contract | b2b | freelance
+  employmentType String?
+  salaryText     String?
+  salaryMin      Int?
+  salaryMax      Int?
+  currency       String?
+  /// Criterio eliminatorio nº 1 do funil — campo de primeira classe.
+  sponsorship    SponsorshipSignal @default(silent)
+  descriptionMd  String?
+  requirementsMd String?
+  postedAt       DateTime?
+  closedAt       DateTime?
+  active         Boolean           @default(true)
+  /// 1 = maior prioridade.
+  priority       Int?
+  fitScore       Int?
+  notesMd        String?
+
+  visibility       Visibility        @default(private)
+  sourcePath       String?
+  contentSha256    String?
+  sourceGeneration SourceGeneration?
+  embeddedAt       DateTime?
+  chunkCount       Int               @default(0)
+  lastSeenAt       DateTime?
+  lastSyncRunId    String?
+  lastMcpTool      String?
+  lastApiKeyId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  techs                JobTech[]
+  applications         Application[]
+  screeningQuestions   ScreeningQuestion[]
+  requirementCoverages RequirementCoverage[]
+  verifications        DescriptionVerification[]
+  radarHits            RadarHit[]
+  generatedResumes     GeneratedResume[]
+
+  @@index([companyId])
+  @@index([sponsorship])
+  @@index([market])
+  @@index([active])
+  @@index([visibility])
+}
+
+/// Stack exigida pela vaga, normalizada para casar com `Skill`.
+model JobTech {
+  id            String  @id @default(cuid())
+  jobId         String
+  job           Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  /// Texto como aparece na vaga.
+  tech          String
+  /// Slug normalizado (casa com `Skill.slug`) quando reconhecido.
+  skillSlug     String?
+  required      Boolean @default(true)
+  yearsRequired Int?
+  rank          Int?
+
+  @@unique([jobId, tech])
+  @@index([skillSlug])
+}
+
+// --------------------------- candidatura -----------------------------------
+
+/// Candidatura. `folderName` UNIQUE e a chave de dedupe do MCP — sem ela, o
+/// guard-rail contra o agente duplicar registro e decorativo.
+model Application {
+  id         String   @id @default(cuid())
+  /// CHAVE NATURAL de sync (pasta em `04 - Candidaturas`).
+  folderName String   @unique
+  jobId      String?
+  job        Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  /// Vocabulario 1 de 3: funil.
+  stage           FunnelStage        @default(radar)
+  /// Vocabulario 2 de 3 (agregado da pasta): draft | ready | sent | archived...
+  packageStatus   String?
+  roleTitle       String?
+  market          String?
+  /// Sobrescreve `job.sponsorship` quando a candidatura tem sinal proprio.
+  sponsorship     SponsorshipSignal?
+  priority        Int?
+  /// vanhack | linkedin | company_site | recruiter | referral ...
+  source          String?
+  /// Rotulo curto de aderencia herdado do tracker (`⭐`, `⭐ Go`, `Bom`). E
+  /// avaliacao subjetiva do usuario, nao score calculado — por isso continua
+  /// texto livre e nao vira `Job.fitScore`.
+  fit             String?
+  /// Lembrete de follow-up: uma data OU uma nota curta ("cobrar em 2 semanas").
+  /// Texto livre pelo mesmo motivo do tracker antigo: metade das linhas nao e
+  /// data. Vira `ApplicationEvent` quando o follow-up de fato acontece.
+  followUp        String?
+  /// Metricas de conversao (comecam vazias — o vault registra 0 envios).
+  appliedAt       DateTime?
+  firstResponseAt DateTime?
+  closedAt        DateTime?
+  outcomeReason   String?
+  targetSalary    String?
+  summaryMd       String?
+  notesMd         String?
+
+  resumeTemplateId String?
+  resumeTemplate   ResumeTemplate? @relation(fields: [resumeTemplateId], references: [id], onDelete: SetNull)
+
+  /// Id da linha do tracker legado (`JobApplication`) que originou esta
+  /// candidatura. A tabela nao existe mais (dropada em `application_cutover`);
+  /// a coluna fica porque e a unica forma de casar esta linha com o snapshot
+  /// guardado em `Provenance` (`mcpTool = 'migration:application_cutover'`) e
+  /// com qualquer dump antigo. Sempre nulo em candidatura nova.
+  legacyJobApplicationId String?
+
+  visibility       Visibility        @default(private)
+  sourcePath       String?
+  contentSha256    String?
+  sourceGeneration SourceGeneration?
+  embeddedAt       DateTime?
+  chunkCount       Int               @default(0)
+  lastSeenAt       DateTime?
+  lastSyncRunId    String?
+  lastMcpTool      String?
+  lastApiKeyId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents            Document[]
+  artifacts            Artifact[]
+  contacts             Contact[]
+  events               ApplicationEvent[]
+  interviews           Interview[]
+  screeningQuestions   ScreeningQuestion[]
+  requirementCoverages RequirementCoverage[]
+  honestyNotes         HonestyNote[]
+  checklistItems       ChecklistItem[]
+  verifications        DescriptionVerification[]
+  generatedResumes     GeneratedResume[]
+
+  @@index([stage])
+  @@index([companyId])
+  @@index([jobId])
+  @@index([sponsorship])
+  @@index([market])
+  @@index([visibility])
+  @@index([legacyJobApplicationId])
+}
+
+/// Arquivo de texto do vault (CV, carta, notas, e-mail...). `filePath` UNIQUE.
+model Document {
+  id            String       @id @default(cuid())
+  /// CHAVE NATURAL de sync (caminho relativo no vault).
+  filePath      String       @unique
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  kind          DocKind
+  title         String?
+  /// pt-BR | en-US. Dossies en-US NAO sao traducao — sao reescritas fieis.
+  language      String?
+  /// Vocabulario 3 de 3: status do documento (draft | final | sent | ...).
+  status        String?
+  contentMd     String?
+  wordCount     Int?
+  sentAt        DateTime?
+
+  visibility       Visibility        @default(private)
+  sourcePath       String?
+  contentSha256    String?
+  sourceGeneration SourceGeneration?
+  embeddedAt       DateTime?
+  chunkCount       Int               @default(0)
+  lastSeenAt       DateTime?
+  lastSyncRunId    String?
+  lastMcpTool      String?
+  lastApiKeyId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  artifacts Artifact[]
+  events    ApplicationEvent[]
+
+  @@index([applicationId])
+  @@index([kind])
+  @@index([visibility])
+}
+
+/// Saida binaria/renderizada (PDF, DOCX, HTML de CV, screenshot). O vault tem
+/// 17 pacotes com PDF pendente — este e o registro dessa pendencia.
+model Artifact {
+  id            String       @id @default(cuid())
+  /// CHAVE NATURAL (caminho ou URL do arquivo gerado).
+  path          String       @unique
+  documentId    String?
+  document      Document?    @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  /// pdf | docx | html | png ...
+  kind          String
+  mimeType      String?
+  sizeBytes     Int?
+  sha256        String?
+  /// Binario do vault NUNCA e enviado pelo MCP; guardamos so a referencia.
+  contentStored Boolean      @default(false)
+  generatedAt   DateTime?
+
+  visibility    Visibility @default(private)
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([documentId])
+}
+
+/// Recrutador / contato. PII pura: e-mail e telefone. CHECK no banco forca
+/// `visibility = 'private'` — esta tabela nunca alimenta o indice publico.
+model Contact {
+  id            String       @id @default(cuid())
+  companyId     String?
+  company       Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  name          String
+  roleTitle     String?
+  email         String?
+  phone         String?
+  linkedinUrl   String?
+  timezone      String?
+  /// linkedin | email | vanhack | referral ...
+  channel       String?
+  notesMd       String?
+
+  /// Chave estavel fornecida pela skill para upsert idempotente.
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events     ApplicationEvent[]
+  interviews Interview[]
+
+  // `companyId` e nullable, logo esta chave nao deduplica contato sem empresa.
+  // Indices UNIQUE PARCIAIS complementares ("applicationId","name") WHERE
+  // companyId IS NULL e ("name") WHERE ambos NULL vivem na migration
+  // `backoffice_dedupe_holes`.
+  @@unique([companyId, name])
+  @@index([applicationId])
+}
+
+/// Linha do tempo da candidatura. Toda resposta gerada em F5 vira um evento
+/// com `direction = outbound`.
+model ApplicationEvent {
+  id            String          @id @default(cuid())
+  applicationId String
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  occurredAt    DateTime        @default(now())
+  /// stage_change | email_sent | reply_received | interview_scheduled |
+  /// note | package_ready | follow_up ...
+  type          String
+  direction     EventDirection?
+  fromStage     FunnelStage?
+  toStage       FunnelStage?
+  /// email | linkedin | phone | portal ...
+  channel       String?
+  subject       String?
+  bodyMd        String?
+  contactId     String?
+  contact       Contact?        @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  documentId    String?
+  document      Document?       @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId, occurredAt])
+  @@index([type])
+}
+
+model Interview {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  round         Int?
+  /// screening | technical | system_design | culture | final ...
+  kind          String
+  scheduledAt   DateTime?
+  durationMin   Int?
+  /// video | phone | onsite
+  mode          String?
+  timezone      String?
+  interviewers  String[]
+  contactId     String?
+  contact       Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  prepMd        String?
+  notesMd       String?
+  /// passed | failed | pending | cancelled
+  outcome       String?
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([scheduledAt])
+}
+
+/// Pergunta de triagem (formulario da vaga) e a resposta usada.
+model ScreeningQuestion {
+  id            String       @id @default(cuid())
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobId         String?
+  job           Job?         @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  orderIndex    Int          @default(0)
+  question      String
+  answer        String?
+  language      String?
+  required      Boolean      @default(false)
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // NOTA: `applicationId` e nullable (pergunta pode ser da VAGA, nao da
+  // candidatura) e no Postgres um UNIQUE composto nao deduplica com NULL.
+  // A migration `backoffice_dedupe_holes` adiciona o indice UNIQUE PARCIAL
+  // ("jobId","orderIndex") WHERE "applicationId" IS NULL, que Prisma nao
+  // expressa. Nao remova sem substituir.
+  @@unique([applicationId, orderIndex])
+  @@index([jobId])
+}
+
+/// Matriz requisito x evidencia. Alimenta o gerador (F4) e o relatorio de gap.
+model RequirementCoverage {
+  id              String         @id @default(cuid())
+  applicationId   String?
+  application     Application?   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobId           String?
+  job             Job?           @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  orderIndex      Int            @default(0)
+  requirement     String
+  /// Slug normalizado do requisito, para dedupe estavel do agente.
+  requirementKey  String
+  coverage        CoverageLevel
+  evidenceMd      String?
+  experienceId    String?
+  experience      Experience?    @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+  careerProjectId String?
+  careerProject   CareerProject? @relation(fields: [careerProjectId], references: [id], onDelete: SetNull)
+  skillId         String?
+  skill           Skill?         @relation(fields: [skillId], references: [id], onDelete: SetNull)
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Mesmo caso de `ScreeningQuestion`: indice UNIQUE PARCIAL
+  // ("jobId","requirementKey") WHERE "applicationId" IS NULL vive na migration
+  // `backoffice_dedupe_holes`.
+  @@unique([applicationId, requirementKey])
+  @@index([jobId])
+  @@index([coverage])
+}
+
+/// Aviso de honestidade (as linhas com ⚠️ do vault). O ingester atual sanitiza
+/// exatamente essas linhas — aqui elas sao dado de primeira classe.
+/// CHECK no banco forca `visibility = 'private'`.
+model HonestyNote {
+  id              String         @id @default(cuid())
+  applicationId   String?
+  application     Application?   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  experienceId    String?
+  experience      Experience?    @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+  careerProjectId String?
+  careerProject   CareerProject? @relation(fields: [careerProjectId], references: [id], onDelete: SetNull)
+  /// Codigo da regra correspondente em `FramingRule` (R1..R8), quando houver.
+  ruleCode        String?
+  scope           String?
+  noteMd          String
+  /// blocking | warning | info
+  severity        String         @default("blocking")
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([ruleCode])
+}
+
+/// Item de checklist do pacote de candidatura.
+/// `applicationId` e OBRIGATORIO de proposito: com a coluna nullable, o
+/// `@@unique([applicationId, orderIndex])` nao deduplica nada quando ela e NULL
+/// (Postgres considera NULLs distintos), e o MCP recriaria a checklist inteira
+/// a cada rodada. Um item de checklist sem candidatura tambem nao tem
+/// significado no vault.
+model ChecklistItem {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  orderIndex    Int         @default(0)
+  label         String
+  groupLabel    String?
+  done          Boolean     @default(false)
+  doneAt        DateTime?
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([applicationId, orderIndex])
+}
+
+// --------------------------- radar de vagas --------------------------------
+
+/// Uma varredura de radar (ex.: "Radar de Vagas 2026-08-04.md").
+model RadarScan {
+  id         String   @id @default(cuid())
+  /// CHAVE NATURAL (ex.: "2026-08-04").
+  scanKey    String   @unique
+  scannedAt  DateTime
+  totalFound Int      @default(0)
+  kept       Int      @default(0)
+  eliminated Int      @default(0)
+  notesMd    String?
+
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  contentSha256 String?
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hits  RadarHit[]
+  rules RadarScoringRule[]
+}
+
+/// Regra de pontuacao/eliminacao usada numa varredura.
+model RadarScoringRule {
+  id          String    @id @default(cuid())
+  radarScanId String
+  radarScan   RadarScan @relation(fields: [radarScanId], references: [id], onDelete: Cascade)
+  code        String
+  label       String
+  /// boost | penalty | eliminator
+  kind        String    @default("boost")
+  weight      Int       @default(0)
+  description String?
+  active      Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([radarScanId, code])
+}
+
+/// Vaga vista numa varredura, antes de virar (ou nao) `Job`/`Application`.
+model RadarHit {
+  id                String             @id @default(cuid())
+  radarScanId       String
+  radarScan         RadarScan          @relation(fields: [radarScanId], references: [id], onDelete: Cascade)
+  jobId             String?
+  job               Job?               @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  sourceUrl         String
+  title             String?
+  companyName       String?
+  score             Int?
+  rank              Int?
+  /// kept | eliminated | shortlisted
+  verdict           String?
+  /// 6 das 15 vagas eliminadas cairam por autorizacao/cidadania.
+  eliminationReason String?
+  sponsorship       SponsorshipSignal?
+  notesMd           String?
+
+  visibility    Visibility @default(private)
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([radarScanId, sourceUrl])
+  @@index([jobId])
+  @@index([verdict])
+}
+
+/// Verificacao da descricao da vaga contra a fonte (terceiro vocabulario
+/// paralelo: `verdict` NAO e `FunnelStage` nem `Document.status`).
+model DescriptionVerification {
+  id            String       @id @default(cuid())
+  jobId         String?
+  job           Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  sourceUrl     String?
+  verifiedAt    DateTime?
+  /// Valores livres do vault (ex.: confirmado | divergente | inacessivel |
+  /// expirada). Mantido String de proposito: os rotulos reais nao foram
+  /// inventariados; virar enum e trabalho de F3 com o vault na mao.
+  verdict       String
+  /// manual | fetch | recruiter
+  method        String?
+  checkedFields String[]
+  discrepancyMd String?
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jobId])
+  @@index([applicationId])
+  @@index([verdict])
+}
+
+// --------------------------- perfil ----------------------------------------
+
+/// Ancoras salariais por mercado/rota. Piso NUNCA vem do modelo de linguagem.
+/// CHECK no banco forca `visibility = 'private'`.
+model SalaryExpectation {
+  id            String    @id @default(cuid())
+  /// CHAVE NATURAL (ex.: "ca-fulltime-year", "ca-contract-hour", "b2b-month").
+  key           String    @unique
+  /// CA | IE | DE | US-remote | B2B ...
+  market        String
+  currency      String
+  /// year | month | hour
+  unit          String    @default("year")
+  /// full_time | contract | b2b
+  contractType  String?
+  target        Int?
+  floor         Int?
+  note          String?
+  effectiveFrom DateTime?
+
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([market])
+}
+
+/// Referencia profissional. PII (telefone/e-mail de terceiros).
+/// CHECK no banco forca `visibility = 'private'`.
+model ProfessionalReference {
+  id           String  @id @default(cuid())
+  /// CHAVE NATURAL.
+  slug         String  @unique
+  name         String
+  relationship String?
+  companyName  String?
+  roleTitle    String?
+  email        String?
+  phone        String?
+  linkedinUrl  String?
+  language     String?
+  canContact   Boolean @default(false)
+  noteMd       String?
+
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Regras invioláveis de enquadramento (R1..R8 da secao 2 do prompt mestre).
+/// Sao criterio de rejeicao do gerador (F4), nao sugestao — e sao sensiveis
+/// (vazar a lista revela o que se esta escondendo). CHECK forca `private`.
+model FramingRule {
+  id                String   @id @default(cuid())
+  /// CHAVE NATURAL: "R1".."R8".
+  code              String   @unique
+  title             String
+  ruleMd            String
+  /// blocking | warning
+  severity          String   @default("blocking")
+  /// resume | cover_letter | screening | all
+  scope             String   @default("all")
+  /// Padroes proibidos, testados por validador deterministico (nao por prompt).
+  forbiddenPatterns String[]
+  /// Substituicao canonica, quando a regra prescreve texto exato (R2).
+  canonicalText     String?
+  examplesMd        String?
+  active            Boolean  @default(true)
+
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Vinculo profissional (os 20 dossies pt-BR + 20 en-US de `02 - Experiencias`).
+model Experience {
+  id                String    @id @default(cuid())
+  /// CHAVE NATURAL de sync.
+  slug              String    @unique
+  companyId         String?
+  company           Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  /// Nome exibido publicamente (pode ser alias sob NDA).
+  publicName        String
+  /// Nome real do cliente/empresa. Inelegivel para o indice publico: um CHECK
+  /// impede `visibility = 'public'` sem `publicName` distinto de `realName`.
+  realName          String?
+  roleTitle         String
+  roleTitleEn       String?
+  /// full_time | contract | b2b | freelance
+  employmentType    String?
+  startDate         DateTime?
+  endDate           DateTime?
+  current           Boolean   @default(false)
+  locationText      String?
+  market            String?
+  orderIndex        Int       @default(0)
+  summaryPt         String?
+  summaryEn         String?
+  /// Dossie completo. O en-US NAO e traducao do pt-BR (paridade verificada).
+  dossierPtMd       String?
+  dossierEnMd       String?
+  /// Camada (b): prosa media ja lapidada em ingles (LinkedIn/Strider).
+  linkedinSummaryEn String?
+  metricsMd         String?
+
+  visibility       Visibility        @default(private)
+  sourcePath       String?
+  contentSha256    String?
+  sourceGeneration SourceGeneration?
+  embeddedAt       DateTime?
+  chunkCount       Int               @default(0)
+  lastSeenAt       DateTime?
+  lastSyncRunId    String?
+  lastMcpTool      String?
+  lastApiKeyId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  careerProjects       CareerProject[]
+  bullets              ResumeBullet[]
+  skills               Skill[]
+  requirementCoverages RequirementCoverage[]
+  honestyNotes         HonestyNote[]
+
+  @@index([companyId])
+  @@index([visibility])
+  @@index([orderIndex])
+}
+
+/// Projeto do dossie de carreira (o `project` do modelo normalizado).
+///
+/// DECISAO (justificativa exigida pela tarefa): NAO estendi o model `Project`.
+/// `Project` e uma entidade de APRESENTACAO do site publico (monogram, gradiente
+/// accent, featured, coverImage, stackJson String-JSON) escrita pelo admin;
+/// `CareerProject` e uma entidade de EVIDENCIA privada, escrita so pelo MCP,
+/// com nome real de cliente sob NDA, dossies pt/en, metricas e proveniencia.
+/// Fundir as duas significaria (a) todo SELECT publico existente
+/// (`projects-repo.ts`, `sitemap`, `generateStaticParams`) passar a depender de
+/// `visibility = 'public'` — mudanca em codigo que o F0 acabou de migrar e cujo
+/// esquecimento vaza nome de cliente; (b) dezenas de colunas nullable numa
+/// tabela que o site renderiza; (c) o MCP escrevendo direto na tabela que o
+/// site publico le. Separado, o default `private` e o CHECK de alias sao
+/// suficientes por schema, e a ligacao opcional `portfolioProjectId` mantem a
+/// rastreabilidade vitrine -> dossie. Fusao continua possivel em F6 se o
+/// conteudo do site migrar de vez para o banco.
+model CareerProject {
+  id                 String      @id @default(cuid())
+  /// CHAVE NATURAL de sync.
+  slug               String      @unique
+  /// Slug/nome anonimizado exposto no site (ex.: "fintech-loan-api").
+  publicName         String
+  /// Nome real do cliente/produto. Nunca vai para o indice publico.
+  realName           String?
+  clientCompanyId    String?
+  clientCompany      Company?    @relation(fields: [clientCompanyId], references: [id], onDelete: SetNull)
+  experienceId       String?
+  experience         Experience? @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+  /// Vitrine publica correspondente, quando existir.
+  portfolioProjectId String?     @unique
+  portfolioProject   Project?    @relation(fields: [portfolioProjectId], references: [id], onDelete: SetNull)
+
+  roleMd       String?
+  summaryPt    String?
+  summaryEn    String?
+  dossierPtMd  String?
+  dossierEnMd  String?
+  metricsMd    String?
+  techStack    String[]
+  repoUrl      String?
+  demoUrl      String?
+  startDate    DateTime?
+  endDate      DateTime?
+  ndaProtected Boolean   @default(false)
+  orderIndex   Int       @default(0)
+
+  visibility       Visibility        @default(private)
+  sourcePath       String?
+  contentSha256    String?
+  sourceGeneration SourceGeneration?
+  embeddedAt       DateTime?
+  chunkCount       Int               @default(0)
+  lastSeenAt       DateTime?
+  lastSyncRunId    String?
+  lastMcpTool      String?
+  lastApiKeyId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bullets              ResumeBullet[]
+  skills               Skill[]
+  requirementCoverages RequirementCoverage[]
+  honestyNotes         HonestyNote[]
+
+  @@index([experienceId])
+  @@index([clientCompanyId])
+  @@index([visibility])
+}
+
+/// Bullet de CV, com a camada de origem explicita. NAO estava na lista de
+/// tabelas do prompt, mas F4 exige "escolher a camada certa (dossie /
+/// LinkedIn-Strider / CV Mestre X-Y-Z)" — impossivel se os ~100 bullets ficarem
+/// so como markdown dentro do dossie. Guardar X/Y/Z separados e o que permite
+/// validar "metrica presente na evidencia" de forma deterministica (R5).
+model ResumeBullet {
+  id              String         @id @default(cuid())
+  experienceId    String?
+  experience      Experience?    @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  careerProjectId String?
+  careerProject   CareerProject? @relation(fields: [careerProjectId], references: [id], onDelete: Cascade)
+  layer           BulletLayer
+  language        String         @default("pt-BR")
+  orderIndex      Int            @default(0)
+  text            String
+  /// Decomposicao X-Y-Z ("Accomplished [X] as measured by [Y], by doing [Z]").
+  xAccomplished   String?
+  yMeasuredBy     String?
+  zByDoing        String?
+  /// Metrica literal citada, para checar contra a evidencia recuperada.
+  metric          String?
+  /// false quando o vault marca `_(a preencher)_` — jamais preencher com
+  /// numero plausivel (R5).
+  metricConfirmed Boolean        @default(false)
+  keywords        String[]
+
+  sourceKey     String?    @unique
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([experienceId])
+  @@index([careerProjectId])
+  @@index([layer])
+}
+
+/// Habilidade normalizada. `anchorRank` codifica R6: TypeScript/Node lidera
+/// sempre (rank 1); Go e segunda linguagem, nunca ancora.
+model Skill {
+  id           String   @id @default(cuid())
+  /// CHAVE NATURAL de sync.
+  slug         String   @unique
+  name         String
+  /// language | framework | database | cloud | practice | tool
+  category     String   @default("tool")
+  /// Rotulo declarado (ex.: "avancado"); nao inventar nivel.
+  level        String?
+  yearsUsed    Float?
+  lastUsedYear Int?
+  isPrimary    Boolean  @default(false)
+  /// Menor = mais ancora no CV. TS/Node = 1, Go >= 2 (decisao registrada).
+  anchorRank   Int?
+  aliases      String[]
+
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  experiences          Experience[]
+  careerProjects       CareerProject[]
+  requirementCoverages RequirementCoverage[]
+
+  @@index([category])
+  @@index([anchorRank])
+}
+
+// --------------------------- geracao de CV ---------------------------------
+
+/// Template de CV. O motor real ja existe no vault:
+/// `_anexos/Modelos HTML/cv/marco-cv-canada.html` (HTML single-file com CSS de
+/// impressao). Comece dali, nao do zero.
+model ResumeTemplate {
+  id                     String         @id @default(cuid())
+  /// CHAVE NATURAL (ex.: "north-america-ca", "europe-ie", "europe-de").
+  key                    String         @unique
+  family                 TemplateFamily
+  name                   String
+  language               String         @default("en-US")
+  country                String?
+  htmlTemplate           String?
+  cssTemplate            String?
+  /// Linha de autorizacao de trabalho para vaga remota B2B/contractor.
+  workAuthLineB2b        String?
+  /// Linha de autorizacao para vaga com relocacao (patrocinio/Blue Card).
+  workAuthLineRelocation String?
+  atsNotesMd             String?
+  version                Int            @default(1)
+  active                 Boolean        @default(true)
+
+  visibility Visibility @default(private)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications     Application[]
+  generatedResumes GeneratedResume[]
+}
+
+/// CV gerado. Guarda o veredito do validador R1..R8 — CV reprovado nao e
+/// apagado, fica com o motivo para auditoria.
+model GeneratedResume {
+  id               String         @id @default(cuid())
+  applicationId    String?
+  application      Application?   @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  jobId            String?
+  job              Job?           @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  templateId       String
+  template         ResumeTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  language         String         @default("en-US")
+  /// resume | cover_letter | screening_answers
+  kind             String         @default("resume")
+  contentMd        String?
+  contentHtml      String?
+  pdfPath          String?
+  docxPath         String?
+  model            String?
+  promptTokens     Int            @default(0)
+  answerTokens     Int            @default(0)
+  /// Match estimado de keywords ATS (alvo 70-80%).
+  keywordMatch     Float?
+  /// false => bloqueado pelo validador; `violations` diz por que.
+  validationPassed Boolean        @default(false)
+  violations       String[]
+  validationReport Json?
+  /// Rastro para o relatorio de conversao por template (comeca vazio: o vault
+  /// registra 0 candidaturas enviadas).
+  sentAt           DateTime?
+
+  sourceKey  String?    @unique
+  visibility Visibility @default(private)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([templateId])
+  @@index([validationPassed])
+}
+
+// --------------------------- conteudo do site ------------------------------
+
+/// Post do blog, bilingue, no banco (F6 remove o Ghost). Nasce `private`;
+/// `status` controla o rascunho e `visibility` a elegibilidade ao RAG publico.
+model Post {
+  id          String    @id @default(cuid())
+  /// CHAVE NATURAL.
+  slug        String    @unique
+  titlePt     String
+  titleEn     String?
+  excerptPt   String?
+  excerptEn   String?
+  bodyPtMd    String?
+  bodyEnMd    String?
+  coverImage  String?
+  tags        String[]
+  /// draft | published | archived
+  status      String    @default("draft")
+  publishedAt DateTime?
+
+  visibility    Visibility @default(private)
+  sourcePath    String?
+  contentSha256 String?
+  embeddedAt    DateTime?
+  chunkCount    Int        @default(0)
+  lastSeenAt    DateTime?
+  lastSyncRunId String?
+  lastMcpTool   String?
+  lastApiKeyId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([visibility])
+}
+
+// --------------------------- MCP: chaves, auditoria, rate limit ------------
+//
+// F3a. Estes tres models sao a fundacao de seguranca do servidor MCP
+// (`src/app/api/mcp/route.ts`). O repositorio e PUBLICO: o atacante le este
+// arquivo antes de tentar qualquer coisa. Nada aqui depende de obscuridade.
+//
+// * `ApiKey.keyHash` guarda **HMAC-SHA256(pepper, token)** em hex — nunca o
+//   plaintext. A justificativa da escolha (HMAC+pepper em vez de bcrypt) esta
+//   no cabecalho de `src/lib/mcp/auth.ts`.
+// * `ApiKey.keyPrefix` e o prefixo PUBLICO da chave ("mk_live_" + 8 chars).
+//   Serve para localizar candidatas com um indice e para exibir na UI. Nao e
+//   segredo e nao permite derivar o resto do token.
+// * `McpAuditLog` e escrito ANTES da execucao da tool (status `running`) e
+//   atualizado depois. Auditoria que so grava no fim perde exatamente o caso
+//   interessante: a chamada que travou ou derrubou o processo.
+// * `McpRateLimit` e o contador DURAVEL (janela fixa). O limitador de
+//   `src/lib/rate-limit.ts` e in-memory e falha ABERTO; este falha FECHADO.
+
+/// Chave de API do servidor MCP. A chave em claro e exibida UMA vez, no
+/// momento da criacao, e nunca mais — nem em log, nem em erro, nem em
+/// resposta. `scopes` e a unica coisa que impede uma chave de leitura de
+/// virar chave de escrita; a checagem acontece no servidor, por tool.
+model ApiKey {
+  id         String    @id @default(cuid())
+  /// Rotulo humano ("skill do Obsidian — macbook").
+  name       String
+  /// HMAC-SHA256(MCP_KEY_PEPPER, token) em hex minusculo (64 chars).
+  keyHash    String    @unique
+  /// Prefixo publico: "mk_live_" + 8 primeiros chars do segredo.
+  keyPrefix  String
+  /// Escopos concedidos. CHECK no banco: array nao vazio.
+  scopes     String[]
+  /// Ultima vez que a chave autenticou com sucesso (atualizado no maximo 1x
+  /// por minuto, para nao transformar toda chamada em escrita).
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  /// Motivo da revogacao, para a auditoria.
+  revokedBy  String?
+  /// `User.id` que criou a chave (sem FK: a chave sobrevive ao usuario).
+  createdBy  String?
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  auditLogs McpAuditLog[]
+
+  @@index([keyPrefix])
+  @@index([revokedAt])
+  @@index([expiresAt])
+}
+
+/// Uma linha por chamada ao MCP — inclusive as RECUSADAS (chave ausente,
+/// invalida, revogada, expirada, sem escopo, rate limit). Sem o registro das
+/// recusas nao ha como detectar varredura.
+model McpAuditLog {
+  id          String    @id @default(cuid())
+  /// Nulo quando a chamada foi recusada antes de identificar a chave.
+  apiKeyId    String?
+  apiKey      ApiKey?   @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  /// Prefixo publico apresentado. Preenchido mesmo quando `apiKeyId` e nulo,
+  /// para correlacionar tentativas com chave inexistente.
+  keyPrefix   String?
+  /// Nome da tool, ou o metodo JSON-RPC ("initialize", "tools/list"), ou
+  /// "<http>" quando a recusa foi anterior ao parse do corpo.
+  tool        String
+  /// Argumentos JSON resumidos e REDIGIDOS (qualquer campo com cara de
+  /// segredo vira "[redigido]"), truncados. Nunca o payload cru.
+  argsSummary String?
+  /// Resumo do resultado (truncado). Nunca o conteudo integral.
+  result      String?
+  /// running | ok | error | denied
+  status      String    @default("running")
+  /// Codigo estavel do motivo quando `status` = denied/error
+  /// (ex.: "missing_scope", "revoked", "rate_limited").
+  reason      String?
+  latencyMs   Int?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  finishedAt  DateTime?
+
+  @@index([apiKeyId, createdAt])
+  @@index([status, createdAt])
+  @@index([tool, createdAt])
+  @@index([createdAt])
+}
+
+/// Contador de rate limit DURAVEL, janela fixa. `bucket` codifica o sujeito e
+/// a janela (ex.: "key:<id>:1m", "ip:<sha256>:1m"); `windowStart` e o inicio
+/// da janela alinhado. O incremento e um `INSERT ... ON CONFLICT DO UPDATE`
+/// atomico — ver `src/lib/mcp/rate-limit.ts`. Qualquer falha ao contar NEGA a
+/// requisicao (fail-closed).
+model McpRateLimit {
+  id          String   @id @default(cuid())
+  bucket      String
+  windowStart DateTime
+  count       Int      @default(0)
+  /// Quando a linha pode ser varrida. Limpeza oportunista no proprio caminho.
+  expiresAt   DateTime
+  updatedAt   DateTime @updatedAt
+
+  @@unique([bucket, windowStart])
+  @@index([expiresAt])
 }

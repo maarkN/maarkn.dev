@@ -1,15 +1,49 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState, useState } from "react";
-import {
-  createProject,
-  updateProject,
-  type ActionState,
-} from "@/app/_actions/admin-projects";
-import { cn } from "@/lib/utils";
+/**
+ * Create/edit form for `Project`, on the shadcn primitives.
+ *
+ * Two things keep it short: the hand-rolled input/label/select/checkbox
+ * components are gone (they are `@/components/ui/*` now, rule A6), and the
+ * plain text/textarea fields are declared as data (`FieldSpec[]`) instead of
+ * twenty near-identical JSX blocks.
+ *
+ * It is a full-page form, not a dialog, but it still follows the
+ * `useTransition` recipe of `src/app/admin/AGENTS.md` §5 rather than
+ * `useActionState`: the action result is in hand inside the same callback, so
+ * "toast + navigate" needs no `useEffect` (which would trip
+ * `react-hooks/set-state-in-effect`).
+ *
+ * The data shape is untouched on purpose: `stack`/`features` are still typed
+ * one per line and stored as String-JSON by the action, and `year` is still a
+ * string. Normalising those columns is F1 work, not a presentation refactor.
+ */
 
-type ProjectInput = {
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { Loader2, Save, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { saveProject } from "@/app/_actions/admin-projects";
+import {
+  PROJECT_CATEGORY_STYLES,
+  PROJECT_STATUS_STYLES,
+} from "@/components/admin/status-badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+
+export type ProjectInput = {
   id?: string;
   slug?: string;
   name?: string;
@@ -32,480 +66,369 @@ type ProjectInput = {
   coverImage?: string | null;
 };
 
-const CATEGORIES = ["web", "mobile", "ai", "backend", "client"] as const;
-const STATUSES = ["live", "internal", "nda", "archived"] as const;
-const VISIBILITIES = [
-  { value: "public", label: "Public · GitHub URL" },
-  { value: "private", label: "Private project (no source link)" },
-] as const;
+type Option = { value: string; label: string };
 
-const initial: ActionState = { status: "idle" };
+/** A plain text or textarea field. `rows` present ⇒ textarea. */
+type FieldSpec = {
+  name: keyof ProjectInput & string;
+  label: string;
+  required?: boolean;
+  help?: string;
+  rows?: number;
+  type?: string;
+  maxLength?: number;
+  /** Value used when creating a new project. */
+  fallback?: string;
+};
+
+const IDENTITY_FIELDS: FieldSpec[] = [
+  { name: "slug", label: "Slug", required: true, help: "Minúsculas e hifens. Vira a URL em /projects/[slug]." },
+  { name: "name", label: "Nome do projeto", required: true },
+  { name: "year", label: "Ano", required: true, help: "Texto livre: 2025, 2023–2024…" },
+];
+
+const COVER_FIELDS: FieldSpec[] = [
+  { name: "monogram", label: "Monograma", required: true, maxLength: 4, help: "1 a 4 letras exibidas na capa estilizada." },
+  { name: "accentFrom", label: "Cor inicial", required: true, fallback: "#4f6ef7", help: "Hexadecimal, ex.: #4f6ef7." },
+  { name: "accentTo", label: "Cor final", required: true, fallback: "#22d3ee", help: "Hexadecimal, ex.: #22d3ee." },
+];
+
+/** `repoUrl` is not here: it only exists while the source is public. */
+const LINK_FIELDS: FieldSpec[] = [
+  { name: "demoUrl", label: "URL da demo", type: "url" },
+  { name: "caseUrl", label: "URL do case externo", type: "url" },
+];
+
+const CONTENT_FIELDS: FieldSpec[] = [
+  { name: "stack", label: "Stack", required: true, rows: 3, help: "Um item por linha (ou separados por vírgula)." },
+  { name: "tagline", label: "Tagline", rows: 2, help: "Um parágrafo curto, usado nos cards." },
+  { name: "description", label: "Descrição longa", rows: 6, help: "Linguagem simples. Exibida na página de detalhe." },
+  { name: "role", label: "Meu papel", rows: 4 },
+  { name: "features", label: "Principais entregas", rows: 5, help: "Um item por linha." },
+];
+
+const CATEGORY_OPTIONS: Option[] = Object.entries(PROJECT_CATEGORY_STYLES).map(
+  ([value, style]) => ({ value, label: style.label }),
+);
+
+const STATUS_OPTIONS: Option[] = Object.entries(PROJECT_STATUS_STYLES).map(
+  ([value, style]) => ({ value, label: style.label }),
+);
+
+const VISIBILITY_OPTIONS: Option[] = [
+  { value: "public", label: "Público · exibe o link do repositório" },
+  { value: "private", label: "Privado · sem link de código" },
+];
+
+/** `stack`/`features` arrive as arrays and are edited one per line. */
+function initialValue(project: ProjectInput | undefined, spec: FieldSpec): string {
+  const raw = project?.[spec.name];
+  if (Array.isArray(raw)) return raw.join("\n");
+  if (typeof raw === "string") return raw;
+  return spec.fallback ?? "";
+}
 
 export function ProjectForm({ project }: { project?: ProjectInput }) {
   const isEdit = Boolean(project?.id);
-  const action = isEdit
-    ? updateProject.bind(null, project!.id!)
-    : createProject;
+  const router = useRouter();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isPending, startTransition] = useTransition();
+  const [visibility, setVisibility] = useState(
+    project?.sourceVisibility === "private" ? "private" : "public",
+  );
 
-  const [state, run, pending] = useActionState<ActionState, FormData>(action, initial);
-  const errors = state.status === "error" ? state.errors : {};
-  const initialVisibility =
-    project?.sourceVisibility === "private" ? "private" : "public";
-  const [visibility, setVisibility] = useState<"public" | "private">(initialVisibility);
+  function onSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await saveProject(project?.id ?? null, formData);
+      if (!res.ok) {
+        setErrors(res.fieldErrors ?? {});
+        toast.error(res.message);
+        return;
+      }
+      setErrors({});
+      toast.success(res.message ?? "Projeto salvo.");
+      router.push("/admin/projects");
+    });
+  }
+
+  const fields = (specs: FieldSpec[]) =>
+    specs.map((spec) => (
+      <Field
+        key={spec.name}
+        spec={spec}
+        defaultValue={initialValue(project, spec)}
+        error={errors[spec.name]}
+      />
+    ));
 
   return (
-    <form action={run} className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <Section title="Identity">
-        <Field
-          name="slug"
-          label="Slug"
-          required
-          defaultValue={project?.slug}
-          help="lowercase, hyphens, used in /projects/[slug]"
-          error={errors.slug}
-        />
-        <Field
-          name="name"
-          label="Project name"
-          required
-          defaultValue={project?.name}
-          error={errors.name}
-        />
-        <Field
-          name="year"
-          label="Year"
-          required
-          defaultValue={project?.year}
-          error={errors.year}
-        />
-        <Select
-          name="category"
-          label="Category"
-          required
-          defaultValue={project?.category ?? "web"}
-          options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-          error={errors.category}
-        />
-        <Select
-          name="status"
-          label="Status"
-          required
-          defaultValue={project?.status ?? "live"}
-          options={STATUSES.map((s) => ({ value: s, label: s }))}
-          error={errors.status}
-        />
-        <Checkbox
-          name="featured"
-          label="Featured on home"
-          defaultChecked={project?.featured ?? false}
-        />
-      </Section>
-
-      <Section title="Cover">
-        <Field
-          name="monogram"
-          label="Monogram"
-          required
-          maxLength={4}
-          defaultValue={project?.monogram}
-          help="1–4 letters; shown in the admin list and on the legacy cover"
-          error={errors.monogram}
-        />
-        <Field
-          name="accentFrom"
-          label="Accent from (legacy)"
-          required
-          defaultValue={project?.accentFrom ?? "#4f6ef7"}
-          help="Legacy cover gradient start — hex, e.g. #4f6ef7. Kept for existing records; the terminal site no longer renders it."
-          error={errors.accentFrom}
-        />
-        <Field
-          name="accentTo"
-          label="Accent to (legacy)"
-          required
-          defaultValue={project?.accentTo ?? "#22d3ee"}
-          help="Legacy cover gradient end — hex, e.g. #22d3ee."
-          error={errors.accentTo}
-        />
-        <CoverImageUploader initial={project?.coverImage} />
-      </Section>
-
-      <Section title="Source & Links" className="md:col-span-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="sourceVisibility" required>
-            Source visibility
-          </Label>
-          <select
-            id="sourceVisibility"
-            name="sourceVisibility"
-            value={visibility}
-            onChange={(e) => setVisibility(e.target.value as "public" | "private")}
-            className={inputClass}
-          >
-            {VISIBILITIES.map((v) => (
-              <option key={v.value} value={v.value}>
-                {v.label}
-              </option>
-            ))}
-          </select>
-          <Help>
-            Pick &ldquo;Private project&rdquo; for client work or internal builds where the source
-            code can&apos;t be shared. The detail page will show a Private project pill instead of
-            the GitHub button.
-          </Help>
-        </div>
-        {visibility === "public" ? (
-          <Field
-            name="repoUrl"
-            label="Repository URL"
-            type="url"
-            defaultValue={project?.repoUrl ?? ""}
-            error={errors.repoUrl}
+    <form action={onSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Section title="Identidade">
+          {fields(IDENTITY_FIELDS)}
+          <SelectField
+            name="category"
+            label="Categoria"
+            required
+            options={CATEGORY_OPTIONS}
+            defaultValue={project?.category ?? "web"}
+            error={errors.category}
           />
-        ) : (
-          <input type="hidden" name="repoUrl" value="" />
-        )}
-        <Field
-          name="demoUrl"
-          label="Live demo URL"
-          type="url"
-          defaultValue={project?.demoUrl ?? ""}
-          error={errors.demoUrl}
-        />
-        <Field
-          name="caseUrl"
-          label="External case study URL"
-          type="url"
-          defaultValue={project?.caseUrl ?? ""}
-          error={errors.caseUrl}
-        />
-      </Section>
+          <SelectField
+            name="status"
+            label="Status"
+            required
+            options={STATUS_OPTIONS}
+            defaultValue={project?.status ?? "live"}
+            error={errors.status}
+          />
+          <SwitchField
+            name="featured"
+            label="Destaque na home"
+            help="Projetos em destaque aparecem na página inicial."
+            defaultChecked={project?.featured ?? false}
+          />
+        </Section>
 
-      <Section title="Stack & content" className="md:col-span-2">
-        <Textarea
-          name="stack"
-          label="Stack"
-          required
-          rows={3}
-          defaultValue={(project?.stack ?? []).join("\n")}
-          help="one item per line (or comma-separated)"
-          error={errors.stack}
-        />
-        <Textarea
-          name="tagline"
-          label="Tagline"
-          rows={2}
-          defaultValue={project?.tagline ?? ""}
-          help="One short paragraph for the cards"
-          error={errors.tagline}
-        />
-        <Textarea
-          name="description"
-          label="Long description"
-          rows={6}
-          defaultValue={project?.description ?? ""}
-          help="Plain language. Shown on the detail page."
-          error={errors.description}
-        />
-        <Textarea
-          name="role"
-          label="My role"
-          rows={4}
-          defaultValue={project?.role ?? ""}
-          error={errors.role}
-        />
-        <Textarea
-          name="features"
-          label="Key features"
-          rows={5}
-          defaultValue={(project?.features ?? []).join("\n")}
-          help="one bullet per line"
-          error={errors.features}
-        />
-      </Section>
+        <Section title="Capa">
+          {fields(COVER_FIELDS)}
+          <CoverImageField initial={project?.coverImage} />
+        </Section>
 
-      {state.status === "error" && state.message ? (
-        <p className="md:col-span-2 border border-[var(--red)]/40 bg-[var(--red)]/10 px-3 py-2 font-mono text-[11px] tracking-[0.04em] text-[var(--red)]">
-          {state.message === "db_unavailable"
-            ? "Database is not configured. Set DATABASE_URL and run migrations first."
-            : "Something went wrong saving the project. Try again."}
-        </p>
-      ) : null}
-
-      <div className="md:col-span-2 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--border)] pt-6">
-        <Link
-          href="/admin"
-          className="border border-[var(--border-2)] px-5 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-        >
-          Cancel
-        </Link>
-        <button
-          type="submit"
-          disabled={pending}
-          className={cn(
-            "inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-6 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-60",
-            !pending && "hover:opacity-90"
+        <Section title="Código-fonte e links" className="md:col-span-2">
+          <SelectField
+            name="sourceVisibility"
+            label="Visibilidade do código"
+            required
+            options={VISIBILITY_OPTIONS}
+            value={visibility}
+            onValueChange={setVisibility}
+            help='Escolha "Privado" para trabalho de cliente ou build interno: a página de detalhe mostra a tarja "Projeto privado" no lugar do botão do GitHub.'
+            error={errors.sourceVisibility}
+          />
+          {visibility === "public" ? (
+            <Field
+              spec={{ name: "repoUrl", label: "URL do repositório", type: "url" }}
+              defaultValue={project?.repoUrl ?? ""}
+              error={errors.repoUrl}
+            />
+          ) : (
+            <input type="hidden" name="repoUrl" value="" />
           )}
-        >
-          {pending ? "Saving…" : isEdit ? "Save changes" : "Create project"}
-        </button>
+          {fields(LINK_FIELDS)}
+        </Section>
+
+        <Section title="Stack e conteúdo" className="md:col-span-2">
+          {fields(CONTENT_FIELDS)}
+        </Section>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/admin/projects">Cancelar</Link>
+        </Button>
+        <Button type="submit" size="sm" disabled={isPending}>
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          {isPending ? "Salvando…" : isEdit ? "Salvar alterações" : "Criar projeto"}
+        </Button>
       </div>
     </form>
   );
 }
 
-function Section({
-  title,
-  className,
-  children,
-}: {
-  title: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
+/* ── field chrome ─────────────────────────────────────────────────────────── */
+
+function Section({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
   return (
-    <fieldset
-      className={cn(
-        "flex flex-col gap-4 border border-[var(--border)] bg-[var(--surface)] p-5",
-        className
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">{children}</CardContent>
+    </Card>
+  );
+}
+
+/** Label + control + help + error, shared by every field below. */
+type ShellProps = {
+  name: string;
+  label: string;
+  required?: boolean;
+  help?: string;
+  error?: string;
+};
+
+function Shell({ name, label, required, help, error, children }: ShellProps & { children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={name}>
+        {label}
+        {required && <span className="text-destructive">*</span>}
+      </Label>
+      {children}
+      {help && <p className="text-xs text-muted-foreground">{help}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
+function Field({ spec, defaultValue, error }: { spec: FieldSpec; defaultValue: string; error?: string }) {
+  const shared = {
+    id: spec.name,
+    name: spec.name,
+    defaultValue,
+    required: spec.required,
+    "aria-invalid": Boolean(error),
+  };
+  return (
+    <Shell name={spec.name} label={spec.label} required={spec.required} help={spec.help} error={error}>
+      {spec.rows ? (
+        <Textarea {...shared} rows={spec.rows} className="font-mono" />
+      ) : (
+        <Input {...shared} type={spec.type ?? "text"} maxLength={spec.maxLength} />
       )}
-    >
-      <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--accent)]">
-        {title}
-      </legend>
-      {children}
-    </fieldset>
+    </Shell>
   );
 }
 
-function Label({
-  htmlFor,
-  children,
-  required,
-}: {
-  htmlFor: string;
-  children: React.ReactNode;
-  required?: boolean;
-}) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="flex items-center gap-1 font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
-    >
-      {children}
-      {required ? <span className="text-[var(--accent)]">*</span> : null}
-    </label>
-  );
-}
-
-function Help({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-mono text-[10px] tracking-[0.02em] text-[var(--muted)]">{children}</p>
-  );
-}
-
-function ErrorLine({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return (
-    <p className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--red)]">{msg}</p>
-  );
-}
-
-const inputClass =
-  "border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none";
-
-function Field({
-  name,
-  label,
-  required,
-  type = "text",
-  defaultValue,
-  help,
-  maxLength,
-  error,
-}: {
-  name: string;
-  label: string;
-  required?: boolean;
-  type?: string;
-  defaultValue?: string | null;
-  help?: string;
-  maxLength?: number;
-  error?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name} required={required}>
-        {label}
-      </Label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        defaultValue={defaultValue ?? ""}
-        required={required}
-        maxLength={maxLength}
-        className={inputClass}
-      />
-      {help ? <Help>{help}</Help> : null}
-      <ErrorLine msg={error} />
-    </div>
-  );
-}
-
-function Textarea({
-  name,
-  label,
-  required,
-  defaultValue,
-  rows = 3,
-  help,
-  error,
-}: {
-  name: string;
-  label: string;
-  required?: boolean;
-  defaultValue?: string | null;
-  rows?: number;
-  help?: string;
-  error?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name} required={required}>
-        {label}
-      </Label>
-      <textarea
-        id={name}
-        name={name}
-        required={required}
-        rows={rows}
-        defaultValue={defaultValue ?? ""}
-        className={cn(inputClass, "resize-y font-mono text-[13px]")}
-      />
-      {help ? <Help>{help}</Help> : null}
-      <ErrorLine msg={error} />
-    </div>
-  );
-}
-
-function Select({
-  name,
-  label,
-  required,
-  defaultValue,
+/**
+ * Radix `Select` is not a native control, so the value travels in a hidden
+ * input instead of relying on the primitive's own form bubbling. Controlled
+ * when `value`/`onValueChange` are passed (the visibility toggle needs that),
+ * self-managed otherwise.
+ */
+function SelectField({
   options,
-  error,
-}: {
-  name: string;
-  label: string;
-  required?: boolean;
+  defaultValue,
+  value,
+  onValueChange,
+  ...shell
+}: ShellProps & {
+  options: Option[];
   defaultValue?: string;
-  options: { value: string; label: string }[];
-  error?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
 }) {
+  const [internal, setInternal] = useState(defaultValue ?? options[0]?.value ?? "");
+  const current = value ?? internal;
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name} required={required}>
-        {label}
-      </Label>
-      <select
-        id={name}
-        name={name}
-        defaultValue={defaultValue}
-        required={required}
-        className={inputClass}
+    <Shell {...shell}>
+      <input type="hidden" name={shell.name} value={current} />
+      <Select
+        value={current}
+        onValueChange={(next) => {
+          setInternal(next);
+          onValueChange?.(next);
+        }}
       >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ErrorLine msg={error} />
+        <SelectTrigger id={shell.name} className="w-full" aria-invalid={Boolean(shell.error)}>
+          <SelectValue placeholder="Selecione" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Shell>
+  );
+}
+
+/** Same trick as `SelectField`: the checked state travels in a hidden input. */
+function SwitchField({ name, label, help, defaultChecked }: ShellProps & { defaultChecked?: boolean }) {
+  const [checked, setChecked] = useState(Boolean(defaultChecked));
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <input type="hidden" name={name} value={checked ? "on" : "off"} />
+        <Switch id={name} checked={checked} onCheckedChange={setChecked} />
+        <Label htmlFor={name}>{label}</Label>
+      </div>
+      {help && <p className="text-xs text-muted-foreground">{help}</p>}
     </div>
   );
 }
 
-function Checkbox({
-  name,
-  label,
-  defaultChecked,
-}: {
-  name: string;
-  label: string;
-  defaultChecked?: boolean;
-}) {
-  return (
-    <label className="inline-flex cursor-pointer items-center gap-2 font-mono text-[12px] tracking-[0.02em] text-[var(--text-2)]">
-      <input
-        type="checkbox"
-        name={name}
-        defaultChecked={defaultChecked}
-        className="h-4 w-4 accent-[var(--accent)]"
-      />
-      {label}
-    </label>
-  );
-}
-
-function CoverImageUploader({ initial }: { initial?: string | null }) {
+/**
+ * Uploads through `/api/admin/upload` (8 MB cap, extension allowlist) and keeps
+ * the returned public path in a hidden input, exactly like before the refactor.
+ */
+function CoverImageField({ initial }: { initial?: string | null }) {
   const [url, setUrl] = useState(initial ?? "");
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [error, setError] = useState("");
 
-  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
-    setErr("");
+    setError("");
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body });
       const json = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !json.url) throw new Error(json.error || "upload_failed");
+      if (!res.ok || !json.url) throw new Error(json.error ?? "upload_failed");
       setUrl(json.url);
-    } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : "upload_failed");
+      toast.success("Imagem enviada.");
+    } catch (err) {
+      const code = err instanceof Error ? err.message : "upload_failed";
+      const message =
+        code === "file_too_large"
+          ? "Arquivo maior que 8 MB."
+          : code === "bad_type"
+            ? "Formato de imagem não aceito."
+            : "Não foi possível enviar a imagem.";
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
-  };
+  }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor="coverImageFile">Cover image</Label>
+    <Shell
+      name="coverImageFile"
+      label="Imagem de capa"
+      help="Opcional. Substitui a capa estilizada nos cards. Máx. 8 MB."
+      error={error || undefined}
+    >
       <input type="hidden" name="coverImage" value={url} />
-      {url ? (
+      {url && (
+        // Uploads are served by a dynamic route; next/image would need a remote
+        // pattern for a path that only exists at runtime.
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={url}
-          alt="cover preview"
-          className="h-32 w-full border border-[var(--border)] object-cover"
+        <img src={url} alt="Pré-visualização da capa" className="h-32 w-full border border-border object-cover" />
+      )}
+      <div className="flex items-center gap-2">
+        <Input
+          id="coverImageFile"
+          type="file"
+          accept="image/*"
+          onChange={onPick}
+          disabled={busy}
+          className="flex-1 cursor-pointer"
         />
-      ) : null}
-      <input
-        id="coverImageFile"
-        type="file"
-        accept="image/*"
-        onChange={onPick}
-        className="font-mono text-[11px] text-[var(--muted)] file:mr-3 file:border file:border-[var(--border-2)] file:bg-[var(--surface-2)] file:px-3 file:py-1.5 file:font-display file:text-[10px] file:uppercase file:tracking-[0.08em] file:text-[var(--text)]"
-      />
-      <div className="flex items-center gap-3">
-        {busy ? <Help>Uploading…</Help> : null}
-        {url && !busy ? (
-          <button
+        {url && !busy && (
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remover imagem de capa"
             onClick={() => setUrl("")}
-            className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:text-[var(--red)]"
           >
-            remove
-          </button>
-        ) : null}
-        <ErrorLine msg={err || undefined} />
+            <Trash2 className="size-4 text-destructive" />
+          </Button>
+        )}
       </div>
-      <Help>Optional. Replaces the stylized cover on cards. Max 8 MB.</Help>
-    </div>
+      {busy && <p className="text-xs text-muted-foreground">Enviando…</p>}
+    </Shell>
   );
 }

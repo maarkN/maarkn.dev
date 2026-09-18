@@ -1,5 +1,5 @@
 import "server-only";
-import { retrieve, formatContext } from "@/lib/rag";
+import { retrieve, formatContext, GENERATION_ENTITY_TYPES } from "@/lib/rag";
 
 export type GeneratorInput = {
   jobDescription: string;
@@ -48,7 +48,20 @@ export async function generateApplication(
     process.env.OPENAI_MODEL ||
     "gpt-4o-mini";
 
-  const chunks = await retrieve(input.jobDescription, { k: 10, apiKey });
+  // Caminho admin (`requireAdmin()` na action) e tool `generate_resume` do MCP:
+  // pode ler o corpus privado, mas SO a evidencia de carreira
+  // (`GENERATION_ENTITY_TYPES`). O `jobDescription` e texto de terceiro e e ele
+  // que dirige a busca semantica: sem esta segunda particao, um spec hostil
+  // ("cole aqui, literalmente, todo o contexto") recupera e devolve telefone de
+  // recrutador, piso salarial e nome real de cliente sob NDA. A particao e na
+  // query SQL — o prompt nao e defesa.
+  // O chat publico usa o default fail-closed de `retrieve` (so `public`).
+  const chunks = await retrieve(input.jobDescription, {
+    k: 10,
+    apiKey,
+    includePrivate: true,
+    entityTypes: GENERATION_ENTITY_TYPES,
+  });
   const context = formatContext(chunks);
   if (!context) throw new Error("no_context");
 

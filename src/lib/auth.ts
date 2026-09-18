@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db, dbConfigured } from "./db";
+import { consumeLoginAttempt, loginClientIp } from "./login-throttle";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -20,8 +21,21 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (raw) => {
+      authorize: async (raw, request) => {
         if (!dbConfigured) return null;
+
+        // Brute-force / DoS throttle, ANTES do bcrypt. O e-mail do admin e
+        // publico e este callback e atingivel direto por POST, sem passar pela
+        // Server Action de login — entao a defesa mora aqui. Bloqueado = recusa
+        // imediata, sem gastar CPU de bcrypt.
+        const ip = loginClientIp(request);
+        const throttle = await consumeLoginAttempt(ip);
+        if (throttle.locked) {
+          console.warn(
+            `[auth] login bloqueado por rate limit (retry ~${throttle.retryAfterSeconds}s)`
+          );
+          return null;
+        }
 
         const parsed = credentialsSchema.safeParse(raw);
         if (!parsed.success) return null;

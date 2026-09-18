@@ -2,17 +2,21 @@
 
 import { LogOut } from "lucide-react";
 import { logoutAction } from "@/app/_actions/auth";
+import { Button } from "@/components/ui/button";
 
+/** Icon-only sign-out control living in the sidebar footer of `AdminShell`. */
 export function LogoutButton() {
   return (
     <form action={logoutAction}>
-      <button
+      <Button
         type="submit"
-        className="inline-flex items-center gap-1.5 border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+        variant="ghost"
+        size="icon-sm"
+        title="Sair"
+        aria-label="Sair"
       >
-        <LogOut className="h-3 w-3" strokeWidth={2.2} />
-        Sign out
-      </button>
+        <LogOut className="size-4" />
+      </Button>
     </form>
   );
 }

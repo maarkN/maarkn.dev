@@ -1,144 +1,439 @@
 "use client";
 
+/**
+ * Formulário de página inteira da candidatura (criar e editar), sobre o modelo
+ * normalizado `Application` + `Job` + `Company`.
+ *
+ * Usa `useActionState` — e não `useTransition` — de propósito: as actions
+ * `createApplication`/`updateApplication` fazem `redirect()` no sucesso, então
+ * não há retorno para o cliente consumir nem toast a exibir (§2 e §5.2 do
+ * `src/app/admin/AGENTS.md`). O feedback de sucesso é a própria navegação; o de
+ * erro é o bloco inline no rodapé.
+ *
+ * Duas coisas que este formulário faz e o antigo não fazia:
+ *
+ * 1. **Mostra a chave natural.** `folderName` é o que impede o MCP de duplicar
+ *    a candidatura na próxima sincronização do vault. Deixá-la implícita seria
+ *    convidar a divergência entre a pasta do Obsidian e a linha do banco — por
+ *    isso ela aparece, é editável e vem pré-preenchida pela mesma regra da
+ *    migration (`empresa--cargo`).
+ * 2. **Trata patrocínio como sinal, não como caixinha.** O `sponsorsVisa
+ *    Boolean` do tracker antigo colapsava duas rotas diferentes num eixo só.
+ *    Aqui o campo tem os 8 sinais reais e um valor extra, "herdar da vaga",
+ *    que é o default: repetir na candidatura o que já está na vaga é como as
+ *    duas fontes divergem.
+ */
+
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Save } from "lucide-react";
 import {
   createApplication,
   updateApplication,
   type AppActionState,
 } from "@/app/_actions/applications";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   APPLICATION_SOURCES,
-  APPLICATION_STATUSES,
+  FUNNEL_STAGE_LABELS,
+  FUNNEL_STAGE_PHASES,
   SOURCE_LABELS,
-  STATUS_LABELS,
+  SPONSORSHIP_HINTS,
+  SPONSORSHIP_LABELS,
+  SPONSORSHIP_SIGNALS,
+  buildFolderName,
 } from "@/lib/applications";
-import { cn } from "@/lib/utils";
+
+/** Espelho da sentinela de `src/app/_actions/applications.ts`. */
+export const INHERIT_SPONSORSHIP = "inherit";
 
 export type ApplicationInput = {
   id?: string;
+  folderName?: string;
   company?: string;
-  country?: string | null;
-  city?: string | null;
-  role?: string | null;
+  roleTitle?: string | null;
+  market?: string | null;
+  locationText?: string | null;
+  stage?: string;
+  sponsorship?: string | null;
+  source?: string | null;
   fit?: string | null;
-  source?: string;
-  status?: string;
+  priority?: number | null;
   careersUrl?: string | null;
   jobUrl?: string | null;
-  sponsorsVisa?: boolean;
   targetSalary?: string | null;
+  /** Já no formato `YYYY-MM-DD` (use `toDateInputValue` na página). */
   appliedAt?: string | null;
   followUp?: string | null;
-  notes?: string | null;
+  notesMd?: string | null;
 };
 
-const initial: AppActionState = { status: "idle" };
+const initialState: AppActionState = { status: "idle" };
 
-export function ApplicationForm({ application }: { application?: ApplicationInput }) {
+/**
+ * O zod devolve mensagem crua (em inglês). A UI do backoffice é pt-BR (A4),
+ * então o texto exibido vem daqui, indexado pelo campo — exceto quando a action
+ * já mandou uma frase pronta (colisão de chave natural).
+ */
+const FIELD_ERRORS: Record<string, string> = {
+  company: "Informe a empresa (até 160 caracteres).",
+  roleTitle: "Cargo muito longo (até 160 caracteres).",
+  folderName:
+    "Use só minúsculas, números e hífen — o separador de empresa e cargo é “--”.",
+  market: "Mercado muito longo (até 60 caracteres).",
+  locationText: "Local muito longo (até 120 caracteres).",
+  stage: "Selecione um estágio válido.",
+  sponsorship: "Selecione um sinal de patrocínio válido.",
+  source: "Selecione uma origem válida.",
+  fit: "Aderência muito longa (até 60 caracteres).",
+  priority: "Prioridade deve ser um número de 1 a 99.",
+  careersUrl: "Informe uma URL válida (com https://).",
+  jobUrl: "Informe uma URL válida (com https://).",
+  targetSalary: "Alvo salarial muito longo (até 200 caracteres).",
+  appliedAt: "Data inválida.",
+  followUp: "Follow-up muito longo (até 200 caracteres).",
+  notesMd: "Notas muito longas (até 20000 caracteres).",
+};
+
+/** Colisão de chave natural — a action devolve o código `duplicate`. */
+const DUPLICATE_ERRORS: Record<string, string> = {
+  folderName:
+    "Já existe uma candidatura com esta chave. Ajuste a chave natural (pasta).",
+  jobUrl: "Esta URL de vaga já está vinculada a outra vaga.",
+};
+
+function errorText(field: string, errors: Record<string, string>) {
+  const raw = errors[field];
+  if (!raw) return undefined;
+  if (raw === "duplicate") {
+    return DUPLICATE_ERRORS[field] ?? "Este valor já está em uso.";
+  }
+  return FIELD_ERRORS[field] ?? "Valor inválido.";
+}
+
+export function ApplicationForm({
+  application,
+}: {
+  application?: ApplicationInput;
+}) {
   const isEdit = Boolean(application?.id);
   const action = isEdit
     ? updateApplication.bind(null, application!.id!)
     : createApplication;
-  const [state, run, pending] = useActionState<AppActionState, FormData>(action, initial);
+  const [state, run, pending] = useActionState<AppActionState, FormData>(
+    action,
+    initialState,
+  );
   const errors = state.status === "error" ? state.errors : {};
 
+  // A chave natural é derivada enquanto o usuário não a editar. Depois de
+  // tocada (ou vinda do banco), fica congelada: reescrevê-la sozinha
+  // quebraria o vínculo com a pasta do vault.
+  const [company, setCompany] = useState(application?.company ?? "");
+  const [roleTitle, setRoleTitle] = useState(application?.roleTitle ?? "");
+  const [market, setMarket] = useState(application?.market ?? "");
+  const [folderName, setFolderName] = useState(application?.folderName ?? "");
+  const [folderTouched, setFolderTouched] = useState(
+    Boolean(application?.folderName),
+  );
+  const derivedFolder = company
+    ? buildFolderName({ company, roleTitle, market })
+    : "";
+  const folderValue = folderTouched ? folderName : derivedFolder;
+
   return (
-    <form action={run} className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <Section title="Role & company">
-        <Field name="company" label="Company" required defaultValue={application?.company} error={errors.company} />
-        <Field name="role" label="Role / posting" defaultValue={application?.role ?? ""} error={errors.role} />
-        <Field name="country" label="Country" defaultValue={application?.country ?? ""} help="e.g. IE, DE, NL" />
-        <Field name="city" label="City" defaultValue={application?.city ?? ""} />
-        <Field name="fit" label="Fit" defaultValue={application?.fit ?? ""} help="e.g. ⭐, ⭐ Go, Bom" />
-        <Select
-          name="source"
-          label="Source"
-          required
-          defaultValue={application?.source ?? "company_site"}
-          options={APPLICATION_SOURCES.map((s) => ({ value: s, label: SOURCE_LABELS[s] }))}
-          error={errors.source}
-        />
-      </Section>
+    <form action={run} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Vaga e empresa</CardTitle>
+            <CardDescription>Quem contrata e para qual posição.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Field
+              name="company"
+              label="Empresa"
+              required
+              value={company}
+              onChange={setCompany}
+              help="Vira (ou reaproveita) uma empresa pela chave normalizada."
+              error={errorText("company", errors)}
+            />
+            <Field
+              name="roleTitle"
+              label="Vaga / cargo"
+              value={roleTitle}
+              onChange={setRoleTitle}
+              error={errorText("roleTitle", errors)}
+            />
+            <Field
+              name="market"
+              label="Mercado"
+              value={market}
+              onChange={setMarket}
+              help="ex.: CA, IE, DE, EU-remoto, BR-B2B"
+              error={errorText("market", errors)}
+            />
+            <Field
+              name="locationText"
+              label="Local"
+              defaultValue={application?.locationText}
+              help="ex.: Toronto, ON · Remoto (EU)"
+              error={errorText("locationText", errors)}
+            />
+            <Field
+              name="folderName"
+              label="Chave natural (pasta)"
+              value={folderValue}
+              onChange={(value) => {
+                setFolderTouched(true);
+                setFolderName(value);
+              }}
+              mono
+              help="É o que impede o MCP de duplicar esta candidatura. Use o nome exato da pasta em “04 - Candidaturas”."
+              error={errorText("folderName", errors)}
+            />
+          </CardContent>
+        </Card>
 
-      <Section title="Pipeline">
-        <Select
-          name="status"
-          label="Status"
-          required
-          defaultValue={application?.status ?? "not_applied"}
-          options={APPLICATION_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] }))}
-          error={errors.status}
-        />
-        <Field name="appliedAt" label="Applied date" type="date" defaultValue={application?.appliedAt ?? ""} />
-        <Field name="followUp" label="Follow-up" defaultValue={application?.followUp ?? ""} help="a date or a short note" />
-        <Field name="targetSalary" label="Target salary" defaultValue={application?.targetSalary ?? ""} />
-        <Checkbox name="sponsorsVisa" label="Sponsors visa" defaultChecked={application?.sponsorsVisa ?? false} />
-      </Section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Funil</CardTitle>
+            <CardDescription>
+              Em que ponto está e por qual rota ela passa.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="stage">Estágio</Label>
+              <Select name="stage" defaultValue={application?.stage ?? "radar"}>
+                <SelectTrigger
+                  id="stage"
+                  className="w-full"
+                  aria-invalid={Boolean(errors.stage)}
+                >
+                  <SelectValue placeholder="Estágio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FUNNEL_STAGE_PHASES.map((phase) => (
+                    <SelectGroup key={phase.key}>
+                      <SelectLabel>{phase.label}</SelectLabel>
+                      {phase.stages.map((stage) => (
+                        <SelectItem key={stage} value={stage}>
+                          {FUNNEL_STAGE_LABELS[stage]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errorText("stage", errors) && (
+                <p className="text-xs text-destructive">
+                  {errorText("stage", errors)}
+                </p>
+              )}
+            </div>
 
-      <Section title="Links & notes" className="md:col-span-2">
-        <Field name="careersUrl" label="Careers page URL" type="url" defaultValue={application?.careersUrl ?? ""} error={errors.careersUrl} />
-        <Field name="jobUrl" label="Job posting URL" type="url" defaultValue={application?.jobUrl ?? ""} error={errors.jobUrl} />
-        <Textarea name="notes" label="Notes" rows={4} defaultValue={application?.notes ?? ""} />
-      </Section>
+            <div className="space-y-1.5">
+              <Label htmlFor="sponsorship">Patrocínio de visto</Label>
+              <Select
+                name="sponsorship"
+                defaultValue={application?.sponsorship ?? INHERIT_SPONSORSHIP}
+              >
+                <SelectTrigger
+                  id="sponsorship"
+                  className="w-full"
+                  aria-invalid={Boolean(errors.sponsorship)}
+                >
+                  <SelectValue placeholder="Patrocínio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={INHERIT_SPONSORSHIP}>
+                    Herdar da vaga
+                  </SelectItem>
+                  {SPONSORSHIP_SIGNALS.map((signal) => (
+                    <SelectItem
+                      key={signal}
+                      value={signal}
+                      title={SPONSORSHIP_HINTS[signal]}
+                    >
+                      {SPONSORSHIP_LABELS[signal]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                “Não se aplica (B2B/contractor)” é a rota remota — o gate de
+                visto não vale para ela.
+              </p>
+            </div>
 
-      {state.status === "error" && state.message ? (
-        <p className="md:col-span-2 border border-[var(--red)]/40 bg-[var(--red)]/10 px-3 py-2 font-mono text-[11px] tracking-[0.04em] text-[var(--red)]">
+            <SelectField
+              name="source"
+              label="Origem"
+              defaultValue={application?.source ?? "company_site"}
+              options={APPLICATION_SOURCES.map((value) => ({
+                value,
+                label: SOURCE_LABELS[value],
+              }))}
+              error={errorText("source", errors)}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                name="fit"
+                label="Aderência"
+                defaultValue={application?.fit}
+                help="ex.: ⭐, ⭐ Go, Bom"
+                error={errorText("fit", errors)}
+              />
+              <Field
+                name="priority"
+                label="Prioridade"
+                type="number"
+                defaultValue={
+                  application?.priority != null
+                    ? String(application.priority)
+                    : ""
+                }
+                help="1 = maior"
+                error={errorText("priority", errors)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Datas e alvo</CardTitle>
+            <CardDescription>
+              O que alimenta a métrica de conversão.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Field
+              name="appliedAt"
+              label="Enviada em"
+              type="date"
+              defaultValue={application?.appliedAt}
+              error={errorText("appliedAt", errors)}
+            />
+            <Field
+              name="followUp"
+              label="Follow-up"
+              defaultValue={application?.followUp}
+              help="uma data ou uma nota curta"
+              error={errorText("followUp", errors)}
+            />
+            <Field
+              name="targetSalary"
+              label="Alvo salarial"
+              defaultValue={application?.targetSalary}
+              error={errorText("targetSalary", errors)}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Links</CardTitle>
+            <CardDescription>
+              A URL da vaga é a chave natural da vaga — sem ela, nenhuma vaga é
+              criada.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Field
+              name="jobUrl"
+              label="URL da vaga"
+              type="url"
+              defaultValue={application?.jobUrl}
+              error={errorText("jobUrl", errors)}
+            />
+            <Field
+              name="careersUrl"
+              label="URL da página de carreiras"
+              type="url"
+              defaultValue={application?.careersUrl}
+              help="Fica na empresa, não na vaga."
+              error={errorText("careersUrl", errors)}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Notas</CardTitle>
+            <CardDescription>
+              Markdown. O que você precisa lembrar antes de falar com eles.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1.5">
+              <Label htmlFor="notesMd">Notas</Label>
+              <Textarea
+                id="notesMd"
+                name="notesMd"
+                rows={5}
+                defaultValue={application?.notesMd ?? ""}
+                aria-invalid={Boolean(errors.notesMd)}
+              />
+              {errorText("notesMd", errors) && (
+                <p className="text-xs text-destructive">
+                  {errorText("notesMd", errors)}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {state.status === "error" && (
+        <p className="text-sm text-destructive">
           {state.message === "db_unavailable"
-            ? "Database is not configured."
-            : "Something went wrong saving the application. Try again."}
+            ? "Banco de dados indisponível — nada foi salvo."
+            : state.message === "unexpected"
+              ? "Não foi possível salvar a candidatura. Tente novamente."
+              : "Confira os campos destacados."}
         </p>
-      ) : null}
+      )}
 
-      <div className="md:col-span-2 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--border)] pt-6">
-        <Link
-          href="/admin/applications"
-          className="border border-[var(--border-2)] px-5 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-        >
-          Cancel
-        </Link>
-        <button
-          type="submit"
-          disabled={pending}
-          className={cn(
-            "inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-6 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-60",
-            !pending && "hover:opacity-90"
-          )}
-        >
-          {pending ? "Saving…" : isEdit ? "Save changes" : "Add application"}
-        </button>
+      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/admin/applications">Cancelar</Link>
+        </Button>
+        <Button type="submit" size="sm" disabled={pending}>
+          <Save className="size-4" />
+          {pending
+            ? "Salvando…"
+            : isEdit
+              ? "Salvar alterações"
+              : "Criar candidatura"}
+        </Button>
       </div>
     </form>
   );
 }
 
-const inputClass =
-  "border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none";
-
-function Section({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
-  return (
-    <fieldset className={cn("flex flex-col gap-4 border border-[var(--border)] bg-[var(--surface)] p-5", className)}>
-      <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--accent)]">{title}</legend>
-      {children}
-    </fieldset>
-  );
-}
-
-function Label({ htmlFor, children, required }: { htmlFor: string; children: React.ReactNode; required?: boolean }) {
-  return (
-    <label htmlFor={htmlFor} className="flex items-center gap-1 font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-      {children}
-      {required ? <span className="text-[var(--accent)]">*</span> : null}
-    </label>
-  );
-}
-function Help({ children }: { children: React.ReactNode }) {
-  return <p className="font-mono text-[10px] tracking-[0.02em] text-[var(--muted)]">{children}</p>;
-}
-function ErrorLine({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return <p className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--red)]">{msg}</p>;
-}
+/* ── Campos: composição dos primitivos shadcn, nada caseiro (A6) ─────────── */
 
 function Field({
   name,
@@ -146,82 +441,78 @@ function Field({
   required,
   type = "text",
   defaultValue,
+  value,
+  onChange,
   help,
   error,
+  mono,
 }: {
   name: string;
   label: string;
   required?: boolean;
   type?: string;
   defaultValue?: string | null;
+  /** Controlado só onde o valor alimenta a derivação da chave natural. */
+  value?: string;
+  onChange?: (value: string) => void;
   help?: string;
   error?: string;
+  mono?: boolean;
 }) {
+  const controlled =
+    value !== undefined && onChange !== undefined
+      ? { value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value) }
+      : { defaultValue: defaultValue ?? "" };
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name} required={required}>{label}</Label>
-      <input id={name} name={name} type={type} defaultValue={defaultValue ?? ""} required={required} className={inputClass} />
-      {help ? <Help>{help}</Help> : null}
-      <ErrorLine msg={error} />
+    <div className="space-y-1.5">
+      <Label htmlFor={name}>
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </Label>
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        required={required}
+        aria-invalid={Boolean(error)}
+        className={mono ? "font-mono text-xs" : undefined}
+        {...controlled}
+      />
+      {help && <p className="text-xs text-muted-foreground">{help}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
 
-function Select({
+function SelectField({
   name,
   label,
-  required,
   defaultValue,
   options,
   error,
 }: {
   name: string;
   label: string;
-  required?: boolean;
-  defaultValue?: string;
+  defaultValue: string;
   options: { value: string; label: string }[];
   error?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name} required={required}>{label}</Label>
-      <select id={name} name={name} defaultValue={defaultValue} required={required} className={inputClass}>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-      <ErrorLine msg={error} />
-    </div>
-  );
-}
-
-function Textarea({
-  name,
-  label,
-  rows = 3,
-  defaultValue,
-  help,
-}: {
-  name: string;
-  label: string;
-  rows?: number;
-  defaultValue?: string | null;
-  help?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
+    <div className="space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
-      <textarea id={name} name={name} rows={rows} defaultValue={defaultValue ?? ""} className={cn(inputClass, "resize-y font-mono text-[13px]")} />
-      {help ? <Help>{help}</Help> : null}
+      <Select name={name} defaultValue={defaultValue}>
+        <SelectTrigger id={name} className="w-full" aria-invalid={Boolean(error)}>
+          <SelectValue placeholder={label} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
-  );
-}
-
-function Checkbox({ name, label, defaultChecked }: { name: string; label: string; defaultChecked?: boolean }) {
-  return (
-    <label className="inline-flex cursor-pointer items-center gap-2 font-mono text-[12px] tracking-[0.02em] text-[var(--text-2)]">
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="h-4 w-4 accent-[var(--accent)]" />
-      {label}
-    </label>
   );
 }

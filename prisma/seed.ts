@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { projects as STATIC_PROJECTS } from "../src/lib/projects";
 import { encodeStringList } from "../src/lib/json-list";
+import { buildFolderName, slugPart } from "../src/lib/applications";
 
 const db = new PrismaClient();
 
@@ -117,35 +118,237 @@ const APPLICATIONS: [string, string, string, string, string, string?][] = [
   ["NL", "TomTom", "Amsterdã", "Bom", "https://www.tomtom.com/careers"],
 ];
 
+/**
+ * Alvos iniciais do tracker, agora no modelo NORMALIZADO
+ * (`Company` + `Job` + `Application`). O model plano `JobApplication` foi
+ * dropado no F2a; a migration `20260816170000_application_cutover` converteu as
+ * linhas que ja estavam no banco.
+ *
+ * A idempotencia mudou de forma: antes era `count() > 0` no inicio (reimportar
+ * duplicava tudo se a tabela estivesse parcialmente preenchida). Agora e por
+ * CHAVE NATURAL, linha a linha — e as chaves sao calculadas com as MESMAS
+ * regras da migration e das telas (`slugPart`/`buildFolderName`), de forma que
+ * rodar o seed depois do cutover reencontra as linhas migradas em vez de criar
+ * um segundo conjunto. Se voce mudar a regra de slug em um lugar, mude nos
+ * tres.
+ */
 async function seedApplications() {
-  const existing = await db.jobApplication.count();
-  if (existing > 0) {
-    console.log(`[seed] applications already populated (${existing}) — skipping.`);
-    return;
-  }
+  let companies = 0;
+  let jobs = 0;
+  let applications = 0;
+
   for (const [country, company, city, fit, careersUrl, notes] of APPLICATIONS) {
-    await db.jobApplication.create({
-      data: {
-        company,
+    const companyFolder = slugPart(company);
+    const companyRow = await db.company.upsert({
+      where: { folderName: companyFolder },
+      // `update: {}` de proposito: o seed nunca sobrescreve o que ja esta la —
+      // o MCP (vault) e fonte melhor que esta lista estatica.
+      update: {},
+      create: {
+        folderName: companyFolder,
+        name: company,
+        careersUrl,
         country,
         city,
-        fit,
-        careersUrl,
+        market: country,
+        lastMcpTool: "seed",
+        lastSeenAt: new Date(),
+      },
+      select: { id: true, createdAt: true, updatedAt: true },
+    });
+    if (companyRow.createdAt.getTime() === companyRow.updatedAt.getTime()) {
+      companies += 1;
+    }
+
+    // Chave natural da vaga: a pagina de carreiras serve varias vagas, entao a
+    // URL crua nao e chave — o fragmento do mercado desambigua (Datadog IE vs
+    // Datadog DE), exatamente como na migration.
+    const sourceUrl = `${careersUrl}#${slugPart(country)}`;
+    const jobRow = await db.job.upsert({
+      where: { sourceUrl },
+      update: {},
+      create: {
+        sourceUrl,
+        companyId: companyRow.id,
+        title: "Cargo a definir",
+        market: country,
+        locationText: [city, country].filter(Boolean).join(", "),
+        // A lista veio da varredura de empresas que patrocinam visto — este e
+        // o unico valor afirmado pela fonte. Vaga remota B2B entra pelo vault.
+        sponsorship: "explicit_support",
+        salaryText: SALARY[country] ?? null,
+        lastMcpTool: "seed",
+        lastSeenAt: new Date(),
+      },
+      select: { id: true },
+    });
+    jobs += 1;
+
+    const folderName = buildFolderName({ company, market: country });
+    const existing = await db.application.findUnique({
+      where: { folderName },
+      select: { id: true },
+    });
+    if (existing) continue;
+
+    await db.application.create({
+      data: {
+        folderName,
+        companyId: companyRow.id,
+        jobId: jobRow.id,
+        stage: "radar",
+        market: country,
         source: "company_site",
-        status: "not_applied",
-        sponsorsVisa: true,
+        fit,
         targetSalary: SALARY[country] ?? null,
-        notes: notes ?? null,
+        notesMd: notes ?? null,
+        lastMcpTool: "seed",
+        lastSeenAt: new Date(),
       },
     });
+    applications += 1;
   }
-  console.log(`[seed] inserted ${APPLICATIONS.length} applications.`);
+
+  console.log(
+    `[seed] applications: ${applications} nova(s), ${companies} empresa(s) nova(s), ${jobs} vaga(s) garantida(s).`
+  );
+}
+
+/// Regras invioláveis de enquadramento (R1–R8). São critério de REJEIÇÃO do
+/// gerador de F4, não sugestão — por isso viram dado, não prompt. O texto é
+/// transcrito da seção 2 do briefing; `forbiddenPatterns` é o gancho do
+/// validador determinístico. Nada aqui é inventado: quando um dado não é
+/// confirmado, o vault escreve `_(a preencher)_` e nós mantemos assim.
+const FRAMING_RULES: {
+  code: string;
+  title: string;
+  ruleMd: string;
+  scope: string;
+  forbiddenPatterns: string[];
+  canonicalText?: string;
+}[] = [
+  {
+    code: "R1",
+    title: '"6+ anos", nunca "7+"',
+    ruleMd:
+      'Sempre "6+ anos" de experiência. Nunca "7+". Já houve correção manual por divergência entre CV, LinkedIn e VanHack.',
+    scope: "all",
+    // O erro documentado nao aparece so como "7+": ja houve "7 years" liso no
+    // LinkedIn/VanHack. O padrao anterior ("7\\+\\s*(anos|years)") deixava
+    // passar "7 years", "7 yrs" e "over 7 years" — falso negativo justamente
+    // na regra que ja causou correcao manual.
+    forbiddenPatterns: [
+      "\\b7\\s*\\+?\\s*(anos|years|yrs)\\b",
+      "\\bseven\\s*\\+?\\s*(years|yrs)\\b",
+    ],
+    canonicalText: "6+ years",
+  },
+  {
+    code: "R2",
+    title: 'Nunca "degree". Nunca "incompleto"',
+    ruleMd:
+      "Formação se escreve exatamente: `Computer Systems Analysis (Technologist programme) — Faculdade SENAI Fatesg, 2018–2020`.",
+    scope: "all",
+    forbiddenPatterns: ["\\bdegree\\b", "\\bincompleto\\b", "\\bincomplete\\b"],
+    canonicalText:
+      "Computer Systems Analysis (Technologist programme) — Faculdade SENAI Fatesg, 2018–2020",
+  },
+  {
+    code: "R3",
+    title: 'cloudscraper.js é "wrapper", nunca "port"',
+    ruleMd:
+      'Ao citar o cloudscraper.js, use "wrapper". A palavra "port" é proibida nesse contexto.',
+    scope: "all",
+    // O separador `[^.]` era fatal: o proprio nome do projeto tem um ponto
+    // ("cloudscraper.js"), entao a regra NUNCA casava com a frase que ela
+    // existe para barrar ("cloudscraper.js, a Node port of ..."). Delimitado
+    // por linha, e cobrindo port/ported/porting.
+    forbiddenPatterns: [
+      "cloudscraper[^\\n]{0,80}\\bport(ed|ing)?\\b",
+      "\\bport(ed|ing)?\\b[^\\n]{0,80}cloudscraper",
+    ],
+  },
+  {
+    code: "R4",
+    title: "A ponte Super Real Estate → Imobitech não pode ser afirmada",
+    ruleMd:
+      "Venda ainda em formalização. O arquivo `00 - Repositórios/Repositórios para fazer analise da minha experiência.md` mostra a ponte sem o aviso ⚠️: está incompleto e é enganoso — não use como fonte.",
+    scope: "all",
+    forbiddenPatterns: ["Super Real Estate[^.]{0,120}Imobitech", "Imobitech[^.]{0,120}Super Real Estate"],
+  },
+  {
+    code: "R5",
+    title: "Nenhuma métrica inventada ou arredondada para cima",
+    ruleMd:
+      "`_(a preencher)_` significa 'não confirmado' — jamais substitua por número plausível. Métrica marcada como projeção de PRD não é benchmark medido. Toda métrica precisa estar na evidência recuperada.",
+    scope: "all",
+    forbiddenPatterns: [],
+  },
+  {
+    code: "R6",
+    title: "TypeScript/Node lidera sempre; Go é segunda linguagem",
+    ruleMd:
+      "Go nunca é âncora, mesmo sustentando os feitos mais impressionantes (41 bounded contexts, backoffice de ~23,4k LOC em uma semana, cloudscraper-go). Decisão registrada: Go é mais raso que TS. Codificado em `Skill.anchorRank` (TS/Node = 1).",
+    scope: "resume",
+    forbiddenPatterns: [],
+  },
+  {
+    code: "R7",
+    title: "VendorHub Sistemas não recebe métricas",
+    ruleMd:
+      "Sem dossiê; empresa com registro suspenso em out/2023. Cite o vínculo sem número.",
+    scope: "all",
+    // "VendorHub[^.]{0,120}\\d" barrava tambem as DATAS do vinculo
+    // ("VendorHub Sistemas — 2021–2023"), que sao obrigatorias no CV: a regra
+    // e blocking, entao o falso positivo reprovaria todo CV honesto. Restringe
+    // a numeros com forma de METRICA.
+    forbiddenPatterns: [
+      "VendorHub[^.]{0,120}\\b\\d+(?:[.,]\\d+)?\\s*(%|k\\b|mil\\b|million\\b|LOC\\b|commits?\\b|usu[aá]rios?\\b|users?\\b|clientes?\\b|x\\b)",
+    ],
+  },
+  {
+    code: "R8",
+    title: "Data do facematch Python da DataSíntese está em disputa",
+    ruleMd:
+      "Informado out/2023→mar/2024, mas o `requirements.txt` fixa pacotes de 2025. Não use essa data em CV até resolver.",
+    scope: "resume",
+    forbiddenPatterns: [],
+  },
+];
+
+async function seedFramingRules() {
+  // Idempotente e não-destrutivo: só insere o que ainda não existe, para não
+  // clobberar edições feitas pelo humano na UI do admin.
+  let inserted = 0;
+  for (const rule of FRAMING_RULES) {
+    const existing = await db.framingRule.findUnique({ where: { code: rule.code } });
+    if (existing) continue;
+    await db.framingRule.create({
+      data: {
+        code: rule.code,
+        title: rule.title,
+        ruleMd: rule.ruleMd,
+        scope: rule.scope,
+        severity: "blocking",
+        forbiddenPatterns: rule.forbiddenPatterns,
+        canonicalText: rule.canonicalText ?? null,
+        sourcePath: "briefing/regras-invioláveis-de-conteúdo",
+      },
+    });
+    inserted++;
+  }
+  console.log(
+    inserted > 0
+      ? `[seed] inserted ${inserted} framing rules (R1–R8).`
+      : "[seed] framing rules already populated — skipping."
+  );
 }
 
 async function main() {
   await seedAdmin();
   await seedProjects();
   await seedApplications();
+  await seedFramingRules();
 }
 
 main()

@@ -1,98 +1,168 @@
 "use client";
 
+/**
+ * CV + cover letter generator form.
+ *
+ * `useTransition` instead of `useActionState` (AGENTS.md §5): the result is in
+ * hand inside the same callback, so the toast fires without a `useEffect`
+ * watching state — the pattern `react-hooks/set-state-in-effect` flags.
+ * `generate` keeps its legacy `(prevState, formData)` signature, so the idle
+ * state is passed explicitly; the action module belongs to another workstream
+ * and is intentionally untouched here.
+ */
+
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { Download, Copy, Check, FileText, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { generate, type GenState } from "@/app/_actions/generator";
-import { cn } from "@/lib/utils";
+import { GENERATOR_LANGUAGES } from "@/app/admin/generator/languages";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
-const initial: GenState = { status: "idle" };
+const IDLE: GenState = { status: "idle" };
 
-const inputClass =
-  "border border-[var(--border-2)] bg-[var(--surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none";
+/**
+ * `src/app/_actions/generator.ts` still returns English strings (and two
+ * machine keys). The backoffice is pt-BR (A4), so the copy is mapped here.
+ * An unmapped message falls through unchanged rather than being swallowed.
+ */
+const ERROR_MESSAGES: Record<string, string> = {
+  unauthorized: "Sessão expirada — entre novamente.",
+  db_unavailable: "Banco de dados não configurado.",
+  "Paste a fuller job description (40+ characters).":
+    "Cole uma descrição de vaga mais completa (mínimo de 40 caracteres).",
+  "OPENAI_API_KEY is not set on the server.":
+    "OPENAI_API_KEY não está definida no servidor.",
+  "Knowledge base is empty — run `npm run db:ingest`.":
+    "A base de conhecimento está vazia — rode `pnpm db:ingest`.",
+  "Generation failed. Check the server logs and try again.":
+    "A geração falhou. Confira os logs do servidor e tente de novo.",
+};
+
+function errorMessage(raw: string): string {
+  return ERROR_MESSAGES[raw] ?? raw;
+}
 
 export function GeneratorForm() {
-  const [state, run, pending] = useActionState<GenState, FormData>(generate, initial);
+  const [result, setResult] = useState<GenState>(IDLE);
+  const [isPending, startTransition] = useTransition();
+
+  function onSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await generate(IDLE, formData);
+      setResult(res);
+      if (res.status === "error") {
+        toast.error(errorMessage(res.message));
+        return;
+      }
+      if (res.status === "success") {
+        toast.success("Materiais gerados.");
+      }
+    });
+  }
 
   return (
     <>
-      <form
-        action={run}
-        className="flex flex-col gap-5 border border-[var(--border)] bg-[var(--surface)] p-5"
-      >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Field name="roleTitle" label="Role title" placeholder="Senior Backend Engineer" />
-          <Field name="company" label="Company" placeholder="Acme Inc." />
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="language">Language</Label>
-            <select id="language" name="language" defaultValue="en" className={inputClass}>
-              <option value="en">English</option>
-              <option value="pt-BR">Português (BR)</option>
-            </select>
-          </div>
-        </div>
+      <Card>
+        <CardContent>
+          <form action={onSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="roleTitle">Vaga</Label>
+                <Input
+                  id="roleTitle"
+                  name="roleTitle"
+                  placeholder="Senior Backend Engineer"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="company">Empresa</Label>
+                <Input id="company" name="company" placeholder="Acme Inc." />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="language">Idioma</Label>
+                {/* Radix renders a hidden native select for `name`, so the
+                    value reaches the FormData without a mirror input. */}
+                <Select name="language" defaultValue="en">
+                  <SelectTrigger id="language" className="w-full">
+                    <SelectValue placeholder="Idioma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENERATOR_LANGUAGES.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>
+                        {l.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="jobDescription" required>
-            Job description
-          </Label>
-          <textarea
-            id="jobDescription"
-            name="jobDescription"
-            required
-            rows={10}
-            placeholder="Paste the full job description here…"
-            className={cn(inputClass, "resize-y font-mono text-[13px]")}
-          />
-        </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="jobDescription">Descrição da vaga *</Label>
+              <Textarea
+                id="jobDescription"
+                name="jobDescription"
+                required
+                rows={12}
+                placeholder="Cole aqui a descrição completa da vaga…"
+                className="min-h-64 resize-y font-mono"
+              />
+            </div>
 
-        {state.status === "error" ? (
-          <p className="border border-[var(--red)]/40 bg-[var(--red)]/10 px-3 py-2 font-mono text-[11px] tracking-[0.04em] text-[var(--red)]">
-            {state.message === "unauthorized"
-              ? "Session expired — sign in again."
-              : state.message === "db_unavailable"
-                ? "Database is not configured."
-                : state.message}
-          </p>
-        ) : null}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                Ancorado no seu CV e dossiês — nunca inventa fatos nem diploma.
+              </p>
+              <Button type="submit" disabled={isPending}>
+                <Sparkles className="size-4" />
+                {isPending ? "Gerando…" : "Gerar"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-[10px] tracking-[0.02em] text-[var(--muted)]">
-            Grounded in your CV/dossiers · never fabricates facts or a degree.
-          </p>
-          <button
-            type="submit"
-            disabled={pending}
-            className={cn(
-              "inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent)] px-6 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-60",
-              !pending && "hover:opacity-90"
-            )}
-          >
-            {pending ? "Generating…" : "Generate"}
-          </button>
-        </div>
-      </form>
-
-      {state.status === "success" ? (
-        <div className="mt-8 flex flex-col gap-6">
+      {result.status === "success" ? (
+        <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)]">
-              Sources: {state.sources.join(" · ") || "—"}
+            <p className="text-xs text-muted-foreground">
+              Fontes: {result.sources.join(" · ") || "—"}
             </p>
-            {state.id ? (
-              <Link
-                href={`/admin/generator/${state.id}`}
-                className="border border-[var(--border-2)] px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              >
-                Open print view (PDF) →
-              </Link>
+            {result.id ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/admin/generator/${result.id}`}>
+                  <FileText className="size-4" />
+                  Abrir versão de impressão (PDF)
+                </Link>
+              </Button>
             ) : null}
           </div>
-          <ResultBlock title="Résumé" filename="resume.md" content={state.resume} />
-          <ResultBlock title="Cover letter" filename="cover-letter.md" content={state.coverLetter} />
           <ResultBlock
-            title="Screening answers"
+            title="Currículo"
+            filename="resume.md"
+            content={result.resume}
+          />
+          <ResultBlock
+            title="Carta de apresentação"
+            filename="cover-letter.md"
+            content={result.coverLetter}
+          />
+          <ResultBlock
+            title="Respostas de triagem"
             filename="screening-answers.md"
-            content={state.screeningAnswers}
+            content={result.screeningAnswers}
           />
         </div>
       ) : null}
@@ -115,9 +185,10 @@ function ResultBlock({
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
+      toast.success("Copiado para a área de transferência.");
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* clipboard blocked — ignore */
+      toast.error("O navegador bloqueou o acesso à área de transferência.");
     }
   };
 
@@ -131,64 +202,30 @@ function ResultBlock({
     URL.revokeObjectURL(url);
   };
 
-  const btn =
-    "border border-[var(--border-2)] px-3 py-1 font-display text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]";
-
   return (
-    <section className="border border-[var(--border)] bg-[var(--surface)]">
-      <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-2.5">
-        <h3 className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--accent)]">
-          {title}
-        </h3>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={copy} className={btn}>
-            {copied ? "Copied" : "Copy"}
-          </button>
-          <button type="button" onClick={download} className={btn}>
-            .md
-          </button>
+    <Card>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-medium">{title}</h3>
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="sm" onClick={copy}>
+              {copied ? (
+                <Check className="size-4" />
+              ) : (
+                <Copy className="size-4" />
+              )}
+              {copied ? "Copiado" : "Copiar"}
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={download}>
+              <Download className="size-4" />
+              .md
+            </Button>
+          </div>
         </div>
-      </header>
-      <pre className="max-h-[30rem] overflow-auto whitespace-pre-wrap px-4 py-4 font-mono text-[12.5px] leading-relaxed text-[var(--text-2)]">
-        {content || "(empty)"}
-      </pre>
-    </section>
-  );
-}
-
-function Label({
-  htmlFor,
-  children,
-  required,
-}: {
-  htmlFor: string;
-  children: React.ReactNode;
-  required?: boolean;
-}) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="flex items-center gap-1 font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]"
-    >
-      {children}
-      {required ? <span className="text-[var(--accent)]">*</span> : null}
-    </label>
-  );
-}
-
-function Field({
-  name,
-  label,
-  placeholder,
-}: {
-  name: string;
-  label: string;
-  placeholder?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name}>{label}</Label>
-      <input id={name} name={name} type="text" placeholder={placeholder} className={inputClass} />
-    </div>
+        <pre className="max-h-[30rem] overflow-auto border border-border bg-muted/30 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+          {content || "(vazio)"}
+        </pre>
+      </CardContent>
+    </Card>
   );
 }

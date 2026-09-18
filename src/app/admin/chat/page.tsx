@@ -1,316 +1,357 @@
-import Link from "next/link";
+import { Suspense } from "react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Coins, Gauge, MessageSquare, Sun, Users, Zap } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 import { CHAT_LIMITS } from "@/lib/chat-log";
+import { formatDateTime, formatNumber } from "@/lib/format";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { PageHeader } from "@/components/admin/page-header";
+import { StatusBadge } from "@/components/admin/status-badge";
+import {
+  TableEmptyRow,
+  TableSkeletonRows,
+} from "@/components/admin/table-pager";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { StatCard } from "../_components/stat-card";
+import { CHAT_STATUS_STYLES } from "./chat-status";
+import { ChatToolbar } from "./chat-toolbar";
 
+export const metadata: Metadata = {
+  title: "Chat · admin · maarkn.dev",
+  robots: { index: false, follow: false },
+};
+
+/** Guard + searchParams: never prerender this route. */
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 25;
+const COLS = 6;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const STAT_TILES = 6;
+
+function one(v: string | string[] | undefined): string {
+  return (Array.isArray(v) ? v[0] : v) ?? "";
+}
+
+/**
+ * Start of the current UTC day — the same boundary `lib/chat-log.ts` uses for
+ * the global daily budget, so the tile and the limiter never disagree.
+ *
+ * Module scope on purpose: `Date.now()` inside a component body is flagged by
+ * `react-hooks/purity`.
+ */
+function startOfUtcDay(): Date {
+  return new Date(Math.floor(Date.now() / DAY_MS) * DAY_MS);
+}
 
 export default async function AdminChatPage({
   searchParams,
 }: PageProps<"/admin/chat">) {
   const session = await auth();
-  if (!session?.user) redirect("/admin/login");
+  if (!session?.user) redirect("/admin/login"); // A1
 
-  const params = await searchParams;
-  const page = Math.max(1, Number.parseInt(pick(params.page) ?? "1", 10) || 1);
-  const skip = (page - 1) * PAGE_SIZE;
-
-  const dayStart = new Date(Math.floor(Date.now() / DAY_MS) * DAY_MS);
-
-  const [total, todayCount, uniqueVisitors, totals, todayTotals, rows] =
-    dbConfigured
-      ? await Promise.all([
-          db.chatLog.count(),
-          db.chatLog.count({ where: { createdAt: { gte: dayStart } } }),
-          db.chatLog.groupBy({ by: ["clientKeyHash"] }).then((g) => g.length),
-          db.chatLog.aggregate({
-            _sum: { promptTokens: true, answerTokens: true },
-          }),
-          db.chatLog.aggregate({
-            where: { createdAt: { gte: dayStart } },
-            _sum: { promptTokens: true, answerTokens: true },
-          }),
-          db.chatLog.findMany({
-            orderBy: { createdAt: "desc" },
-            skip,
-            take: PAGE_SIZE,
-          }),
-        ])
-      : [0, 0, 0, { _sum: {} }, { _sum: {} }, []];
-
-  const totalTokens =
-    (totals._sum.promptTokens ?? 0) + (totals._sum.answerTokens ?? 0);
-  const todayTokens =
-    (todayTotals._sum.promptTokens ?? 0) + (todayTotals._sum.answerTokens ?? 0);
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const dailyPct = Math.min(
-    100,
-    Math.round((todayCount / CHAT_LIMITS.dailyMax) * 100)
-  );
+  const sp = await searchParams; // Next 16: searchParams is a Promise
+  const q = one(sp.q);
+  const status = one(sp.status);
+  const page = Math.max(1, Number.parseInt(one(sp.page), 10) || 1);
 
   return (
     <AdminShell email={session.user.email ?? "admin"}>
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent)]">
-          Assistant
-        </p>
-        <h1 className="mt-2 font-display text-[1.8rem] font-bold tracking-tight text-[var(--text)]">
-          Chat usage &amp; logs
-        </h1>
-        <p className="mt-2 max-w-xl text-sm font-light text-[var(--muted)]">
-          Every visitor turn that reaches the model, with rough token estimates.
-          Rate limits: {CHAT_LIMITS.perIpMax} msgs/visitor per{" "}
-          {Math.round(CHAT_LIMITS.perIpWindowMs / 60000)}min ·{" "}
-          {CHAT_LIMITS.dailyMax}/day globally.
-        </p>
-      </div>
-
-      {!dbConfigured ? (
-        <p className="mt-6 inline-block border border-[var(--red)]/40 bg-[var(--red)]/10 px-3 py-2 font-mono text-[11px] tracking-[0.04em] text-[var(--red)]">
-          DATABASE_URL is not set — chat logs are unavailable.
-        </p>
-      ) : null}
-
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Stat label="Messages" value={fmt(total)} />
-        <Stat label="Today" value={fmt(todayCount)} />
-        <Stat label="Visitors" value={fmt(uniqueVisitors)} />
-        <Stat label="Tokens (est.)" value={fmt(totalTokens)} />
-        <Stat label="Tokens today" value={fmt(todayTokens)} />
-        <Stat
-          label="Daily budget"
-          value={`${dailyPct}%`}
-          hint={`${fmt(todayCount)} / ${fmt(CHAT_LIMITS.dailyMax)}`}
-          bar={dailyPct}
+      <div className="space-y-4">
+        <PageHeader
+          title="Chat"
+          description={`Cada turno de visitante que chega ao modelo, com estimativa de tokens. Limites: ${CHAT_LIMITS.perIpMax} msgs por visitante a cada ${Math.round(
+            CHAT_LIMITS.perIpWindowMs / 60000,
+          )} min · ${CHAT_LIMITS.dailyMax}/dia no total.`}
         />
-      </div>
 
-      <div className="mt-8 overflow-x-auto border border-[var(--border)]">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-[var(--border)] bg-[var(--surface-2)]">
-            <tr>
-              <Th>When</Th>
-              <Th>Conversation</Th>
-              <Th className="hidden md:table-cell">Visitor</Th>
-              <Th className="hidden sm:table-cell">Status</Th>
-              <Th className="text-right">Tokens</Th>
-              <Th className="hidden lg:table-cell text-right">Latency</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="bg-[var(--surface)] px-4 py-12 text-center text-[var(--muted)]"
-                >
-                  No chat activity yet.
-                </td>
-              </tr>
-            ) : (
-              rows.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-b border-[var(--border)] bg-[var(--surface)] align-top hover:bg-[var(--surface-2)]"
-                >
-                  <Td className="whitespace-nowrap font-mono text-[10px] tracking-[0.02em] text-[var(--muted)]">
-                    {formatDate(r.createdAt)}
-                    <span className="mt-1 block uppercase tracking-[0.1em] text-[var(--muted)]/70">
-                      {r.locale}
-                    </span>
-                  </Td>
-                  <Td>
-                    <details className="group max-w-[560px]">
-                      <summary className="cursor-pointer list-none font-mono text-[13px] font-medium text-[var(--text)] marker:hidden">
-                        <span className="line-clamp-2 group-open:line-clamp-none">
-                          {r.question || "—"}
-                        </span>
-                        <span className="mt-1 inline-block font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--accent)] group-open:hidden">
-                          show answer ↓
-                        </span>
-                      </summary>
-                      <div className="mt-3 border-l-2 border-[var(--accent)]/40 pl-3 text-[13px] font-light leading-[1.6] text-[var(--text-2)]">
-                        <p className="whitespace-pre-wrap">
-                          {r.answer || (
-                            <span className="italic text-[var(--muted)]">
-                              (no answer captured)
-                            </span>
-                          )}
-                        </p>
-                        <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--muted)]">
-                          {r.model || "—"}
-                        </p>
-                      </div>
-                    </details>
-                  </Td>
-                  <Td className="hidden md:table-cell font-mono text-[10px] tracking-[0.02em] text-[var(--muted)]">
-                    {r.clientKeyHash.slice(0, 8)}
-                  </Td>
-                  <Td className="hidden sm:table-cell">
-                    <StatusPill status={r.status} />
-                  </Td>
-                  <Td className="text-right font-mono text-[11px] text-[var(--text-2)]">
-                    {fmt(r.promptTokens + r.answerTokens)}
-                    <span className="block text-[9px] text-[var(--muted)]">
-                      {fmt(r.promptTokens)}+{fmt(r.answerTokens)}
-                    </span>
-                  </Td>
-                  <Td className="hidden lg:table-cell text-right font-mono text-[10px] text-[var(--muted)]">
-                    {r.latencyMs ? `${(r.latencyMs / 1000).toFixed(1)}s` : "—"}
-                  </Td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+        {!dbConfigured ? (
+          <Card size="sm">
+            <CardContent className="text-destructive">
+              DATABASE_URL não está definida — os logs do chat ficam
+              indisponíveis.
+            </CardContent>
+          </Card>
+        ) : null}
 
-      {totalPages > 1 ? (
-        <div className="mt-5 flex items-center justify-between">
-          <PageLink page={page - 1} disabled={page <= 1}>
-            ← Newer
-          </PageLink>
-          <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--muted)]">
-            Page {page} of {totalPages}
-          </span>
-          <PageLink page={page + 1} disabled={page >= totalPages}>
-            Older →
-          </PageLink>
-        </div>
-      ) : null}
+        <Suspense fallback={<StatsSkeleton />}>
+          <ChatStats />
+        </Suspense>
+
+        <Suspense
+          key={`${q}|${status}|${page}`}
+          fallback={<ChatTableSkeleton />}
+        >
+          <ChatLogsTable q={q} status={status} page={page} />
+        </Suspense>
+      </div>
     </AdminShell>
   );
 }
 
-function pick(v: string | string[] | undefined): string | undefined {
-  if (!v) return undefined;
-  return Array.isArray(v) ? v[0] : v;
-}
+/* ── KPI tiles ────────────────────────────────────────────────────────────── */
 
-function fmt(n: number): string {
-  return new Intl.NumberFormat("en-US").format(n);
-}
-
-function formatDate(d: Date): string {
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(d);
-  } catch {
-    return "";
-  }
-}
-
-function Stat({
-  label,
-  value,
-  hint,
-  bar,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  bar?: number;
-}) {
+function StatsSkeleton() {
   return (
-    <div className="border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-      <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
-        {label}
-      </p>
-      <p className="mt-1.5 font-display text-[1.4rem] font-bold leading-none tracking-tight text-[var(--text)]">
-        {value}
-      </p>
-      {hint ? (
-        <p className="mt-1 font-mono text-[9px] tracking-[0.04em] text-[var(--muted)]">
-          {hint}
-        </p>
-      ) : null}
-      {typeof bar === "number" ? (
-        <div className="mt-2 h-1 w-full bg-[var(--surface-2)]">
-          <div
-            className="h-1 bg-[var(--accent)]"
-            style={{ width: `${bar}%` }}
-          />
-        </div>
-      ) : null}
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      {Array.from({ length: STAT_TILES }, (_, i) => (
+        <Card key={`stat-skeleton-${i}`} size="sm">
+          <CardContent className="space-y-2">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-6 w-16" />
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const tone =
-    status === "ok"
-      ? "border-[var(--green)]/40 text-[var(--green)] bg-[var(--green)]/10"
-      : status === "error"
-        ? "border-[var(--red)]/40 text-[var(--red)] bg-[var(--red)]/10"
-        : status === "pending"
-          ? "border-[var(--accent)]/40 text-[var(--accent)] bg-[var(--accent)]/10"
-          : "border-[var(--border-2)] text-[var(--muted)] bg-[var(--surface-2)]";
-  return (
-    <span
-      className={`inline-flex border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] ${tone}`}
-    >
-      {status}
-    </span>
-  );
-}
+async function ChatStats() {
+  const dayStart = startOfUtcDay();
 
-function Th({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <th
-      className={`px-4 py-3 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)] ${className}`}
-    >
-      {children}
-    </th>
-  );
-}
-
-function Td({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <td className={`px-4 py-3 ${className}`}>{children}</td>;
-}
-
-function PageLink({
-  page,
-  disabled,
-  children,
-}: {
-  page: number;
-  disabled: boolean;
-  children: React.ReactNode;
-}) {
-  if (disabled) {
-    return (
-      <span className="border border-[var(--border)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)]/40">
-        {children}
-      </span>
-    );
+  // A3: without DATABASE_URL every tile reads zero instead of throwing.
+  let total = 0;
+  let todayCount = 0;
+  let visitors = 0;
+  let totalTokens = 0;
+  let todayTokens = 0;
+  if (dbConfigured) {
+    try {
+      const [t, today, uniq, totals, todayTotals] = await Promise.all([
+        db.chatLog.count(),
+        db.chatLog.count({ where: { createdAt: { gte: dayStart } } }),
+        db.chatLog.groupBy({ by: ["clientKeyHash"] }).then((g) => g.length),
+        db.chatLog.aggregate({
+          _sum: { promptTokens: true, answerTokens: true },
+        }),
+        db.chatLog.aggregate({
+          where: { createdAt: { gte: dayStart } },
+          _sum: { promptTokens: true, answerTokens: true },
+        }),
+      ]);
+      total = t;
+      todayCount = today;
+      visitors = uniq;
+      totalTokens =
+        (totals._sum.promptTokens ?? 0) + (totals._sum.answerTokens ?? 0);
+      todayTokens =
+        (todayTotals._sum.promptTokens ?? 0) +
+        (todayTotals._sum.answerTokens ?? 0);
+    } catch (err) {
+      console.error("[admin] chat stats failed", err);
+    }
   }
+
+  const dailyPct = Math.min(
+    100,
+    Math.round((todayCount / CHAT_LIMITS.dailyMax) * 100),
+  );
+
   return (
-    <Link
-      href={`/admin/chat?page=${page}`}
-      className="border border-[var(--border)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-    >
-      {children}
-    </Link>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <StatCard
+        label="Mensagens"
+        value={formatNumber(total)}
+        icon={MessageSquare}
+      />
+      <StatCard label="Hoje" value={formatNumber(todayCount)} icon={Sun} />
+      <StatCard label="Visitantes" value={formatNumber(visitors)} icon={Users} />
+      <StatCard
+        label="Tokens (est.)"
+        value={formatNumber(totalTokens)}
+        icon={Coins}
+      />
+      <StatCard
+        label="Tokens hoje"
+        value={formatNumber(todayTokens)}
+        icon={Zap}
+      />
+      <StatCard
+        label="Orçamento diário"
+        value={`${dailyPct}%`}
+        hint={`${formatNumber(todayCount)} / ${formatNumber(CHAT_LIMITS.dailyMax)}`}
+        bar={dailyPct}
+        icon={Gauge}
+      />
+    </div>
+  );
+}
+
+/* ── table ────────────────────────────────────────────────────────────────── */
+
+function ChatTableHead() {
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Quando</TableHead>
+        <TableHead>Conversa</TableHead>
+        <TableHead className="hidden md:table-cell">Visitante</TableHead>
+        <TableHead className="hidden sm:table-cell">Status</TableHead>
+        <TableHead className="text-right">Tokens</TableHead>
+        <TableHead className="hidden lg:table-cell text-right">
+          Latência
+        </TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
+
+/** State 1 of §3: loading. */
+function ChatTableSkeleton() {
+  return (
+    <Card>
+      <CardContent>
+        <Table>
+          <ChatTableHead />
+          <TableBody>
+            <TableSkeletonRows cols={COLS} />
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function ChatLogsTable({
+  q,
+  status,
+  page,
+}: {
+  q: string;
+  status: string;
+  page: number;
+}) {
+  const where = {
+    ...(status ? { status } : {}),
+    ...(q ? { question: { contains: q, mode: "insensitive" as const } } : {}),
+  };
+
+  // A3: `next build` runs without DATABASE_URL — degrade, never throw.
+  let rows: Awaited<ReturnType<typeof db.chatLog.findMany>> = [];
+  let total = 0;
+  let failed = false;
+  if (dbConfigured) {
+    try {
+      [rows, total] = await Promise.all([
+        db.chatLog.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip: (page - 1) * PAGE_SIZE,
+          take: PAGE_SIZE,
+        }),
+        db.chatLog.count({ where }),
+      ]);
+    } catch (err) {
+      console.error("[admin] list chat logs failed", err);
+      failed = true;
+    }
+  }
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <Card>
+      <CardContent>
+        <ChatToolbar
+          q={q}
+          status={status}
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          position="top"
+        />
+
+        <Table>
+          <ChatTableHead />
+          <TableBody>
+            {failed || !dbConfigured ? (
+              <TableEmptyRow
+                cols={COLS}
+                destructive
+                message={
+                  dbConfigured
+                    ? "Não foi possível carregar os logs do chat."
+                    : "Banco indisponível: DATABASE_URL não está configurada."
+                }
+              />
+            ) : rows.length === 0 ? (
+              <TableEmptyRow cols={COLS} message="Nenhuma conversa encontrada." />
+            ) : (
+              rows.map((r) => (
+                <TableRow key={r.id} className="align-top">
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    {formatDateTime(r.createdAt)}
+                    <span className="mt-1 block font-mono text-xs uppercase">
+                      {r.locale}
+                    </span>
+                  </TableCell>
+                  <TableCell className="whitespace-normal">
+                    {/* Native <details>: the answer expands without shipping a
+                        client component per row. */}
+                    <details className="group max-w-[560px]">
+                      <summary className="cursor-pointer list-none font-medium marker:hidden">
+                        <span className="line-clamp-2 group-open:line-clamp-none">
+                          {r.question || "—"}
+                        </span>
+                        <span className="mt-1 inline-block text-xs text-brand group-open:hidden">
+                          ver resposta ↓
+                        </span>
+                      </summary>
+                      <div className="mt-3 border-l-2 border-brand/40 pl-3 leading-relaxed text-muted-foreground">
+                        <p className="whitespace-pre-wrap">
+                          {r.answer || (
+                            <span className="italic">
+                              (nenhuma resposta capturada)
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-2 font-mono text-xs">
+                          {r.model || "—"}
+                        </p>
+                      </div>
+                    </details>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell font-mono text-xs text-muted-foreground">
+                    {r.clientKeyHash.slice(0, 8)}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <StatusBadge status={r.status} styles={CHAT_STATUS_STYLES} />
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatNumber(r.promptTokens + r.answerTokens)}
+                    <span className="block text-xs text-muted-foreground">
+                      {formatNumber(r.promptTokens)}+
+                      {formatNumber(r.answerTokens)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-right tabular-nums text-muted-foreground">
+                    {r.latencyMs ? `${(r.latencyMs / 1000).toFixed(1)}s` : "—"}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+
+        <ChatToolbar
+          q={q}
+          status={status}
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          position="bottom"
+        />
+      </CardContent>
+    </Card>
   );
 }
