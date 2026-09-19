@@ -3,7 +3,7 @@ import { ArrowRight, History, Inbox, Send } from "lucide-react";
 import { FunnelStageBadge } from "@/components/admin/status-badge";
 import {
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -72,7 +72,7 @@ export function RecentEventsSkeleton() {
   return (
     <EventsCardShell>
       <EventsFrame>
-        <TableSkeletonRows rows={5} cols={COLS} />
+        <TableLoadingRow cols={COLS} />
       </EventsFrame>
     </EventsCardShell>
   );

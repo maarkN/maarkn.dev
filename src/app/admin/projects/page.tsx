@@ -13,9 +13,13 @@ import {
   ProjectStatusBadge,
   VisibilityBadge,
 } from "@/components/admin/status-badge";
-import { TableEmptyRow, TableSkeletonRows } from "@/components/admin/table-pager";
+import {
+  ListingIndexCell,
+  ListingIndexHead,
+  TableEmptyRow,
+  TableLoadingRow,
+} from "@/components/admin/table-pager";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -30,7 +34,8 @@ import { ProjectsToolbar } from "./projects-toolbar";
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
-const COLS = 7;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const COLS = 8;
 
 function one(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v) ?? "";
@@ -85,14 +90,15 @@ export default async function ProjectsPage({
 function ProjectsTableHead() {
   return (
     <TableHeader>
-      <TableRow>
-        <TableHead>Projeto</TableHead>
-        <TableHead>Categoria</TableHead>
-        <TableHead>Status</TableHead>
-        <TableHead>Código-fonte</TableHead>
-        <TableHead>Destaque</TableHead>
-        <TableHead>Atualizado em</TableHead>
-        <TableHead className="text-right">Ações</TableHead>
+      <TableRow className="hover:bg-transparent">
+        <ListingIndexHead />
+        <TableHead>projeto</TableHead>
+        <TableHead className="w-[12ch]">categoria</TableHead>
+        <TableHead className="w-[12ch]">status</TableHead>
+        <TableHead className="w-[12ch]">fonte</TableHead>
+        <TableHead className="w-[12ch]">destaque</TableHead>
+        <TableHead className="w-[20ch]">atualizado</TableHead>
+        <TableHead className="w-[12ch] text-right">acoes</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -101,16 +107,12 @@ function ProjectsTableHead() {
 /** State 1 of §3: loading. */
 function ProjectsTableSkeleton() {
   return (
-    <Card>
-      <CardContent>
-        <Table>
-          <ProjectsTableHead />
-          <TableBody>
-            <TableSkeletonRows cols={COLS} />
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <Table className="table-fixed">
+      <ProjectsTableHead />
+      <TableBody>
+        <TableLoadingRow cols={COLS} />
+      </TableBody>
+    </Table>
   );
 }
 
@@ -161,108 +163,112 @@ async function ProjectsTable({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <Card>
-      <CardContent>
-        <ProjectsToolbar
-          q={q}
-          category={category}
-          status={status}
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          position="top"
-        />
+    <div className="space-y-3">
+      <ProjectsToolbar
+        q={q}
+        category={category}
+        status={status}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        position="top"
+      />
 
-        <Table>
-          <ProjectsTableHead />
-          <TableBody>
-            {failed || !dbConfigured ? (
-              <TableEmptyRow
-                cols={COLS}
-                destructive
-                message={
-                  dbConfigured
-                    ? "Não foi possível carregar os projetos."
-                    : "Banco indisponível: DATABASE_URL não está configurada."
-                }
-              />
-            ) : rows.length === 0 ? (
-              <TableEmptyRow cols={COLS} />
-            ) : (
-              rows.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="flex size-9 shrink-0 items-center justify-center font-display text-[11px] font-bold tracking-tight text-white"
-                        style={{
-                          background: `linear-gradient(135deg, ${p.accentFrom}, ${p.accentTo})`,
-                        }}
-                      >
-                        {p.monogram}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="truncate font-medium">{p.name}</div>
-                        <div className="truncate font-mono text-xs text-muted-foreground">
-                          /{p.slug} · {p.year}
-                        </div>
+      <Table className="table-fixed">
+        <ProjectsTableHead />
+        <TableBody>
+          {failed || !dbConfigured ? (
+          <TableEmptyRow
+            cols={COLS}
+            destructive
+            message={
+              dbConfigured
+                ? "Não foi possível carregar os projetos."
+                : "Banco indisponível: DATABASE_URL não está configurada."
+            }
+          />
+        ) : rows.length === 0 ? (
+          <TableEmptyRow cols={COLS} />
+        ) : (
+          rows.map((p, index) => (
+            <TableRow key={p.id}>
+              <ListingIndexCell index={index} />
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex size-9 shrink-0 items-center justify-center font-display text-[11px] font-bold tracking-tight text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${p.accentFrom}, ${p.accentTo})`,
+                    }}
+                  >
+                    {p.monogram}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate font-medium" title={p.name}>
+                      {p.name}
+                    </div>
+                    <div
+                      className="truncate text-xs text-muted-foreground"
+                      title={`/${p.slug} · ${p.year}`}
+                    >
+                      /{p.slug} · {p.year}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <ProjectCategoryBadge status={p.category} />
-                  </TableCell>
-                  <TableCell>
-                    <ProjectStatusBadge status={p.status} />
-                  </TableCell>
-                  <TableCell>
-                    <VisibilityBadge status={p.sourceVisibility} />
-                  </TableCell>
-                  <TableCell>
-                    {p.featured ? (
-                      <Star
-                        className="size-4 fill-current text-amber-400"
-                        aria-label="Em destaque"
-                      />
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">
-                    {formatDateTime(p.updatedAt)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        asChild
-                        aria-label={`Editar ${p.name}`}
-                        title="Editar"
-                      >
-                        <Link href={`/admin/projects/${p.id}/edit`}>
-                          <Pencil className="size-4" />
-                        </Link>
-                      </Button>
-                      <DeleteProjectButton id={p.id} name={p.name} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <ProjectCategoryBadge status={p.category} />
+                </TableCell>
+                <TableCell>
+                  <ProjectStatusBadge status={p.status} />
+                </TableCell>
+                <TableCell>
+                  <VisibilityBadge status={p.sourceVisibility} />
+                </TableCell>
+                <TableCell>
+                  {p.featured ? (
+                    <Star
+                      className="size-4 fill-current text-amber-400"
+                      aria-label="Em destaque"
+                    />
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="tabular-nums text-muted-foreground">
+                  {formatDateTime(p.updatedAt)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="inline-flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      asChild
+                      aria-label={`Editar ${p.name}`}
+                      title="Editar"
+                    >
+                      <Link href={`/admin/projects/${p.id}/edit`}>
+                        <Pencil className="size-4" />
+                      </Link>
+                    </Button>
+                    <DeleteProjectButton id={p.id} name={p.name} />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
 
-        <ProjectsToolbar
-          q={q}
-          category={category}
-          status={status}
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          position="bottom"
-        />
-      </CardContent>
-    </Card>
+      <ProjectsToolbar
+        q={q}
+        category={category}
+        status={status}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        position="bottom"
+      />
+    </div>
   );
 }

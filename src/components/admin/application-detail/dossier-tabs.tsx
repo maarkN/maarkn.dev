@@ -158,8 +158,44 @@ function formatBytes(value: number | null): string {
 }
 
 function TabCount({ value }: { value: number }) {
+  return <span className="tabular-nums text-muted-foreground">({value})</span>;
+}
+
+/**
+ * Uma aba em notação de colchete, sobre o `TabsTrigger` do shadcn.
+ *
+ * O Radix continua por baixo de propósito: ele entrega `role="tablist"`,
+ * `aria-selected`, a navegação por setas e o `tabindex` móvel. Reescrever isso
+ * à mão para ganhar um par de colchetes custaria caro e quebraria — o colchete
+ * é `aria-hidden`, é pintura.
+ *
+ * A aba ativa: fundo `--sel` e um marcador `--purple`. O design pedia o TEXTO
+ * ativo em `--purple`, e `--purple` sobre `--sel` mede 4.07:1 — abaixo de AA.
+ * O roxo migrou para o marcador (um componente de interface, piso de 3:1, que
+ * ele passa) e o texto ativo ficou em `--fg`, 8.46:1 sobre `--sel`. O `!` nas
+ * duas classes é necessário: a variante `line` do primitive já declara
+ * `data-active:bg-transparent` e `after:bg-foreground` com a mesma
+ * especificidade, e a ordem entre elas é a do Tailwind, não a da marcação.
+ */
+function DossierTab({
+  value,
+  label,
+  count,
+}: {
+  value: string;
+  label: string;
+  count: number;
+}) {
   return (
-    <span className="tabular-nums text-muted-foreground">({value})</span>
+    <TabsTrigger
+      value={value}
+      className="h-8 flex-none gap-1 px-2 data-active:bg-sel! data-active:text-fg after:bg-purple!"
+    >
+      <span aria-hidden>[</span>
+      {label}
+      <TabCount value={count} />
+      <span aria-hidden>]</span>
+    </TabsTrigger>
   );
 }
 
@@ -210,27 +246,33 @@ export function ApplicationDossierTabs({
         variant="line"
         className="h-auto w-full flex-wrap justify-start gap-x-3"
       >
-        <TabsTrigger value="documents" className="h-8 flex-none">
-          Documentos <TabCount value={documents.length + artifacts.length} />
-        </TabsTrigger>
-        <TabsTrigger value="timeline" className="h-8 flex-none">
-          Timeline <TabCount value={events.length} />
-        </TabsTrigger>
-        <TabsTrigger value="coverage" className="h-8 flex-none">
-          Cobertura <TabCount value={coverages.length} />
-        </TabsTrigger>
-        <TabsTrigger value="screening" className="h-8 flex-none">
-          Triagem <TabCount value={questions.length} />
-        </TabsTrigger>
-        <TabsTrigger value="honesty" className="h-8 flex-none">
-          Honestidade <TabCount value={honestyNotes.length} />
-        </TabsTrigger>
-        <TabsTrigger value="interviews" className="h-8 flex-none">
-          Entrevistas <TabCount value={interviews.length} />
-        </TabsTrigger>
-        <TabsTrigger value="checklist" className="h-8 flex-none">
-          Checklist <TabCount value={checklistItems.length} />
-        </TabsTrigger>
+        <DossierTab
+          value="documents"
+          label="documentos"
+          count={documents.length + artifacts.length}
+        />
+        <DossierTab value="timeline" label="timeline" count={events.length} />
+        <DossierTab
+          value="coverage"
+          label="cobertura"
+          count={coverages.length}
+        />
+        <DossierTab value="screening" label="triagem" count={questions.length} />
+        <DossierTab
+          value="honesty"
+          label="honestidade"
+          count={honestyNotes.length}
+        />
+        <DossierTab
+          value="interviews"
+          label="entrevistas"
+          count={interviews.length}
+        />
+        <DossierTab
+          value="checklist"
+          label="checklist"
+          count={checklistItems.length}
+        />
       </TabsList>
 
       <TabsContent value="documents">

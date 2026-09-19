@@ -1,29 +1,46 @@
 /**
- * Enum → coloured badge. One `Record<string, StatusStyle>` per enum, all built
- * through `makeStatusBadge`, so a new entity only needs a style map.
+ * Enum → etiqueta de colchete. Um `Record<string, StatusStyle>` por enum,
+ * todos montados por `makeStatusBadge`, então um enum novo só precisa de um
+ * mapa de estilo.
  *
- * Colour contract: `bg-<hue>-500/15 text-<hue>-<light shade>`. The admin is
- * always dark, so there is no dark-mode variant to remap — the light shade (400,
- * or 300 for the low-chroma hues) is written directly, which is exactly what
- * used to render. A `text-<hue>-700` here would be near-invisible on `--bg`.
+ * ── Colchete, não pílula ─────────────────────────────────────────────────
+ * O que aparece na tela é `[applied]`, `[offer]`, `[blocked]`: o VALOR CRU do
+ * enum entre colchetes, sem fundo, sem borda e sem raio — a notação que a
+ * saída de um comando usaria. O rótulo em pt-BR não se perde: ele vai para o
+ * `title`, e `statusLabelFrom` continua sendo a fonte dos `<Select>` e
+ * filtros, que são onde a frase legível importa.
  *
- * Unknown values never throw: they fall back to `<Badge variant="outline">`
- * with the raw key, which is what you want while an enum is still growing.
+ * ── Cor: a paleta, não a escala do Tailwind ──────────────────────────────
+ * As cores saem dos tokens Dracula (`text-cyan`, `text-green`, `text-yellow`,
+ * `text-orange`, `text-pink`, `text-comment`) e de `--destructive`, o
+ * vermelho já corrigido do admin. A escala `text-<hue>-300` que estava aqui
+ * media 4.34:1 (indigo) e 4.74:1 (violet) sobre `--card` — uma delas abaixo de
+ * AA — e trazia doze matizes que a moldura de terminal não tem. Medidas da
+ * paleta sobre `--bg` (a superfície da listagem depois que o cartão saiu):
+ * cyan 9.74 · yellow 11.58 · green 9.08 · orange 9.07 · purple 6.33 ·
+ * pink 6.09 · destructive 6.00 · comment 4.64. Na linha sob o cursor o
+ * `.admin-listing` leva todo o texto para `--fg` (8.46:1 sobre `--sel`), então
+ * nenhuma destas precisa ser medida uma segunda vez.
+ *
+ * Valor desconhecido nunca quebra: cai em `text-comment` com a chave crua,
+ * que é o que se quer enquanto um enum ainda está crescendo.
  */
 
 import type { FunnelStage } from "@prisma/client";
-import { Badge } from "@/components/ui/badge";
 import {
   APPLICATION_SOURCES,
   FUNNEL_STAGES,
   FUNNEL_STAGE_LABELS,
+  FUNNEL_STAGE_PHASES,
   SOURCE_LABELS,
   SPONSORSHIP_GATES,
   SPONSORSHIP_LABELS,
   SPONSORSHIP_SIGNALS,
   type ApplicationSource,
+  type FunnelPhaseKey,
   type SponsorshipGate,
 } from "@/lib/applications";
+import { EMPTY } from "@/lib/format";
 import type { ProjectCategory, ProjectStatus } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 
@@ -47,24 +64,22 @@ export function StatusBadge({
   className,
 }: StatusBadgeProps & { styles: StatusStyles }) {
   if (!status) {
-    return (
-      <Badge variant="outline" className={cn("text-muted-foreground", className)}>
-        —
-      </Badge>
-    );
+    return <span className={cn("text-comment", className)}>{EMPTY}</span>;
   }
   const style = styles[status];
-  if (!style) {
-    return (
-      <Badge variant="outline" className={className}>
-        {status}
-      </Badge>
-    );
-  }
   return (
-    <Badge className={cn("border-transparent", style.className, className)}>
-      {style.label}
-    </Badge>
+    <span
+      data-slot="status-tag"
+      // O rótulo legível não some: vira o `title` da etiqueta.
+      title={style?.label ?? status}
+      className={cn(
+        "whitespace-nowrap",
+        style?.className ?? "text-comment",
+        className,
+      )}
+    >
+      [{status}]
+    </span>
   );
 }
 
@@ -92,38 +107,47 @@ export function statusLabelFrom(styles: StatusStyles, key: string): string {
 /* ── Application.stage (`funnel_stage`) — src/lib/applications.ts ────────── */
 
 /**
- * 21 estagios, 4 cores: a cor codifica a FASE (pre-envio, enviada, avaliacao,
- * desfecho), nao o estagio. Um matiz por estagio seria ilegivel numa tabela e
- * transformaria "que cor e essa?" numa consulta ao codigo — o rotulo ja diz o
- * estagio exato. Dentro do desfecho, os finais bons e ruins se separam.
+ * 21 estagios, 4 cores — e as quatro cores saem da FASE, nao do estagio, e a
+ * fase sai de `FUNNEL_STAGE_PHASES`, o mesmo agrupamento que a consulta, o
+ * `<Select>` da lista e o board ja usam. Nao existe um terceiro lugar que
+ * decida cor por estagio: derivar daqui e o que garante que um estagio novo
+ * no enum nasca colorido em vez de cair num default.
+ *
+ * O mapa `outcome` e o unico com quebra interna, e a quebra e deliberada: o
+ * desfecho bom (`offer`, `accepted`) e o desfecho perdido (`rejected`) nao
+ * podem ter a mesma cor, e os quatro abandonos (`withdrawn`, `no_response`,
+ * `ghosted`, `skipped`) nao sao nem uma coisa nem outra — sao arquivo morto e
+ * ficam na cor de comentario.
  */
-const FUNNEL_STAGE_CLASSNAMES: Record<FunnelStage, string> = {
-  // pre-envio — cinza esfriando para ambar conforme a acao fica comigo
-  radar: "bg-slate-500/15 text-slate-300",
-  shortlisted: "bg-slate-500/15 text-slate-300",
-  package_drafting: "bg-amber-500/15 text-amber-300",
-  package_ready: "bg-amber-500/15 text-amber-300",
-  awaiting_my_send: "bg-amber-500/15 text-amber-300",
-  ready: "bg-amber-500/15 text-amber-300",
-  // enviada — azul
-  applied: "bg-blue-500/15 text-blue-300",
-  recruiter_contact: "bg-cyan-500/15 text-cyan-300",
-  screening: "bg-cyan-500/15 text-cyan-300",
-  // avaliacao — violeta
-  assessment: "bg-violet-500/15 text-violet-300",
-  technical_challenge: "bg-violet-500/15 text-violet-300",
-  interview: "bg-violet-500/15 text-violet-300",
-  final_interview: "bg-violet-500/15 text-violet-300",
-  reference_check: "bg-violet-500/15 text-violet-300",
-  // desfecho — verde para bom, vermelho para perdido, neutro para abandonado
-  offer: "bg-emerald-500/15 text-emerald-300",
-  accepted: "bg-emerald-500/15 text-emerald-300",
-  rejected: "bg-red-500/15 text-red-300",
-  withdrawn: "bg-neutral-500/15 text-neutral-300",
-  no_response: "bg-neutral-500/15 text-neutral-300",
-  ghosted: "bg-neutral-500/15 text-neutral-300",
-  skipped: "bg-neutral-500/15 text-neutral-300",
+export const FUNNEL_PHASE_TONES: Record<FunnelPhaseKey, string> = {
+  pre_send: "text-comment",
+  sent: "text-cyan",
+  evaluation: "text-yellow",
+  outcome: "text-green",
 };
+
+/** Excecoes dentro de `outcome`. Chave ausente = a cor da fase. */
+const OUTCOME_TONE: Partial<Record<FunnelStage, string>> = {
+  rejected: "text-destructive",
+  withdrawn: "text-comment",
+  no_response: "text-comment",
+  ghosted: "text-comment",
+  skipped: "text-comment",
+};
+
+/**
+ * `Record<FunnelStage, string>` montado a partir das fases. O `satisfies` em
+ * `FUNNEL_STAGES` ja garante que as fases cobrem o enum inteiro, entao este
+ * mapa tem os 21 estagios por construcao — nenhum cai em cor padrao.
+ */
+export const FUNNEL_STAGE_TONES = Object.fromEntries(
+  FUNNEL_STAGE_PHASES.flatMap((phase) =>
+    phase.stages.map((stage) => [
+      stage,
+      OUTCOME_TONE[stage] ?? FUNNEL_PHASE_TONES[phase.key],
+    ]),
+  ),
+) as Record<FunnelStage, string>;
 
 /** Rotulos vem de `src/lib/applications.ts` — nunca duplicados aqui. */
 export const FUNNEL_STAGE_STYLES: StatusStyles = Object.fromEntries(
@@ -131,7 +155,7 @@ export const FUNNEL_STAGE_STYLES: StatusStyles = Object.fromEntries(
     stage,
     {
       label: FUNNEL_STAGE_LABELS[stage],
-      className: FUNNEL_STAGE_CLASSNAMES[stage],
+      className: FUNNEL_STAGE_TONES[stage],
     },
   ]),
 );
@@ -151,10 +175,10 @@ export const FunnelStageBadge = makeStatusBadge(
  * filtrar "patrocinio ok" e descartar justamente o alvo de hoje.
  */
 const SPONSORSHIP_GATE_CLASSNAMES: Record<SponsorshipGate, string> = {
-  not_applicable: "bg-sky-500/15 text-sky-300",
-  open: "bg-emerald-500/15 text-emerald-300",
-  unknown: "bg-slate-500/15 text-slate-300",
-  blocked: "bg-red-500/15 text-red-300",
+  not_applicable: "text-cyan",
+  open: "text-green",
+  unknown: "text-comment",
+  blocked: "text-destructive",
 };
 
 export const SPONSORSHIP_STYLES: StatusStyles = Object.fromEntries(
@@ -175,15 +199,15 @@ export const SponsorshipBadge = makeStatusBadge(
 /* ── Application.source — src/lib/applications.ts ────────────────────────── */
 
 const APPLICATION_SOURCE_CLASSNAMES: Record<ApplicationSource, string> = {
-  vanhack: "bg-indigo-500/15 text-indigo-300",
-  linkedin: "bg-sky-500/15 text-sky-300",
-  company_site: "bg-slate-500/15 text-slate-300",
-  indeed: "bg-blue-500/15 text-blue-300",
-  glassdoor: "bg-teal-500/15 text-teal-300",
-  recruiter: "bg-amber-500/15 text-amber-300",
-  referral: "bg-emerald-500/15 text-emerald-300",
-  radar: "bg-fuchsia-500/15 text-fuchsia-300",
-  other: "bg-neutral-500/15 text-neutral-300",
+  vanhack: "text-purple",
+  linkedin: "text-cyan",
+  company_site: "text-comment",
+  indeed: "text-cyan",
+  glassdoor: "text-green",
+  recruiter: "text-orange",
+  referral: "text-green",
+  radar: "text-pink",
+  other: "text-comment",
 };
 
 export const APPLICATION_SOURCE_STYLES: StatusStyles = Object.fromEntries(
@@ -203,19 +227,19 @@ export const ApplicationSourceBadge = makeStatusBadge(
 export const PROJECT_STATUS_STYLES: Record<ProjectStatus, StatusStyle> = {
   live: {
     label: "No ar",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   internal: {
     label: "Interno",
-    className: "bg-blue-500/15 text-blue-300",
+    className: "text-cyan",
   },
   nda: {
     label: "NDA",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   archived: {
     label: "Arquivado",
-    className: "bg-slate-500/15 text-slate-300",
+    className: "text-comment",
   },
 };
 
@@ -229,23 +253,23 @@ export const ProjectStatusBadge = makeStatusBadge(
 export const PROJECT_CATEGORY_STYLES: Record<ProjectCategory, StatusStyle> = {
   web: {
     label: "Web",
-    className: "bg-sky-500/15 text-sky-300",
+    className: "text-cyan",
   },
   mobile: {
     label: "Mobile",
-    className: "bg-violet-500/15 text-violet-300",
+    className: "text-purple",
   },
   ai: {
     label: "IA",
-    className: "bg-fuchsia-500/15 text-fuchsia-300",
+    className: "text-pink",
   },
   backend: {
     label: "Backend",
-    className: "bg-orange-500/15 text-orange-300",
+    className: "text-orange",
   },
   client: {
     label: "Cliente",
-    className: "bg-teal-500/15 text-teal-300",
+    className: "text-green",
   },
 };
 
@@ -259,11 +283,11 @@ export const ProjectCategoryBadge = makeStatusBadge(
 export const VISIBILITY_STYLES: StatusStyles = {
   public: {
     label: "Público",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   private: {
     label: "Privado",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
 };
 

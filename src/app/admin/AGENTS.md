@@ -33,7 +33,7 @@ carregar dados: pare e leia a tabela abaixo.
 |---|---|
 | `useQuery({ queryKey, queryFn })` | **Server Component `async`** lendo o Prisma direto. Não existe fetch no cliente. |
 | `queryKey: ["apps", { page, status }]` | **`searchParams` da URL.** A URL é a query key. Filtro e página são estado de servidor, não `useState`. |
-| `isLoading` | `loading.tsx` ou `<Suspense fallback={…}>` → renderiza `TableSkeletonRows`. |
+| `isLoading` | `loading.tsx` ou `<Suspense fallback={…}>` → renderiza `TableLoadingRow`. |
 | `isError` | `try/catch` no Server Component (ou `!dbConfigured`) → `TableEmptyRow destructive`. |
 | `useMutation({ mutationFn })` | **Server Action** (`"use server"`) chamada dentro de `startTransition`. |
 | `mutation.isPending` | `isPending` de `useTransition()`. |
@@ -98,22 +98,32 @@ própria navegação, sem toast.
     actions={<ApplicationDialog />}
   />
   {/* filtros: draft → applied, SEM debounce */}
-  <Card>
-    <CardContent>{/* Table + TablePager */}</CardContent>
-  </Card>
+  <div className="space-y-3">{/* toolbar + Table + TablePager, SEM cartão */}</div>
   {/* dialogs no final do arquivo */}
 </div>
 ```
 
-Convenções de célula: números com `tabular-nums`, IDs com `font-mono text-xs`, ícone dentro de botão sempre
-`className="size-4"`.
+Convenções de célula: números com `tabular-nums`, ícone dentro de botão sempre `className="size-4"`.
+Nada de `font-mono`: o admin inteiro já é monoespaçado.
+
+**A listagem é saída de comando** (bko-03). A `<table>` continua sendo uma `<table>` — o visual vem da
+classe `.admin-listing`, aplicada uma vez dentro de `ui/table.tsx`. O que cada listagem precisa fazer:
+
+- `<Table className="table-fixed">` e uma largura em `ch` (`w-[24ch]`) em todo `<TableHead>` que não seja
+  a coluna de texto livre. Sem o par `table-fixed` + `ch`, o alinhamento monoespaçado não se sustenta.
+- `<ListingIndexHead />` no cabeçalho e `<ListingIndexCell index={i} />` como primeira célula de cada
+  linha — a coluna `001`, `002`… é decorativa (`aria-hidden`) e **conta no `colSpan`**: `COLS` inclui ela.
+- Cabeçalho em minúsculas e sem acento (`estagio`, `acoes`): é nome de coluna de saída, não título.
+- Valor de enum vai como `[valor_cru]` via `StatusBadge`; o rótulo em pt-BR viaja no `title`.
+- Texto que pode estourar a coluna leva `title` com o valor inteiro — a célula trunca com reticências.
 
 **Ordem obrigatória dos estados da tabela** (a mesma do admin de referência, traduzida para RSC):
 
-1. carregando → `<TableSkeletonRows rows={6} cols={N} />` (dentro do `fallback` do `Suspense`/`loading.tsx`)
+1. carregando → `<TableLoadingRow cols={N} />` — uma linha de progresso em blocos, estática sob
+   `prefers-reduced-motion: reduce` (dentro do `fallback` do `Suspense`/`loading.tsx`)
 2. erro / `!dbConfigured` → `<TableEmptyRow cols={N} destructive message="…" />`
-3. vazio → `<TableEmptyRow cols={N} />`
-4. dados → `rows.map(...)`
+3. vazio → `<TableEmptyRow cols={N} />`, que escreve `# nenhum registro`
+4. dados → `rows.map((row, index) => …)` — o `index` alimenta `<ListingIndexCell />`
 
 ---
 
@@ -719,7 +729,7 @@ toast.info("Nada mudou desde a última sincronização.");
 | `src/components/admin/terminal/admin-status-bar.tsx` | `AdminStatusBar({ path })` — reusa `terminal.module.css` do site; só o controle `exit` |
 | `src/components/admin/terminal/admin-tree-nav.tsx` | `AdminTreeNav({ pathname, email })` · `NAV` · `isNavItemActive` · `activeNavHref` |
 | `src/components/admin/page-header.tsx` | `PageHeader({ title, description?, actions?, className? })` — `title` vira `<h1 class="sr-only">`: o título visível é o breadcrumb do chrome |
-| `src/components/admin/table-pager.tsx` | `TablePager` · `TableSkeletonRows` · `TableEmptyRow` |
+| `src/components/admin/table-pager.tsx` | `TablePager` · `TableLoadingRow` · `TableEmptyRow` |
 | `src/components/admin/status-badge.tsx` | `makeStatusBadge` · `StatusBadge` · `statusLabelFrom` · `FunnelStageBadge` · `SponsorshipBadge` · `ApplicationSourceBadge` · badges de status/categoria de projeto e visibilidade |
 | `src/lib/format.ts` | `formatDate` (data de calendário, UTC) · `formatDateTime` (instante, America/Sao_Paulo) · `formatMoney(value, currency = "BRL")` · `formatNumber` · `formatPercent` · `toDateInputValue` (inverso exato de `new Date("YYYY-MM-DD")`) · `EMPTY` (`"—"`) |
 | `src/components/ui/*` | 19 primitivos shadcn (style `radix-lyra`) |

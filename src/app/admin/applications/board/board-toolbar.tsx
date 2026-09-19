@@ -105,7 +105,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
     >
       {/* Rota — o criterio eliminatorio nº 1, fora do Select e aplicado no clique. */}
       <span className="text-xs font-medium text-muted-foreground">Rota</span>
-      <div className="inline-flex overflow-hidden rounded-md border border-border">
+      <div className="inline-flex overflow-hidden rounded-none border border-border">
         <RouteButton
           active={draft.route === ""}
           disabled={isPending}

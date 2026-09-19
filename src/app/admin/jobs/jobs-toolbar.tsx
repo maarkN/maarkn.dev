@@ -150,7 +150,7 @@ export function JobsToolbar(props: JobsToolbarProps) {
       {/* Rota + vínculo — aplicam no clique (são botões, não campos). */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-muted-foreground">Rota</span>
-        <div className="inline-flex overflow-hidden rounded-md border border-border">
+        <div className="inline-flex overflow-hidden rounded-none border border-border">
           <ToggleButton
             active={draft.route === ""}
             disabled={isPending}
@@ -181,7 +181,7 @@ export function JobsToolbar(props: JobsToolbarProps) {
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         <span className="text-xs font-medium text-muted-foreground">Funil</span>
-        <div className="inline-flex overflow-hidden rounded-md border border-border">
+        <div className="inline-flex overflow-hidden rounded-none border border-border">
           <ToggleButton
             active={draft.link === ""}
             disabled={isPending}

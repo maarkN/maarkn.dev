@@ -10,8 +10,10 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
+  ListingIndexCell,
+  ListingIndexHead,
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,7 +38,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
-const COLS = 6;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const COLS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STAT_TILES = 6;
 
@@ -193,14 +196,15 @@ async function ChatStats() {
 function ChatTableHead() {
   return (
     <TableHeader>
-      <TableRow>
-        <TableHead>Quando</TableHead>
-        <TableHead>Conversa</TableHead>
-        <TableHead className="hidden md:table-cell">Visitante</TableHead>
-        <TableHead className="hidden sm:table-cell">Status</TableHead>
-        <TableHead className="text-right">Tokens</TableHead>
-        <TableHead className="hidden lg:table-cell text-right">
-          Latência
+      <TableRow className="hover:bg-transparent">
+        <ListingIndexHead />
+        <TableHead className="w-[20ch]">quando</TableHead>
+        <TableHead>conversa</TableHead>
+        <TableHead className="hidden w-[12ch] md:table-cell">visitante</TableHead>
+        <TableHead className="hidden w-[12ch] sm:table-cell">status</TableHead>
+        <TableHead className="w-[12ch] text-right">tokens</TableHead>
+        <TableHead className="hidden w-[12ch] lg:table-cell text-right">
+          latencia
         </TableHead>
       </TableRow>
     </TableHeader>
@@ -210,16 +214,12 @@ function ChatTableHead() {
 /** State 1 of §3: loading. */
 function ChatTableSkeleton() {
   return (
-    <Card>
-      <CardContent>
-        <Table>
-          <ChatTableHead />
-          <TableBody>
-            <TableSkeletonRows cols={COLS} />
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <Table className="table-fixed">
+      <ChatTableHead />
+      <TableBody>
+        <TableLoadingRow cols={COLS} />
+      </TableBody>
+    </Table>
   );
 }
 
@@ -260,9 +260,8 @@ async function ChatLogsTable({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <Card>
-      <CardContent>
-        <ChatToolbar
+    <div className="space-y-3">
+      <ChatToolbar
           q={q}
           status={status}
           page={page}
@@ -271,7 +270,7 @@ async function ChatLogsTable({
           position="top"
         />
 
-        <Table>
+        <Table className="table-fixed">
           <ChatTableHead />
           <TableBody>
             {failed || !dbConfigured ? (
@@ -287,11 +286,12 @@ async function ChatLogsTable({
             ) : rows.length === 0 ? (
               <TableEmptyRow cols={COLS} message="Nenhuma conversa encontrada." />
             ) : (
-              rows.map((r) => (
+              rows.map((r, index) => (
                 <TableRow key={r.id} className="align-top">
+                  <ListingIndexCell index={index} />
                   <TableCell className="tabular-nums text-muted-foreground">
                     {formatDateTime(r.createdAt)}
-                    <span className="mt-1 block font-mono text-xs uppercase">
+                    <span className="mt-1 block text-xs uppercase">
                       {r.locale}
                     </span>
                   </TableCell>
@@ -315,13 +315,13 @@ async function ChatLogsTable({
                             </span>
                           )}
                         </p>
-                        <p className="mt-2 font-mono text-xs">
+                        <p className="mt-2 text-xs">
                           {r.model || "—"}
                         </p>
                       </div>
                     </details>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell font-mono text-xs text-muted-foreground">
+                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                     {r.clientKeyHash.slice(0, 8)}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
@@ -349,9 +349,8 @@ async function ChatLogsTable({
           page={page}
           totalPages={totalPages}
           total={total}
-          position="bottom"
-        />
-      </CardContent>
-    </Card>
+        position="bottom"
+      />
+    </div>
   );
 }

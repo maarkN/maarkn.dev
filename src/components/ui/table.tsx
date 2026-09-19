@@ -4,6 +4,15 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * `admin-listing` (src/app/admin/admin.css) is what turns this into `ls`
+ * output: `table-layout: fixed`, widths in `ch`, tabular numerals, the
+ * comment-coloured header and the terminal-selection row highlight. It is
+ * applied here, once, instead of at eight call sites — the DOM is untouched,
+ * which is the whole point of the decision recorded in the bko-03 design.md.
+ *
+ * The container, not the document, is what scrolls horizontally.
+ */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
@@ -12,7 +21,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-xs", className)}
+        className={cn("admin-listing w-full caption-bottom text-xs", className)}
         {...props}
       />
     </div>
@@ -56,8 +65,11 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       data-slot="table-row"
+      // The hover highlight lives in `.admin-listing` (admin.css), which also
+      // lifts the row's text to --fg so no cell colour has to be measured on
+      // --sel. `hover:bg-transparent` is the opt-out for non-data rows.
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
+        "border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
         className
       )}
       {...props}
@@ -65,10 +77,13 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+/** `scope="col"` by default: it is what makes the cell↔header association
+ * survive the `ls` paint. Pass `scope` explicitly to override. */
+function TableHead({ className, scope = "col", ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
+      scope={scope}
       className={cn(
         "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
         className

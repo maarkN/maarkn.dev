@@ -9,19 +9,14 @@ import { formatDateTime } from "@/lib/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import {
+  ListingIndexCell,
+  ListingIndexHead,
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
 import { GeneratorForm } from "@/components/admin/generator-form";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -42,7 +37,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 10;
-const COLS = 5;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const COLS = 6;
 
 function one(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v) ?? "";
@@ -77,19 +73,19 @@ export default async function GeneratorPage({
 
         <GeneratorForm />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Gerações recentes</CardTitle>
-            <CardDescription>
-              Histórico gravado no banco. “Abrir” leva à versão de impressão.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense key={`${q}|${page}`} fallback={<GenerationsSkeleton />}>
-              <GenerationsTable q={q} page={page} />
-            </Suspense>
-          </CardContent>
-        </Card>
+        {/* §1: a listagem é saída de comando — sem cartão, raio ou sombra em
+            volta. O título da seção vira o comentário que precede a saída. */}
+        <section className="space-y-3">
+          <h2 className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+            Gerações recentes
+          </h2>
+          <p className="text-xs text-comment">
+            # histórico gravado no banco — “Abrir” leva à versão de impressão
+          </p>
+          <Suspense key={`${q}|${page}`} fallback={<GenerationsSkeleton />}>
+            <GenerationsTable q={q} page={page} />
+          </Suspense>
+        </section>
       </div>
     </AdminShell>
   );
@@ -100,12 +96,13 @@ export default async function GeneratorPage({
 function GenerationsTableHead() {
   return (
     <TableHeader>
-      <TableRow>
-        <TableHead>Vaga</TableHead>
-        <TableHead className="hidden md:table-cell">Empresa</TableHead>
-        <TableHead className="hidden sm:table-cell">Idioma</TableHead>
-        <TableHead className="hidden md:table-cell">Criada em</TableHead>
-        <TableHead className="text-right">Ações</TableHead>
+      <TableRow className="hover:bg-transparent">
+        <ListingIndexHead />
+        <TableHead>vaga</TableHead>
+        <TableHead className="hidden md:table-cell">empresa</TableHead>
+        <TableHead className="hidden w-[10ch] sm:table-cell">idioma</TableHead>
+        <TableHead className="hidden w-[20ch] md:table-cell">criada</TableHead>
+        <TableHead className="w-[12ch] text-right">acoes</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -114,10 +111,10 @@ function GenerationsTableHead() {
 /** State 1 of §3: loading. */
 function GenerationsSkeleton() {
   return (
-    <Table>
+    <Table className="table-fixed">
       <GenerationsTableHead />
       <TableBody>
-        <TableSkeletonRows cols={COLS} />
+        <TableLoadingRow cols={COLS} />
       </TableBody>
     </Table>
   );
@@ -178,7 +175,7 @@ async function GenerationsTable({ q, page }: { q: string; page: number }) {
         position="top"
       />
 
-      <Table>
+      <Table className="table-fixed">
         <GenerationsTableHead />
         <TableBody>
           {failed || !dbConfigured ? (
@@ -194,16 +191,20 @@ async function GenerationsTable({ q, page }: { q: string; page: number }) {
           ) : rows.length === 0 ? (
             <TableEmptyRow cols={COLS} message="Nada gerado ainda." />
           ) : (
-            rows.map((g) => (
+            rows.map((g, index) => (
               <TableRow key={g.id}>
-                <TableCell className="font-medium">
-                  {g.roleTitle || "Vaga sem título"}
+                <ListingIndexCell index={index} />
+                <TableCell title={g.roleTitle ?? undefined}>
+                  {g.roleTitle || "vaga sem título"}
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground">
+                <TableCell
+                  className="hidden md:table-cell text-muted-foreground"
+                  title={g.company ?? undefined}
+                >
                   {g.company || "—"}
                 </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  <Badge variant="outline">{languageLabel(g.language)}</Badge>
+                <TableCell className="hidden sm:table-cell text-cyan">
+                  <span title={languageLabel(g.language)}>[{g.language}]</span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell tabular-nums text-muted-foreground">
                   {formatDateTime(g.createdAt)}

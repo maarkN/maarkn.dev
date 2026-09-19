@@ -27,7 +27,6 @@ import {
   FunnelStageBadge,
   SponsorshipBadge,
 } from "@/components/admin/status-badge";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -83,17 +82,21 @@ export function KanbanCard({ card, moveAction, showStage }: KanbanCardProps) {
   return (
     <article
       className={cn(
-        "space-y-2 bg-card p-2.5 ring-1 ring-foreground/10 transition-opacity",
+        // `admin-selection`, e não um utilitário de fundo no hover: o realce
+        // só é acessível junto com a ida do texto para --fg (ver admin.css).
+        "admin-selection space-y-0.5 px-2 py-1.5 transition-opacity",
         isPending && "pointer-events-none opacity-50",
       )}
     >
-      <div className="flex items-start justify-between gap-1">
+      {/* Linha 1: empresa — cargo. */}
+      <div className="flex items-baseline justify-between gap-1">
         <Link
           href={`/admin/applications/${card.id}`}
-          className="min-w-0 flex-1 text-sm font-medium transition-colors hover:text-brand"
-          title={card.folderName}
+          className="min-w-0 flex-1 truncate text-xs transition-colors hover:text-brand"
+          title={`${companyName} — ${role}`}
         >
-          <span className="line-clamp-2">{companyName}</span>
+          {companyName}
+          <span className="text-muted-foreground"> — {role}</span>
         </Link>
 
         <DropdownMenu>
@@ -116,7 +119,7 @@ export function KanbanCard({ card, moveAction, showStage }: KanbanCardProps) {
             <DropdownMenuLabel>Mover para…</DropdownMenuLabel>
             {FUNNEL_STAGE_PHASES.map((phase) => (
               <DropdownMenuGroup key={phase.key}>
-                <DropdownMenuLabel className="pt-2 font-medium text-foreground/70">
+                <DropdownMenuLabel className="pt-2 text-muted-foreground">
                   {phase.label}
                 </DropdownMenuLabel>
                 {phase.stages.map((stage) => (
@@ -139,29 +142,25 @@ export function KanbanCard({ card, moveAction, showStage }: KanbanCardProps) {
         </DropdownMenu>
       </div>
 
-      <div className="text-xs text-muted-foreground">
-        <div className="line-clamp-2">{role}</div>
-        {place && <div className="line-clamp-1">{place}</div>}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1">
-        {showStage && (
-          <FunnelStageBadge status={card.stage} className="text-[10px]" />
-        )}
+      {/* Linha 2: mercado e patrocínio (+ o estágio exato na coluna agrupada). */}
+      <div className="flex items-baseline gap-2 truncate text-[11px]">
+        {showStage && <FunnelStageBadge status={card.stage} />}
         <span
           title={sponsorship ? SPONSORSHIP_HINTS[sponsorship] : undefined}
-          className="inline-flex"
+          className="shrink-0"
         >
-          <SponsorshipBadge status={sponsorship} className="text-[10px]" />
+          <SponsorshipBadge status={sponsorship} />
+        </span>
+        <span className="truncate text-muted-foreground" title={place}>
+          {place || EMPTY}
         </span>
         {card.priority != null && (
-          <Badge
-            variant="outline"
-            className="text-[10px] font-normal tabular-nums"
+          <span
+            className="shrink-0 tabular-nums text-orange"
             title="Prioridade (1 = maior)"
           >
-            P{card.priority}
-          </Badge>
+            [P{card.priority}]
+          </span>
         )}
       </div>
     </article>

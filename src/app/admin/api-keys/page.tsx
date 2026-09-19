@@ -15,10 +15,11 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
+  ListingIndexCell,
+  ListingIndexHead,
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -43,7 +44,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
-const COLS = 7;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const COLS = 8;
 
 function one(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v) ?? "";
@@ -128,14 +130,15 @@ export default async function ApiKeysPage({
 function KeysTableHead() {
   return (
     <TableHeader>
-      <TableRow>
-        <TableHead>Nome</TableHead>
-        <TableHead>Prefixo</TableHead>
-        <TableHead className="hidden lg:table-cell">Escopos</TableHead>
-        <TableHead className="hidden md:table-cell">Último uso</TableHead>
-        <TableHead className="hidden sm:table-cell">Expira em</TableHead>
-        <TableHead>Situação</TableHead>
-        <TableHead className="text-right">Ações</TableHead>
+      <TableRow className="hover:bg-transparent">
+        <ListingIndexHead />
+        <TableHead>nome</TableHead>
+        <TableHead className="w-[14ch]">prefixo</TableHead>
+        <TableHead className="hidden w-[30ch] lg:table-cell">escopos</TableHead>
+        <TableHead className="hidden w-[20ch] md:table-cell">ultimo_uso</TableHead>
+        <TableHead className="hidden w-[20ch] sm:table-cell">expira</TableHead>
+        <TableHead className="w-[14ch]">situacao</TableHead>
+        <TableHead className="w-[22ch] text-right">acoes</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -144,16 +147,12 @@ function KeysTableHead() {
 /** Estado 1 do §3: carregando. */
 function KeysTableSkeleton() {
   return (
-    <Card>
-      <CardContent>
-        <Table>
-          <KeysTableHead />
-          <TableBody>
-            <TableSkeletonRows cols={COLS} />
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <Table className="table-fixed">
+      <KeysTableHead />
+      <TableBody>
+        <TableLoadingRow cols={COLS} />
+      </TableBody>
+    </Table>
   );
 }
 
@@ -247,9 +246,8 @@ async function ApiKeysTable({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <Card>
-      <CardContent>
-        <ApiKeysToolbar
+    <div className="space-y-3">
+      <ApiKeysToolbar
           q={q}
           status={status}
           page={page}
@@ -258,7 +256,7 @@ async function ApiKeysTable({
           position="top"
         />
 
-        <Table>
+        <Table className="table-fixed">
           <KeysTableHead />
           <TableBody>
             {failed || !dbConfigured ? (
@@ -277,17 +275,20 @@ async function ApiKeysTable({
                 message="Nenhuma chave encontrada. Crie a primeira para conectar a skill do Obsidian."
               />
             ) : (
-              rows.map((r) => {
+              rows.map((r, index) => {
                 const st = keyStatusOf(r, at.getTime());
                 return (
                   <TableRow key={r.id} className="align-top">
-                    <TableCell className="font-medium">
-                      {r.name}
+                    <ListingIndexCell index={index} />
+                    <TableCell>
+                      <div className="truncate" title={r.name}>
+                        {r.name}
+                      </div>
                       <span className="block text-xs font-normal text-muted-foreground">
                         criada em {formatDateTime(r.createdAt)}
                       </span>
                     </TableCell>
-                    <TableCell className="font-mono text-xs whitespace-nowrap">
+                    <TableCell className="text-xs whitespace-nowrap">
                       {r.keyPrefix}…
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
@@ -296,19 +297,25 @@ async function ApiKeysTable({
                           <span className="text-muted-foreground">—</span>
                         ) : (
                           r.scopes.map((s) => (
-                            <Badge
+                            <span
                               key={s}
-                              variant="outline"
                               className={
                                 (MCP_WRITE_SCOPES as readonly string[]).includes(
                                   s,
                                 )
-                                  ? "font-mono text-[10px] text-amber-400"
-                                  : "font-mono text-[10px] text-muted-foreground"
+                                  ? "text-[10px] text-orange"
+                                  : "text-[10px] text-muted-foreground"
+                              }
+                              title={
+                                (MCP_WRITE_SCOPES as readonly string[]).includes(
+                                  s,
+                                )
+                                  ? "Escopo de escrita"
+                                  : "Escopo de leitura"
                               }
                             >
-                              {s}
-                            </Badge>
+                              [{s}]
+                            </span>
                           ))
                         )}
                       </div>
@@ -354,9 +361,8 @@ async function ApiKeysTable({
           page={page}
           totalPages={totalPages}
           total={total}
-          position="bottom"
-        />
-      </CardContent>
-    </Card>
+        position="bottom"
+      />
+    </div>
   );
 }

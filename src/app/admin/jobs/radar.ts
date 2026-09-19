@@ -48,31 +48,31 @@ export const RADAR_VERDICT_LABELS: Record<string, string> = {
 export const RADAR_VERDICT_STYLES: StatusStyles = {
   top_find: {
     label: RADAR_VERDICT_LABELS.top_find,
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   shortlisted: {
     label: RADAR_VERDICT_LABELS.shortlisted,
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   approved: {
     label: RADAR_VERDICT_LABELS.approved,
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   kept: {
     label: RADAR_VERDICT_LABELS.kept,
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   stretch: {
     label: RADAR_VERDICT_LABELS.stretch,
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   eliminated: {
     label: RADAR_VERDICT_LABELS.eliminated,
-    className: "bg-red-500/15 text-red-300",
+    className: "text-destructive",
   },
   not_verified: {
     label: RADAR_VERDICT_LABELS.not_verified,
-    className: "bg-slate-500/15 text-slate-300",
+    className: "text-comment",
   },
 };
 
@@ -86,19 +86,19 @@ export function radarVerdictLabel(value: string | null | undefined): string {
 export const VERIFICATION_VERDICT_STYLES: StatusStyles = {
   confirmado: {
     label: "Confirmada",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   divergente: {
     label: "Divergente",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   inacessível: {
     label: "Inacessível",
-    className: "bg-slate-500/15 text-slate-300",
+    className: "text-comment",
   },
   expirada: {
     label: "Expirada",
-    className: "bg-red-500/15 text-red-300",
+    className: "text-destructive",
   },
 };
 

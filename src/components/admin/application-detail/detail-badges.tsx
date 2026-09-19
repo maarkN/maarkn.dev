@@ -7,13 +7,14 @@
  * `CoverageLevel`, `DocKind`, severidade de `HonestyNote`, desfecho de
  * `Interview`, tipo de `ApplicationEvent` — aparecem em uma tela só. Ficam
  * juntos do consumidor e reaproveitam `makeStatusBadge`, então o contrato de
- * cor (`bg-<hue>-500/15 text-<hue>-<tom claro>`) continua um só.
+ * cor — um token da paleta em `text-*`, sem fundo, dentro de colchetes —
+ * continua um só.
  *
  * Três dos cinco vocabulários são **texto livre no banco** (status do
  * documento, tipo do evento, desfecho da entrevista, veredito da verificação):
  * o vault escreve o que quer e o MCP repassa. Por isso o fallback do
- * `StatusBadge` — `<Badge variant="outline">` com a chave crua — não é um caso
- * de erro aqui, é o caminho normal para um valor que ainda não foi catalogado.
+ * `StatusBadge` — `[chave_crua]` em cor de comentário — não é um caso de erro
+ * aqui, é o caminho normal para um valor que ainda não foi catalogado.
  */
 
 import type { CoverageLevel, DocKind } from "@prisma/client";
@@ -39,11 +40,11 @@ export const COVERAGE_LABELS: Record<CoverageLevel, string> = {
 };
 
 const COVERAGE_CLASSNAMES: Record<CoverageLevel, string> = {
-  strong: "bg-emerald-500/15 text-emerald-300",
-  has: "bg-teal-500/15 text-teal-300",
-  shallow: "bg-amber-500/15 text-amber-300",
-  gap: "bg-red-500/15 text-red-300",
-  advantage: "bg-violet-500/15 text-violet-300",
+  strong: "text-green",
+  has: "text-green",
+  shallow: "text-orange",
+  gap: "text-destructive",
+  advantage: "text-purple",
 };
 
 // `Record<CoverageLevel, …>` nos dois mapas: acrescentar um nível ao enum do
@@ -77,19 +78,19 @@ export const DOC_KIND_LABELS: Record<DocKind, string> = {
 /** A cor agrupa por PAPEL no pacote (peça enviada · insumo da vaga · preparo),
  *  não um matiz por tipo: doze cores numa coluna estreita seriam ruído. */
 const DOC_KIND_CLASSNAMES: Record<DocKind, string> = {
-  cv: "bg-blue-500/15 text-blue-300",
-  cover_letter: "bg-indigo-500/15 text-indigo-300",
-  job_data: "bg-slate-500/15 text-slate-300",
-  job_info: "bg-slate-500/15 text-slate-300",
-  notes: "bg-neutral-500/15 text-neutral-300",
-  email: "bg-cyan-500/15 text-cyan-300",
-  screening_answers: "bg-teal-500/15 text-teal-300",
-  recruiter_reply: "bg-cyan-500/15 text-cyan-300",
-  challenge_prep: "bg-violet-500/15 text-violet-300",
-  practice: "bg-violet-500/15 text-violet-300",
+  cv: "text-cyan",
+  cover_letter: "text-purple",
+  job_data: "text-comment",
+  job_info: "text-comment",
+  notes: "text-comment",
+  email: "text-cyan",
+  screening_answers: "text-green",
+  recruiter_reply: "text-cyan",
+  challenge_prep: "text-purple",
+  practice: "text-purple",
   english_eval_script:
-    "bg-fuchsia-500/15 text-fuchsia-300",
-  mini_spec: "bg-amber-500/15 text-amber-300",
+    "text-pink",
+  mini_spec: "text-orange",
 };
 
 export const DOC_KIND_STYLES: StatusStyles = Object.fromEntries(
@@ -106,27 +107,27 @@ export const DocKindBadge = makeStatusBadge(DOC_KIND_STYLES, "DocKind");
 export const DOC_STATUS_STYLES: StatusStyles = {
   draft: {
     label: "Rascunho",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   ready: {
     label: "Pronto",
-    className: "bg-blue-500/15 text-blue-300",
+    className: "text-cyan",
   },
   final: {
     label: "Final",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   sent: {
     label: "Enviado",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   pending: {
     label: "Pendente",
-    className: "bg-slate-500/15 text-slate-300",
+    className: "text-comment",
   },
   archived: {
     label: "Arquivado",
-    className: "bg-neutral-500/15 text-neutral-300",
+    className: "text-comment",
   },
 };
 
@@ -143,15 +144,15 @@ export const DocStatusBadge = makeStatusBadge(DOC_STATUS_STYLES, "DocStatus");
 export const HONESTY_SEVERITY_STYLES: StatusStyles = {
   blocking: {
     label: "Bloqueante",
-    className: "bg-red-500/15 text-red-300",
+    className: "text-destructive",
   },
   warning: {
     label: "Atenção",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   info: {
     label: "Informativo",
-    className: "bg-slate-500/15 text-slate-300",
+    className: "text-comment",
   },
 };
 
@@ -165,19 +166,19 @@ export const HonestySeverityBadge = makeStatusBadge(
 export const INTERVIEW_OUTCOME_STYLES: StatusStyles = {
   passed: {
     label: "Aprovado",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   failed: {
     label: "Reprovado",
-    className: "bg-red-500/15 text-red-300",
+    className: "text-destructive",
   },
   pending: {
     label: "Pendente",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   cancelled: {
     label: "Cancelada",
-    className: "bg-neutral-500/15 text-neutral-300",
+    className: "text-comment",
   },
 };
 
@@ -273,19 +274,19 @@ export function eventChannelLabel(value: string): string {
 export const VERIFICATION_STYLES: StatusStyles = {
   confirmado: {
     label: "Confirmada",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   divergente: {
     label: "Divergente",
-    className: "bg-red-500/15 text-red-300",
+    className: "text-destructive",
   },
   inacessivel: {
     label: "Inacessível",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   expirada: {
     label: "Expirada",
-    className: "bg-neutral-500/15 text-neutral-300",
+    className: "text-comment",
   },
 };
 

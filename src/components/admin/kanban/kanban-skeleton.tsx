@@ -1,30 +1,21 @@
 /**
- * Estado "carregando" do board — o equivalente de `TableSkeletonRows` para o
+ * Estado "carregando" do board — o equivalente de `TableLoadingRow` para o
  * Kanban (AGENTS.md §3, estado 1). Vai no `fallback` do `<Suspense>`.
  *
- * Desenha quatro colunas largas com tres cards cada: e o formato mediano do
- * funil e evita o salto de layout quando os dados chegam.
+ * Uma linha de progresso, não quatro colunas de retângulos cinza: os blocos
+ * são desenhados inteiros e revelados por um `clip-path` animado
+ * (`.admin-progress` em admin.css), então sob `prefers-reduced-motion: reduce`
+ * a regra global encerra a animação no último quadro — barra cheia, parada.
  */
 
-import { Skeleton } from "@/components/ui/skeleton";
-
-export function KanbanBoardSkeleton({ columns = 4 }: { columns?: number }) {
+export function KanbanBoardSkeleton() {
   return (
-    <div className="flex items-start gap-2 overflow-hidden pb-2">
-      {Array.from({ length: columns }, (_, column) => (
-        <div key={column} className="w-56 shrink-0 bg-muted/30">
-          <Skeleton className="h-0.5 w-full" />
-          <div className="flex items-center justify-between gap-2 px-2.5 py-2">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-3 w-5" />
-          </div>
-          <div className="space-y-2 px-2 pb-2">
-            {Array.from({ length: 3 }, (_, card) => (
-              <Skeleton key={card} className="h-24 w-full" />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <p className="flex items-center gap-2 py-6 text-xs text-muted-foreground">
+      <span aria-hidden>#</span>
+      <span role="status">carregando o funil</span>
+      <span className="admin-progress" aria-hidden>
+        {"█".repeat(32)}
+      </span>
+    </p>
   );
 }

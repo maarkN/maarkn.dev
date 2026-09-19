@@ -114,7 +114,7 @@ export function ContactsToolbar(props: ContactsToolbarProps) {
         push({});
       }}
     >
-      <div className="inline-flex overflow-hidden rounded-md border border-border">
+      <div className="inline-flex overflow-hidden rounded-none border border-border">
         {CONTACT_TABS.map((tab) => (
           <Button
             key={tab}

@@ -170,7 +170,7 @@ export function ApplicationsToolbar(props: ApplicationsToolbarProps) {
       {/* Rota — o critério que separa os dois planos. Aplica no clique. */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-muted-foreground">Rota</span>
-        <div className="inline-flex overflow-hidden rounded-md border border-border">
+        <div className="inline-flex overflow-hidden rounded-none border border-border">
           <RouteButton
             active={draft.route === ""}
             disabled={isPending}

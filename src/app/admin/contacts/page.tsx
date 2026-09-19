@@ -10,11 +10,11 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import { FunnelStageBadge } from "@/components/admin/status-badge";
 import {
+  ListingIndexCell,
+  ListingIndexHead,
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -65,8 +65,9 @@ import { channelLabel, referenceLanguageLabel } from "./vocabulary";
 // Guard de sessão + searchParams: esta rota nunca é pré-renderizada.
 export const dynamic = "force-dynamic";
 
-const CONTACT_COLS = 5;
-const REFERENCE_COLS = 5;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const CONTACT_COLS = 6;
+const REFERENCE_COLS = 6;
 
 export default async function ContactsPage({
   searchParams,
@@ -95,9 +96,8 @@ export default async function ContactsPage({
             actions={isContacts ? <ContactDialog /> : <ReferenceDialog />}
           />
 
-          <Card>
-            <CardContent>
-              <ContactsToolbar
+          <div className="space-y-3">
+            <ContactsToolbar
                 {...filters}
                 counts={counts}
                 channels={channels}
@@ -111,11 +111,11 @@ export default async function ContactsPage({
                 fallback={
                   isContacts ? (
                     <ContactsTableFrame>
-                      <TableSkeletonRows cols={CONTACT_COLS} />
+                      <TableLoadingRow cols={CONTACT_COLS} />
                     </ContactsTableFrame>
                   ) : (
                     <ReferencesTableFrame>
-                      <TableSkeletonRows cols={REFERENCE_COLS} />
+                      <TableLoadingRow cols={REFERENCE_COLS} />
                     </ReferencesTableFrame>
                   )
                 }
@@ -126,8 +126,7 @@ export default async function ContactsPage({
                   <ReferenceRows filters={filters} page={page} />
                 )}
               </Suspense>
-            </CardContent>
-          </Card>
+          </div>
 
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Lock className="size-3.5" />
@@ -177,17 +176,23 @@ async function ContactRows({
             }
           />
         ) : (
-          result.rows.map((row) => (
+          result.rows.map((row, index) => (
             <TableRow key={row.id}>
+              <ListingIndexCell index={index} />
               <TableCell>
-                <div className="font-medium">{row.name}</div>
-                <div className="text-xs text-muted-foreground">
+                <div title={row.name}>{row.name}</div>
+                <div
+                  className="text-xs text-muted-foreground"
+                  title={row.roleTitle || undefined}
+                >
                   {row.roleTitle || EMPTY}
                 </div>
               </TableCell>
 
               <TableCell>
-                <div className="text-sm">{row.company?.name ?? EMPTY}</div>
+                <div className="text-sm" title={row.company?.name ?? undefined}>
+                  {row.company?.name ?? EMPTY}
+                </div>
                 {row.application && (
                   <Link
                     href={`/admin/applications/${row.application.id}`}
@@ -195,7 +200,7 @@ async function ContactRows({
                     title={row.application.folderName}
                   >
                     <FunnelStageBadge status={row.application.stage} />
-                    <span className="font-mono text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+                    <span className="truncate text-[11px] text-muted-foreground underline-offset-2 hover:underline">
                       {row.application.folderName}
                     </span>
                   </Link>
@@ -211,9 +216,9 @@ async function ContactRows({
               </TableCell>
 
               <TableCell>
-                <Badge variant="outline" className="font-normal">
-                  {channelLabel(row.channel)}
-                </Badge>
+                <span className="text-cyan" title={channelLabel(row.channel)}>
+                  [{row.channel}]
+                </span>
                 <div className="pt-0.5 text-[11px] text-muted-foreground">
                   {row.timezone ?? EMPTY}
                   {row._count.events > 0 && (
@@ -274,14 +279,15 @@ async function ContactRows({
 
 function ContactsTableFrame({ children }: { children: React.ReactNode }) {
   return (
-    <Table>
+    <Table className="table-fixed">
       <TableHeader>
-        <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>Empresa</TableHead>
-          <TableHead>Contato</TableHead>
-          <TableHead>Canal</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
+        <TableRow className="hover:bg-transparent">
+          <ListingIndexHead />
+          <TableHead>nome</TableHead>
+          <TableHead>empresa</TableHead>
+          <TableHead className="w-[26ch]">contato</TableHead>
+          <TableHead className="w-[22ch]">canal</TableHead>
+          <TableHead className="w-[12ch] text-right">acoes</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
@@ -324,18 +330,27 @@ async function ReferenceRows({
             }
           />
         ) : (
-          result.rows.map((row) => (
+          result.rows.map((row, index) => (
             <TableRow key={row.id}>
+              <ListingIndexCell index={index} />
               <TableCell>
-                <div className="font-medium">{row.name}</div>
-                <div className="font-mono text-xs text-muted-foreground">
+                <div title={row.name}>{row.name}</div>
+                <div className="text-xs text-muted-foreground" title={row.slug}>
                   {row.slug}
                 </div>
               </TableCell>
 
               <TableCell>
-                <div className="text-sm">{row.relationship || EMPTY}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm" title={row.relationship || undefined}>
+                  {row.relationship || EMPTY}
+                </div>
+                <div
+                  className="text-xs text-muted-foreground"
+                  title={
+                    [row.roleTitle, row.companyName].filter(Boolean).join(" · ") ||
+                    undefined
+                  }
+                >
                   {[row.roleTitle, row.companyName].filter(Boolean).join(" · ") ||
                     EMPTY}
                 </div>
@@ -351,16 +366,16 @@ async function ReferenceRows({
 
               <TableCell>
                 {row.canContact ? (
-                  <Badge className="border-transparent bg-emerald-500/15 text-emerald-300">
-                    Autorizada
-                  </Badge>
+                  <span className="text-green" title="Autorizada">
+                    [can_contact]
+                  </span>
                 ) : (
-                  <Badge
-                    className="border-transparent bg-amber-500/15 text-amber-300"
-                    title="Não pode ser passada para um recrutador ainda."
+                  <span
+                    className="text-orange"
+                    title="Sem autorização: não pode ser passada para um recrutador ainda."
                   >
-                    Sem autorização
-                  </Badge>
+                    [no_consent]
+                  </span>
                 )}
                 <div className="pt-0.5 text-[11px] text-muted-foreground">
                   {referenceLanguageLabel(row.language)}
@@ -412,14 +427,15 @@ async function ReferenceRows({
 
 function ReferencesTableFrame({ children }: { children: React.ReactNode }) {
   return (
-    <Table>
+    <Table className="table-fixed">
       <TableHeader>
-        <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>Relação</TableHead>
-          <TableHead>Contato</TableHead>
-          <TableHead>Autorização</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
+        <TableRow className="hover:bg-transparent">
+          <ListingIndexHead />
+          <TableHead>nome</TableHead>
+          <TableHead>relacao</TableHead>
+          <TableHead className="w-[26ch]">contato</TableHead>
+          <TableHead className="w-[20ch]">autorizacao</TableHead>
+          <TableHead className="w-[12ch] text-right">acoes</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
@@ -446,19 +462,23 @@ function ContactLinks({
       {email && (
         <a
           href={`mailto:${email}`}
-          className="flex items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="flex min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          title={email}
         >
           <Mail className="size-3.5 shrink-0" />
-          <span className="break-all">{email}</span>
+          {/* A célula é `whitespace-nowrap`, então `break-all` não quebra nada:
+              quem corta é o truncamento, e o endereço inteiro fica no title. */}
+          <span className="truncate">{email}</span>
         </a>
       )}
       {phone && (
         <a
           href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-          className="flex items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="flex min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          title={phone}
         >
           <Phone className="size-3.5 shrink-0" />
-          <span className="tabular-nums">{phone}</span>
+          <span className="truncate tabular-nums">{phone}</span>
         </a>
       )}
       {/* Esquema em allowlist, como em `ExternalLinkValue`: `linkedinUrl` vem do
@@ -472,10 +492,11 @@ function ContactLinks({
           // `noreferrer` também: o Referer levaria a URL do backoffice
           // (inclusive os filtros) para fora.
           rel="noreferrer"
-          className="flex items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="flex min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          title={linkedinUrl}
         >
           <ExternalLink className="size-3.5 shrink-0" />
-          LinkedIn
+          <span className="truncate">LinkedIn</span>
         </a>
       )}
     </div>

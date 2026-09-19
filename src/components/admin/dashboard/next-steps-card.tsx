@@ -3,9 +3,8 @@ import { CalendarClock, ListChecks } from "lucide-react";
 import { FunnelStageBadge } from "@/components/admin/status-badge";
 import {
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -79,7 +78,7 @@ export function NextStepsSkeleton() {
   return (
     <NextStepsCardShell description="Entrevistas marcadas e follow-ups pendentes.">
       <NextStepsFrame>
-        <TableSkeletonRows rows={5} cols={COLS} />
+        <TableLoadingRow cols={COLS} />
       </NextStepsFrame>
     </NextStepsCardShell>
   );
@@ -144,10 +143,8 @@ export async function NextStepsCard() {
                   <>
                     {formatDateTime(item.at)}
                     {item.overdue && (
-                      <div className="pt-0.5">
-                        <Badge className="border-transparent bg-red-500/15 text-red-300">
-                          sem desfecho
-                        </Badge>
+                      <div className="pt-0.5 text-destructive">
+                        [sem_desfecho]
                       </div>
                     )}
                   </>

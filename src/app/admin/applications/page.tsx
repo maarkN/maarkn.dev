@@ -11,12 +11,12 @@ import {
   SponsorshipBadge,
 } from "@/components/admin/status-badge";
 import {
+  ListingIndexCell,
+  ListingIndexHead,
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -46,7 +46,8 @@ import { ApplicationsToolbar } from "./applications-toolbar";
 // Guard de sessão + searchParams: esta rota nunca é pré-renderizada.
 export const dynamic = "force-dynamic";
 
-const COLS = 6;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const COLS = 7;
 
 export default async function ApplicationsPage({
   searchParams,
@@ -91,36 +92,32 @@ export default async function ApplicationsPage({
         />
 
         {notice && (
-          <Card>
-            <CardContent className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
-              <CheckCircle2 className="size-4 text-emerald-500" />
-              {notice}
-            </CardContent>
-          </Card>
+          <p className="flex items-center gap-2 text-xs text-green">
+            <CheckCircle2 className="size-4" />
+            {notice}
+          </p>
         )}
 
-        <Card>
-          <CardContent>
-            <ApplicationsToolbar
-              {...filters}
-              markets={markets}
-              sources={sources}
-              page={page}
-              position="top"
-            />
+        <div className="space-y-3">
+          <ApplicationsToolbar
+            {...filters}
+            markets={markets}
+            sources={sources}
+            page={page}
+            position="top"
+          />
 
-            <Suspense
-              key={applicationsQueryKey(filters, page)}
-              fallback={
-                <ApplicationsTableFrame>
-                  <TableSkeletonRows cols={COLS} />
-                </ApplicationsTableFrame>
-              }
-            >
-              <ApplicationsRows filters={filters} page={page} />
-            </Suspense>
-          </CardContent>
-        </Card>
+          <Suspense
+            key={applicationsQueryKey(filters, page)}
+            fallback={
+              <ApplicationsTableFrame>
+                <TableLoadingRow cols={COLS} />
+              </ApplicationsTableFrame>
+            }
+          >
+            <ApplicationsRows filters={filters} page={page} />
+          </Suspense>
+        </div>
       </div>
     </AdminShell>
   );
@@ -161,43 +158,52 @@ async function ApplicationsRows({
             }
           />
         ) : (
-          result.rows.map((row) => {
+          result.rows.map((row, index) => {
             const sponsorship = effectiveSponsorship(row);
             const market = effectiveMarket(row);
             const companyName = row.company?.name ?? row.folderName;
+            const roleTitle = row.roleTitle || row.job?.title || EMPTY;
+            const place =
+              [market, row.job?.locationText].filter(Boolean).join(" · ") || EMPTY;
             const jobUrl = row.job?.sourceUrl;
             // URI sintético criado pelo cutover para as linhas do tracker antigo
             // que não tinham link algum: não é clicável.
             const linkable = Boolean(jobUrl && /^https?:\/\//i.test(jobUrl));
             return (
               <TableRow key={row.id}>
+                <ListingIndexCell index={index} />
                 <TableCell>
+                  {/* Flex container não recebe `text-overflow`: quem trunca é
+                      o item de texto, e o valor inteiro fica no seu `title`. */}
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{companyName}</span>
+                    <span className="truncate font-medium" title={companyName}>
+                      {companyName}
+                    </span>
                     {row.fit && (
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {row.fit}
                       </span>
                     )}
                     {row.priority != null && (
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-normal tabular-nums"
+                      <span
+                        className="shrink-0 tabular-nums text-orange"
                         title="Prioridade (1 = maior)"
                       >
-                        P{row.priority}
-                      </Badge>
+                        [P{row.priority}]
+                      </span>
                     )}
                   </div>
-                  <div className="font-mono text-xs text-muted-foreground">
+                  <div
+                    className="text-xs text-muted-foreground"
+                    title={row.folderName}
+                  >
                     {row.folderName}
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  <div>{row.roleTitle || row.job?.title || EMPTY}</div>
-                  <div className="text-xs">
-                    {[market, row.job?.locationText].filter(Boolean).join(" · ") ||
-                      EMPTY}
+                  <div title={roleTitle}>{roleTitle}</div>
+                  <div className="text-xs" title={place}>
+                    {place}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -274,15 +280,16 @@ async function ApplicationsRows({
 /** Cabeçalho fixo da tabela — compartilhado pelo skeleton e pelos dados. */
 function ApplicationsTableFrame({ children }: { children: React.ReactNode }) {
   return (
-    <Table>
+    <Table className="table-fixed">
       <TableHeader>
-        <TableRow>
-          <TableHead>Empresa</TableHead>
-          <TableHead>Vaga</TableHead>
-          <TableHead>Estágio</TableHead>
-          <TableHead>Patrocínio</TableHead>
-          <TableHead>Origem</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
+        <TableRow className="hover:bg-transparent">
+          <ListingIndexHead />
+          <TableHead>empresa</TableHead>
+          <TableHead>vaga</TableHead>
+          <TableHead className="w-[24ch]">estagio</TableHead>
+          <TableHead className="w-[30ch]">patrocinio</TableHead>
+          <TableHead className="w-[18ch]">origem</TableHead>
+          <TableHead className="w-[14ch] text-right">acoes</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>

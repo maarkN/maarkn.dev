@@ -16,18 +16,18 @@ import type { StatusStyles } from "@/components/admin/status-badge";
 export const CHAT_STATUS_STYLES: StatusStyles = {
   ok: {
     label: "OK",
-    className: "bg-emerald-500/15 text-emerald-300",
+    className: "text-green",
   },
   mock: {
     label: "Mock",
-    className: "bg-slate-500/15 text-slate-300",
+    className: "text-comment",
   },
   pending: {
     label: "Pendente",
-    className: "bg-amber-500/15 text-amber-300",
+    className: "text-orange",
   },
   error: {
     label: "Erro",
-    className: "bg-red-500/15 text-red-300",
+    className: "text-destructive",
   },
 };

@@ -7,7 +7,6 @@ import { PageHeader } from "@/components/admin/page-header";
 import { KanbanBoard } from "@/components/admin/kanban/kanban-board";
 import { KanbanBoardSkeleton } from "@/components/admin/kanban/kanban-skeleton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
 import { formatNumber } from "@/lib/format";
@@ -56,30 +55,24 @@ export default async function ApplicationsBoardPage({
           }
         />
 
-        <Card>
-          <CardContent>
-            <BoardToolbar
-              q={filters.q}
-              phase={filters.phase}
-              market={filters.market}
-              route={filters.route}
-              sponsorship={filters.sponsorship}
-              source={filters.source}
-              markets={markets}
-            />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <BoardToolbar
+            q={filters.q}
+            phase={filters.phase}
+            market={filters.market}
+            route={filters.route}
+            sponsorship={filters.sponsorship}
+            source={filters.source}
+            markets={markets}
+          />
 
-        <Card>
-          <CardContent>
-            <Suspense
-              key={applicationsQueryKey(filters, 1)}
-              fallback={<KanbanBoardSkeleton />}
-            >
-              <BoardColumns filters={filters} />
-            </Suspense>
-          </CardContent>
-        </Card>
+          <Suspense
+            key={applicationsQueryKey(filters, 1)}
+            fallback={<KanbanBoardSkeleton />}
+          >
+            <BoardColumns filters={filters} />
+          </Suspense>
+        </div>
       </div>
     </AdminShell>
   );

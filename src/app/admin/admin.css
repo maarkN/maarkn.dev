@@ -71,12 +71,26 @@
   --input:                var(--comment);
   --ring:                 var(--purple);
 
-  /* Square corners are written into the primitives as `rounded-none`; this
-     token is not what flattens them. Tailwind v4 reads `rounded-sm/md/lg`
-     from --radius-sm/md/lg, which globals.css does not declare, so those
-     keep the framework defaults. The only consumer of --radius is the inline
-     style in src/components/ui/sonner.tsx. Kept at 0 so that one stays
-     square; change 03 decides whether to introduce the --radius-* scale. */
+  /* RESOLVED in bko-03, option (b): the radius is MARKUP, not a token.
+     Tailwind v4 reads the `rounded-*` scale from --radius-sm/md/lg, which
+     globals.css does not declare — measured in the built CSS, those keep the
+     framework defaults (.25rem / .375rem). Declaring the scale was the other
+     option and was rejected:
+       • `@theme` only works in globals.css, so the scale would have to be
+         declared in a file that does NOT import this one, while its value
+         (--radius) lives here. Every `rounded-*` in the repository would then
+         emit a var() that resolves to nothing outside `.admin-root`.
+       • it would buy exactly five call sites — the five medium-radius
+         utilities left in four toolbars were all that remained. bko-03
+         converted them to square, so the scale would have zero consumers.
+     Net: 43 square-corner utilities in the markup are what flattens the
+     admin. The bko-01 design.md had already stopped claiming "one token,
+     twenty primitives" and deferred the call to change 03; that paragraph in
+     the archive now records this answer. --radius survives at 0 for its one
+     real consumer, the inline style in src/components/ui/sonner.tsx.
+     (This comment deliberately avoids spelling any utility class name:
+     Tailwind v4 scans CSS files too, and a class written in prose here is
+     enough to make it emit the rule.) */
   --radius: 0;
 
   /* Not in the design.md table — required by markup that predates it.
@@ -114,4 +128,120 @@
 .admin-root :is(input[type="checkbox"], input[type="file"], button, a, summary):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* ════════════════════════════════════════════════
+   LISTING — the `ls` look, on a table that is still a table.
+   `<pre>` with padded text would be more faithful and would destroy the
+   column header, the cell↔header association and table navigation in a
+   screen reader. So the DOM stays <table>/<thead>/<th scope="col"> (see
+   src/components/ui/table.tsx) and only the paint changes.
+
+   Monospaced alignment is only trustworthy with widths in `ch` and tabular
+   numerals. The fixed layout is NOT set here: a table that declares no width
+   at all would get equal columns and truncate text that has nowhere to go.
+   It is opted into at the frame (`<Table className="table-fixed">`) by the
+   listings that do declare `ch` widths on their headers, and there it
+   promotes each width to the law of the whole column — a long company name
+   truncates instead of pushing every other column out of line. Columns with
+   no width share what is left: that is the free-text column, by design.
+   ════════════════════════════════════════════════ */
+.admin-root .admin-listing {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* The column header reads as the comment line above the output. */
+.admin-root .admin-listing thead th {
+  color: var(--comment);
+  font-weight: 400;
+}
+
+/* Truncation is the rule: the cell clips, and the one-line <div>s inside it
+   get the ellipsis. A div holding a control is left alone — it hugs its
+   buttons, and clipping it would eat the 2px focus outline. */
+.admin-root .admin-listing :is(th, td),
+.admin-root .admin-listing td > div:not(:has(:is(button, a, input, [role="button"]))) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── the hovered row is the terminal SELECTION ────────────────────────────
+   Background --sel, foreground --fg, uniformly — which is what selecting a
+   line in a terminal does. It is also the only version of this highlight
+   that is accessible without re-measuring every colour in the table:
+   measured on --sel (#44475A), the admin's own palette reads
+
+     --fg 8.46   --muted-foreground 4.97   --yellow 7.44   --cyan 6.26
+     --green 5.84   --orange 5.83   --purple 4.07   --pink 3.91
+     --destructive 3.85   --comment 2.98   --red 2.93
+
+   so five of the eleven would fail 1.4.3 on a hovered row if each cell kept
+   its own colour. At rest the listing sits on --bg, where the whole palette
+   clears 4.5:1 (--red is the floor at 4.56). Rows that are not data —
+   the empty line, the error line, the loading line — opt out with
+   `hover:bg-transparent`. */
+.admin-root .admin-listing tbody tr:hover {
+  background: var(--sel);
+}
+.admin-root .admin-listing tbody tr:hover :is(td, td *) {
+  color: var(--fg);
+}
+.admin-root .admin-listing tbody tr.hover\:bg-transparent:hover {
+  background: transparent;
+}
+.admin-root .admin-listing tbody tr.hover\:bg-transparent:hover :is(td, td *) {
+  color: inherit;
+}
+
+/* The same selection, for output that is NOT a <table>: the Kanban card.
+   Painting --sel on hover and stopping there would leave every colour the
+   card carries measured against --sel, where `[unknown]`/`[pre_send]`/
+   `[withdrawn]`/`—` (--comment, 2.98) and `[rejected]`/`[blocked]`
+   (--destructive, 3.85) fail 1.4.3. The background and the trip to --fg are
+   one decision, so they are one class: reach for this, never for a bare
+   hover-background utility. */
+.admin-root .admin-selection:hover {
+  background: var(--sel);
+}
+.admin-root .admin-selection:hover * {
+  color: var(--fg);
+}
+
+/* …and give the link back its hover hue. Forcing the selection to --fg also
+   swallowed the brand-on-hover utility that links under /admin carry: this
+   file is imported from TypeScript and therefore sits outside every @layer,
+   which beats any Tailwind utility regardless of specificity. Without this
+   rule a link inside a hovered row has no hover affordance at all unless it
+   also happens to underline. --brand (= --cyan) measures 6.26 on --sel, so
+   the colour comes back without costing contrast. The escaped selector below
+   is that utility's own class name. */
+.admin-root .admin-listing tbody tr:hover a.hover\:text-brand:hover,
+.admin-root .admin-selection:hover a.hover\:text-brand:hover {
+  color: var(--brand);
+}
+
+/* The decorative index column (`001`, `002`…): `ls -1 | nl`, not the id. */
+.admin-root .admin-listing [data-listing-index] {
+  color: var(--comment);
+}
+
+/* ── loading: a progress line, not a grey box ─────────────────────────────
+   The blocks are drawn in full and revealed by an animated clip, so under
+   `prefers-reduced-motion: reduce` the global rule in globals.css collapses
+   the animation to its last frame — a full, motionless bar. Nothing blinks,
+   nothing pulses, and the row still says "carregando" to a screen reader. */
+.admin-root .admin-progress {
+  display: inline-block;
+  color: var(--purple);
+  background: var(--sel);
+  animation: admin-progress-fill 1.4s linear infinite;
+}
+
+@keyframes admin-progress-fill {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
 }

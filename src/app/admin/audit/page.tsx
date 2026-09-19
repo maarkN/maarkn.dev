@@ -11,8 +11,10 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
+  ListingIndexCell,
+  ListingIndexHead,
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +44,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
-const COLS = 6;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const COLS = 7;
 const STAT_TILES = 5;
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Teto do select de chaves da toolbar — é filtro, não listagem. */
@@ -183,13 +186,14 @@ async function AuditStats() {
 function AuditTableHead() {
   return (
     <TableHeader>
-      <TableRow>
-        <TableHead>Quando</TableHead>
-        <TableHead>Tool</TableHead>
-        <TableHead className="hidden md:table-cell">Chave</TableHead>
-        <TableHead>Situação</TableHead>
-        <TableHead className="text-right">Latência</TableHead>
-        <TableHead className="hidden lg:table-cell">Origem</TableHead>
+      <TableRow className="hover:bg-transparent">
+        <ListingIndexHead />
+        <TableHead className="w-[20ch]">quando</TableHead>
+        <TableHead>tool</TableHead>
+        <TableHead className="hidden w-[22ch] md:table-cell">chave</TableHead>
+        <TableHead className="w-[18ch]">situacao</TableHead>
+        <TableHead className="w-[12ch] text-right">latencia</TableHead>
+        <TableHead className="hidden w-[24ch] lg:table-cell">origem</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -198,16 +202,12 @@ function AuditTableHead() {
 /** Estado 1 do §3: carregando. */
 function AuditTableSkeleton() {
   return (
-    <Card>
-      <CardContent>
-        <Table>
-          <AuditTableHead />
-          <TableBody>
-            <TableSkeletonRows cols={COLS} />
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <Table className="table-fixed">
+      <AuditTableHead />
+      <TableBody>
+        <TableLoadingRow cols={COLS} />
+      </TableBody>
+    </Table>
   );
 }
 
@@ -290,9 +290,8 @@ async function AuditTable({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <Card>
-      <CardContent>
-        <AuditToolbar
+    <div className="space-y-3">
+      <AuditToolbar
           q={q}
           status={status}
           keyId={keyId}
@@ -303,7 +302,7 @@ async function AuditTable({
           position="top"
         />
 
-        <Table>
+        <Table className="table-fixed">
           <AuditTableHead />
           <TableBody>
             {failed || !dbConfigured ? (
@@ -322,8 +321,9 @@ async function AuditTable({
                 message="Nenhuma chamada registrada com esses filtros."
               />
             ) : (
-              rows.map((r) => (
+              rows.map((r, index) => (
                 <TableRow key={r.id} className="align-top">
+                  <ListingIndexCell index={index} />
                   <TableCell className="tabular-nums whitespace-nowrap text-muted-foreground">
                     {formatDateTime(r.createdAt)}
                   </TableCell>
@@ -332,10 +332,10 @@ async function AuditTable({
                         component por linha. O conteúdo já vem redigido e
                         truncado de `lib/mcp/redact.ts`. */}
                     <details className="group max-w-[420px]">
-                      <summary className="cursor-pointer list-none font-mono text-xs marker:hidden">
+                      <summary className="cursor-pointer list-none text-xs marker:hidden">
                         {r.tool}
                         {r.argsSummary || r.result ? (
-                          <span className="mt-0.5 block font-sans text-xs text-brand group-open:hidden">
+                          <span className="mt-0.5 block text-xs text-brand group-open:hidden">
                             ver detalhes ↓
                           </span>
                         ) : null}
@@ -364,7 +364,8 @@ async function AuditTable({
                     {r.apiKey ? (
                       <Link
                         href={`/admin/audit?key=${r.apiKey.id}`}
-                        className="font-medium transition-colors hover:text-brand"
+                        className="block truncate font-medium transition-colors hover:text-brand"
+                        title={r.apiKey.name}
                       >
                         {r.apiKey.name}
                       </Link>
@@ -373,7 +374,7 @@ async function AuditTable({
                         não identificada
                       </span>
                     )}
-                    <span className="block font-mono text-xs text-muted-foreground">
+                    <span className="block text-xs text-muted-foreground">
                       {r.keyPrefix ? `${r.keyPrefix}…` : "—"}
                     </span>
                   </TableCell>
@@ -391,7 +392,7 @@ async function AuditTable({
                       : `${formatNumber(r.latencyMs)} ms`}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">
-                    <span className="font-mono text-xs">{r.ip ?? "—"}</span>
+                    <span className="text-xs">{r.ip ?? "—"}</span>
                     {r.userAgent ? (
                       <span
                         className="mt-0.5 block max-w-48 truncate text-xs"
@@ -415,9 +416,8 @@ async function AuditTable({
           page={page}
           totalPages={totalPages}
           total={total}
-          position="bottom"
-        />
-      </CardContent>
-    </Card>
+        position="bottom"
+      />
+    </div>
   );
 }

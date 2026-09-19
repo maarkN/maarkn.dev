@@ -10,12 +10,12 @@ import {
   StatusBadge,
 } from "@/components/admin/status-badge";
 import {
+  ListingIndexCell,
+  ListingIndexHead,
   TableEmptyRow,
-  TableSkeletonRows,
+  TableLoadingRow,
 } from "@/components/admin/table-pager";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -68,7 +68,8 @@ import {
 // Guard de sessão + searchParams: esta rota nunca é pré-renderizada.
 export const dynamic = "force-dynamic";
 
-const COLS = 7;
+// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const COLS = 8;
 
 export default async function JobsPage({
   searchParams,
@@ -98,28 +99,26 @@ export default async function JobsPage({
           }
         />
 
-        <Card>
-          <CardContent>
-            <JobsToolbar
-              {...filters}
-              markets={markets}
-              verdicts={verdicts}
-              page={page}
-              position="top"
-            />
+        <div className="space-y-3">
+          <JobsToolbar
+            {...filters}
+            markets={markets}
+            verdicts={verdicts}
+            page={page}
+            position="top"
+          />
 
-            <Suspense
-              key={jobsQueryKey(filters, page)}
-              fallback={
-                <JobsTableFrame>
-                  <TableSkeletonRows cols={COLS} />
-                </JobsTableFrame>
-              }
-            >
-              <JobsRows filters={filters} page={page} />
-            </Suspense>
-          </CardContent>
-        </Card>
+          <Suspense
+            key={jobsQueryKey(filters, page)}
+            fallback={
+              <JobsTableFrame>
+                <TableLoadingRow cols={COLS} />
+              </JobsTableFrame>
+            }
+          >
+            <JobsRows filters={filters} page={page} />
+          </Suspense>
+        </div>
 
         {unmappedHits > 0 && (
           <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
@@ -175,7 +174,9 @@ async function JobsRows({
             }
           />
         ) : (
-          result.rows.map((row) => <JobRow key={row.id} row={row} />)
+          result.rows.map((row, index) => (
+            <JobRow key={row.id} row={row} index={index} />
+          ))
         )}
       </JobsTableFrame>
 
@@ -190,7 +191,7 @@ async function JobsRows({
   );
 }
 
-function JobRow({ row }: { row: JobListRow }) {
+function JobRow({ row, index }: { row: JobListRow; index: number }) {
   const hit = latestHit(row);
   const verification = latestVerification(row);
   const application = linkedApplication(row);
@@ -213,31 +214,40 @@ function JobRow({ row }: { row: JobListRow }) {
 
   return (
     <TableRow>
+      <ListingIndexCell index={index} />
       <TableCell>
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{row.title}</span>
+        <div className="flex items-center gap-2" title={row.title}>
+          <span className="truncate">{row.title}</span>
           {row.priority != null && (
-            <Badge
-              variant="outline"
-              className="text-xs font-normal tabular-nums"
+            <span
+              className="shrink-0 tabular-nums text-orange"
               title="Prioridade (1 = maior)"
             >
-              P{row.priority}
-            </Badge>
+              [P{row.priority}]
+            </span>
           )}
           {!row.active && (
-            <Badge variant="outline" className="text-xs font-normal">
-              Encerrada
-            </Badge>
+            <span className="shrink-0 text-comment" title="Vaga encerrada">
+              [closed]
+            </span>
           )}
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div
+          className="text-xs text-muted-foreground"
+          title={`${companyName ?? "empresa não identificada"}${board ? ` · ${board}` : ""}`}
+        >
           {companyName ?? "empresa não identificada"}
           {board && ` · ${board}`}
         </div>
-        {place && <div className="text-xs text-muted-foreground">{place}</div>}
+        {place && (
+          <div className="text-xs text-muted-foreground" title={place}>
+            {place}
+          </div>
+        )}
         {row.salaryText && (
-          <div className="text-xs text-muted-foreground">{row.salaryText}</div>
+          <div className="text-xs text-muted-foreground" title={row.salaryText}>
+            {row.salaryText}
+          </div>
         )}
       </TableCell>
 
@@ -261,7 +271,17 @@ function JobRow({ row }: { row: JobListRow }) {
             eliminatório). Quando as duas existem, as duas aparecem — esconder a
             segunda faria a coluna contradizer a do lado sem explicação. */}
         {hit && (hit.score !== null || hit.rank !== null) && (
-          <div className="font-mono text-[11px] text-muted-foreground">
+          <div
+            className="text-[11px] text-muted-foreground"
+            title={[
+              hit.score !== null && row.fitScore !== null
+                ? `radar ${hit.score}`
+                : null,
+              hit.rank !== null ? `#${hit.rank}` : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
             {hit.score !== null && row.fitScore !== null && `radar ${hit.score}`}
             {hit.rank !== null && ` #${hit.rank}`}
           </div>
@@ -306,7 +326,10 @@ function JobRow({ row }: { row: JobListRow }) {
       <TableCell className="tabular-nums text-muted-foreground">
         {formatDate(row.postedAt)}
         {hit?.radarScan?.scannedAt && (
-          <div className="text-[11px]">
+          <div
+            className="text-[11px]"
+            title={`radar ${formatDate(hit.radarScan.scannedAt)}`}
+          >
             radar {formatDate(hit.radarScan.scannedAt)}
           </div>
         )}
@@ -320,7 +343,7 @@ function JobRow({ row }: { row: JobListRow }) {
             title={application.folderName}
           >
             <FunnelStageBadge status={application.stage} />
-            <span className="font-mono text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+            <span className="truncate text-[11px] text-muted-foreground underline-offset-2 hover:underline">
               {application.folderName}
             </span>
           </Link>
@@ -358,16 +381,17 @@ function JobRow({ row }: { row: JobListRow }) {
 /** Cabeçalho fixo da tabela — compartilhado pelo skeleton e pelos dados. */
 function JobsTableFrame({ children }: { children: React.ReactNode }) {
   return (
-    <Table>
+    <Table className="table-fixed">
       <TableHeader>
-        <TableRow>
-          <TableHead>Vaga</TableHead>
-          <TableHead>Pontuação</TableHead>
-          <TableHead>Veredito</TableHead>
-          <TableHead>Patrocínio</TableHead>
-          <TableHead>Publicada</TableHead>
-          <TableHead>Funil</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
+        <TableRow className="hover:bg-transparent">
+          <ListingIndexHead />
+          <TableHead>vaga</TableHead>
+          <TableHead className="w-[12ch]">score</TableHead>
+          <TableHead className="w-[22ch]">veredito</TableHead>
+          <TableHead className="w-[30ch]">patrocinio</TableHead>
+          <TableHead className="w-[16ch]">publicada</TableHead>
+          <TableHead className="w-[26ch]">funil</TableHead>
+          <TableHead className="w-[12ch] text-right">acoes</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>

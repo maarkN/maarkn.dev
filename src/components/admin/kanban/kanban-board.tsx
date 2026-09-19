@@ -30,12 +30,13 @@
 import type { FunnelStage } from "@prisma/client";
 import Link from "next/link";
 import type { ActionResult } from "@/app/_actions/action-result";
+import { FUNNEL_PHASE_TONES } from "@/components/admin/status-badge";
 import {
   FUNNEL_STAGE_LABELS,
   FUNNEL_STAGE_PHASES,
-  type FunnelPhaseKey,
 } from "@/lib/applications";
 import type { ApplicationFilters } from "@/lib/applications-query";
+import { cn } from "@/lib/utils";
 import { KanbanCard } from "./kanban-card";
 import { KanbanColumn } from "./kanban-column";
 import {
@@ -45,13 +46,9 @@ import {
   type KanbanCardData,
 } from "./kanban-types";
 
-/** A cor da fase, igual a escala de `FUNNEL_STAGE_STYLES`. */
-const PHASE_ACCENT: Record<FunnelPhaseKey, string> = {
-  pre_send: "bg-amber-500/50",
-  sent: "bg-blue-500/50",
-  evaluation: "bg-violet-500/50",
-  outcome: "bg-emerald-500/50",
-};
+/* A cor da fase vem de `FUNNEL_PHASE_TONES` — a MESMA fonte que pinta o
+   `[estagio]` na lista. Não há um segundo mapa de cor por fase aqui: a barra
+   do painel usa `bg-current` sobre a classe `text-*` da fase. */
 
 export interface KanbanBoardProps {
   data: KanbanBoardData;
@@ -112,11 +109,13 @@ export function KanbanBoard({
         return (
           <div key={phase.key} className="flex flex-col gap-1.5">
             <div className="flex items-baseline gap-2 px-0.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {phase.label}
+              <span
+                className={cn("text-[11px] uppercase tracking-wider", FUNNEL_PHASE_TONES[phase.key])}
+              >
+                {phase.key}
               </span>
               <span className="text-[11px] tabular-nums text-muted-foreground">
-                {phaseTotal}
+                ({phaseTotal})
               </span>
             </div>
 
@@ -124,10 +123,11 @@ export function KanbanBoard({
               {ownColumns.map((stage) => (
                 <KanbanColumn
                   key={stage}
+                  name={stage}
                   title={FUNNEL_STAGE_LABELS[stage]}
                   count={data.counts[stage]}
                   href={listHref(filters, stage)}
-                  accentClassName={PHASE_ACCENT[phase.key]}
+                  accentClassName={FUNNEL_PHASE_TONES[phase.key]}
                   hiddenCount={Math.max(
                     0,
                     data.counts[stage] - data.cards[stage].length,
@@ -149,7 +149,7 @@ export function KanbanBoard({
                   filters={filters}
                   moveAction={moveAction}
                   cardsPerColumn={cardsPerColumn}
-                  accentClassName={PHASE_ACCENT[phase.key]}
+                  accentClassName={FUNNEL_PHASE_TONES[phase.key]}
                 />
               )}
             </div>
@@ -185,6 +185,7 @@ function ClosedColumn({
 
   return (
     <KanbanColumn
+      name="closed"
       title="Encerradas"
       count={total}
       accentClassName={accentClassName}
@@ -198,8 +199,8 @@ function ClosedColumn({
                 href={listHref(filters, stage)}
                 className="hover:text-foreground hover:underline"
               >
-                {FUNNEL_STAGE_LABELS[stage]}{" "}
-                <span className="tabular-nums">{data.counts[stage]}</span>
+                {stage}{" "}
+                <span className="tabular-nums">({data.counts[stage]})</span>
               </Link>
             ),
           )}
@@ -229,10 +230,11 @@ function BoardNotice({
     <p
       className={
         destructive
-          ? "py-10 text-center text-sm text-destructive"
-          : "py-10 text-center text-sm text-muted-foreground"
+          ? "py-10 text-destructive"
+          : "py-10 text-muted-foreground"
       }
     >
+      <span aria-hidden>{"# "}</span>
       {children}
     </p>
   );
