@@ -132,7 +132,7 @@ export function AuditToolbar(p: Props) {
       </Select>
       <Button type="submit" variant="outline" size="sm" disabled={isPending}>
         <Search className="size-4" />
-        Filtrar
+        [ filtrar ]
       </Button>
     </form>
   );

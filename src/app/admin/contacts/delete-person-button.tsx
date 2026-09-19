@@ -16,6 +16,7 @@ import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/app/_actions/action-result";
+import { DestructiveEcho } from "@/components/admin/destructive-echo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export function DeletePersonButton({
   name,
   entityLabel,
   description,
+  commandDir,
   action,
 }: {
   id: string;
@@ -45,6 +47,8 @@ export function DeletePersonButton({
   entityLabel: string;
   /** Uma frase sobre o que sobrevive à exclusão. */
   description: string;
+  /** Caminho ilustrativo do eco `rm -rf` — ex.: `contacts`, `references`. */
+  commandDir: string;
   action: (id: string) => Promise<ActionResult>;
 }) {
   const [open, setOpen] = useState(false);
@@ -79,6 +83,8 @@ export function DeletePersonButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
+        <DestructiveEcho command={`rm -rf ${commandDir}/${name}`} />
+
         <div className="space-y-1.5 py-2">
           <Label htmlFor={`confirm-delete-${id}`}>Nome</Label>
           <Input
@@ -91,8 +97,11 @@ export function DeletePersonButton({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>
+            [ cancelar ]
+          </AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             disabled={!matches || isPending}
             onClick={(event) => {
               // O AlertDialogAction fecha o dialog no clique; segure para
@@ -109,7 +118,7 @@ export function DeletePersonButton({
               });
             }}
           >
-            {isPending ? "Excluindo…" : "Excluir definitivamente"}
+            {isPending ? "[ excluindo… ]" : "[ excluir definitivamente ]"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

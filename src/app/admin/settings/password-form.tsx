@@ -11,6 +11,12 @@ import { useRef, useState, useTransition } from "react";
 import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { changePassword } from "@/app/_actions/account";
+import {
+  FieldError,
+  FieldHelp,
+  RequiredHint,
+  describedBy,
+} from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,7 +73,7 @@ export function PasswordForm() {
 
       <Button type="submit" disabled={isPending}>
         <KeyRound className="size-4" />
-        {isPending ? "Alterando…" : "Alterar senha"}
+        {isPending ? "[ alterando… ]" : "[ alterar senha ]"}
       </Button>
     </form>
   );
@@ -90,7 +96,10 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        {label}
+        <RequiredHint />
+      </Label>
       <Input
         id={id}
         name={id}
@@ -98,12 +107,15 @@ function Field({
         autoComplete={autoComplete}
         minLength={minLength}
         aria-invalid={Boolean(error)}
+        aria-describedby={describedBy(
+          error ? `${id}-error` : hint ? `${id}-help` : undefined,
+        )}
         required
       />
       {error ? (
-        <p className="text-xs text-destructive">{error}</p>
+        <FieldError id={`${id}-error`}>{error}</FieldError>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <FieldHelp id={`${id}-help`}>{hint}</FieldHelp>
       ) : null}
     </div>
   );

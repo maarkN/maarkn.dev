@@ -63,7 +63,7 @@ export default async function ProjectsPage({
             <Button size="sm" asChild>
               <Link href="/admin/projects/new">
                 <Plus className="size-4" />
-                Novo projeto
+                [ novo projeto ]
               </Link>
             </Button>
           }
@@ -251,7 +251,7 @@ async function ProjectsTable({
                         <Pencil className="size-4" />
                       </Link>
                     </Button>
-                    <DeleteProjectButton id={p.id} name={p.name} />
+                    <DeleteProjectButton id={p.id} name={p.name} slug={p.slug} />
                   </div>
                 </TableCell>
               </TableRow>

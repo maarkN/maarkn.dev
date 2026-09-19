@@ -256,6 +256,7 @@ async function ContactRows({
                     id={row.id}
                     name={row.name}
                     entityLabel="contato"
+                    commandDir="contacts"
                     description="Eventos e entrevistas permanecem, apenas sem o contato vinculado."
                     action={deleteContact}
                   />
@@ -404,6 +405,7 @@ async function ReferenceRows({
                     id={row.id}
                     name={row.name}
                     entityLabel="referência"
+                    commandDir="references"
                     description="A referência some do painel; nenhuma candidatura é afetada."
                     action={deleteProfessionalReference}
                   />

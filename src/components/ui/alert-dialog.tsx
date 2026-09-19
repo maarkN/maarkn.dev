@@ -6,6 +6,19 @@ import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
+/**
+ * ── Barra de título e `[esc]` (bko-04) ─────────────────────────────────────
+ * Igual ao `Dialog`: a régua do título vem de `::before`/`::after` em
+ * `src/app/admin/admin.css`.
+ *
+ * O `[esc]` aqui NÃO é um `Close` — o `AlertDialog` do Radix não tem um, de
+ * propósito: um diálogo de alerta não se fecha por engano. Ele é o próprio
+ * `AlertDialogPrimitive.Cancel`, que é exatamente o que a tecla Esc dispara,
+ * então o rótulo continua verdadeiro: apertar `[esc]` e apertar Esc percorrem
+ * o mesmo caminho e devolvem o foco ao gatilho. O botão `[ cancelar ]` do
+ * rodapé segue sendo o alvo grande; este é o atalho escrito.
+ */
+
 function AlertDialog({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
@@ -47,9 +60,12 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = "default",
+  showEscButton = true,
+  children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
+  showEscButton?: boolean
 }) {
   return (
     <AlertDialogPortal>
@@ -62,7 +78,27 @@ function AlertDialogContent({
           className
         )}
         {...props}
-      />
+      >
+        {/* ANTES de `children`, e isso importa: o Radix guarda uma única
+            `cancelRef` e dá o foco inicial a ela. Como os refs são anexados
+            na ordem da árvore, o último `Cancel` montado é quem fica com a
+            referência — então o `[esc]` vem primeiro para que o foco caia no
+            `[ cancelar ]` do rodapé, o alvo grande, e não no atalho do canto.
+            A posição na tela não muda: o botão é absoluto. */}
+        {showEscButton && (
+          <AlertDialogPrimitive.Cancel asChild>
+            <Button
+              variant="ghost"
+              className="absolute top-2 right-2 text-muted-foreground"
+              size="xs"
+              aria-label="cancelar [esc]"
+            >
+              [esc]
+            </Button>
+          </AlertDialogPrimitive.Cancel>
+        )}
+        {children}
+      </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   )
 }
@@ -74,8 +110,10 @@ function AlertDialogHeader({
   return (
     <div
       data-slot="alert-dialog-header"
+      // Alinhado à esquerda em qualquer largura: a régua do título só faz
+      // sentido começando na margem, e saída de terminal não é centralizada.
       className={cn(
-        "grid grid-rows-[auto_1fr] place-items-center gap-1.5 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
+        "grid grid-rows-[auto_1fr] place-items-start gap-1.5 text-left has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4",
         className
       )}
       {...props}
@@ -123,7 +161,7 @@ function AlertDialogTitle({
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        "text-sm font-medium sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
+        "text-sm font-medium group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
         className
       )}
       {...props}

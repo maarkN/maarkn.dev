@@ -18,6 +18,12 @@ import { useState, useTransition } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { saveContact } from "@/app/_actions/contacts";
+import {
+  FieldError,
+  FieldHelp,
+  RequiredHint,
+  describedBy,
+} from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -98,7 +104,7 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
         ) : (
           <Button size="sm">
             <Plus className="size-4" />
-            Novo contato
+            [ novo contato ]
           </Button>
         )}
       </DialogTrigger>
@@ -142,7 +148,15 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
                   interpretaria isso como "tirar a empresa" — apagando o vínculo
                   em silêncio numa edição. */}
               <Select name="companyId" defaultValue={initial?.companyId ?? NONE}>
-                <SelectTrigger id="contact-company" className="w-full">
+                <SelectTrigger
+                  id="contact-company"
+                  className="w-full"
+                  aria-describedby={
+                    errors.companyId
+                      ? "contact-company-error"
+                      : "contact-company-help"
+                  }
+                >
                   <SelectValue placeholder="Sem empresa" />
                 </SelectTrigger>
                 <SelectContent>
@@ -155,12 +169,14 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
                 </SelectContent>
               </Select>
               {errors.companyId ? (
-                <p className="text-xs text-destructive">{errors.companyId}</p>
+                <FieldError id="contact-company-error">
+                  {errors.companyId}
+                </FieldError>
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <FieldHelp id="contact-company-help">
                   Só empresas que já existem — a lista é compartilhada com vagas
                   e candidaturas.
-                </p>
+                </FieldHelp>
               )}
             </div>
 
@@ -234,10 +250,10 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
               onClick={() => setOpen(false)}
               disabled={isPending}
             >
-              Cancelar
+              [ cancelar ]
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Salvando…" : "Salvar"}
+              {isPending ? "[ salvando… ]" : "[ salvar ]"}
             </Button>
           </DialogFooter>
         </form>
@@ -267,7 +283,10 @@ function Field({
 }) {
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        {label}
+        {required && <RequiredHint />}
+      </Label>
       <Input
         id={id}
         name={name}
@@ -277,8 +296,9 @@ function Field({
         // PII de terceiro: fora do autopreenchimento do navegador.
         autoComplete="off"
         aria-invalid={Boolean(error)}
+        aria-describedby={describedBy(error && `${id}-error`)}
       />
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      <FieldError id={`${id}-error`}>{error}</FieldError>
     </div>
   );
 }

@@ -183,7 +183,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
 
       <Button type="submit" variant="outline" size="sm" disabled={isPending}>
         <Search className="size-4" />
-        Filtrar
+        [ filtrar ]
       </Button>
 
       {hasFilters && (
@@ -195,7 +195,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
           disabled={isPending}
         >
           <X className="size-4" />
-          Limpar
+          [ limpar ]
         </Button>
       )}
     </form>

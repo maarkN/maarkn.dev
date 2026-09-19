@@ -32,6 +32,12 @@ import {
   updateApplication,
   type AppActionState,
 } from "@/app/_actions/applications";
+import {
+  FieldError,
+  FieldHelp,
+  RequiredHint,
+  describedBy,
+} from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -230,6 +236,9 @@ export function ApplicationForm({
                   id="stage"
                   className="w-full"
                   aria-invalid={Boolean(errors.stage)}
+                  aria-describedby={describedBy(
+                    errorText("stage", errors) && "stage-error",
+                  )}
                 >
                   <SelectValue placeholder="Estágio" />
                 </SelectTrigger>
@@ -246,11 +255,9 @@ export function ApplicationForm({
                   ))}
                 </SelectContent>
               </Select>
-              {errorText("stage", errors) && (
-                <p className="text-xs text-destructive">
-                  {errorText("stage", errors)}
-                </p>
-              )}
+              <FieldError id="stage-error">
+                {errorText("stage", errors)}
+              </FieldError>
             </div>
 
             <div className="space-y-1.5">
@@ -263,6 +270,7 @@ export function ApplicationForm({
                   id="sponsorship"
                   className="w-full"
                   aria-invalid={Boolean(errors.sponsorship)}
+                  aria-describedby="sponsorship-help"
                 >
                   <SelectValue placeholder="Patrocínio" />
                 </SelectTrigger>
@@ -281,10 +289,10 @@ export function ApplicationForm({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <FieldHelp id="sponsorship-help">
                 “Não se aplica (B2B/contractor)” é a rota remota — o gate de
                 visto não vale para ela.
-              </p>
+              </FieldHelp>
             </div>
 
             <SelectField
@@ -395,38 +403,39 @@ export function ApplicationForm({
                 rows={5}
                 defaultValue={application?.notesMd ?? ""}
                 aria-invalid={Boolean(errors.notesMd)}
+                aria-describedby={describedBy(
+                  errorText("notesMd", errors) && "notesMd-error",
+                )}
               />
-              {errorText("notesMd", errors) && (
-                <p className="text-xs text-destructive">
-                  {errorText("notesMd", errors)}
-                </p>
-              )}
+              <FieldError id="notesMd-error">
+                {errorText("notesMd", errors)}
+              </FieldError>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {state.status === "error" && (
-        <p className="text-sm text-destructive">
+        <FieldError className="text-sm">
           {state.message === "db_unavailable"
             ? "Banco de dados indisponível — nada foi salvo."
             : state.message === "unexpected"
               ? "Não foi possível salvar a candidatura. Tente novamente."
               : "Confira os campos destacados."}
-        </p>
+        </FieldError>
       )}
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/admin/applications">Cancelar</Link>
+          <Link href="/admin/applications">[ cancelar ]</Link>
         </Button>
         <Button type="submit" size="sm" disabled={pending}>
           <Save className="size-4" />
           {pending
-            ? "Salvando…"
+            ? "[ salvando… ]"
             : isEdit
-              ? "Salvar alterações"
-              : "Criar candidatura"}
+              ? "[ salvar alterações ]"
+              : "[ criar candidatura ]"}
         </Button>
       </div>
     </form>
@@ -463,11 +472,13 @@ function Field({
     value !== undefined && onChange !== undefined
       ? { value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value) }
       : { defaultValue: defaultValue ?? "" };
+  const helpId = help ? `${name}-help` : undefined;
+  const errorId = error ? `${name}-error` : undefined;
   return (
     <div className="space-y-1.5">
       <Label htmlFor={name}>
         {label}
-        {required && <span className="text-destructive"> *</span>}
+        {required && <RequiredHint />}
       </Label>
       <Input
         id={name}
@@ -475,11 +486,12 @@ function Field({
         type={type}
         required={required}
         aria-invalid={Boolean(error)}
+        aria-describedby={describedBy(helpId, errorId)}
         className={mono ? "font-mono text-xs" : undefined}
         {...controlled}
       />
-      {help && <p className="text-xs text-muted-foreground">{help}</p>}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {help && <FieldHelp id={helpId}>{help}</FieldHelp>}
+      <FieldError id={errorId}>{error}</FieldError>
     </div>
   );
 }
@@ -501,7 +513,12 @@ function SelectField({
     <div className="space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
       <Select name={name} defaultValue={defaultValue}>
-        <SelectTrigger id={name} className="w-full" aria-invalid={Boolean(error)}>
+        <SelectTrigger
+          id={name}
+          className="w-full"
+          aria-invalid={Boolean(error)}
+          aria-describedby={describedBy(error && `${name}-error`)}
+        >
           <SelectValue placeholder={label} />
         </SelectTrigger>
         <SelectContent>
@@ -512,7 +529,7 @@ function SelectField({
           ))}
         </SelectContent>
       </Select>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      <FieldError id={`${name}-error`}>{error}</FieldError>
     </div>
   );
 }

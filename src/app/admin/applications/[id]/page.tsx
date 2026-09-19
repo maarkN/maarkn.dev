@@ -169,7 +169,7 @@ export default async function ApplicationDetailPage({
               <Button asChild variant="ghost" size="sm">
                 <Link href={`/admin/applications/${app.id}/edit`}>
                   <Pencil className="size-4" />
-                  Formulário completo
+                  [ formulário completo ]
                 </Link>
               </Button>
             </>

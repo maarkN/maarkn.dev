@@ -27,6 +27,12 @@ import { useState, useTransition } from "react";
 import { AlertTriangle, Check, Copy, Plus, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { createApiKey, type CreatedApiKey } from "@/app/_actions/api-keys";
+import {
+  FieldError,
+  FieldHelp,
+  RequiredHint,
+  describedBy,
+} from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -161,7 +167,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
       <DialogTrigger asChild>
         <Button size="sm" disabled={disabled}>
           <Plus className="size-4" />
-          Nova chave
+          [ nova chave ]
         </Button>
       </DialogTrigger>
 
@@ -220,7 +226,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                     ) : (
                       <Copy className="size-4" />
                     )}
-                    {copied ? "Copiado" : "Copiar"}
+                    {copied ? "[ copiado ]" : "[ copiar ]"}
                   </Button>
                 </div>
               </div>
@@ -273,7 +279,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                   reset();
                 }}
               >
-                Concluir
+                [ concluir ]
               </Button>
             </DialogFooter>
           </>
@@ -290,7 +296,10 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
 
             <div className="space-y-4 py-4">
               <div className="space-y-1.5">
-                <Label htmlFor="key-name">Nome</Label>
+                <Label htmlFor="key-name">
+                  Nome
+                  <RequiredHint />
+                </Label>
                 <Input
                   id="key-name"
                   name="name"
@@ -299,19 +308,24 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                   placeholder="skill do Obsidian — macbook"
                   autoComplete="off"
                   aria-invalid={Boolean(errors.name)}
+                  aria-describedby={describedBy(
+                    "key-name-help",
+                    errors.name && "key-name-error",
+                  )}
                   required
                 />
-                <p className="text-xs text-muted-foreground">
+                <FieldHelp id="key-name-help">
                   É este nome que você vai digitar para revogar a chave depois.
-                </p>
-                {errors.name && (
-                  <p className="text-xs text-destructive">{errors.name}</p>
-                )}
+                </FieldHelp>
+                <FieldError id="key-name-error">{errors.name}</FieldError>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <Label>Escopos</Label>
+                  {/* Grupo, não campo: o `Label` não tem controle para
+                      apontar, então quem amarra o nome à lista é o
+                      `aria-labelledby` do `role="group"` logo abaixo. */}
+                  <Label id="key-scopes-label">Escopos</Label>
                   <div className="flex gap-1">
                     <Button
                       type="button"
@@ -319,7 +333,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                       size="xs"
                       onClick={() => setScopes([...READ_SCOPES])}
                     >
-                      Só leitura
+                      [ só leitura ]
                     </Button>
                     <Button
                       type="button"
@@ -327,17 +341,25 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                       size="xs"
                       onClick={() => setScopes([])}
                     >
-                      Limpar
+                      [ limpar ]
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <FieldHelp id="key-scopes-help">
                   Não há herança: <code>applications:write</code> não concede{" "}
                   <code>applications:read</code>. Marque os dois quando precisar
                   dos dois.
-                </p>
+                </FieldHelp>
 
-                <div className="max-h-56 space-y-1.5 overflow-y-auto border border-border p-2">
+                <div
+                  role="group"
+                  aria-labelledby="key-scopes-label"
+                  aria-describedby={describedBy(
+                    "key-scopes-help",
+                    errors.scopes && "key-scopes-error",
+                  )}
+                  className="max-h-56 space-y-1.5 overflow-y-auto border border-border p-2"
+                >
                   {MCP_SCOPES.map((scope) => (
                     <div key={scope} className="flex items-start gap-2 py-1">
                       <Checkbox
@@ -373,9 +395,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                   <input key={scope} type="hidden" name="scopes" value={scope} />
                 ))}
 
-                {errors.scopes && (
-                  <p className="text-xs text-destructive">{errors.scopes}</p>
-                )}
+                <FieldError id="key-scopes-error">{errors.scopes}</FieldError>
 
                 {writeSelected.length > 0 && (
                   <p className="flex items-start gap-2 text-xs text-amber-400">
@@ -391,7 +411,13 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
               <div className="space-y-1.5">
                 <Label htmlFor="key-expires">Expiração</Label>
                 <Select value={expiresIn} onValueChange={setExpiresIn}>
-                  <SelectTrigger id="key-expires" className="w-full">
+                  <SelectTrigger
+                    id="key-expires"
+                    className="w-full"
+                    aria-describedby={describedBy(
+                      errors.expiresIn && "key-expires-error",
+                    )}
+                  >
                     <SelectValue placeholder="Expiração" />
                   </SelectTrigger>
                   <SelectContent>
@@ -403,9 +429,9 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                   </SelectContent>
                 </Select>
                 <input type="hidden" name="expiresIn" value={expiresIn} />
-                {errors.expiresIn && (
-                  <p className="text-xs text-destructive">{errors.expiresIn}</p>
-                )}
+                <FieldError id="key-expires-error">
+                  {errors.expiresIn}
+                </FieldError>
               </div>
             </div>
 
@@ -416,10 +442,10 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                 onClick={() => setOpen(false)}
                 disabled={isPending}
               >
-                Cancelar
+                [ cancelar ]
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Criando…" : "Criar chave"}
+                {isPending ? "[ criando… ]" : "[ criar chave ]"}
               </Button>
             </DialogFooter>
           </form>

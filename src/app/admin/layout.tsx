@@ -26,7 +26,10 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
     <html lang="en" data-theme="soft" data-font="caskaydia" className={caskaydia.variable}>
       <body className="admin-root min-h-dvh antialiased">
         <TooltipProvider>{children}</TooltipProvider>
-        <Toaster richColors position="top-right" theme="dark" />
+        {/* Posição, tema e marcadores vivem no próprio componente (bko-04):
+            o toast é uma linha de saída, e `richColors` foi retirado porque
+            tingia o cartão inteiro. */}
+        <Toaster />
       </body>
     </html>
   );

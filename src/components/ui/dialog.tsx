@@ -5,8 +5,22 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
 
+/**
+ * ── Barra de título e `[esc]` (bko-04) ─────────────────────────────────────
+ * O título é desenhado como régua (`── editar candidatura ──────────`) por
+ * `::before`/`::after` em `src/app/admin/admin.css`, e não em utilitários
+ * aqui: a régua é uma fileira de `─` de comprimento variável, que em Tailwind
+ * viraria um `content-[...]` de sessenta caracteres repetido em três
+ * primitives. O CSS do admin alcança o diálogo mesmo portalizado porque
+ * `.admin-root` está no `<body>` (admin/layout.tsx), e o portal do Radix
+ * monta ali dentro.
+ *
+ * O botão de fechar passa a ser `[esc]` — que é literalmente o atalho, já
+ * entregue pelo Radix. O texto visível é `[esc]` e o nome acessível é
+ * "fechar [esc]": contém o texto visível (1.4.11/2.5.3) e ainda diz o que o
+ * botão faz, em vez de anunciar "abre colchete e-s-c fecha colchete".
+ */
 function Dialog({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -71,12 +85,11 @@ function DialogContent({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-2 right-2"
-              size="icon-sm"
+              className="absolute top-2 right-2 text-muted-foreground"
+              size="xs"
+              aria-label="fechar [esc]"
             >
-              <XIcon
-              />
-              <span className="sr-only">Close</span>
+              [esc]
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -115,7 +128,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline">[ fechar ]</Button>
         </DialogPrimitive.Close>
       )}
     </div>

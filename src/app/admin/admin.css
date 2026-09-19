@@ -55,10 +55,16 @@
      70%×60% it is 3.96:1. Dim by choosing a colour, never by alpha. */
   --muted-foreground:     #BABFCC;
 
-  /* Lifted from --red (#EE6666): destructive text sits on a red-tinted box
-     (`bg-destructive/10`), where the palette red lands at 4.01:1 over --bg
-     and 4.43:1 over --card. #F28B8B reads 5.04:1 / 5.58:1 on the same boxes
-     and 6.00:1 / 6.65:1 as bare `text-destructive`. */
+  /* Lifted from --red (#EE6666): 4.01:1 over --bg and 4.43:1 over --card is
+     under 4.5:1, and this colour is read as bare `text-destructive` (a linha
+     `stderr:` do FieldError, o `$ rm -rf …` do DestructiveEcho, o marcador ✗
+     do toast). #F28B8B reads 6.00:1 / 6.65:1 there.
+     A caixa tingida `bg-destructive/10` continua existindo no `Badge`
+     destrutivo e no item de menu em foco (5.58:1 sobre --card), mas desde a
+     bko-04 ela NÃO é mais o caso do botão: `variant="destructive"` virou
+     sólido (`bg-destructive` + `text-destructive-foreground`), com texto a
+     6.00:1 e a própria superfície a 6.65:1 contra --popover — 1.4.11 pede
+     3.0, que a variante tingida (1.19:1) não dava. */
   --destructive:          #F28B8B;
   --destructive-foreground: var(--bg);
 
@@ -244,4 +250,95 @@
 @keyframes admin-progress-fill {
   from { clip-path: inset(0 100% 0 0); }
   to   { clip-path: inset(0 0 0 0); }
+}
+
+/* ════════════════════════════════════════════════
+   DIÁLOGO — a barra de título em régua.
+   `── editar candidatura ─────────────` : dois traços antes do título e uma
+   fileira de U+2500 depois, preenchendo o que sobrou da linha.
+
+   Por que aqui e não em utilitário no primitive: a régua é uma string de
+   sessenta e quatro traços. Escrita como valor arbitrário de `content` ela
+   apareceria três vezes (dialog, alert-dialog, sheet) dentro de atributos que
+   já passam de trezentos caracteres. O comprimento fixo + recorte é o truque:
+   o pseudo-elemento é um item flexível que encolhe até zero, então a régua
+   sempre termina exatamente na borda, em qualquer largura de diálogo.
+
+   Isto alcança o conteúdo mesmo portalizado: o Radix monta o portal em
+   `document.body`, e é o `<body>` que carrega `.admin-root`
+   (src/app/admin/layout.tsx).
+
+   O recuo à direita abre espaço para o `[esc]`, que fica ancorado no canto
+   superior direito do conteúdo — sem ele a régua passaria por baixo do botão.
+   ════════════════════════════════════════════════ */
+.admin-root :is(
+  [data-slot="dialog-title"],
+  [data-slot="alert-dialog-title"],
+  [data-slot="sheet-title"]
+) {
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: left;
+  padding-right: 3.5rem;
+}
+
+.admin-root :is(
+  [data-slot="dialog-title"],
+  [data-slot="alert-dialog-title"],
+  [data-slot="sheet-title"]
+)::before {
+  /* `/ ""` é o alt-text de `content` (CSS Generated Content, o mesmo par que
+     `content: url(...) / "descrição"`): o traço é desenhado e o nome acessível
+     recebe string vazia. Sem ele a régua ENTRA no nome do diálogo — o Radix
+     aponta o `aria-labelledby` do conteúdo para o título, e o algoritmo de
+     accname (accname 1.2 §4.3.2, passo 2.F) inclui conteúdo gerado. O
+     `overflow: hidden` recorta o desenho, não a árvore de acessibilidade. */
+  content: "──" / "";
+  flex: none;
+  color: var(--comment);
+}
+
+.admin-root :is(
+  [data-slot="dialog-title"],
+  [data-slot="alert-dialog-title"],
+  [data-slot="sheet-title"]
+)::after {
+  /* Alt-text vazio pelo mesmo motivo do `::before` — ver o comentário lá. */
+  content: "────────────────────────────────────────────────────────────────" / "";
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--comment);
+}
+
+/* ════════════════════════════════════════════════
+   TOAST — a linha de saída da ação.
+   O tema (superfície, borda, marcadores, posição) está em
+   src/components/ui/sonner.tsx; aqui ficam as duas coisas que precisam
+   alcançar o DOM interno do sonner: a fonte da linha e a cor do marcador.
+
+   `✓` em --green (10.07:1 sobre --popover) e `✗` em --destructive (6.65:1).
+   O marcador é texto e é `aria-hidden` — a cor é reforço, não o canal.
+   ════════════════════════════════════════════════ */
+.admin-root [data-sonner-toaster],
+.admin-root [data-sonner-toast] {
+  font-family: var(--font);
+}
+
+.admin-root [data-sonner-toast] .admin-output-marker {
+  color: var(--comment);
+  font-family: var(--font);
+}
+
+.admin-root [data-sonner-toast][data-type="success"] .admin-output-marker {
+  color: var(--green);
+}
+
+.admin-root [data-sonner-toast][data-type="error"] .admin-output-marker {
+  color: var(--destructive);
 }

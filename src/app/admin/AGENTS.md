@@ -24,6 +24,9 @@ carregar dados: pare e leia a tabela abaixo.
 | A6 | **Nenhum primitivo caseiro.** Botão, input, tabela, dialog, badge, select vêm de `@/components/ui/*` (shadcn, style `radix-lyra`). Se faltar um, `pnpm dlx shadcn@latest add <nome>` — não escreva à mão. |
 | A7 | **Cores:** use os tokens shadcn (`bg-card`, `text-muted-foreground`, `border-border`, `bg-sidebar`). O azul da marca é **`text-brand` / `bg-brand`**, *não* `bg-accent` (que no shadcn é o fundo de hover). Nunca reatribua `--muted`, `--accent` ou `--border` no `globals.css`. |
 | A8 | **Um só `<Toaster/>`**, já montado em `src/app/admin/layout.tsx`. Não registre outro. |
+| A9 | **Ajuda, obrigatoriedade e erro de campo vêm de `@/components/admin/field-output`** (`FieldHelp`, `RequiredHint`, `FieldError`, `describedBy`) — nunca um `<p className="text-xs text-destructive">` solto. O `#` e o `stderr:` são `aria-hidden`; o erro carrega `role="alert"` e um `id` que o campo referencia por `aria-describedby`. Obrigatoriedade é `(obrigatório)` escrito dentro do `<Label>`, nunca um `*`. |
+| A10 | **Botão com texto visível escreve o rótulo entre colchetes** — `[ salvar ]`, `[ cancelar ]`, `[ excluir definitivamente ]`, em minúsculas. Os colchetes são **texto do `<button>`**, não `::before`/`::after`. Fora da regra, de propósito: botão só de ícone (o nome vem do `aria-label`), `variant="link"`, e os segmentados de aba/rota que carregam `aria-pressed` — ali o estado já é pintado. |
+| A11 | **Diálogo de exclusão ecoa o comando equivalente** com `<DestructiveEcho command="rm -rf …" />` e usa `variant="destructive"` no `AlertDialogAction`. O eco é **ilustrativo**: não existe comando por trás e nenhuma change deve tentar "fazer funcionar". A confirmação por digitação do nome exato (§6) continua sendo o freio real e não pode ser enfraquecida. |
 
 ---
 
@@ -498,27 +501,29 @@ export function ApplicationDialog({ initial }: { initial?: Initial }) {
 
           <div className="space-y-3 py-4">
             <div className="space-y-1.5">
-              <Label htmlFor="company">Empresa</Label>
+              <Label htmlFor="company">
+                Empresa
+                <RequiredHint />
+              </Label>
               <Input
                 id="company"
                 name="company"
                 defaultValue={initial?.company ?? ""}
                 aria-invalid={Boolean(errors.company)}
+                aria-describedby={describedBy(errors.company && "company-error")}
                 required
               />
-              {errors.company && (
-                <p className="text-xs text-destructive">{errors.company}</p>
-              )}
+              <FieldError id="company-error">{errors.company}</FieldError>
             </div>
             {/* … demais campos … */}
           </div>
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
-              Cancelar
+              [ cancelar ]
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Salvando…" : "Salvar"}
+              {isPending ? "[ salvando… ]" : "[ salvar ]"}
             </Button>
           </DialogFooter>
         </form>
@@ -555,12 +560,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DestructiveEcho } from "@/components/admin/destructive-echo";
 import type { ActionResult } from "@/app/_actions/action-result";
 
 export function ConfirmDeleteDialog({
   id,
   name,
   entityLabel,
+  command,
   action,
 }: {
   id: string;
@@ -568,6 +575,8 @@ export function ConfirmDeleteDialog({
   name: string;
   /** "candidatura", "projeto", "chave de API"… */
   entityLabel: string;
+  /** O comando que o eco desenha — regra A11. Ilustrativo, nunca executado. */
+  command: string;
   /**
    * REFERÊNCIA a uma Server Action (`import { deleteX } from "@/app/_actions/…"`).
    * Uma referência de Server Action é serializável, então este componente pode
@@ -602,6 +611,9 @@ export function ConfirmDeleteDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
+        {/* A11: todo diálogo de exclusão ecoa o comando equivalente. */}
+        <DestructiveEcho command={command} />
+
         <div className="space-y-1.5 py-2">
           <Label htmlFor="confirm-name">Nome do registro</Label>
           <Input
@@ -614,8 +626,9 @@ export function ConfirmDeleteDialog({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>[ cancelar ]</AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             disabled={!matches || isPending}
             onClick={(e) => {
               // O AlertDialogAction fecha o dialog no clique; segure para poder
@@ -632,7 +645,8 @@ export function ConfirmDeleteDialog({
               });
             }}
           >
-            {isPending ? "Excluindo…" : "Excluir definitivamente"}
+            {/* A10: o rótulo do botão é texto entre colchetes. */}
+            {isPending ? "[ excluindo… ]" : "[ excluir definitivamente ]"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -650,6 +664,7 @@ import { deleteApplication } from "@/app/_actions/applications";
   id={row.id}
   name={row.company}
   entityLabel="candidatura"
+  command={`rm -rf applications/${row.folderName}`}
   action={deleteApplication}
 />
 ```
@@ -691,8 +706,9 @@ toast.warning("Sincronização parcial: 3 arquivos falharam.");
 toast.info("Nada mudou desde a última sincronização.");
 ```
 
-- O `<Toaster richColors position="top-right" theme="dark" />` já está em `src/app/admin/layout.tsx`
-  (A8). Não monte outro, não passe props de tema por chamada.
+- O `<Toaster />` já está em `src/app/admin/layout.tsx` (A8). Não monte outro, não passe props de
+  tema por chamada: posição (canto inferior direito), tema e marcadores `✓`/`✗` vivem em
+  `src/components/ui/sonner.tsx`, porque o toast do admin é uma **linha de saída** (bko-04).
 - **Toast é só do cliente.** Server Action não dá toast — ela devolve `message` e quem chama decide.
 - Sempre em pt-BR, uma frase, com ponto final.
 - **Sucesso silencioso é bug:** toda mutação confirmada mostra `toast.success`. Toda falha mostra

@@ -94,7 +94,7 @@ export default async function JobsPage({
           description="Radar: o que existe lá fora, com pontuação, veredito e o gate de visto — antes de virar candidatura."
           actions={
             <Button asChild variant="outline" size="sm">
-              <Link href="/admin/applications">Ver candidaturas</Link>
+              <Link href="/admin/applications">[ ver candidaturas ]</Link>
             </Button>
           }
         />

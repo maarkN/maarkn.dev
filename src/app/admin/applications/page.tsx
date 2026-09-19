@@ -85,7 +85,7 @@ export default async function ApplicationsPage({
             <Button asChild size="sm">
               <Link href="/admin/applications/new">
                 <Plus className="size-4" />
-                Nova candidatura
+                [ nova candidatura ]
               </Link>
             </Button>
           }

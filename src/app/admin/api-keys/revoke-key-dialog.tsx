@@ -62,7 +62,7 @@ export function RevokeKeyDialog({
       <AlertDialogTrigger asChild>
         <Button variant="ghost" size="sm" aria-label={`Revogar a chave ${name}`}>
           <Ban className="size-4 text-destructive" />
-          Revogar
+          [ revogar ]
         </Button>
       </AlertDialogTrigger>
 
@@ -90,8 +90,11 @@ export function RevokeKeyDialog({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>
+            [ cancelar ]
+          </AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             disabled={!matches || isPending}
             onClick={(e) => {
               // O AlertDialogAction fecha no clique; segure para poder mostrar
@@ -108,7 +111,7 @@ export function RevokeKeyDialog({
               });
             }}
           >
-            {isPending ? "Revogando…" : "Revogar definitivamente"}
+            {isPending ? "[ revogando… ]" : "[ revogar definitivamente ]"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -27,6 +27,11 @@ import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { SponsorshipSignal } from "@prisma/client";
 import type { ActionResult } from "@/app/_actions/action-result";
+import {
+  FieldError,
+  FieldHelp,
+  describedBy,
+} from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -148,7 +153,7 @@ export function KeyFieldsDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled}>
           <Pencil className="size-4" />
-          Editar campos-chave
+          [ editar campos-chave ]
         </Button>
       </DialogTrigger>
 
@@ -172,10 +177,11 @@ export function KeyFieldsDialog({
                 defaultValue={initial.roleTitle ?? ""}
                 maxLength={160}
                 aria-invalid={Boolean(errors.roleTitle)}
+                aria-describedby={describedBy(
+                  errors.roleTitle && "kf-roleTitle-error",
+                )}
               />
-              {errors.roleTitle && (
-                <p className="text-xs text-destructive">{errors.roleTitle}</p>
-              )}
+              <FieldError id="kf-roleTitle-error">{errors.roleTitle}</FieldError>
             </div>
 
             <div className="space-y-1.5">
@@ -187,10 +193,11 @@ export function KeyFieldsDialog({
                 maxLength={60}
                 placeholder="CA · IE · DE · US-remote…"
                 aria-invalid={Boolean(errors.market)}
+                aria-describedby={describedBy(
+                  errors.market && "kf-market-error",
+                )}
               />
-              {errors.market && (
-                <p className="text-xs text-destructive">{errors.market}</p>
-              )}
+              <FieldError id="kf-market-error">{errors.market}</FieldError>
             </div>
 
             <div className="space-y-1.5">
@@ -213,7 +220,11 @@ export function KeyFieldsDialog({
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="kf-sponsorship">Patrocínio</Label>
               <Select value={sponsorship} onValueChange={setSponsorship}>
-                <SelectTrigger id="kf-sponsorship" className="w-full">
+                <SelectTrigger
+                  id="kf-sponsorship"
+                  className="w-full"
+                  aria-describedby="kf-sponsorship-help"
+                >
                   <SelectValue placeholder="Patrocínio" />
                 </SelectTrigger>
                 <SelectContent>
@@ -234,10 +245,10 @@ export function KeyFieldsDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">
+              <FieldHelp id="kf-sponsorship-help">
                 O sinal da candidatura sobrescreve o da vaga. “Herdar” grava
                 NULL e volta a seguir a vaga.
-              </p>
+              </FieldHelp>
             </div>
 
             <div className="space-y-1.5">
@@ -253,10 +264,11 @@ export function KeyFieldsDialog({
                 defaultValue={initial.priority ?? ""}
                 placeholder="1 = maior"
                 aria-invalid={Boolean(errors.priority)}
+                aria-describedby={describedBy(
+                  errors.priority && "kf-priority-error",
+                )}
               />
-              {errors.priority && (
-                <p className="text-xs text-destructive">{errors.priority}</p>
-              )}
+              <FieldError id="kf-priority-error">{errors.priority}</FieldError>
             </div>
 
             <div className="space-y-1.5">
@@ -278,10 +290,11 @@ export function KeyFieldsDialog({
                 type="date"
                 defaultValue={initial.appliedAt}
                 aria-invalid={Boolean(errors.appliedAt)}
+                aria-describedby={describedBy(
+                  errors.appliedAt && "kf-appliedAt-error",
+                )}
               />
-              {errors.appliedAt && (
-                <p className="text-xs text-destructive">{errors.appliedAt}</p>
-              )}
+              <FieldError id="kf-appliedAt-error">{errors.appliedAt}</FieldError>
             </div>
 
             <div className="space-y-1.5">
@@ -336,10 +349,10 @@ export function KeyFieldsDialog({
               onClick={() => setOpen(false)}
               disabled={isPending}
             >
-              Cancelar
+              [ cancelar ]
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Salvando…" : "Salvar"}
+              {isPending ? "[ salvando… ]" : "[ salvar ]"}
             </Button>
           </DialogFooter>
         </form>

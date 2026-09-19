@@ -18,6 +18,12 @@ import { useState, useTransition } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { saveProfessionalReference } from "@/app/_actions/contacts";
+import {
+  FieldError,
+  FieldHelp,
+  RequiredHint,
+  describedBy,
+} from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -102,7 +108,7 @@ export function ReferenceDialog({ initial }: { initial?: ReferenceInitial }) {
         ) : (
           <Button size="sm">
             <Plus className="size-4" />
-            Nova referência
+            [ nova referência ]
           </Button>
         )}
       </DialogTrigger>
@@ -201,23 +207,26 @@ export function ReferenceDialog({ initial }: { initial?: ReferenceInitial }) {
               className="sm:col-span-2"
             />
 
-            <div className="flex items-start gap-2 sm:col-span-2">
-              <Checkbox
-                id="reference-can-contact"
-                name="canContact"
-                defaultChecked={initial?.canContact ?? false}
-                className="mt-0.5"
-              />
-              <Label
-                htmlFor="reference-can-contact"
-                className="text-sm font-normal leading-snug"
-              >
-                Autorizou ser contatada
-                <span className="block text-xs text-muted-foreground">
-                  Sem isso marcado, o nome não pode ser passado para um
-                  recrutador.
-                </span>
-              </Label>
+            <div className="space-y-1.5 sm:col-span-2">
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="reference-can-contact"
+                  name="canContact"
+                  defaultChecked={initial?.canContact ?? false}
+                  className="mt-0.5"
+                  aria-describedby="reference-can-contact-help"
+                />
+                <Label
+                  htmlFor="reference-can-contact"
+                  className="text-sm font-normal leading-snug"
+                >
+                  Autorizou ser contatada
+                </Label>
+              </div>
+              <FieldHelp id="reference-can-contact-help">
+                Sem isso marcado, o nome não pode ser passado para um
+                recrutador.
+              </FieldHelp>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
@@ -239,10 +248,10 @@ export function ReferenceDialog({ initial }: { initial?: ReferenceInitial }) {
               onClick={() => setOpen(false)}
               disabled={isPending}
             >
-              Cancelar
+              [ cancelar ]
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Salvando…" : "Salvar"}
+              {isPending ? "[ salvando… ]" : "[ salvar ]"}
             </Button>
           </DialogFooter>
         </form>
@@ -274,7 +283,10 @@ function Field({
 }) {
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        {label}
+        {required && <RequiredHint />}
+      </Label>
       <Input
         id={id}
         name={name}
@@ -285,8 +297,9 @@ function Field({
         // PII de terceiro: fora do autopreenchimento do navegador.
         autoComplete="off"
         aria-invalid={Boolean(error)}
+        aria-describedby={describedBy(error && `${id}-error`)}
       />
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      <FieldError id={`${id}-error`}>{error}</FieldError>
     </div>
   );
 }

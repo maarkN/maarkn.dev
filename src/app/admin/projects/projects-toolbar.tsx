@@ -131,7 +131,7 @@ export function ProjectsToolbar(p: Props) {
       </Select>
       <Button type="submit" variant="outline" size="sm" disabled={isPending}>
         <Search className="size-4" />
-        Filtrar
+        [ filtrar ]
       </Button>
       {hasFilters && (
         <Button
@@ -147,7 +147,7 @@ export function ProjectsToolbar(p: Props) {
           }}
         >
           <X className="size-4" />
-          Limpar
+          [ limpar ]
         </Button>
       )}
     </form>

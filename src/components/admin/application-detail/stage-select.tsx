@@ -100,7 +100,7 @@ export function StageSelect({
       {dirty && (
         <Button type="button" size="sm" onClick={move} disabled={isPending}>
           <ArrowRightLeft className="size-4" />
-          {isPending ? "Movendo…" : "Mover"}
+          {isPending ? "[ movendo… ]" : "[ mover ]"}
         </Button>
       )}
     </div>

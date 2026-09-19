@@ -83,7 +83,7 @@ export default async function AuditPage({
             <Button asChild variant="outline" size="sm">
               <Link href="/admin/api-keys">
                 <KeyRound className="size-4" />
-                Chaves de API
+                [ chaves de api ]
               </Link>
             </Button>
           }

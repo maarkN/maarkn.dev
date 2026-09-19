@@ -26,6 +26,12 @@ import { Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveProject } from "@/app/_actions/admin-projects";
 import {
+  FieldError,
+  FieldHelp,
+  RequiredHint,
+  describedBy,
+} from "@/components/admin/field-output";
+import {
   PROJECT_CATEGORY_STYLES,
   PROJECT_STATUS_STYLES,
 } from "@/components/admin/status-badge";
@@ -225,7 +231,7 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/admin/projects">Cancelar</Link>
+          <Link href="/admin/projects">[ cancelar ]</Link>
         </Button>
         <Button type="submit" size="sm" disabled={isPending}>
           {isPending ? (
@@ -233,7 +239,11 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
           ) : (
             <Save className="size-4" />
           )}
-          {isPending ? "Salvando…" : isEdit ? "Salvar alterações" : "Criar projeto"}
+          {isPending
+            ? "[ salvando… ]"
+            : isEdit
+              ? "[ salvar alterações ]"
+              : "[ criar projeto ]"}
         </Button>
       </div>
     </form>
@@ -262,16 +272,41 @@ type ShellProps = {
   error?: string;
 };
 
+/** Os ids que o `aria-describedby` de cada controle aponta. */
+function helpId(name: string) {
+  return `${name}-help`;
+}
+function errorId(name: string) {
+  return `${name}-error`;
+}
+
+/**
+ * Os atributos que ligam um controle à ajuda e ao erro que o `Shell` desenha
+ * logo abaixo dele.
+ *
+ * É uma função, e não três linhas repetidas em cada campo, porque o `Shell`
+ * emite `#{name}-help` e `#{name}-error` sozinho: quem monta o `Shell` à mão e
+ * esquece o vínculo produz uma mensagem órfã — visível, anunciada uma vez pelo
+ * `role="alert"` e depois inalcançável para quem volta ao campo. Foi o que
+ * aconteceu com o upload de capa.
+ */
+function shellAria({ name, help, error }: Pick<ShellProps, "name" | "help" | "error">) {
+  return {
+    "aria-invalid": Boolean(error),
+    "aria-describedby": describedBy(help && helpId(name), error && errorId(name)),
+  };
+}
+
 function Shell({ name, label, required, help, error, children }: ShellProps & { children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={name}>
         {label}
-        {required && <span className="text-destructive">*</span>}
+        {required && <RequiredHint />}
       </Label>
       {children}
-      {help && <p className="text-xs text-muted-foreground">{help}</p>}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {help && <FieldHelp id={helpId(name)}>{help}</FieldHelp>}
+      <FieldError id={errorId(name)}>{error}</FieldError>
     </div>
   );
 }
@@ -282,7 +317,7 @@ function Field({ spec, defaultValue, error }: { spec: FieldSpec; defaultValue: s
     name: spec.name,
     defaultValue,
     required: spec.required,
-    "aria-invalid": Boolean(error),
+    ...shellAria({ name: spec.name, help: spec.help, error }),
   };
   return (
     <Shell name={spec.name} label={spec.label} required={spec.required} help={spec.help} error={error}>
@@ -326,7 +361,16 @@ function SelectField({
           onValueChange?.(next);
         }}
       >
-        <SelectTrigger id={shell.name} className="w-full" aria-invalid={Boolean(shell.error)}>
+        <SelectTrigger
+          id={shell.name}
+          className="w-full"
+          // `required` nativo não alcança aqui: o gatilho do Radix é um
+          // `<button>` e o valor viaja num `<input type="hidden">`, que a
+          // validação de formulário do navegador ignora por definição. O
+          // `(obrigatório)` do rótulo é o canal visível; este é o programático.
+          aria-required={shell.required || undefined}
+          {...shellAria(shell)}
+        >
           <SelectValue placeholder="Selecione" />
         </SelectTrigger>
         <SelectContent>
@@ -348,10 +392,15 @@ function SwitchField({ name, label, help, defaultChecked }: ShellProps & { defau
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
         <input type="hidden" name={name} value={checked ? "on" : "off"} />
-        <Switch id={name} checked={checked} onCheckedChange={setChecked} />
+        <Switch
+          id={name}
+          checked={checked}
+          onCheckedChange={setChecked}
+          {...shellAria({ name, help })}
+        />
         <Label htmlFor={name}>{label}</Label>
       </div>
-      {help && <p className="text-xs text-muted-foreground">{help}</p>}
+      {help && <FieldHelp id={helpId(name)}>{help}</FieldHelp>}
     </div>
   );
 }
@@ -360,14 +409,19 @@ function SwitchField({ name, label, help, defaultChecked }: ShellProps & { defau
  * Uploads through `/api/admin/upload` (8 MB cap, extension allowlist) and keeps
  * the returned public path in a hidden input, exactly like before the refactor.
  */
+const COVER_HELP = "Opcional. Substitui a capa estilizada nos cards. Máx. 8 MB.";
+
 function CoverImageField({ initial }: { initial?: string | null }) {
   const [url, setUrl] = useState(initial ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  /** Nome do arquivo escolhido — a "saída" do anexo, no lugar do texto nativo. */
+  const [picked, setPicked] = useState("");
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPicked(file.name);
     setBusy(true);
     setError("");
     try {
@@ -393,11 +447,17 @@ function CoverImageField({ initial }: { initial?: string | null }) {
     }
   }
 
+  // O `<input type="file">` desenha, além do botão do sistema, o nome do
+  // arquivo (ou "Nenhum arquivo escolhido") em texto do navegador, na língua
+  // do navegador. `text-transparent` apaga SÓ esse texto — o botão nativo tem
+  // cor própria (`file:text-foreground`) e continua visível, e o valor do
+  // campo segue intacto para a API de acessibilidade. A linha de saída abaixo
+  // é quem conta o que foi escolhido, na voz do painel.
   return (
     <Shell
       name="coverImageFile"
-      label="Imagem de capa"
-      help="Opcional. Substitui a capa estilizada nos cards. Máx. 8 MB."
+      label="attach: imagem de capa"
+      help={COVER_HELP}
       error={error || undefined}
     >
       <input type="hidden" name="coverImage" value={url} />
@@ -414,7 +474,12 @@ function CoverImageField({ initial }: { initial?: string | null }) {
           accept="image/*"
           onChange={onPick}
           disabled={busy}
-          className="flex-1 cursor-pointer"
+          className="flex-1 cursor-pointer text-transparent"
+          {...shellAria({
+            name: "coverImageFile",
+            help: COVER_HELP,
+            error: error || undefined,
+          })}
         />
         {url && !busy && (
           <Button
@@ -428,7 +493,20 @@ function CoverImageField({ initial }: { initial?: string | null }) {
           </Button>
         )}
       </div>
-      {busy && <p className="text-xs text-muted-foreground">Enviando…</p>}
+      <p aria-live="polite" className="font-mono text-xs break-all">
+        <span aria-hidden="true" className="text-muted-foreground">
+          {"attach: "}
+        </span>
+        {busy ? (
+          <span className="text-muted-foreground">
+            {picked} · enviando…
+          </span>
+        ) : picked || url ? (
+          <span>{picked || url.split("/").pop()}</span>
+        ) : (
+          <span className="text-muted-foreground">(nenhum arquivo)</span>
+        )}
+      </p>
     </Shell>
   );
 }

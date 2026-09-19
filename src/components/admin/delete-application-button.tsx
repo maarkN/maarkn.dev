@@ -12,6 +12,7 @@ import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteApplication } from "@/app/_actions/applications";
+import { DestructiveEcho } from "@/components/admin/destructive-echo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +78,10 @@ export function DeleteApplicationButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
+        <DestructiveEcho
+          command={`rm -rf applications/${folderName ?? company}`}
+        />
+
         <div className="space-y-1.5 py-2">
           <Label htmlFor={`confirm-delete-${id}`}>Nome da empresa</Label>
           <Input
@@ -89,8 +94,11 @@ export function DeleteApplicationButton({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>
+            [ cancelar ]
+          </AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             disabled={!matches || isPending}
             onClick={(event) => {
               // O AlertDialogAction fecha o dialog no clique; segure para
@@ -111,7 +119,7 @@ export function DeleteApplicationButton({
               });
             }}
           >
-            {isPending ? "Excluindo…" : "Excluir definitivamente"}
+            {isPending ? "[ excluindo… ]" : "[ excluir definitivamente ]"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

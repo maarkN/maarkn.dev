@@ -198,7 +198,7 @@ export function ContactsToolbar(props: ContactsToolbarProps) {
 
         <Button type="submit" variant="outline" size="sm" disabled={isPending}>
           <Search className="size-4" />
-          Filtrar
+          [ filtrar ]
         </Button>
 
         {hasFilters && (
@@ -210,7 +210,7 @@ export function ContactsToolbar(props: ContactsToolbarProps) {
             disabled={isPending}
           >
             <X className="size-4" />
-            Limpar
+            [ limpar ]
           </Button>
         )}
       </div>

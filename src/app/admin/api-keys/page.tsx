@@ -86,7 +86,7 @@ export default async function ApiKeysPage({
               <Button asChild variant="outline" size="sm">
                 <Link href="/admin/audit">
                   <ScrollText className="size-4" />
-                  Auditoria
+                  [ auditoria ]
                 </Link>
               </Button>
               <CreateKeyDialog disabled={!dbConfigured || !pepperOk} />
@@ -337,7 +337,7 @@ async function ApiKeysTable({
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button asChild variant="ghost" size="sm">
-                          <Link href={`/admin/audit?key=${r.id}`}>Chamadas</Link>
+                          <Link href={`/admin/audit?key=${r.id}`}>[ chamadas ]</Link>
                         </Button>
                         {st === "revoked" ? null : (
                           <RevokeKeyDialog

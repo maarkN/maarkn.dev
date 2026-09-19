@@ -49,7 +49,7 @@ export default async function ApplicationsBoardPage({
             <Button asChild variant="outline" size="sm">
               <Link href={`/admin/applications${listQuery(filters)}`}>
                 <List className="size-4" />
-                Ver como lista
+                [ ver como lista ]
               </Link>
             </Button>
           }

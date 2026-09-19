@@ -297,7 +297,7 @@ export function ApplicationsToolbar(props: ApplicationsToolbarProps) {
 
         <Button type="submit" variant="outline" size="sm" disabled={isPending}>
           <Search className="size-4" />
-          Filtrar
+          [ filtrar ]
         </Button>
 
         {hasFilters && (
@@ -309,7 +309,7 @@ export function ApplicationsToolbar(props: ApplicationsToolbarProps) {
             disabled={isPending}
           >
             <X className="size-4" />
-            Limpar
+            [ limpar ]
           </Button>
         )}
       </div>

@@ -17,6 +17,7 @@ import { Download, Copy, Check, FileText, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { generate, type GenState } from "@/app/_actions/generator";
 import { GENERATOR_LANGUAGES } from "@/app/admin/generator/languages";
+import { FieldHelp, RequiredHint } from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -110,7 +111,10 @@ export function GeneratorForm() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="jobDescription">Descrição da vaga *</Label>
+              <Label htmlFor="jobDescription">
+                Descrição da vaga
+                <RequiredHint />
+              </Label>
               <Textarea
                 id="jobDescription"
                 name="jobDescription"
@@ -118,16 +122,20 @@ export function GeneratorForm() {
                 rows={12}
                 placeholder="Cole aqui a descrição completa da vaga…"
                 className="min-h-64 resize-y font-mono"
+                aria-describedby="jobDescription-help"
               />
+              <FieldHelp id="jobDescription-help">
+                Mínimo de 40 caracteres — cole a vaga inteira, não só o título.
+              </FieldHelp>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">
+              <FieldHelp>
                 Ancorado no seu CV e dossiês — nunca inventa fatos nem diploma.
-              </p>
+              </FieldHelp>
               <Button type="submit" disabled={isPending}>
                 <Sparkles className="size-4" />
-                {isPending ? "Gerando…" : "Gerar"}
+                {isPending ? "[ gerando… ]" : "[ gerar ]"}
               </Button>
             </div>
           </form>
@@ -144,7 +152,7 @@ export function GeneratorForm() {
               <Button asChild variant="outline" size="sm">
                 <Link href={`/admin/generator/${result.id}`}>
                   <FileText className="size-4" />
-                  Abrir versão de impressão (PDF)
+                  [ abrir versão de impressão (PDF) ]
                 </Link>
               </Button>
             ) : null}
@@ -214,11 +222,11 @@ function ResultBlock({
               ) : (
                 <Copy className="size-4" />
               )}
-              {copied ? "Copiado" : "Copiar"}
+              {copied ? "[ copiado ]" : "[ copiar ]"}
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={download}>
               <Download className="size-4" />
-              .md
+              [ .md ]
             </Button>
           </div>
         </div>

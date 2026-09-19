@@ -60,13 +60,13 @@ export default async function AdminDashboard() {
               <Button asChild variant="outline" size="sm">
                 <Link href="/admin/applications">
                   <Briefcase className="size-4" />
-                  Ver o funil completo
+                  [ ver o funil completo ]
                 </Link>
               </Button>
               <Button asChild size="sm">
                 <Link href="/admin/applications/new">
                   <Plus className="size-4" />
-                  Nova candidatura
+                  [ nova candidatura ]
                 </Link>
               </Button>
             </>

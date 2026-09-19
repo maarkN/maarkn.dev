@@ -319,7 +319,7 @@ export function JobsToolbar(props: JobsToolbarProps) {
 
         <Button type="submit" variant="outline" size="sm" disabled={isPending}>
           <Search className="size-4" />
-          Filtrar
+          [ filtrar ]
         </Button>
 
         {hasFilters && (
@@ -331,7 +331,7 @@ export function JobsToolbar(props: JobsToolbarProps) {
             disabled={isPending}
           >
             <X className="size-4" />
-            Limpar
+            [ limpar ]
           </Button>
         )}
       </div>

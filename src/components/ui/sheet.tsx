@@ -5,7 +5,12 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+
+/**
+ * Mesmo tratamento do `Dialog` (bko-04): título em régua, desenhado por
+ * `::before`/`::after` em `src/app/admin/admin.css`, e fechamento escrito
+ * como `[esc]` — o atalho real que o Radix já entrega.
+ */
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -72,12 +77,11 @@ function SheetContent({
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-3 right-3"
-              size="icon-sm"
+              className="absolute top-3 right-3 text-muted-foreground"
+              size="xs"
+              aria-label="fechar [esc]"
             >
-              <XIcon
-              />
-              <span className="sr-only">Close</span>
+              [esc]
             </Button>
           </SheetPrimitive.Close>
         )}

@@ -80,7 +80,7 @@ export default async function GeneratorPage({
             Gerações recentes
           </h2>
           <p className="text-xs text-comment">
-            # histórico gravado no banco — “Abrir” leva à versão de impressão
+            # histórico gravado no banco — “[ abrir ]” leva à versão de impressão
           </p>
           <Suspense key={`${q}|${page}`} fallback={<GenerationsSkeleton />}>
             <GenerationsTable q={q} page={page} />
@@ -213,7 +213,7 @@ async function GenerationsTable({ q, page }: { q: string; page: number }) {
                   <Button asChild variant="ghost" size="sm">
                     <Link href={`/admin/generator/${g.id}`}>
                       <FileText className="size-4" />
-                      Abrir
+                      [ abrir ]
                     </Link>
                   </Button>
                 </TableCell>

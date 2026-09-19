@@ -266,13 +266,13 @@ export function ApplicationQuickSheet({
           <Button asChild size="sm">
             <Link href={`/admin/applications/${row.id}`}>
               <FileText className="size-4" />
-              Abrir o dossiê
+              [ abrir o dossiê ]
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
             <Link href={`/admin/applications/${row.id}/edit`}>
               <Pencil className="size-4" />
-              Editar
+              [ editar ]
             </Link>
           </Button>
         </SheetFooter>

@@ -21,6 +21,11 @@ import { useState, useTransition } from "react";
 import { CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/app/_actions/action-result";
+import {
+  FieldError,
+  FieldHelp,
+  describedBy,
+} from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -129,7 +134,7 @@ export function LogEventDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled}>
           <CalendarPlus className="size-4" />
-          Registrar evento
+          [ registrar evento ]
         </Button>
       </DialogTrigger>
 
@@ -150,7 +155,13 @@ export function LogEventDialog({
             <div className="space-y-1.5">
               <Label htmlFor="event-type">Tipo</Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger id="event-type" className="w-full">
+                <SelectTrigger
+                  id="event-type"
+                  className="w-full"
+                  aria-describedby={describedBy(
+                    errors.type && "event-type-error",
+                  )}
+                >
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,9 +172,7 @@ export function LogEventDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.type && (
-                <p className="text-xs text-destructive">{errors.type}</p>
-              )}
+              <FieldError id="event-type-error">{errors.type}</FieldError>
             </div>
 
             <div className="space-y-1.5">
@@ -173,13 +182,17 @@ export function LogEventDialog({
                 name="occurredAtLocal"
                 type="datetime-local"
                 aria-invalid={Boolean(errors.occurredAt)}
+                aria-describedby={describedBy(
+                  "event-occurred-at-help",
+                  errors.occurredAt && "event-occurred-at-error",
+                )}
               />
-              <p className="text-[11px] text-muted-foreground">
+              <FieldHelp id="event-occurred-at-help">
                 Em branco = agora.
-              </p>
-              {errors.occurredAt && (
-                <p className="text-xs text-destructive">{errors.occurredAt}</p>
-              )}
+              </FieldHelp>
+              <FieldError id="event-occurred-at-error">
+                {errors.occurredAt}
+              </FieldError>
             </div>
 
             <div className="space-y-1.5">
@@ -245,10 +258,11 @@ export function LogEventDialog({
                 maxLength={300}
                 placeholder="Ex.: resposta do recrutador sobre disponibilidade"
                 aria-invalid={Boolean(errors.subject)}
+                aria-describedby={describedBy(
+                  errors.subject && "event-subject-error",
+                )}
               />
-              {errors.subject && (
-                <p className="text-xs text-destructive">{errors.subject}</p>
-              )}
+              <FieldError id="event-subject-error">{errors.subject}</FieldError>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
@@ -270,10 +284,10 @@ export function LogEventDialog({
               onClick={() => setOpen(false)}
               disabled={isPending}
             >
-              Cancelar
+              [ cancelar ]
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Registrando…" : "Registrar"}
+              {isPending ? "[ registrando… ]" : "[ registrar ]"}
             </Button>
           </DialogFooter>
         </form>

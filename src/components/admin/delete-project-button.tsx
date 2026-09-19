@@ -14,6 +14,7 @@ import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteProject } from "@/app/_actions/admin-projects";
+import { DestructiveEcho } from "@/components/admin/destructive-echo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +30,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function DeleteProjectButton({ id, name }: { id: string; name: string }) {
+export function DeleteProjectButton({
+  id,
+  name,
+  slug,
+}: {
+  id: string;
+  name: string;
+  /** Chave natural, só para o eco do comando. Sem ela, o eco usa o nome. */
+  slug?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -56,6 +66,8 @@ export function DeleteProjectButton({ id, name }: { id: string; name: string }) 
           </AlertDialogDescription>
         </AlertDialogHeader>
 
+        <DestructiveEcho command={`rm -rf projects/${slug ?? name}`} />
+
         <div className="space-y-1.5 py-2">
           <Label htmlFor={`confirm-delete-${id}`}>Nome do projeto</Label>
           <Input
@@ -68,8 +80,11 @@ export function DeleteProjectButton({ id, name }: { id: string; name: string }) 
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>
+            [ cancelar ]
+          </AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             disabled={!matches || isPending}
             onClick={(e) => {
               // AlertDialogAction closes the dialog on click; hold it open so
@@ -86,7 +101,7 @@ export function DeleteProjectButton({ id, name }: { id: string; name: string }) 
               });
             }}
           >
-            {isPending ? "Excluindo…" : "Excluir definitivamente"}
+            {isPending ? "[ excluindo… ]" : "[ excluir definitivamente ]"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
