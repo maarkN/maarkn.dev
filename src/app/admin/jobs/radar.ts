@@ -48,31 +48,31 @@ export const RADAR_VERDICT_LABELS: Record<string, string> = {
 export const RADAR_VERDICT_STYLES: StatusStyles = {
   top_find: {
     label: RADAR_VERDICT_LABELS.top_find,
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   shortlisted: {
     label: RADAR_VERDICT_LABELS.shortlisted,
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   approved: {
     label: RADAR_VERDICT_LABELS.approved,
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   kept: {
     label: RADAR_VERDICT_LABELS.kept,
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   stretch: {
     label: RADAR_VERDICT_LABELS.stretch,
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   eliminated: {
     label: RADAR_VERDICT_LABELS.eliminated,
-    className: "bg-red-500/15 text-red-700 dark:text-red-400",
+    className: "bg-red-500/15 text-red-300",
   },
   not_verified: {
     label: RADAR_VERDICT_LABELS.not_verified,
-    className: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+    className: "bg-slate-500/15 text-slate-300",
   },
 };
 
@@ -86,19 +86,19 @@ export function radarVerdictLabel(value: string | null | undefined): string {
 export const VERIFICATION_VERDICT_STYLES: StatusStyles = {
   confirmado: {
     label: "Confirmada",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   divergente: {
     label: "Divergente",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   inacessível: {
     label: "Inacessível",
-    className: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+    className: "bg-slate-500/15 text-slate-300",
   },
   expirada: {
     label: "Expirada",
-    className: "bg-red-500/15 text-red-700 dark:text-red-400",
+    className: "bg-red-500/15 text-red-300",
   },
 };
 

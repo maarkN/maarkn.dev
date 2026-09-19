@@ -1,41 +1,104 @@
 /* ════════════════════════════════════════════════
-   ADMIN THEME — legacy token aliases, scoped.
-   The admin panel keeps its pre-terminal classes (`--surface`, `--muted`,
-   `--accent`…). They are mapped here onto the Dracula palette from
-   globals.css and only exist under `.admin-root`; globals.css carries no
-   copy of them.
-   The admin is always rendered in the `soft` palette (see admin/layout.tsx).
+   ADMIN THEME — the shadcn token values, scoped.
+   The names (`--color-background`, `--color-primary`…) are declared in the
+   `@theme inline` block of globals.css, the only file Tailwind v4 reads
+   `@theme` from; this file — imported by admin/layout.tsx, not by CSS —
+   carries the values. `inline` makes the utilities emit `var(--primary)`
+   instead of a build-time literal, so they resolve here and nowhere else.
+   Every value points straight at a palette name from globals.css: one
+   indirection, no legacy aliases. The two colour literals below (#BABFCC,
+   #F28B8B) are contrast lifts and carry the measured numbers.
+   The admin is always rendered in the `soft` palette (see admin/layout.tsx)
+   and is always dark — no dark-mode variant is used anywhere under /admin.
    ════════════════════════════════════════════════ */
 
 .admin-root {
-  --bg-low:       var(--bg-dim);
-  --surface:      var(--bg-dim);
-  --surface-2:    #2F313E;
-  --surface-3:    var(--sel);
-  --border:       var(--line);
-  --border-2:     var(--sel);
-  --text:         var(--fg);
-  --text-2:       #D6D6D2;
-  /* Lifted from --comment (#7B7F8B, 3.2:1 on --surface-2) so labels, help
-     text and table headers clear WCAG AA 4.5:1 on every admin surface. */
-  --muted:        #A2A6B3;
-  --accent:       var(--purple);
-  --accent-2:     var(--pink);
-  --accent-glow:  color-mix(in srgb, var(--purple) 25%, transparent);
-  --grid-opacity: 0.28;
-  /* Error text sits on a red-tinted box (`bg-[var(--red)]/10`); the palette
-     red (#EE6666) lands at 4.0–4.4:1 there, so the admin lifts it. */
-  --red:          #F28B8B;
+  --background:    var(--bg);
+  --foreground:    var(--fg);
 
-  /* Everything in the admin is monospace; the legacy font names resolve to
+  /* Elevated surface = the same one the public site uses. */
+  --card:                 var(--bg-dim);
+  --card-foreground:      var(--fg);
+  --popover:              var(--bg-dim);
+  --popover-foreground:   var(--fg);
+
+  --primary:              var(--purple);
+  /* NOT #ffffff: white on --purple is 2.25:1 and fails AA. --bg is 6.3:1. */
+  --primary-foreground:   var(--bg);
+
+  /* In the shadcn vocabulary these three are SURFACES, not text colours.
+     Reading them as text is what makes a panel go invisible; the secondary
+     text colour is --muted-foreground. */
+  --secondary:            var(--sel);
+  --secondary-foreground: var(--fg);
+  --muted:                var(--sel);
+  --accent:               var(--sel);
+  --accent-foreground:    var(--fg);
+
+  /* Lifted from --comment (#8F93A0). Measured with the WCAG relative-luminance
+     formula on the `soft` palette (the only one the admin ever renders):
+
+       text \ surface   --bg #282A36   --card #21222C   --sel #44475A
+       --comment            4.64            5.15            2.98
+       #A2A6B3 (change 14)  5.86            6.50            3.77
+       #BABFCC              7.74            8.58            4.97
+
+     --sel is the binding surface: `bg-muted`, `bg-accent` and `bg-secondary`
+     all resolve to it, and that is where secondary text actually lands —
+     AvatarFallback (`bg-muted text-muted-foreground`), hovered menu items,
+     `data-[state=selected]` rows. Neither --comment nor the change-14 value
+     clears 4.5:1 there; #BABFCC does, on all three surfaces.
+     Do NOT add an alpha modifier to this colour: `text-muted-foreground/70`
+     composites to 4.95:1 on --card but only 4.11:1 on a hovered table row
+     (`hover:bg-muted/50`) and 3.31:1 on --sel. No token value fixes that —
+     the ceiling for any 70% text on --card is 6.57:1 (pure white), and at
+     70%×60% it is 3.96:1. Dim by choosing a colour, never by alpha. */
+  --muted-foreground:     #BABFCC;
+
+  /* Lifted from --red (#EE6666): destructive text sits on a red-tinted box
+     (`bg-destructive/10`), where the palette red lands at 4.01:1 over --bg
+     and 4.43:1 over --card. #F28B8B reads 5.04:1 / 5.58:1 on the same boxes
+     and 6.00:1 / 6.65:1 as bare `text-destructive`. */
+  --destructive:          #F28B8B;
+  --destructive-foreground: var(--bg);
+
+  /* Decorative separators. */
+  --border:               var(--line);
+  /* Control boundaries need 3:1 (WCAG 1.4.11) and --line reads 1.25:1 on
+     --bg / 1.38:1 on --card, so field borders use the comment grey instead:
+     4.64:1 on --bg, 5.15:1 on --card. (It would be 2.98:1 on --sel; no
+     field is rendered on that surface today.) */
+  --input:                var(--comment);
+  --ring:                 var(--purple);
+
+  /* Square corners are written into the primitives as `rounded-none`; this
+     token is not what flattens them. Tailwind v4 reads `rounded-sm/md/lg`
+     from --radius-sm/md/lg, which globals.css does not declare, so those
+     keep the framework defaults. The only consumer of --radius is the inline
+     style in src/components/ui/sonner.tsx. Kept at 0 so that one stays
+     square; change 03 decides whether to introduce the --radius-* scale. */
+  --radius: 0;
+
+  /* Not in the design.md table — required by markup that predates it.
+     --brand is the link/active-filter accent (`text-brand`, `bg-brand/15`);
+     the palette's blue is --cyan. The sidebar set is the elevated surface
+     plus the selection grey, so the nav matches cards and popovers. */
+  --brand:                        var(--cyan);
+  --sidebar:                      var(--bg-dim);
+  --sidebar-foreground:           var(--fg);
+  --sidebar-border:               var(--line);
+  --sidebar-accent:               var(--sel);
+  --sidebar-accent-foreground:    var(--fg);
+
+  /* Everything in the admin is monospace; the three family names resolve to
      the same face so no proportional font is ever requested. */
   --font-sans:    var(--font);
   --font-display: var(--font);
   --font-mono:    var(--font);
   font-family: var(--font);
 
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 /* Dense forms in a monospace face read better with a little more air. */
@@ -44,32 +107,22 @@
   line-height: 1.5;
 }
 
-/* Field borders: the classes use --border-2 (--sel, 1.4:1 on --surface-2),
-   below the 3:1 WCAG 1.4.11 guideline for control boundaries. Rest on the
-   comment grey (≈4.2:1 on --surface-2) instead; focus stays purple. */
-.admin-root :is(input:not([type="checkbox"]):not([type="file"]), select, textarea):not(:focus) {
-  border-color: var(--comment);
-}
-
-/* Focus: keep the border swap the classes already do and add a 1px ring so
-   the focused field stands out even next to a purple label or legend. */
-.admin-root :is(input:not([type="checkbox"]):not([type="file"]), select, textarea):focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-  outline: none;
-}
+/* Every visible field in the admin goes through the shadcn primitives, which
+   already carry `border-input` at rest and `border-ring` + `ring-ring/50` on
+   focus. This is the floor for the elements that carry no focus class of
+   their own — links, <summary>, checkboxes, file pickers. */
 .admin-root :is(input[type="checkbox"], input[type="file"], button, a, summary):focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* Faded grid behind the login card (legacy primitive, admin-only). */
+/* Faded grid behind the login card (admin-only primitive). */
 .admin-root .bg-grid {
   background-image:
     linear-gradient(var(--border) 1px, transparent 1px),
     linear-gradient(90deg, var(--border) 1px, transparent 1px);
   background-size: 56px 56px;
-  opacity: var(--grid-opacity);
+  opacity: 0.28;
   mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
 }

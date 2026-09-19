@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* Enter/exit keyframes (`animate-in`, `fade-in-0`, `slide-in-from-top-2`…) used by
+   the Radix-backed primitives in src/components/ui. Tailwind v4 has no built-in
+   equivalent, so the utilities come from this package; without the import the
+   classes simply do not exist and every overlay pops in. */
+@import "tw-animate-css";
 
 /* ════════════════════════════════════════════════
    THEME TOKENS — Dracula. `soft` is the default palette,
@@ -94,13 +99,51 @@
   --font-sans:    var(--font);
   --font-display: var(--font);
   --font-mono:    var(--font);
+
+  /* ─── shadcn vocabulary ───────────────────────────────────────────────
+     Names only. The values live in admin/admin.css under `.admin-root`,
+     mapped straight onto the palette above — one indirection, not two.
+     They have to be declared here because Tailwind v4 only processes
+     `@theme` in the file that carries `@import "tailwindcss"`, and
+     admin.css is pulled in by admin/layout.tsx, not by CSS.
+     The `inline` modifier is what makes the split work: the utility emits
+     `var(--primary)` instead of resolving to a literal at build time, so
+     the variable resolves in the scope where the class is used.
+     Consequence: `bg-background`, `text-muted-foreground`… exist site-wide
+     and resolve to nothing outside `.admin-root`. Keep them inside
+     src/app/admin and src/components/{ui,admin}; change 05 adds the grep
+     that fails the build otherwise. */
+  --color-background:               var(--background);
+  --color-foreground:               var(--foreground);
+  --color-card:                     var(--card);
+  --color-card-foreground:          var(--card-foreground);
+  --color-popover:                  var(--popover);
+  --color-popover-foreground:       var(--popover-foreground);
+  --color-primary:                  var(--primary);
+  --color-primary-foreground:       var(--primary-foreground);
+  --color-secondary:                var(--secondary);
+  --color-secondary-foreground:     var(--secondary-foreground);
+  --color-muted:                    var(--muted);
+  --color-muted-foreground:         var(--muted-foreground);
+  --color-accent:                   var(--accent);
+  --color-accent-foreground:        var(--accent-foreground);
+  --color-destructive:              var(--destructive);
+  --color-destructive-foreground:   var(--destructive-foreground);
+  --color-border:                   var(--border);
+  --color-input:                    var(--input);
+  --color-ring:                     var(--ring);
+  --color-brand:                    var(--brand);
+  --color-sidebar:                  var(--sidebar);
+  --color-sidebar-foreground:       var(--sidebar-foreground);
+  --color-sidebar-border:           var(--sidebar-border);
+  --color-sidebar-accent:           var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 }
 
 /* ════════════════════════════════════════════════
    BASE
-   Legacy aliases (--surface, --accent, --muted…) live only in
-   admin/admin.css, scoped to .admin-root; terminal code uses the palette
-   names above.
+   The shadcn token values live only in admin/admin.css, scoped to
+   .admin-root; terminal code uses the palette names above.
    ════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; }
 

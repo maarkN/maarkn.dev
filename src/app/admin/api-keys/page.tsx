@@ -303,7 +303,7 @@ async function ApiKeysTable({
                                 (MCP_WRITE_SCOPES as readonly string[]).includes(
                                   s,
                                 )
-                                  ? "font-mono text-[10px] text-amber-700 dark:text-amber-400"
+                                  ? "font-mono text-[10px] text-amber-400"
                                   : "font-mono text-[10px] text-muted-foreground"
                               }
                             >

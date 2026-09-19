@@ -221,7 +221,7 @@ async function ProjectsTable({
                   <TableCell>
                     {p.featured ? (
                       <Star
-                        className="size-4 fill-current text-amber-500 dark:text-amber-400"
+                        className="size-4 fill-current text-amber-400"
                         aria-label="Em destaque"
                       />
                     ) : (

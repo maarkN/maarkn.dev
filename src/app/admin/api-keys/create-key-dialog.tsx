@@ -187,7 +187,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
             </DialogHeader>
 
             <div className="space-y-3">
-              <div className="flex items-start gap-2 bg-amber-500/10 p-3 text-amber-700 dark:text-amber-400">
+              <div className="flex items-start gap-2 bg-amber-500/10 p-3 text-amber-400">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                 <p>
                   Guarde em um gerenciador de segredos. Não commite em
@@ -353,7 +353,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                         <span
                           className={
                             isWrite(scope)
-                              ? "font-mono text-xs text-amber-700 dark:text-amber-400"
+                              ? "font-mono text-xs text-amber-400"
                               : "font-mono text-xs"
                           }
                         >
@@ -378,7 +378,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                 )}
 
                 {writeSelected.length > 0 && (
-                  <p className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400">
+                  <p className="flex items-start gap-2 text-xs text-amber-400">
                     <ShieldAlert className="mt-0.5 size-3.5 shrink-0" />
                     <span>
                       {writeSelected.length} escopo(s) de escrita. Esta chave

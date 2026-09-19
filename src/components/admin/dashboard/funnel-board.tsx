@@ -219,7 +219,7 @@ function ClosedOutcomes({ closed }: { closed: FunnelView["closed"] }) {
 function FunnelHonestyNote({ view }: { view: FunnelView }) {
   if (view.sentReached === 0) {
     return (
-      <div className="flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+      <div className="flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-400">
         <TriangleAlert className="mt-0.5 size-4 shrink-0" />
         <p>
           <strong>Ainda não há dado de outcome.</strong> Nenhuma candidatura
@@ -234,7 +234,7 @@ function FunnelHonestyNote({ view }: { view: FunnelView }) {
 
   if (view.undefinedRates > 0) {
     return (
-      <div className="flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+      <div className="flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-400">
         <TriangleAlert className="mt-0.5 size-4 shrink-0" />
         <p>
           {formatNumber(view.undefinedRates)} taxa(s) sem denominador: nenhuma

@@ -145,7 +145,7 @@ export async function NextStepsCard() {
                     {formatDateTime(item.at)}
                     {item.overdue && (
                       <div className="pt-0.5">
-                        <Badge className="border-transparent bg-red-500/15 text-red-700 dark:text-red-400">
+                        <Badge className="border-transparent bg-red-500/15 text-red-300">
                           sem desfecho
                         </Badge>
                       </div>

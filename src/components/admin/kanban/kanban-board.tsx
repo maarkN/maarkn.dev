@@ -115,7 +115,7 @@ export function KanbanBoard({
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {phase.label}
               </span>
-              <span className="text-[11px] tabular-nums text-muted-foreground/70">
+              <span className="text-[11px] tabular-nums text-muted-foreground">
                 {phaseTotal}
               </span>
             </div>

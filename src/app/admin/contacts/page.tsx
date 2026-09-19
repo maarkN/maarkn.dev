@@ -351,12 +351,12 @@ async function ReferenceRows({
 
               <TableCell>
                 {row.canContact ? (
-                  <Badge className="border-transparent bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                  <Badge className="border-transparent bg-emerald-500/15 text-emerald-300">
                     Autorizada
                   </Badge>
                 ) : (
                   <Badge
-                    className="border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                    className="border-transparent bg-amber-500/15 text-amber-300"
                     title="Não pode ser passada para um recrutador ainda."
                   >
                     Sem autorização

@@ -1,15 +1,19 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
+/**
+ * The admin palette is pinned server-side (admin/layout.tsx) and there is no
+ * `ThemeProvider` under /admin, so sonner's theme is pinned too instead of
+ * being read from `next-themes` — the hook always returned "system" and the
+ * layout overrode it anyway. `theme` sits before the spread so a caller can
+ * still pass its own.
+ */
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="dark"
       className="toaster group"
       icons={{
         success: (

@@ -7,7 +7,7 @@
  * `CoverageLevel`, `DocKind`, severidade de `HonestyNote`, desfecho de
  * `Interview`, tipo de `ApplicationEvent` — aparecem em uma tela só. Ficam
  * juntos do consumidor e reaproveitam `makeStatusBadge`, então o contrato de
- * cor (`bg-<hue>-500/15 text-<hue>-700 dark:text-<hue>-400`) continua um só.
+ * cor (`bg-<hue>-500/15 text-<hue>-<tom claro>`) continua um só.
  *
  * Três dos cinco vocabulários são **texto livre no banco** (status do
  * documento, tipo do evento, desfecho da entrevista, veredito da verificação):
@@ -39,11 +39,11 @@ export const COVERAGE_LABELS: Record<CoverageLevel, string> = {
 };
 
 const COVERAGE_CLASSNAMES: Record<CoverageLevel, string> = {
-  strong: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  has: "bg-teal-500/15 text-teal-700 dark:text-teal-400",
-  shallow: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  gap: "bg-red-500/15 text-red-700 dark:text-red-400",
-  advantage: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
+  strong: "bg-emerald-500/15 text-emerald-300",
+  has: "bg-teal-500/15 text-teal-300",
+  shallow: "bg-amber-500/15 text-amber-300",
+  gap: "bg-red-500/15 text-red-300",
+  advantage: "bg-violet-500/15 text-violet-300",
 };
 
 // `Record<CoverageLevel, …>` nos dois mapas: acrescentar um nível ao enum do
@@ -77,19 +77,19 @@ export const DOC_KIND_LABELS: Record<DocKind, string> = {
 /** A cor agrupa por PAPEL no pacote (peça enviada · insumo da vaga · preparo),
  *  não um matiz por tipo: doze cores numa coluna estreita seriam ruído. */
 const DOC_KIND_CLASSNAMES: Record<DocKind, string> = {
-  cv: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-  cover_letter: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400",
-  job_data: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
-  job_info: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
-  notes: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
-  email: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-400",
-  screening_answers: "bg-teal-500/15 text-teal-700 dark:text-teal-400",
-  recruiter_reply: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-400",
-  challenge_prep: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
-  practice: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
+  cv: "bg-blue-500/15 text-blue-300",
+  cover_letter: "bg-indigo-500/15 text-indigo-300",
+  job_data: "bg-slate-500/15 text-slate-300",
+  job_info: "bg-slate-500/15 text-slate-300",
+  notes: "bg-neutral-500/15 text-neutral-300",
+  email: "bg-cyan-500/15 text-cyan-300",
+  screening_answers: "bg-teal-500/15 text-teal-300",
+  recruiter_reply: "bg-cyan-500/15 text-cyan-300",
+  challenge_prep: "bg-violet-500/15 text-violet-300",
+  practice: "bg-violet-500/15 text-violet-300",
   english_eval_script:
-    "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400",
-  mini_spec: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    "bg-fuchsia-500/15 text-fuchsia-300",
+  mini_spec: "bg-amber-500/15 text-amber-300",
 };
 
 export const DOC_KIND_STYLES: StatusStyles = Object.fromEntries(
@@ -106,27 +106,27 @@ export const DocKindBadge = makeStatusBadge(DOC_KIND_STYLES, "DocKind");
 export const DOC_STATUS_STYLES: StatusStyles = {
   draft: {
     label: "Rascunho",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   ready: {
     label: "Pronto",
-    className: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+    className: "bg-blue-500/15 text-blue-300",
   },
   final: {
     label: "Final",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   sent: {
     label: "Enviado",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   pending: {
     label: "Pendente",
-    className: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+    className: "bg-slate-500/15 text-slate-300",
   },
   archived: {
     label: "Arquivado",
-    className: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
+    className: "bg-neutral-500/15 text-neutral-300",
   },
 };
 
@@ -143,15 +143,15 @@ export const DocStatusBadge = makeStatusBadge(DOC_STATUS_STYLES, "DocStatus");
 export const HONESTY_SEVERITY_STYLES: StatusStyles = {
   blocking: {
     label: "Bloqueante",
-    className: "bg-red-500/15 text-red-700 dark:text-red-400",
+    className: "bg-red-500/15 text-red-300",
   },
   warning: {
     label: "Atenção",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   info: {
     label: "Informativo",
-    className: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+    className: "bg-slate-500/15 text-slate-300",
   },
 };
 
@@ -165,19 +165,19 @@ export const HonestySeverityBadge = makeStatusBadge(
 export const INTERVIEW_OUTCOME_STYLES: StatusStyles = {
   passed: {
     label: "Aprovado",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   failed: {
     label: "Reprovado",
-    className: "bg-red-500/15 text-red-700 dark:text-red-400",
+    className: "bg-red-500/15 text-red-300",
   },
   pending: {
     label: "Pendente",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   cancelled: {
     label: "Cancelada",
-    className: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
+    className: "bg-neutral-500/15 text-neutral-300",
   },
 };
 
@@ -273,19 +273,19 @@ export function eventChannelLabel(value: string): string {
 export const VERIFICATION_STYLES: StatusStyles = {
   confirmado: {
     label: "Confirmada",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   divergente: {
     label: "Divergente",
-    className: "bg-red-500/15 text-red-700 dark:text-red-400",
+    className: "bg-red-500/15 text-red-300",
   },
   inacessivel: {
     label: "Inacessível",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   expirada: {
     label: "Expirada",
-    className: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
+    className: "bg-neutral-500/15 text-neutral-300",
   },
 };
 

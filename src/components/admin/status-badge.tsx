@@ -2,10 +2,10 @@
  * Enum → coloured badge. One `Record<string, StatusStyle>` per enum, all built
  * through `makeStatusBadge`, so a new entity only needs a style map.
  *
- * Colour contract (admin de referência): `bg-<hue>-500/15 text-<hue>-700 dark:text-<hue>-400`.
- * The `dark:` variant is remapped in globals.css to `[data-theme="dark"]` and
- * `[data-theme="dev"]` — the admin <html> is always `data-theme="dark"`, so the
- * 400 shade is what actually renders in the backoffice.
+ * Colour contract: `bg-<hue>-500/15 text-<hue>-<light shade>`. The admin is
+ * always dark, so there is no dark-mode variant to remap — the light shade (400,
+ * or 300 for the low-chroma hues) is written directly, which is exactly what
+ * used to render. A `text-<hue>-700` here would be near-invisible on `--bg`.
  *
  * Unknown values never throw: they fall back to `<Badge variant="outline">`
  * with the raw key, which is what you want while an enum is still growing.
@@ -99,30 +99,30 @@ export function statusLabelFrom(styles: StatusStyles, key: string): string {
  */
 const FUNNEL_STAGE_CLASSNAMES: Record<FunnelStage, string> = {
   // pre-envio — cinza esfriando para ambar conforme a acao fica comigo
-  radar: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
-  shortlisted: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
-  package_drafting: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  package_ready: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  awaiting_my_send: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  ready: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  radar: "bg-slate-500/15 text-slate-300",
+  shortlisted: "bg-slate-500/15 text-slate-300",
+  package_drafting: "bg-amber-500/15 text-amber-300",
+  package_ready: "bg-amber-500/15 text-amber-300",
+  awaiting_my_send: "bg-amber-500/15 text-amber-300",
+  ready: "bg-amber-500/15 text-amber-300",
   // enviada — azul
-  applied: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-  recruiter_contact: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-400",
-  screening: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-400",
+  applied: "bg-blue-500/15 text-blue-300",
+  recruiter_contact: "bg-cyan-500/15 text-cyan-300",
+  screening: "bg-cyan-500/15 text-cyan-300",
   // avaliacao — violeta
-  assessment: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
-  technical_challenge: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
-  interview: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
-  final_interview: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
-  reference_check: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
+  assessment: "bg-violet-500/15 text-violet-300",
+  technical_challenge: "bg-violet-500/15 text-violet-300",
+  interview: "bg-violet-500/15 text-violet-300",
+  final_interview: "bg-violet-500/15 text-violet-300",
+  reference_check: "bg-violet-500/15 text-violet-300",
   // desfecho — verde para bom, vermelho para perdido, neutro para abandonado
-  offer: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  accepted: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  rejected: "bg-red-500/15 text-red-700 dark:text-red-400",
-  withdrawn: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
-  no_response: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
-  ghosted: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
-  skipped: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
+  offer: "bg-emerald-500/15 text-emerald-300",
+  accepted: "bg-emerald-500/15 text-emerald-300",
+  rejected: "bg-red-500/15 text-red-300",
+  withdrawn: "bg-neutral-500/15 text-neutral-300",
+  no_response: "bg-neutral-500/15 text-neutral-300",
+  ghosted: "bg-neutral-500/15 text-neutral-300",
+  skipped: "bg-neutral-500/15 text-neutral-300",
 };
 
 /** Rotulos vem de `src/lib/applications.ts` — nunca duplicados aqui. */
@@ -151,10 +151,10 @@ export const FunnelStageBadge = makeStatusBadge(
  * filtrar "patrocinio ok" e descartar justamente o alvo de hoje.
  */
 const SPONSORSHIP_GATE_CLASSNAMES: Record<SponsorshipGate, string> = {
-  not_applicable: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
-  open: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  unknown: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
-  blocked: "bg-red-500/15 text-red-700 dark:text-red-400",
+  not_applicable: "bg-sky-500/15 text-sky-300",
+  open: "bg-emerald-500/15 text-emerald-300",
+  unknown: "bg-slate-500/15 text-slate-300",
+  blocked: "bg-red-500/15 text-red-300",
 };
 
 export const SPONSORSHIP_STYLES: StatusStyles = Object.fromEntries(
@@ -175,15 +175,15 @@ export const SponsorshipBadge = makeStatusBadge(
 /* ── Application.source — src/lib/applications.ts ────────────────────────── */
 
 const APPLICATION_SOURCE_CLASSNAMES: Record<ApplicationSource, string> = {
-  vanhack: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400",
-  linkedin: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
-  company_site: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
-  indeed: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-  glassdoor: "bg-teal-500/15 text-teal-700 dark:text-teal-400",
-  recruiter: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  referral: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  radar: "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400",
-  other: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300",
+  vanhack: "bg-indigo-500/15 text-indigo-300",
+  linkedin: "bg-sky-500/15 text-sky-300",
+  company_site: "bg-slate-500/15 text-slate-300",
+  indeed: "bg-blue-500/15 text-blue-300",
+  glassdoor: "bg-teal-500/15 text-teal-300",
+  recruiter: "bg-amber-500/15 text-amber-300",
+  referral: "bg-emerald-500/15 text-emerald-300",
+  radar: "bg-fuchsia-500/15 text-fuchsia-300",
+  other: "bg-neutral-500/15 text-neutral-300",
 };
 
 export const APPLICATION_SOURCE_STYLES: StatusStyles = Object.fromEntries(
@@ -203,19 +203,19 @@ export const ApplicationSourceBadge = makeStatusBadge(
 export const PROJECT_STATUS_STYLES: Record<ProjectStatus, StatusStyle> = {
   live: {
     label: "No ar",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   internal: {
     label: "Interno",
-    className: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+    className: "bg-blue-500/15 text-blue-300",
   },
   nda: {
     label: "NDA",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   archived: {
     label: "Arquivado",
-    className: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+    className: "bg-slate-500/15 text-slate-300",
   },
 };
 
@@ -229,23 +229,23 @@ export const ProjectStatusBadge = makeStatusBadge(
 export const PROJECT_CATEGORY_STYLES: Record<ProjectCategory, StatusStyle> = {
   web: {
     label: "Web",
-    className: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+    className: "bg-sky-500/15 text-sky-300",
   },
   mobile: {
     label: "Mobile",
-    className: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
+    className: "bg-violet-500/15 text-violet-300",
   },
   ai: {
     label: "IA",
-    className: "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400",
+    className: "bg-fuchsia-500/15 text-fuchsia-300",
   },
   backend: {
     label: "Backend",
-    className: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
+    className: "bg-orange-500/15 text-orange-300",
   },
   client: {
     label: "Cliente",
-    className: "bg-teal-500/15 text-teal-700 dark:text-teal-400",
+    className: "bg-teal-500/15 text-teal-300",
   },
 };
 
@@ -259,11 +259,11 @@ export const ProjectCategoryBadge = makeStatusBadge(
 export const VISIBILITY_STYLES: StatusStyles = {
   public: {
     label: "Público",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   private: {
     label: "Privado",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
 };
 

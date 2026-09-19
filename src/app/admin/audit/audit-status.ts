@@ -17,19 +17,19 @@ import type { StatusStyles } from "@/components/admin/status-badge";
 export const AUDIT_STATUS_STYLES: StatusStyles = {
   ok: {
     label: "OK",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+    className: "bg-emerald-500/15 text-emerald-300",
   },
   running: {
     label: "Em curso",
-    className: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+    className: "bg-slate-500/15 text-slate-300",
   },
   denied: {
     label: "Recusada",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    className: "bg-amber-500/15 text-amber-300",
   },
   error: {
     label: "Erro",
-    className: "bg-red-500/15 text-red-700 dark:text-red-400",
+    className: "bg-red-500/15 text-red-300",
   },
 };
 

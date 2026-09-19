@@ -212,7 +212,7 @@ function JobRow({ row }: { row: JobListRow }) {
     .join(" · ");
 
   return (
-    <TableRow className={row.active ? undefined : "opacity-60"}>
+    <TableRow>
       <TableCell>
         <div className="flex items-center gap-2">
           <span className="font-medium">{row.title}</span>
@@ -233,7 +233,7 @@ function JobRow({ row }: { row: JobListRow }) {
         </div>
         <div className="text-xs text-muted-foreground">
           {companyName ?? "empresa não identificada"}
-          {board && <span className="text-muted-foreground/70"> · {board}</span>}
+          {board && ` · ${board}`}
         </div>
         {place && <div className="text-xs text-muted-foreground">{place}</div>}
         {row.salaryText && (
