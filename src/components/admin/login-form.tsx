@@ -1,18 +1,23 @@
 "use client";
 
 /**
- * Sign-in form. This is the one place `useActionState` is still the right tool
- * (AGENTS.md §5): it is a full-page form with no dialog and no toast, and the
- * happy path never returns — `loginAction` calls `signIn(..., { redirectTo })`,
- * which throws Next's redirect control-flow exception.
+ * Sign-in form, drawn as a tty console (`login:` / `password:`).
+ *
+ * `useActionState` is still the right tool here (AGENTS.md §5): it is a
+ * full-page form with no dialog and no toast, and the happy path never
+ * returns — `loginAction` calls `signIn(..., { redirectTo })`, which throws
+ * Next's redirect control-flow exception.
+ *
+ * SECURITY, unchanged by the repaint: the error copy below is deliberately
+ * the SAME line for a wrong password and for an address that does not exist,
+ * so the screen never confirms whether an account is there. The per-IP
+ * throttle lives server-side in `src/lib/login-throttle.ts` and is untouched
+ * by this component.
  */
 
 import { useActionState } from "react";
-import { ArrowRight } from "lucide-react";
 import { loginAction, type LoginState } from "@/app/_actions/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import s from "./terminal/admin-chrome.module.css";
 
 const initial: LoginState = { status: "idle" };
 
@@ -24,44 +29,54 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initial);
+  const failed = state.status === "error";
 
   return (
-    <form action={action} className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="email">E-mail</Label>
-        <Input
+    <form action={action} className={s.ttyForm}>
+      <p className={s.ttyField}>
+        <label htmlFor="email" className={s.ttyLabel} lang="en">
+          login:
+        </label>
+        <input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
-          aria-invalid={state.status === "error"}
+          autoCapitalize="off"
+          spellCheck={false}
+          className={s.ttyInput}
+          aria-invalid={failed}
           required
         />
-      </div>
+      </p>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="password">Senha</Label>
-        <Input
+      <p className={s.ttyField}>
+        <label htmlFor="password" className={s.ttyLabel} lang="en">
+          password:
+        </label>
+        <input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
-          aria-invalid={state.status === "error"}
+          className={s.ttyInput}
+          aria-invalid={failed}
           required
         />
-      </div>
+      </p>
 
-      {state.status === "error" ? (
-        <p className="text-xs text-destructive">
-          {ERROR_MESSAGES[state.message] ??
-            "Não foi possível entrar. Tente de novo."}
+      {/* An output line, not a field error: the console answers and reprints
+          the prompt. `role="alert"` so it is announced on arrival. */}
+      {failed && (
+        <p className={s.ttyOut} role="alert">
+          {ERROR_MESSAGES[state.message] ?? ERROR_MESSAGES.auth_error}
         </p>
-      ) : null}
+      )}
 
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Entrando…" : "Entrar"}
-        {pending ? null : <ArrowRight className="size-4" />}
-      </Button>
+      <button type="submit" className={s.ttySubmit} disabled={pending} lang="en">
+        {pending ? "authenticating…" : "login"}
+        {pending ? null : <span className={s.caret} aria-hidden="true">{" ▸"}</span>}
+      </button>
     </form>
   );
 }

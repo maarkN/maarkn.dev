@@ -9,11 +9,16 @@ export const PROMPT_USER = `${site.nick}@dev`;
 /** `id` of the command input — the skip link's target. One prompt per page. */
 export const PROMPT_INPUT_ID = "cmd";
 
-/** `maarkn@dev:~$ ` — used by the prompt and by echoed command lines. */
-export function Ps1() {
+/**
+ * `maarkn@dev:~$ ` — used by the prompt and by echoed command lines.
+ *
+ * `cwd` exists for the backoffice chrome, whose commands are written relative
+ * to `~/admin` (`ls applications/`); on the public site it is always `~`.
+ */
+export function Ps1({ cwd = "~" }: { cwd?: string } = {}) {
   return (
     <span className={s.ps1}>
-      <span className={s.u}>{PROMPT_USER}</span>:<span className={s.h}>~</span>${" "}
+      <span className={s.u}>{PROMPT_USER}</span>:<span className={s.h}>{cwd}</span>${" "}
     </span>
   );
 }

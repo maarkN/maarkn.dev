@@ -22,8 +22,6 @@ export default async function EditApplicationPage({
         <div className="space-y-4">
           <PageHeader
             title="Editar candidatura"
-            backHref="/admin/applications"
-            backLabel="Candidaturas"
           />
           <Card>
             <CardContent className="py-8 text-center text-destructive">
@@ -49,7 +47,7 @@ export default async function EditApplicationPage({
   const companyName = application.company?.name ?? application.folderName;
 
   return (
-    <AdminShell email={session.user.email ?? "admin"}>
+    <AdminShell email={session.user.email ?? "admin"} name={application.folderName}>
       <div className="space-y-4">
         <PageHeader
           title={companyName}
@@ -58,8 +56,6 @@ export default async function EditApplicationPage({
             application.job?.title ??
             "Editar candidatura"
           }
-          backHref="/admin/applications"
-          backLabel="Candidaturas"
         />
         <ApplicationForm
           application={{

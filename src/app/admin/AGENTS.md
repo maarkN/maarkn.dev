@@ -41,7 +41,7 @@ carregar dados: pare e leia a tabela abaixo.
 | `onError: () => toast.error(…)` | a action **retorna** `{ ok: false, message }`; o cliente decide o toast. Não use `throw`. |
 | `queryClient.invalidateQueries({ queryKey })` | **`revalidatePath("/admin/…")`** dentro da action (servidor). O RSC payload é refeito sozinho ao fim da transition. |
 | `navigate({ search: { page } })` | `router.push("?" + params)` dentro de `startTransition`. |
-| `<Outlet/>` + `AppShell` | `{children}` + `AdminShell` (`@/components/admin/admin-shell`). |
+| `<Outlet/>` + `AppShell` | `{children}` + `AdminShell` (`@/components/admin/admin-shell`) — é ele que veste o chrome de terminal. |
 
 **A consequência prática mais importante:** não há cache no cliente para invalidar. Quem invalida é o
 servidor, via `revalidatePath`. Se a lista não atualizou depois de salvar, é porque faltou `revalidatePath`
@@ -703,7 +703,8 @@ toast.info("Nada mudou desde a última sincronização.");
 - [ ] `toast.success` / `toast.error` em toda mutação.
 - [ ] Nenhum `<SelectItem value="">`, nenhum `toLocaleDateString`, nenhum primitivo caseiro.
 - [ ] Rótulos em pt-BR.
-- [ ] Se criou rota nova que já está no `NAV` do `admin-shell.tsx`, **vire o `ready` para `true`**.
+- [ ] Se criou rota nova que já está no `NAV` do `terminal/admin-tree-nav.tsx`, **vire o `ready` para `true`** e tire a entrada do bloco final de `# em breve`.
+- [ ] Se a rota é nova de verdade, acrescente-a à tabela de `terminal/admin-route-chrome.ts` (caminho + comando + destino do `cd ..`) e ao teste dela.
 - [ ] `pnpm lint` e `env -u DATABASE_URL pnpm build` verdes.
 
 ---
@@ -712,8 +713,12 @@ toast.info("Nada mudou desde a última sincronização.");
 
 | Arquivo | O que oferece |
 |---|---|
-| `src/components/admin/admin-shell.tsx` | `AdminShell({ email, children })` · `NAV` · `isNavItemActive(pathname, href)` |
-| `src/components/admin/page-header.tsx` | `PageHeader({ title, description?, actions?, backHref?, backLabel?, className? })` |
+| `src/components/admin/admin-shell.tsx` | `AdminShell({ email, name?, children })` — aplica o chrome de terminal; reexporta `NAV` · `isNavItemActive` · `activeNavHref` |
+| `src/components/admin/terminal/admin-route-chrome.ts` | `describeAdminRoute(pathname, name?)` → `{ path, command, back }` (tabela normativa rota → caminho → comando) · `ADMIN_CWD` |
+| `src/components/admin/terminal/admin-chrome.tsx` | `AdminChrome` — barra + árvore + breadcrumb + `{children}` + `cd ..` |
+| `src/components/admin/terminal/admin-status-bar.tsx` | `AdminStatusBar({ path })` — reusa `terminal.module.css` do site; só o controle `exit` |
+| `src/components/admin/terminal/admin-tree-nav.tsx` | `AdminTreeNav({ pathname, email })` · `NAV` · `isNavItemActive` · `activeNavHref` |
+| `src/components/admin/page-header.tsx` | `PageHeader({ title, description?, actions?, className? })` — `title` vira `<h1 class="sr-only">`: o título visível é o breadcrumb do chrome |
 | `src/components/admin/table-pager.tsx` | `TablePager` · `TableSkeletonRows` · `TableEmptyRow` |
 | `src/components/admin/status-badge.tsx` | `makeStatusBadge` · `StatusBadge` · `statusLabelFrom` · `FunnelStageBadge` · `SponsorshipBadge` · `ApplicationSourceBadge` · badges de status/categoria de projeto e visibilidade |
 | `src/lib/format.ts` | `formatDate` (data de calendário, UTC) · `formatDateTime` (instante, America/Sao_Paulo) · `formatMoney(value, currency = "BRL")` · `formatNumber` · `formatPercent` · `toDateInputValue` (inverso exato de `new Date("YYYY-MM-DD")`) · `EMPTY` (`"—"`) |

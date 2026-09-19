@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { languageLabel } from "../languages";
 import { PrintButton } from "./print-button";
 
@@ -103,11 +101,16 @@ function renderMarkdown(md: string): string {
 }
 
 /**
- * Print view — deliberately outside `AdminShell`: it is the sheet of paper that
- * becomes the PDF. The light palette below is hardcoded on purpose (the admin
- * chrome is always dark, and a dark CV prints as a black rectangle). Only the
- * solid button variants are used here, since `ghost`/`outline` would inherit
- * the dark theme's foreground onto a light background.
+ * Print view. The sheet of paper that becomes the PDF: the light palette below
+ * is hardcoded on purpose (the admin chrome is always dark, and a dark CV
+ * prints as a black rectangle), and only the solid button variants are used,
+ * since `ghost`/`outline` would inherit the dark theme's foreground onto a
+ * light background.
+ *
+ * It DOES wear the chrome — it is an authenticated `/admin` route like any
+ * other — but `admin-chrome.module.css` hides the bar, the tree, the
+ * breadcrumb and `cd ..` under `@media print`, so what leaves the printer is
+ * still the bare sheet.
  */
 export default async function GenerationDetail({
   params,
@@ -128,15 +131,11 @@ export default async function GenerationDetail({
   ].filter((s) => s.body && s.body.trim());
 
   return (
-    <div className="min-h-dvh bg-neutral-100 py-8 print:bg-white print:py-0">
+    <AdminShell email={session.user.email ?? "admin"}>
+    <div className="bg-neutral-100 py-8 print:bg-white print:py-0">
       <div className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 print:hidden">
+        {/* No "voltar" button: `cd ..` in the chrome's footer is the way out. */}
         <div className="flex items-center gap-2">
-          <Button asChild variant="secondary" size="sm">
-            <Link href="/admin/generator">
-              <ArrowLeft className="size-4" />
-              Voltar ao gerador
-            </Link>
-          </Button>
           <PrintButton />
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-600">
@@ -162,5 +161,6 @@ export default async function GenerationDetail({
 
       <style>{`@page { margin: 16mm; }`}</style>
     </div>
+    </AdminShell>
   );
 }

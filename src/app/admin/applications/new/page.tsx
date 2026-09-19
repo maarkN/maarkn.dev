@@ -16,8 +16,6 @@ export default async function NewApplicationPage() {
         <PageHeader
           title="Nova candidatura"
           description="Registre uma vaga que você mira, mesmo antes de aplicar."
-          backHref="/admin/applications"
-          backLabel="Candidaturas"
         />
         <ApplicationForm />
       </div>

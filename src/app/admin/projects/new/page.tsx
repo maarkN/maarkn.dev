@@ -14,8 +14,6 @@ export default async function NewProjectPage() {
     <AdminShell email={session.user.email ?? "admin"}>
       <div className="space-y-4">
         <PageHeader
-          backHref="/admin/projects"
-          backLabel="Projetos"
           title="Novo projeto"
           description="O slug vira a URL em /projects. Projetos em destaque aparecem na home."
         />

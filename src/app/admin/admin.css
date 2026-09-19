@@ -115,14 +115,3 @@
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
-
-/* Faded grid behind the login card (admin-only primitive). */
-.admin-root .bg-grid {
-  background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 56px 56px;
-  opacity: 0.28;
-  mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse at 60% 40%, black 10%, transparent 70%);
-}

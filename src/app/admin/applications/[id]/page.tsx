@@ -101,8 +101,6 @@ export default async function ApplicationDetailPage({
         <div className="space-y-4">
           <PageHeader
             title="Candidatura"
-            backHref="/admin/applications"
-            backLabel="Candidaturas"
           />
           <Card>
             <CardContent className="py-8 text-center text-destructive">
@@ -128,13 +126,11 @@ export default async function ApplicationDetailPage({
   const lastVerification = app.verifications[0] ?? null;
 
   return (
-    <AdminShell email={session.user.email ?? "admin"}>
+    <AdminShell email={session.user.email ?? "admin"} name={app.folderName}>
       <div className="space-y-4">
         <PageHeader
           title={companyName}
           description={app.roleTitle || job?.title || "Candidatura"}
-          backHref="/admin/applications"
-          backLabel="Candidaturas"
           actions={
             <>
               <StageSelect

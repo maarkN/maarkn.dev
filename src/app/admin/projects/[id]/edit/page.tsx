@@ -21,8 +21,6 @@ export default async function EditProjectPage({
       <AdminShell email={session.user.email ?? "admin"}>
         <div className="space-y-4">
           <PageHeader
-            backHref="/admin/projects"
-            backLabel="Projetos"
             title="Editar projeto"
           />
           <Card>
@@ -43,8 +41,6 @@ export default async function EditProjectPage({
     <AdminShell email={session.user.email ?? "admin"}>
       <div className="space-y-4">
         <PageHeader
-          backHref="/admin/projects"
-          backLabel="Projetos"
           title={project.name}
           description={`/${project.slug} · ${project.year}`}
         />
