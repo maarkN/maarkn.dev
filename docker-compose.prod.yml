@@ -31,7 +31,14 @@ services:
       # global HTTP -> HTTPS redirect
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      # HSTS + modern TLS defaults on the HTTPS entrypoint
+      # TLS on the HTTPS entrypoint. NOTE: this line does *not* set HSTS --
+      # Strict-Transport-Security is emitted by the app itself (see
+      # `securityHeaders` in next.config.ts), so it stays version-controlled and
+      # unit-tested. If you ever serve something on this entrypoint that is not
+      # the app (e.g. the Traefik dashboard below), give it HSTS too with a
+      # headers middleware:
+      #   traefik.http.middlewares.hsts.headers.stsSeconds=31536000
+      #   traefik.http.routers.<router>.middlewares=hsts
       - --entrypoints.websecure.http.tls=true
       # --- Let's Encrypt (TLS-ALPN-01 challenge, needs port 443) ---
       - --certificatesresolvers.le.acme.tlschallenge=true
@@ -47,7 +54,15 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # read-only socket so Traefik can watch containers but not control the host
+      # WARNING: `:ro` is not a security boundary. It only stops writes to the
+      # socket *file*; anything that can talk to the socket can drive the Docker
+      # daemon -- create a privileged container, bind-mount `/`, take the host.
+      # Traefik only needs to *read* container metadata, so the real fix is a
+      # socket proxy (e.g. tecnativa/docker-socket-proxy with CONTAINERS=1 and
+      # everything else off) on the `internal` network, with Traefik pointed at
+      # `--providers.docker.endpoint=tcp://docker-socket-proxy:2375` and this
+      # mount removed. Not done here because it changes the running topology and
+      # could not be validated from a workstation -- owner's call.
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-letsencrypt:/letsencrypt
     networks:

@@ -17,3 +17,14 @@ coverage
 .vercel
 *.tsbuildinfo
 docs
+# Local planning / agent docs: never needed by any build stage.
+openspec
+.claude
+
+# NOTE on knowledge/ (the private corpus: CV + project dossiers).
+# It is deliberately NOT ignored here: `npm run db:ingest` reads it from
+# process.cwd(), and that runs from the `builder` stage via the `migrate`
+# service in docker-compose.prod.yml. Keeping it out of the build context would
+# break ingestion. It must not survive into the runtime image though -- Next's
+# standalone output copies the project root, so the runner stage deletes it
+# explicitly (see the `rm -rf ./knowledge` in Dockerfile).

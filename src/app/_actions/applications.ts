@@ -30,6 +30,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
+import { safeDbError } from "@/lib/safe-error";
 import {
   APPLICATION_SOURCES,
   FUNNEL_STAGES,
@@ -293,7 +294,9 @@ export async function createApplication(
         message: "duplicate",
       };
     }
-    console.error("[admin] create application failed", err);
+    // `err` cru serializaria o `data` da chamada no log do container (salario
+    // alvo, notas do recrutador). Daqui so sai nome + codigo + modelo.
+    console.error("[admin] create application failed", safeDbError(err));
     return { status: "error", errors: {}, message: "unexpected" };
   }
 
@@ -350,7 +353,7 @@ export async function updateApplication(
         message: "duplicate",
       };
     }
-    console.error("[admin] update application failed", err);
+    console.error("[admin] update application failed", safeDbError(err));
     return { status: "error", errors: {}, message: "unexpected" };
   }
 
@@ -377,7 +380,7 @@ export async function deleteApplication(id: string): Promise<ActionResult> {
   } catch (err) {
     // A action nao lanca (contrato `ActionResult`, AGENTS.md §2): sem este
     // catch a UI daria toast de sucesso numa exclusao que falhou.
-    console.error("[admin] delete application failed", err);
+    console.error("[admin] delete application failed", safeDbError(err));
     return { ok: false, message: "Não foi possível excluir a candidatura." };
   }
   revalidatePath("/admin/applications");

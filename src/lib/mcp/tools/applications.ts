@@ -10,6 +10,7 @@ import {
   bumpSyncRun,
   childStamp,
   coverageLevelSchema,
+  createUntrustedFence,
   dateSchema,
   docKindSchema,
   eventDirectionSchema,
@@ -32,10 +33,8 @@ import {
   sponsorshipSchema,
   syncRunIdSchema,
   textSchema,
-  UNTRUSTED_NOTICE,
   toDate,
   touchSyncState,
-  untrusted,
   urlSchema,
   type SyncContextInput,
   type WriteOutcome,
@@ -1069,8 +1068,13 @@ export const getApplication = defineMcpTool({
       );
     }
 
+    // UMA cerca por resposta: o aviso e todas as pontas de bloco desta
+    // resposta citam o mesmo nonce, e nenhum texto copiado consegue adivinha-lo
+    // para forjar o fechamento e "sair" do bloco.
+    const fence = createUntrustedFence();
+
     return jsonResult({
-      aviso: UNTRUSTED_NOTICE,
+      aviso: fence.aviso,
       applicationId: row.id,
       folderName: row.folderName,
       stage: row.stage,
@@ -1113,8 +1117,8 @@ export const getApplication = defineMcpTool({
             sponsorship: row.job.sponsorship,
             salaryText: row.job.salaryText,
             // Copiados do anuncio publicado por terceiro: delimitados.
-            requirementsMd: untrusted("requisitos da vaga", row.job.requirementsMd),
-            descriptionMd: untrusted("descricao da vaga", row.job.descriptionMd),
+            requirementsMd: fence.wrap("requisitos da vaga", row.job.requirementsMd),
+            descriptionMd: fence.wrap("descricao da vaga", row.job.descriptionMd),
             techs: row.job.techs,
           }
         : null,
@@ -1174,12 +1178,17 @@ export const getApplication = defineMcpTool({
         fromStage: event.fromStage,
         toStage: event.toStage,
         channel: event.channel,
-        subject: maskContactPii(event.subject),
+        // Assunto de e-mail de recrutador e texto de terceiro igual ao corpo:
+        // cabe uma linha inteira de instrucao forjada. Mesma cerca.
+        subject:
+          event.direction === "inbound"
+            ? fence.wrap("assunto recebido", maskContactPii(event.subject))
+            : maskContactPii(event.subject),
         // Corpo de e-mail/mensagem de recrutador: escrito por terceiro, e
         // tipicamente com assinatura (telefone/e-mail) no rodape.
         bodyMd:
           event.direction === "inbound"
-            ? untrusted("mensagem recebida", maskContactPii(event.bodyMd))
+            ? fence.wrap("mensagem recebida", maskContactPii(event.bodyMd))
             : maskContactPii(event.bodyMd),
       })),
     });

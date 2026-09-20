@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { db, dbConfigured } from "@/lib/db";
 import { safeErrorMessage } from "@/lib/mcp/redact";
+import { trustedClientIp } from "@/lib/trusted-client-ip";
 
 /**
  * Rate limit DURAVEL e FAIL-CLOSED do servidor MCP.
@@ -105,20 +106,19 @@ export function hashIp(ip: string): string {
 }
 
 /**
- * IP do cliente atras do Traefik. `x-forwarded-for` e falsificavel por quem
- * fala direto com a app — em producao so o proxy alcanca o container, entao o
- * primeiro elemento e confiavel o suficiente para rate limit (nao para
- * autorizacao, e nao usamos para autorizacao).
+ * IP do cliente atras do Traefik, para rate limit (nunca para autorizacao).
+ *
+ * Le o ULTIMO salto confiavel da cadeia, jamais o primeiro elemento. O
+ * primeiro elemento e escrito pelo CLIENTE: com ele como chave, um
+ * `X-Forwarded-For` novo a cada requisicao dava um balde novo a cada
+ * requisicao, e o teto de 60/min por IP — a unica defesa PRE-AUTENTICACAO
+ * deste endpoint, a que impede o flood anonimo de encher o `McpAuditLog` —
+ * nao segurava nada. A derivacao e a normalizacao (IPv4 mapeado, porta,
+ * colchetes, zona) sao compartilhadas com o throttle do login em
+ * `@/lib/trusted-client-ip`: um lugar so para acertar.
  */
 export function clientIp(request: Request): string {
-  const fwd = request.headers.get("x-forwarded-for");
-  if (fwd) {
-    const first = fwd.split(",")[0]?.trim();
-    if (first) return first.slice(0, 64);
-  }
-  const real = request.headers.get("x-real-ip");
-  if (real) return real.trim().slice(0, 64);
-  return "desconhecido";
+  return trustedClientIp(request);
 }
 
 /** Inicio da janela fixa que contem `now`. */

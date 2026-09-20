@@ -22,7 +22,10 @@
       Conferido no CSS compilado que `.admin-root` traz `--muted-foreground:#babfcc`, que as 55
       utilities de token shadcn do admin têm regra, e que nenhum token de texto resolve para o mesmo
       valor do token de superfície em que é usado.
-- [ ] 3.2b Percorrer visualmente as 18 rotas do backoffice procurando elemento invisível.
-      NÃO FEITO: 17 das 18 rotas exigem sessão de admin e a extensão do Chrome não está conectada
-      neste ambiente. Só `/admin/login` foi servida (HTML confirma `.admin-root` e `data-theme="soft"`
-      fixo, sem script de tema). Precisa de uma passada humana ou de um agente com browser.
+- [x] 3.2b Percorrer visualmente as 18 rotas do backoffice procurando elemento invisível.
+      Ficou aberta nesta change — 17 das 18 rotas exigem sessão de admin e o agente da bko-01 não
+      tinha navegador. Absorvida e fechada pela bko-05, com sessão real: `scripts/a11y-admin-axe.mjs`
+      mediu 23 superfícies (as 18 rotas mais os 5 overlays, cada um aberto de fato) em 1440×900 e
+      390×844. A regra `color-contrast` do axe é o que detecta texto invisível, e o resultado final
+      é zero violação critical/serious nas duas larguras, zero rolagem horizontal e zero gatilho não
+      encontrado. O único achado real da varredura (`contacts: target-size`) foi corrigido na bko-05.

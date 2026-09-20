@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { db, dbConfigured } from "@/lib/db";
+import { trustedClientIp, trustedProxyHops } from "@/lib/trusted-client-ip";
 
 /**
  * Throttle DURAVEL de brute force no login do admin.
@@ -39,6 +40,27 @@ import { db, dbConfigured } from "@/lib/db";
  *   proprio `authorize` ja recusa tudo (a verificacao de credencial precisa do
  *   banco), entao nao ha brute force a proteger, e travar o login legitimo por
  *   um soluco de banco seria pior. A recusa por LIMITE, essa sim, e firme.
+ *
+ * ---------------------------------------------------------------------------
+ * A chave do contador: de onde sai o IP (premissa de deploy)
+ * ---------------------------------------------------------------------------
+ * Uma trava por IP so vale o que vale a chave. Se a chave sair de um valor que
+ * o CLIENTE escolhe, nao existe trava: o atacante manda um
+ * `X-Forwarded-For` diferente a cada tentativa, cada uma cai num balde novo, e
+ * o brute force (mais o DoS de CPU por bcrypt) volta inteiro. Portanto NUNCA
+ * leia o elemento mais a ESQUERDA da cadeia — esse e exatamente o pedaco que o
+ * cliente escreve.
+ *
+ * A derivacao mora em `@/lib/trusted-client-ip` (ultimo salto confiavel +
+ * normalizacao), compartilhada com o rate limit do `/api/mcp`: o mesmo defeito
+ * ja foi escrito duas vezes, entao existe UM lugar para acertar. Ver o
+ * cabecalho de la para a premissa de topologia, para `TRUSTED_PROXY_HOPS` e
+ * para as formas de IP aceitas.
+ *
+ * `LOGIN_TRUSTED_PROXY_HOPS` sobrescreve `TRUSTED_PROXY_HOPS` so para o login.
+ * Token que nao e um IP valido nao vira balde proprio: cai no balde
+ * compartilhado `desconhecido`, porque qualquer lixo aceito como chave seria,
+ * de novo, um bypass.
  */
 
 const WINDOW_MS = intEnv("LOGIN_RATE_WINDOW_MS", 15 * 60_000); // 15 min
@@ -60,19 +82,13 @@ function hashIp(ip: string): string {
   return createHash("sha256").update(ip).digest("hex").slice(0, 32);
 }
 
-/** IP do cliente atras do Traefik. Falsificavel por quem fala direto com a app,
- * mas em producao so o proxy alcanca o container. Usado apenas para throttle,
- * nunca para autorizacao. */
+/**
+ * Chave do throttle: o IP escrito pelo ULTIMO salto confiavel (o Traefik),
+ * nunca o valor cru que o cliente manda. Ver "A chave do contador" no
+ * cabecalho. Usado apenas para throttle, nunca para autorizacao.
+ */
 export function loginClientIp(request: Request | undefined): string {
-  if (!request) return "desconhecido";
-  const fwd = request.headers.get("x-forwarded-for");
-  if (fwd) {
-    const first = fwd.split(",")[0]?.trim();
-    if (first) return first.slice(0, 64);
-  }
-  const real = request.headers.get("x-real-ip");
-  if (real) return real.trim().slice(0, 64);
-  return "desconhecido";
+  return trustedClientIp(request, trustedProxyHops("LOGIN_TRUSTED_PROXY_HOPS"));
 }
 
 function windowStartOf(now: number): number {

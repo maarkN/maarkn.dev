@@ -40,8 +40,28 @@ import { buildMcpServer } from "@/lib/mcp/server";
  *   4. autenticacao       — timing-safe, fail-closed (`src/lib/mcp/auth.ts`).
  *   5. rate limit da chave— cota propria, ja identificada.
  *   6. tamanho do corpo   — leitura com teto real, nao so `Content-Length`.
- *   7. JSON + guard de argumento proibido (`visibility`) no payload CRU.
+ *   7. JSON + teto de mensagens do batch + guard de argumento proibido
+ *      (`visibility`) no payload CRU.
  *   8. execucao           — `McpServer` novo por requisicao, stateless.
+ *
+ * ---------------------------------------------------------------------------
+ * Por que existe um teto de mensagens por requisicao
+ * ---------------------------------------------------------------------------
+ * Os gates 2 e 5 contam REQUISICAO HTTP, uma unidade cada. Mas JSON-RPC aceita
+ * batch: o corpo pode ser um array. Sem teto, um unico POST de 4 MiB cabe
+ * ~40.000 `tools/call` e atravessa "60/min por IP" e "120/min por chave" como
+ * se fosse 1 — o servidor entao processa as 40.000 EM SERIE. Medido em PoC:
+ * 103,9 s de CPU numa instancia de um core, ~40 mil idas ao Postgres, e o
+ * proprio rate limiter falhando sob a carga que ele mesmo deixou entrar
+ * (14.435 respostas "nao foi possivel aplicar o rate limit"). Basta UMA chave
+ * valida, ainda que so de leitura.
+ *
+ * Por isso o tamanho do array e checado ANTES de qualquer despacho (e antes do
+ * proprio guard de argumento, que percorreria o payload inteiro): acima de
+ * `MCP_MAX_BATCH_MESSAGES` a requisicao morre com 400, sem tocar no
+ * transporte. O gate por chamada de tool (`consumeToolCallBudget`, dentro de
+ * `server.ts`) continua sendo o teto real de trabalho; o teto aqui e o que
+ * impede que o custo de ATINGIR esse gate ja seja o ataque.
  *
  * Toda recusa vira linha em `McpAuditLog` com `status = "denied"` e uma
  * `reason` estavel — EXCETO as recusas por excesso de cota depois da primeira
@@ -68,6 +88,17 @@ const MAX_BODY_BYTES = (() => {
   const raw = process.env.MCP_MAX_BODY_BYTES;
   const n = raw ? Number.parseInt(raw, 10) : NaN;
   return Number.isFinite(n) && n > 0 ? n : 4 * 1024 * 1024; // 4 MiB
+})();
+
+/**
+ * Teto de mensagens JSON-RPC por requisicao (batch). Folgado para o cliente
+ * MCP real — que manda uma mensagem por requisicao — e apertado o bastante
+ * para que um batch nunca seja um multiplicador de carga. Ver o cabecalho.
+ */
+const MAX_BATCH_MESSAGES = (() => {
+  const raw = process.env.MCP_MAX_BATCH_MESSAGES;
+  const n = raw ? Number.parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : 20;
 })();
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -284,6 +315,28 @@ export async function POST(request: Request): Promise<Response> {
       latencyMs: Date.now() - startedAt,
     });
     return jsonRpcError(400, -32700, "JSON invalido.");
+  }
+
+  // 7a. Teto de mensagens do batch, ANTES de descrever, varrer ou despachar
+  //     o payload: e o que impede que uma requisicao valha por 40.000 nos
+  //     gates 2 e 5 (ver cabecalho).
+  if (Array.isArray(parsedBody) && parsedBody.length > MAX_BATCH_MESSAGES) {
+    await recordDenied({
+      ...keyBase,
+      tool: "<batch>",
+      // So o tamanho: o conteudo recusado continua sendo dado do vault.
+      args: { mensagens: parsedBody.length, teto: MAX_BATCH_MESSAGES },
+      reason: "payload_too_large",
+      latencyMs: Date.now() - startedAt,
+    });
+    return jsonRpcError(
+      400,
+      -32600,
+      `Batch com ${parsedBody.length} mensagens; o maximo por requisicao e ` +
+        `${MAX_BATCH_MESSAGES}. Divida em requisicoes menores — o limite de ` +
+        "requisicoes conta uma unidade por POST, entao um batch gigante seria " +
+        "um jeito de contorna-lo."
+    );
   }
 
   const call = describeJsonRpcCall(parsedBody);

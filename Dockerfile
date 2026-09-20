@@ -55,6 +55,21 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 
+# `.next/standalone` is a copy of the project root that Next's file tracer
+# produced, so it drags in everything the runtime has no business holding:
+#  - knowledge/ is the private corpus (CV, project dossiers). It is only needed
+#    by `db:ingest`, which runs from the `builder` stage (see the `migrate`
+#    service in docker-compose.prod.yml), never by `server.js`. It stays in the
+#    build context on purpose -- it is deleted here instead.
+#  - .env would be the whole production secret set sitting in the image. Today
+#    only a line in .dockerignore keeps it out of the build context; this rm is
+#    the second lock, so a change to .dockerignore cannot silently bake it in.
+#  - the rest is documentation and compose/Dockerfile sources.
+# NOT removed: src/, which `src/lib/og.tsx` reads at runtime (the Cascadia Code
+# subsets under src/app/fonts/ are loaded from process.cwd() for OG images).
+RUN rm -rf ./knowledge ./docs ./openspec ./.claude \
+    && rm -f ./.env ./.env.* ./*.md ./Dockerfile ./docker-compose*.yml
+
 # Writable directory for uploaded media (mounted as a named volume in prod).
 RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
 ENV UPLOAD_DIR=/data/uploads

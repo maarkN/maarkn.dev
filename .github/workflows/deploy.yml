@@ -12,10 +12,17 @@ concurrency:
   group: production-deploy
   cancel-in-progress: false
 
+# Least privilege for GITHUB_TOKEN: without this block the repo/org default
+# applies, which is often read+write on contents, packages, issues... Each job
+# narrows it further below.
+permissions: {}
+
 jobs:
   ci:
     name: Lint & build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read   # actions/checkout
     steps:
       - uses: actions/checkout@v4
 
@@ -46,9 +53,16 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
+    # No checkout, no API calls -- this job only needs the production SSH key,
+    # so GITHUB_TOKEN gets nothing.
+    permissions: {}
     steps:
       - name: SSH deploy (git pull + docker compose up --build)
-        uses: appleboy/ssh-action@v1.2.0
+        # Pinned to the commit v1.2.0 pointed at. A tag is mutable: whoever can
+        # move it in a third-party repo would get the production SSH key handed
+        # to their code on the next deploy. Bump deliberately, re-reading the
+        # diff, and update the comment with the new version.
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}

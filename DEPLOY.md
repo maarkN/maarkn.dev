@@ -42,6 +42,11 @@ OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 # CHAT_RATE_MAX=10                # optional: `ask` messages per visitor per window
 # CHAT_RATE_WINDOW_MS=3600000     # optional: that window (1 h)
 # CHAT_DAILY_MAX=300              # optional: `ask` messages per day, site-wide
+CHAT_IP_SALT=<openssl rand -base64 32>   # strongly recommended: see the note below
+
+# --- client IP behind the proxy (the key of every per-IP limit) ---
+# TRUSTED_PROXY_HOPS=1            # optional: trusted proxies in front (default 1)
+# LOGIN_TRUSTED_PROXY_HOPS=1      # optional: login-only override of the line above
 
 # --- terminal (build-time; see the note below) ---
 NEXT_PUBLIC_TERMINAL_ASK_FALLBACK=false
@@ -61,6 +66,33 @@ you want typos to spend the assistant's quota.
 
 Generate `AUTH_SECRET` with `openssl rand -base64 32`. Use the **same** password in
 `POSTGRES_PASSWORD` and inside `DATABASE_URL`.
+
+`CHAT_IP_SALT` (min. 16 chars) is the salt of the HMAC that pseudonymises the chat
+visitor's IP — the raw IP is never written to the database. **Leaving it out does
+not fail the deploy**, and that is the point to watch: the app logs a single
+warning and falls back to a random per-process salt, so the hashes stop being
+comparable across restarts and across workers. The per-visitor limit
+(`CHAT_RATE_MAX`) then resets on every restart and every `up --build`, each worker
+counts its own, and `/admin` stops grouping one visitor's sessions; only
+`CHAT_DAILY_MAX`, which does not depend on the hash, still caps the spend. Set it
+once and keep it — rotating it re-pseudonymises everyone (old rows stop matching
+new ones), which is also the emergency move if the salt leaks.
+
+`TRUSTED_PROXY_HOPS` is a property of **this topology**, not of the code. Every
+per-IP limit (the login throttle, the pre-auth 60/min on `/api/mcp`) keys on the
+IP taken from the *last* trusted `X-Forwarded-For` hop; the leftmost element is
+written by the client, and using it would give an attacker a fresh bucket per
+request. With the stack above there is exactly one trusted hop (Traefik, the only
+thing that can reach the app container — it does not publish a port), so the
+default `1` is correct and the variable can stay unset. If you ever put a
+CDN/WAF in front of Traefik, raise it to `2` **in the same change**, or those
+limits quietly stop limiting. `LOGIN_TRUSTED_PROXY_HOPS` overrides it for the
+login path only and falls back to `TRUSTED_PROXY_HOPS`, then to `1`.
+
+Everything else the app reads at runtime — including the `/api/mcp` variables
+(`MCP_KEY_PEPPER`, `MCP_ALLOWED_ORIGINS`, the `MCP_RATE_*` limits,
+`MCP_MAX_BODY_BYTES`, `MCP_MAX_BATCH_MESSAGES`) — is documented in
+`app/.env.example`.
 
 ## 3. Database + migrations
 ```bash

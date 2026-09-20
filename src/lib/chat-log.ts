@@ -1,9 +1,12 @@
 import "server-only";
-import { createHash } from "node:crypto";
 import { db, dbConfigured } from "./db";
+import { hashKey } from "./visitor-hash";
 
 /**
  * Durable, DB-backed rate limiting + usage logging for the public chat.
+ *
+ * The visitor is only ever identified by `clientKeyHash`, the salted HMAC from
+ * `lib/visitor-hash.ts` — a pseudonym, not an anonymous token.
  *
  * The `ChatLog` table is the single source of truth: every turn that reaches
  * the model is written here, and the limiter simply counts recent rows. That
@@ -29,10 +32,14 @@ const DAILY_MAX = intEnv("CHAT_DAILY_MAX", 300);
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** sha256(ip) truncated — pseudonymous visitor id, so no raw IP is stored. */
-export function hashKey(key: string): string {
-  return createHash("sha256").update(key).digest("hex").slice(0, 32);
-}
+/**
+ * Salted HMAC of the visitor key (the forwarded IP) — see `lib/visitor-hash.ts`
+ * for the salt rules and for what this does and does not protect. The raw IP is
+ * never stored; without the installation salt the stored value does not lead
+ * back to it. Re-exported here because this module is the chat log's front
+ * door and `api/chat/route.ts` already imports from it.
+ */
+export { hashKey };
 
 /** chars/4 is the usual rough proxy for OpenAI token counts. */
 export function estimateTokens(text: string): number {

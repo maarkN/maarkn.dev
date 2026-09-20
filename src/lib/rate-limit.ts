@@ -4,6 +4,8 @@
  * Redis-backed implementation when the site goes multi-region.
  */
 
+import { trustedClientIp } from "@/lib/trusted-client-ip";
+
 type Entry = { count: number; resetAt: number };
 
 function intEnv(name: string, fallback: number): number {
@@ -47,10 +49,16 @@ export function consume(
   return { ok: true, remaining: max - entry.count, resetAt: entry.resetAt };
 }
 
+/**
+ * Chave do rate limit do /api/chat — endpoint PUBLICO e anonimo que gasta a
+ * OPENAI_API_KEY. Le o IP do ultimo salto confiavel por `trustedClientIp`.
+ *
+ * Ate 2026-09-20 esta funcao usava o primeiro elemento de `x-forwarded-for`,
+ * que e exatamente o pedaco que o cliente escreve: um cabecalho novo por
+ * requisicao dava um balde novo por requisicao, e o teto nao segurava nada.
+ * Era a terceira copia do mesmo defeito (login e MCP eram as outras duas);
+ * as tres agora passam pelo mesmo helper, para haver um so lugar onde errar.
+ */
 export function clientKey(request: Request): string {
-  const fwd = request.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0]!.trim();
-  const real = request.headers.get("x-real-ip");
-  if (real) return real.trim();
-  return "anonymous";
+  return trustedClientIp(request);
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { db } from "@/lib/db";
+import { httpHref } from "@/lib/http-url";
 import { decodeStringList } from "@/lib/json-list";
 import {
   projects as staticProjects,
@@ -33,10 +34,15 @@ function rowToProject(row: ProjectRow): RepoProject {
     accent: { from: row.accentFrom, to: row.accentTo },
     stack: decodeStringList(row.stackJson),
     sourceVisibility: (row.sourceVisibility as SourceVisibility) ?? "public",
+    // Second lock on the schemes, on the read side: these three columns become
+    // `href` on the public site, and rows written before `httpUrlSchema`
+    // existed (or written straight into the DB) were never checked. Anything
+    // that is not http(s) — `javascript:`, `data:`, `vbscript:` — is dropped
+    // here instead of reaching a renderer we have to trust.
     links: {
-      repo: row.repoUrl ?? undefined,
-      demo: row.demoUrl ?? undefined,
-      case: row.caseUrl ?? undefined,
+      repo: httpHref(row.repoUrl),
+      demo: httpHref(row.demoUrl),
+      case: httpHref(row.caseUrl),
     },
     coverImage: row.coverImage ?? null,
     tagline: row.tagline ?? null,

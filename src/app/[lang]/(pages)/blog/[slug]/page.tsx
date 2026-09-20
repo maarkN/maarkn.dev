@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
 import { getPostBySlug } from "@/lib/ghost";
+import { sanitizePostHtml } from "@/lib/sanitize-post-html";
 import { routeAlternates } from "@/lib/seo";
 import { D } from "@/components/terminal/primitives";
 import s from "@/components/terminal/page.module.css";
@@ -36,8 +37,14 @@ export async function generateMetadata({
 
 /**
  * `less blog/<slug>.md` — title, date · reading time · tags, excerpt and the
- * post body in monospace prose. Ghost is the author's own CMS, so its HTML
- * is trusted; run it through a sanitizer before ever accepting other sources.
+ * post body in monospace prose.
+ *
+ * The body is EXTERNAL HTML: Ghost is a hosted CMS with its own login and its
+ * own CVEs, and this page shares an origin with `/admin`, where the session
+ * cookie lives. One hostile post would otherwise run script in that origin, so
+ * the HTML goes through `sanitizePostHtml` (server-side allowlist) before it
+ * is ever handed to `dangerouslySetInnerHTML` — a CSP is containment on top,
+ * not a replacement. See `@/lib/sanitize-post-html`.
  */
 export default async function PostPage({ params }: PageProps<"/[lang]/blog/[slug]">) {
   const { lang, slug } = await params;
@@ -73,7 +80,10 @@ export default async function PostPage({ params }: PageProps<"/[lang]/blog/[slug
         ) : null}
       </header>
 
-      <div className="prose-term" dangerouslySetInnerHTML={{ __html: post.html }} />
+      <div
+        className="prose-term"
+        dangerouslySetInnerHTML={{ __html: sanitizePostHtml(post.html) }}
+      />
     </article>
   );
 }

@@ -1,9 +1,10 @@
 # `/admin` — receita única do backoffice
 
 Este arquivo é **normativo** para tudo sob `src/app/admin/**`, `src/app/_actions/**` e
-`src/components/admin/**`. Ele existe porque o backoffice é um port dos padrões do
-um admin de referência privado (fora deste repositório) — que usa **TanStack Query +
-`useMutation` + `invalidateQueries`** — para um app **Next 16 App Router com Server Actions**. Os dois
+`src/components/admin/**`. Ele existe porque o backoffice é um port dos padrões de um **admin de
+referência** privado (projeto de cliente sob NDA, fora deste repositório; nome e caminho ficam de
+fora de propósito — este repositório é público) que usa **TanStack Query + `useMutation` +
+`invalidateQueries`**, para um app **Next 16 App Router com Server Actions**. Os dois
 modelos resolvem o mesmo problema de formas diferentes. **Não misture os dois.** Não instale TanStack Query.
 Não crie rotas REST paralelas.
 
@@ -34,7 +35,7 @@ carregar dados: pare e leia a tabela abaixo.
 
 ---
 
-## 1. Mapeamento admin de referência → Next
+## 1. Mapeamento do admin de referência → Next
 
 | admin de referência (TanStack Query) | aqui (Next 16 + Server Actions) |
 |---|---|
@@ -70,7 +71,13 @@ export type ActionResult<T = undefined> =
 Regras:
 
 - **Nunca `throw`** numa action consumida pela UI: o erro vira uma tela de erro genérica e o toast some.
-  Capture, logue no servidor (`console.error("[admin] …", err)`) e devolva `{ ok: false, message }`.
+  Capture, logue no servidor (`console.error("[admin] …", safeDbError(err))`) e devolva
+  `{ ok: false, message }`.
+- **Nunca logue o `err` cru.** Num erro de validação o Prisma embute o `data` da chamada na própria
+  mensagem — salário alvo, nota de recrutador, CV gerado — e isso vai parar no log do container.
+  Use `safeDbError(err)` de `@/lib/safe-error`: nome da classe + código (`P2002`) + modelo, nada mais.
+  (`_actions/contacts.ts` e `admin/contacts/contacts-query.ts` ainda têm uma cópia local chamada
+  `safeError`; equivalente, pendente de consolidação.)
 - **`message` é texto pt-BR pronto para o toast.** Não devolva código de erro cru.
 - **Nunca vaze detalhe interno** (stack, SQL, e-mail de outro usuário) no `message`.
 - `fieldErrors` é `{ [nome do campo]: mensagem }`, montado a partir de `zod`.
@@ -220,7 +227,7 @@ export default async function ApplicationsPage({
         db.application.count({ where }),
       ]);
     } catch (err) {
-      console.error("[admin] list applications failed", err);
+      console.error("[admin] list applications failed", safeDbError(err));
       failed = true;
     }
   }
@@ -848,7 +855,7 @@ export async function deleteApplication(id: string): Promise<ActionResult> {
     revalidatePath("/admin/applications");
     return { ok: true, message: `Candidatura "${row.folderName}" excluída.` };
   } catch (err) {
-    console.error("[admin] delete application failed", err);
+    console.error("[admin] delete application failed", safeDbError(err));
     return { ok: false, message: "Não foi possível excluir a candidatura." };
   }
 }

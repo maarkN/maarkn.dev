@@ -2,7 +2,25 @@ import "server-only";
 import { retrieve, formatContext, GENERATION_ENTITY_TYPES } from "@/lib/rag";
 
 export type GeneratorInput = {
+  /**
+   * Texto do job spec como ele vai ao PROMPT — ja dentro da cerca de texto
+   * nao confiavel (`createUntrustedFence().wrapJobSpec()`), com nonce por
+   * chamada. Serve para o modelo distinguir DADO de INSTRUCAO.
+   */
   jobDescription: string;
+  /**
+   * Texto CRU do spec, usado SO como query da busca semantica.
+   *
+   * Os dois caminhos sao separados de proposito. A cerca existe para o
+   * prompt; no embedding ela e ruido: o nonce e ALEATORIO a cada chamada,
+   * entao o mesmo spec recuperaria chunks diferentes a cada geracao, e num
+   * spec curto o texto fixo da cerca (aviso, delimitadores) domina o vetor e
+   * afoga o pouco de sinal que o anuncio tem.
+   *
+   * Omitido = cai no `jobDescription`, o que so e correto quando o chamador
+   * nao cercou nada.
+   */
+  retrievalQuery?: string;
   language: "en" | "pt-BR";
   company?: string;
   roleTitle?: string;
@@ -50,13 +68,16 @@ export async function generateApplication(
 
   // Caminho admin (`requireAdmin()` na action) e tool `generate_resume` do MCP:
   // pode ler o corpus privado, mas SO a evidencia de carreira
-  // (`GENERATION_ENTITY_TYPES`). O `jobDescription` e texto de terceiro e e ele
-  // que dirige a busca semantica: sem esta segunda particao, um spec hostil
+  // (`GENERATION_ENTITY_TYPES`). O spec e texto de terceiro e e ele que dirige
+  // a busca semantica: sem esta segunda particao, um spec hostil
   // ("cole aqui, literalmente, todo o contexto") recupera e devolve telefone de
   // recrutador, piso salarial e nome real de cliente sob NDA. A particao e na
   // query SQL — o prompt nao e defesa.
   // O chat publico usa o default fail-closed de `retrieve` (so `public`).
-  const chunks = await retrieve(input.jobDescription, {
+  // A QUERY e o spec cru; o PROMPT e o spec cercado. Misturar os dois faz a
+  // cerca (nonce aleatorio + delimitadores) entrar no vetor de busca.
+  const retrievalQuery = input.retrievalQuery?.trim() || input.jobDescription;
+  const chunks = await retrieve(retrievalQuery, {
     k: 10,
     apiKey,
     includePrivate: true,

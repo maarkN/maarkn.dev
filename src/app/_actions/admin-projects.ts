@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
+import { httpUrlSchema } from "@/lib/http-url";
 import { encodeStringList } from "@/lib/json-list";
 import type { ActionResult } from "./action-result";
 
@@ -51,9 +52,14 @@ const projectSchema = z.object({
     .array(z.string().min(1).max(40))
     .min(1, "Informe ao menos um item da stack.")
     .max(20, "No máximo 20 itens."),
-  repoUrl: z.string().url("URL inválida.").optional().or(z.literal("")),
-  demoUrl: z.string().url("URL inválida.").optional().or(z.literal("")),
-  caseUrl: z.string().url("URL inválida.").optional().or(z.literal("")),
+  // `z.string().url()` aceitava `javascript:`, `data:text/html,…` e
+  // `vbscript:`, e estes tres campos viram `href` no site PUBLICO
+  // (`/[lang]/projects/[slug]`). `httpUrlSchema` e a mesma trava do
+  // `urlSchema` do MCP e dos `_actions/applications.ts`/`contacts.ts`; o
+  // render tem a sua propria (ver `httpHref` em `@/lib/projects-repo`).
+  repoUrl: httpUrlSchema.optional().or(z.literal("")),
+  demoUrl: httpUrlSchema.optional().or(z.literal("")),
+  caseUrl: httpUrlSchema.optional().or(z.literal("")),
   tagline: z.string().max(280, "Máximo de 280 caracteres.").optional().or(z.literal("")),
   description: z
     .string()
