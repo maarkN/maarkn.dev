@@ -35,11 +35,15 @@ Campos, rótulos, botões, mensagens de erro e todos os primitives de `src/compo
 - **THEN** título, corpo e ambos os botões são legíveis sobre `--popover`, com o botão destrutivo em `--destructive` e texto `--bg`
 
 ### Requirement: Funcionalidade preservada
-Login, listagem/criação/edição/exclusão de projetos, aplicações, gerador de CV, log de chat e upload de imagem MUST continuar funcionando sem regressão visual que impeça o uso.
+As 18 rotas do backoffice — login, dashboard, candidaturas (lista, board, detalhe, criação, edição), vagas, contatos, projetos, gerador, chaves de API, auditoria, chat e configurações — MUST continuar funcionando sem regressão que impeça o uso, e MUST permanecer operáveis apenas com teclado.
 
 #### Scenario: Smoke do admin
-- **WHEN** o administrador percorre login → projetos → aplicações → gerador → chat
+- **WHEN** o administrador percorre login → dashboard → candidaturas → board → detalhe → gerador → auditoria
 - **THEN** todas as telas são legíveis e as ações concluem com sucesso
+
+#### Scenario: Somente teclado
+- **WHEN** o administrador executa o mesmo percurso sem apontador
+- **THEN** alcança todos os controles, o foco é sempre visível e nenhum diálogo aprisiona o foco
 
 ### Requirement: Campos legados de cover
 Os campos de gradiente de capa dos projetos SHALL permanecer editáveis e rotulados como legado, sem alteração de esquema de dados.
@@ -69,3 +73,24 @@ Todo par texto/fundo do admin MUST atingir 4.5:1, e toda borda de controle (inpu
 #### Scenario: Borda de campo em repouso
 - **WHEN** um input do admin não está em foco
 - **THEN** sua borda atinge ao menos 3:1 contra a superfície em que está
+
+### Requirement: Atalhos anunciados
+Todo atalho de teclado ativo numa rota do admin SHALL estar visível na interface daquela rota, junto da ação que executa.
+
+#### Scenario: Paginação
+- **WHEN** o administrador vê uma listagem paginada
+- **THEN** as teclas de avançar e voltar aparecem na própria linha de paginação
+
+### Requirement: Movimento reduzido no admin
+Toda animação do admin MUST respeitar `prefers-reduced-motion: reduce`, permanecendo estática sem perda de informação.
+
+#### Scenario: Carregamento com movimento reduzido
+- **WHEN** a preferência está ativa e uma listagem carrega
+- **THEN** a linha de progresso é exibida sem animação e o estado continua compreensível
+
+### Requirement: Utilities do admin não vazam
+As utilities de token do vocabulário shadcn MUST NOT ser usadas fora do admin e dos seus componentes, e a verificação SHALL falhar o lint.
+
+#### Scenario: Uso indevido no site
+- **WHEN** uma classe `bg-background` é introduzida numa página pública
+- **THEN** `pnpm lint` falha apontando o arquivo
