@@ -31,6 +31,7 @@ import {
   RequiredHint,
   describedBy,
 } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import {
   PROJECT_CATEGORY_STYLES,
   PROJECT_STATUS_STYLES,
@@ -168,7 +169,7 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
     ));
 
   return (
-    <form action={onSubmit} className="space-y-4">
+    <form onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Section title="Identidade">
           {fields(IDENTITY_FIELDS)}

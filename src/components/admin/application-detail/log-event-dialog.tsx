@@ -26,6 +26,7 @@ import {
   FieldHelp,
   describedBy,
 } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -139,10 +140,11 @@ export function LogEventDialog({
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-lg">
-        {/* `action` recebe uma função do cliente: o React entrega o FormData e
-            NÃO reseta o form sozinho (isso só acontece com Server Action
-            passada direta ao `<form>`). */}
-        <form action={onSubmit}>
+        {/* `onSubmit` e não `action=`: o React 19 reseta o formulário ao fim
+            de QUALQUER função de `action` — inclusive de cliente — e o erro de
+            validação voltava com os campos em branco (ver
+            `@/components/admin/form-submit`). */}
+        <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
           <DialogHeader>
             <DialogTitle>Registrar evento</DialogTitle>
             <DialogDescription>

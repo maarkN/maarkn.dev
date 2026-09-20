@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { generate, type GenState } from "@/app/_actions/generator";
 import { GENERATOR_LANGUAGES } from "@/app/admin/generator/languages";
 import { FieldHelp, RequiredHint } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -77,7 +78,7 @@ export function GeneratorForm() {
     <>
       <Card>
         <CardContent>
-          <form action={onSubmit} className="space-y-4">
+          <form onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-1.5">
                 <Label htmlFor="roleTitle">Vaga</Label>

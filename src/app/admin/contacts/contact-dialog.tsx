@@ -24,6 +24,7 @@ import {
   RequiredHint,
   describedBy,
 } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -110,9 +111,11 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
       </DialogTrigger>
 
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
-        {/* `action` recebe uma função do cliente: o React entrega o FormData e
-            NÃO reseta o formulário sozinho. */}
-        <form action={onSubmit}>
+        {/* `onSubmit` e não `action=`: o React 19 reseta o formulário ao fim
+            de QUALQUER função de `action`, e no caminho de erro isso apagava
+            tudo o que o usuário tinha digitado (ver
+            `@/components/admin/form-submit`). */}
+        <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
           <DialogHeader>
             <DialogTitle>
               {initial ? "Editar contato" : "Novo contato"}

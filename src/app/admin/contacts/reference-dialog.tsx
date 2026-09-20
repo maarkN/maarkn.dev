@@ -24,6 +24,7 @@ import {
   RequiredHint,
   describedBy,
 } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -114,7 +115,7 @@ export function ReferenceDialog({ initial }: { initial?: ReferenceInitial }) {
       </DialogTrigger>
 
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
-        <form action={onSubmit}>
+        <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
           <DialogHeader>
             <DialogTitle>
               {initial ? "Editar referência" : "Nova referência"}

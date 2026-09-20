@@ -166,6 +166,41 @@ export function ApplicationForm({
     : "";
   const folderValue = folderTouched ? folderName : derivedFolder;
 
+  /**
+   * Os DEMAIS campos também vivem em estado — e isso não é preferência de
+   * estilo, é o que impede perda de dado.
+   *
+   * O React 19 reseta o formulário quando a função de `action` termina, e
+   * `useActionState` não é exceção. Medido por `scripts/smoke-admin-write.mjs`
+   * com `priority = 999` (passa pela validação nativa, morre no zod do
+   * servidor): o erro voltava e o formulário estava assim —
+   * `{"company":"Smoke QA …","location":"","priority":""}`. Só sobrevivia o
+   * que já era controlado. A tela pedia "confira os campos destacados" sobre
+   * campos que ela mesma tinha acabado de esvaziar.
+   *
+   * A saída aqui é estado, e não `onSubmit` + `preventDefault` como nos
+   * diálogos (`@/components/admin/form-submit`): este formulário passa uma
+   * Server Action ao `action=` e funciona sem JavaScript — tirá-lo do fluxo de
+   * ação do React custaria esse realce progressivo. Campo controlado é
+   * renderizado com `value` no HTML do servidor, então o envio sem JS continua
+   * mandando tudo.
+   */
+  const [text, setText] = useState<Record<string, string>>({
+    locationText: application?.locationText ?? "",
+    fit: application?.fit ?? "",
+    priority: application?.priority != null ? String(application.priority) : "",
+    appliedAt: application?.appliedAt ?? "",
+    followUp: application?.followUp ?? "",
+    targetSalary: application?.targetSalary ?? "",
+    jobUrl: application?.jobUrl ?? "",
+    careersUrl: application?.careersUrl ?? "",
+    notesMd: application?.notesMd ?? "",
+  });
+  const bind = (name: string) => ({
+    value: text[name] ?? "",
+    onChange: (value: string) => setText((prev) => ({ ...prev, [name]: value })),
+  });
+
   return (
     <form action={run} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -202,7 +237,7 @@ export function ApplicationForm({
             <Field
               name="locationText"
               label="Local"
-              defaultValue={application?.locationText}
+              {...bind("locationText")}
               help="ex.: Toronto, ON · Remoto (EU)"
               error={errorText("locationText", errors)}
             />
@@ -309,7 +344,7 @@ export function ApplicationForm({
               <Field
                 name="fit"
                 label="Aderência"
-                defaultValue={application?.fit}
+                {...bind("fit")}
                 help="ex.: ⭐, ⭐ Go, Bom"
                 error={errorText("fit", errors)}
               />
@@ -317,11 +352,7 @@ export function ApplicationForm({
                 name="priority"
                 label="Prioridade"
                 type="number"
-                defaultValue={
-                  application?.priority != null
-                    ? String(application.priority)
-                    : ""
-                }
+                {...bind("priority")}
                 help="1 = maior"
                 error={errorText("priority", errors)}
               />
@@ -341,20 +372,20 @@ export function ApplicationForm({
               name="appliedAt"
               label="Enviada em"
               type="date"
-              defaultValue={application?.appliedAt}
+              {...bind("appliedAt")}
               error={errorText("appliedAt", errors)}
             />
             <Field
               name="followUp"
               label="Follow-up"
-              defaultValue={application?.followUp}
+              {...bind("followUp")}
               help="uma data ou uma nota curta"
               error={errorText("followUp", errors)}
             />
             <Field
               name="targetSalary"
               label="Alvo salarial"
-              defaultValue={application?.targetSalary}
+              {...bind("targetSalary")}
               error={errorText("targetSalary", errors)}
             />
           </CardContent>
@@ -373,14 +404,14 @@ export function ApplicationForm({
               name="jobUrl"
               label="URL da vaga"
               type="url"
-              defaultValue={application?.jobUrl}
+              {...bind("jobUrl")}
               error={errorText("jobUrl", errors)}
             />
             <Field
               name="careersUrl"
               label="URL da página de carreiras"
               type="url"
-              defaultValue={application?.careersUrl}
+              {...bind("careersUrl")}
               help="Fica na empresa, não na vaga."
               error={errorText("careersUrl", errors)}
             />
@@ -401,7 +432,10 @@ export function ApplicationForm({
                 id="notesMd"
                 name="notesMd"
                 rows={5}
-                defaultValue={application?.notesMd ?? ""}
+                value={text.notesMd}
+                onChange={(event) =>
+                  setText((prev) => ({ ...prev, notesMd: event.target.value }))
+                }
                 aria-invalid={Boolean(errors.notesMd)}
                 aria-describedby={describedBy(
                   errorText("notesMd", errors) && "notesMd-error",
@@ -461,7 +495,8 @@ function Field({
   required?: boolean;
   type?: string;
   defaultValue?: string | null;
-  /** Controlado só onde o valor alimenta a derivação da chave natural. */
+  /** Todo campo de texto é controlado: ver a nota sobre o reset do React 19
+   *  em `ApplicationForm`. */
   value?: string;
   onChange?: (value: string) => void;
   help?: string;

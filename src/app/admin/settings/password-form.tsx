@@ -17,6 +17,7 @@ import {
   RequiredHint,
   describedBy,
 } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,15 +39,16 @@ export function PasswordForm() {
         return;
       }
       setErrors({});
-      // React only auto-resets a form whose `action` is a Server Action passed
-      // straight through; this one goes through a client function, so reset it.
+      // Aqui o reset é DESEJADO (senha não fica na tela) e agora é o único:
+      // `submitKeepingValues` tirou o reset automático do React, que antes
+      // acontecia também quando a troca falhava.
       formRef.current?.reset();
       toast.success(res.message ?? "Senha alterada.");
     });
   }
 
   return (
-    <form ref={formRef} action={onSubmit} className="space-y-4">
+    <form ref={formRef} onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-4">
       <div className="grid gap-4 sm:max-w-sm">
         <Field
           id="currentPassword"

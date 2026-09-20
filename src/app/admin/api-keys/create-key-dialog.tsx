@@ -33,6 +33,7 @@ import {
   RequiredHint,
   describedBy,
 } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -284,7 +285,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
             </DialogFooter>
           </>
         ) : (
-          <form action={onSubmit}>
+          <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
             <DialogHeader>
               <DialogTitle>Nova chave de API</DialogTitle>
               <DialogDescription>

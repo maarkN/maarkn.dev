@@ -32,6 +32,7 @@ import {
   FieldHelp,
   describedBy,
 } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -158,7 +159,7 @@ export function KeyFieldsDialog({
       </DialogTrigger>
 
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-        <form action={onSubmit}>
+        <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
           <DialogHeader>
             <DialogTitle>Editar campos-chave</DialogTitle>
             <DialogDescription>
