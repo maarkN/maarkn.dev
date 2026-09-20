@@ -42,7 +42,11 @@ Every inner route survived the redesign with the same URLs, metadata and content
 
 ### Admin
 
-`/admin` (no locale prefix) is a NextAuth-protected panel pinned to the `soft` palette: project CRUD with cover upload, a job-application tracker, a CV / cover-letter generator that draws on the knowledge base, and the chat log of the assistant. Sign in at `/admin/login`.
+`/admin` (no locale prefix) is a NextAuth-protected backoffice of 18 routes, pinned to the `soft` palette and always dark: a funnel dashboard, the application tracker as a list and as a board, the full dossier of an application, jobs, contacts, project CRUD with cover upload, a CV / cover-letter generator that draws on the knowledge base, MCP API keys and their audit log, the assistant's chat log, and settings. Sign in at `/admin/login`, drawn as a tty.
+
+It speaks the same visual language as the public terminal, which is a decision, not decoration: a tmux-style status bar, a directory tree, a breadcrumb written as the command that opened the screen, `cd ..` in the footer, listings painted as `ls` output (bracket tags like `[applied]`, a decorative `001` index column, monospaced columns measured in `ch`), field errors printed as `stderr:` and toasts as a single output line. It is **not** a terminal: there is no prompt to type into and no command engine — the screens stay forms and tables. Every colour value is derived from the Dracula palette in `src/app/admin/admin.css`, where each deviation carries its measured contrast ratio.
+
+Accessibility is held to AA on the private surface too, and measured rather than assumed. `scripts/a11y-admin-axe.mjs` drives headless Chrome over all 18 routes plus the five overlays that only exist after a click (the `Sheet` stays out while it is mounted on no route; `A11Y_SHEET_PATH=` brings it back): axe-core by default, `--keyboard` for the focus walk (focus always visible, no focus trap escape, Escape returns focus to the trigger), `--motion` for `prefers-reduced-motion: reduce` (with `--motion no-preference` as the negative control), and `--width 390` for the narrow sweep. Lighthouse accessibility is 100 on `/admin/login` and `/admin/applications`. Because the shadcn token vocabulary only resolves inside `.admin-root`, `scripts/check-admin-utilities.ts` runs as part of `pnpm lint` and fails the build if one of those utilities leaks into the public site.
 
 ### SEO and performance
 
@@ -169,7 +173,7 @@ src/
 │   ├── _actions/                   # server actions: contact, auth, admin CRUD, generator
 │   ├── api/chat/route.ts           # streaming assistant (RAG + rate limit + mock fallback)
 │   ├── api/admin/upload/route.ts   # cover uploads
-│   ├── admin/                      # protected panel (no [lang]): projects, applications, generator, chat log
+│   ├── admin/                      # the backoffice (no [lang]): 18 routes + admin.css, the scoped shadcn token values
 │   └── [lang]/
 │       ├── layout.tsx              # html, fonts, ThemeProvider, metadata, JSON-LD
 │       ├── (terminal)/page.tsx     # the home: loads TerminalData, renders MOTD + whoami on the server
@@ -187,7 +191,8 @@ src/
 │   │   ├── page-chrome.tsx · page-footer.tsx · route-chrome.ts · route-focus.ts
 │   │   └── terminal.module.css · page.module.css · prose.css
 │   ├── theme-provider.tsx          # palette + font state, pre-hydration boot script
-│   └── admin/                      # admin shell and forms
+│   ├── admin/                      # the backoffice: terminal chrome, listings, forms, dialogs, kanban
+│   └── ui/                         # shadcn primitives — imported only from /admin (see check-admin-utilities)
 ├── lib/
 │   ├── terminal/
 │   │   ├── types.ts · registry.ts · parse.ts · complete.ts · history.ts · run.ts
@@ -204,7 +209,8 @@ src/
 ├── i18n/config.ts
 └── proxy.ts                        # locale routing (Next 16's middleware)
 prisma/                             # schema, migrations, seed
-scripts/                            # check-dictionaries, ingest-knowledge, check-commands-doc
+scripts/                            # check-dictionaries, check-admin-utilities (lint), ingest-knowledge,
+                                    # check-commands-doc, a11y-admin-axe, a11y-dialog-accname
 knowledge/                          # CV + project dossiers for the assistant (gitignored)
 ```
 
@@ -216,7 +222,8 @@ knowledge/                          # CV + project dossiers for the assistant (g
 - Command and file names in the terminal stay in English in both languages; only descriptions and messages are translated, and `pnpm lint` fails when the two dictionaries drift.
 - No `innerHTML`: every output line is a React node, and everything a visitor types is displayed literally.
 - Content lives in `lib/` and the dictionaries; `lib/terminal` only formats it.
-- Animations respect `prefers-reduced-motion`.
+- Animations respect `prefers-reduced-motion` on both surfaces, and the admin's are checked against a negative control (`node scripts/a11y-admin-axe.mjs --motion` / `--motion no-preference`).
+- The shadcn token vocabulary is admin-only; `pnpm lint` fails when it leaks into the public site.
 
 ---
 

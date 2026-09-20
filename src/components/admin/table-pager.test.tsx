@@ -66,8 +66,15 @@ describe("linha de status", () => {
       ),
     );
     const [next, prev] = [...container.querySelectorAll("button")];
-    expect(next.getAttribute("aria-label")).toBe("Próxima página (tecla n)");
-    expect(prev.getAttribute("aria-label")).toBe("Página anterior (tecla p)");
+    // SC 2.5.3 (Label in Name): o nome acessível começa pelo rótulo visível.
+    expect(next.getAttribute("aria-label")).toBe(
+      "[n]ext — Próxima página (tecla n)",
+    );
+    expect(prev.getAttribute("aria-label")).toBe(
+      "[p]rev — Página anterior (tecla p)",
+    );
+    expect(next.getAttribute("aria-label")).toContain(next.textContent);
+    expect(prev.getAttribute("aria-label")).toContain(prev.textContent);
     // Primeira página: só `prev` está travado.
     expect(next.disabled).toBe(false);
     expect(prev.disabled).toBe(true);

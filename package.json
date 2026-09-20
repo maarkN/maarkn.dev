@@ -13,7 +13,7 @@
     "dev": "next dev -p 5050",
     "build": "next build",
     "start": "next start -p 5050",
-    "lint": "eslint && tsx scripts/check-dictionaries.ts",
+    "lint": "eslint && tsx scripts/check-dictionaries.ts && tsx scripts/check-admin-utilities.ts",
     "docs:commands": "tsx scripts/check-commands-doc.ts",
     "test": "vitest run",
     "postinstall": "prisma generate",

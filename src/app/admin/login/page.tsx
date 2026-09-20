@@ -24,9 +24,13 @@ export default async function LoginPage() {
   return (
     <main className={s.tty}>
       <div className={s.ttyInner}>
-        <p className={s.ttyBanner} lang="en">
+        {/* O banner É o título da página. Era um <p>, e o axe reprovava
+            `page-has-heading-one` só aqui — todas as outras 17 rotas têm h1
+            pelo PageHeader. O preflight do Tailwind já zera tamanho, peso e
+            margem de heading, então a linha continua idêntica na tela. */}
+        <h1 className={s.ttyBanner} lang="en">
           <span className={s.ttyHost}>maarkn.dev</span> tty1
-        </p>
+        </h1>
 
         {dbConfigured ? (
           <LoginForm />

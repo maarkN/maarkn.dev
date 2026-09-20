@@ -2,7 +2,17 @@
 
 ## Purpose
 
-Garante que o painel administrativo permaneça funcional e legível na nova paleta, isolado da experiência de terminal do site público.
+Garante que o painel administrativo use a linguagem visual do terminal do
+site — um único vocabulário de token derivado da paleta Dracula, contraste
+verificado — permaneça operável por teclado e leitor de tela, e que sua
+documentação descreva o que existe.
+
+> O texto anterior desta seção dizia que o admin era "isolado da experiência
+> de terminal do site público". Isso valia até a change 14; a bko-01 inverteu
+> a decisão e a bko-02 vestiu o backoffice com a moldura de terminal. O
+> `openspec archive` aplica blocos de requisito, não o `## Purpose`, então a
+> frase antiga sobreviveu ao arquivamento da bko-01 e só foi corrigida na
+> bko-05.
 
 ## Requirements
 

@@ -22,11 +22,15 @@ carregar dados: pare e leia a tabela abaixo.
 | A4 | **UI em pt-BR.** Rótulos, botões, toasts, mensagens de erro, cabeçalho de tabela. |
 | A5 | **Nunca `toLocaleString`/`toLocaleDateString` solto.** Use `@/lib/format`. Locale e time zone estão pinados lá justamente para não haver hydration mismatch. Regra de escolha: **`formatDate` para data de calendário** (`appliedAt`, datas do vault, qualquer coisa que veio de um `<input type="date">` — são gravadas como meia-noite **UTC** e por isso são lidas em UTC) e **`formatDateTime` para timestamp de sistema** (`createdAt`, `updatedAt`, logs — instantes reais, exibidos em America/Sao_Paulo). Trocar os dois causa erro de um dia. |
 | A6 | **Nenhum primitivo caseiro.** Botão, input, tabela, dialog, badge, select vêm de `@/components/ui/*` (shadcn, style `radix-lyra`). Se faltar um, `pnpm dlx shadcn@latest add <nome>` — não escreva à mão. |
-| A7 | **Cores:** use os tokens shadcn (`bg-card`, `text-muted-foreground`, `border-border`, `bg-sidebar`). O azul da marca é **`text-brand` / `bg-brand`**, *não* `bg-accent` (que no shadcn é o fundo de hover). Nunca reatribua `--muted`, `--accent` ou `--border` no `globals.css`. |
+| A7 | **Cores:** use os tokens shadcn (`bg-card`, `text-muted-foreground`, `border-border`, `bg-sidebar`). O azul da marca é **`text-brand` / `bg-brand`**, *não* `bg-accent` (que no shadcn é o fundo de hover). Nunca reatribua `--muted`, `--accent` ou `--border` no `globals.css`. **Esse vocabulário só existe dentro de `.admin-root`:** os NOMES são declarados no `@theme inline` de `globals.css` e os VALORES em `src/app/admin/admin.css` (bko-01). Fora de `src/app/admin`, `src/components/ui` e `src/components/admin` a utility resolve para nada — um painel invisível em produção, não um erro de compilação. `scripts/check-admin-utilities.ts` roda dentro de `pnpm lint` e reprova o CI (bko-05). No site público use os nomes da paleta: `bg-bg`, `text-fg`, `text-comment`, `border-line`. |
 | A8 | **Um só `<Toaster/>`**, já montado em `src/app/admin/layout.tsx`. Não registre outro. |
 | A9 | **Ajuda, obrigatoriedade e erro de campo vêm de `@/components/admin/field-output`** (`FieldHelp`, `RequiredHint`, `FieldError`, `describedBy`) — nunca um `<p className="text-xs text-destructive">` solto. O `#` e o `stderr:` são `aria-hidden`; o erro carrega `role="alert"` e um `id` que o campo referencia por `aria-describedby`. Obrigatoriedade é `(obrigatório)` escrito dentro do `<Label>`, nunca um `*`. |
 | A10 | **Botão com texto visível escreve o rótulo entre colchetes** — `[ salvar ]`, `[ cancelar ]`, `[ excluir definitivamente ]`, em minúsculas. Os colchetes são **texto do `<button>`**, não `::before`/`::after`. Fora da regra, de propósito: botão só de ícone (o nome vem do `aria-label`), `variant="link"`, e os segmentados de aba/rota que carregam `aria-pressed` — ali o estado já é pintado. |
 | A11 | **Diálogo de exclusão ecoa o comando equivalente** com `<DestructiveEcho command="rm -rf …" />` e usa `variant="destructive"` no `AlertDialogAction`. O eco é **ilustrativo**: não existe comando por trás e nenhuma change deve tentar "fazer funcionar". A confirmação por digitação do nome exato (§6) continua sendo o freio real e não pode ser enfraquecida. |
+| A12 | **Listagem é saída de `ls`, e a pintura mora no CSS.** A tabela continua `<table>/<thead>/<th scope="col">` — `<pre>` destruiria cabeçalho, associação célula↔coluna e navegação por tabela no leitor de tela. Quem transforma o desenho é a classe `admin-listing`, aplicada UMA vez dentro de `@/components/ui/table.tsx`; nenhuma página a escreve. A listagem **não** fica dentro de `<Card>` (a bko-03 tirou o cartão). Cabeçalho em minúsculas e sem acento (`empresa`, `vaga`, `estagio`, `acoes`), largura em `ch` no `<th>` e `table-fixed` no `<Table>` quando as larguras existem. A coluna decorativa de índice (`001`, `002`…) vem de `ListingIndexHead`/`ListingIndexCell` e é `aria-hidden`: é âncora visual, não o id. |
+| A13 | **Atalho que não se anuncia não existe.** Toda tecla ligada numa rota aparece escrita na própria linha da ação — a paginação mostra `[n]ext` / `[p]rev`, e o nome acessível do botão **começa pelo rótulo visível** (`"[n]ext — Próxima página (tecla n)"`): a SC 2.5.3 (Label in Name) exige que o texto visível esteja contido no nome acessível, senão comando por voz não alcança o botão. Não existe overlay de `?` e não deve passar a existir. O `useListingShortcut` do `TablePager` é o único atalho de uma letra do admin; se um novo aparecer, ele copia a mesma regra de guarda (`isEditableTarget`, nenhum modificador, `preventDefault` mesmo com ação nula). |
+| A15 | **Formulário do painel submete por `onSubmit={(event) => submitKeepingValues(event, fn)}`** (`@/components/admin/form-submit`), **nunca** `action={fn}` com função de cliente. O React 19 reseta o `<form>` ao fim de QUALQUER função de `action`: no caminho de erro isso apagava todos os campos não controlados, e a tela pedia para "conferir os campos destacados" que ela mesma tinha esvaziado (medido em `scripts/smoke-admin-write.mjs`, bko-04). Exceção, de propósito: quem passa uma **Server Action direta** — `application-form.tsx` (`useActionState`) e `login-form.tsx` — fica com `action=`, porque ali o reset é o contrato documentado e o formulário funciona sem JS. Quem quer limpar no sucesso chama `form.reset()`. Detalhes e prova em §5.3; `form-submit.test.tsx` trava a regressão no CI. |
+| A14 | **Animação respeita `prefers-reduced-motion: reduce`.** A regra global de `globals.css` colapsa `animation-duration`/`transition-duration` para 0.01ms com `!important` e força uma iteração, então uma animação nova precisa ser legível **no último quadro** — é ele que fica na tela. A barra `.admin-progress` foi desenhada assim de propósito (revelada por `clip-path`, último quadro = barra cheia). Verifique com `node scripts/a11y-admin-axe.mjs --motion`, cujo controle negativo é `--motion no-preference`. |
 
 ---
 
@@ -98,13 +102,26 @@ própria navegação, sem toast.
   <PageHeader
     title="Candidaturas"
     description="Funil de vagas. O banco é canônico — o Obsidian não recebe nada de volta."
-    actions={<ApplicationDialog />}
+    actions={
+      <Button asChild size="sm">
+        <Link href="/admin/applications/new">
+          <Plus className="size-4" />
+          [ nova candidatura ]
+        </Link>
+      </Button>
+    }
   />
   {/* filtros: draft → applied, SEM debounce */}
   <div className="space-y-3">{/* toolbar + Table + TablePager, SEM cartão */}</div>
   {/* dialogs no final do arquivo */}
 </div>
 ```
+
+**A ação do cabeçalho: rota ou `Dialog`?** Formulário longo mora em rota própria — a candidatura
+tem ~15 campos, e o cabeçalho aponta para `/admin/applications/new` com
+`<Button asChild><Link/></Button>`, como acima (é o que
+`src/app/admin/applications/page.tsx` faz hoje). `Dialog` (§5) é para entidade curta, editada sem
+sair da lista: contato, referência, chave de API.
 
 Convenções de célula: números com `tabular-nums`, ícone dentro de botão sempre `className="size-4"`.
 Nada de `font-mono`: o admin inteiro já é monoespaçado.
@@ -132,32 +149,40 @@ classe `.admin-listing`, aplicada uma vez dentro de `ui/table.tsx`. O que cada l
 
 ## 4. Receita (a) — listar com paginação **server-side**
 
-Nunca filtre/pagine no cliente. `applications-table.tsx` faz isso hoje e não escala para o radar (~191
-vagas). A URL é a fonte da verdade.
+Nunca filtre/pagine no cliente: filtrar um `findMany()` inteiro no navegador não escala para o radar
+(~191 vagas) e perde a página ao recarregar. A URL é a fonte da verdade — `parseApplicationFilters` e
+`parsePage` (de `@/lib/applications-query`, `server-only`) leem os `searchParams`, e `listApplications`
+aplica `skip`/`take` no Prisma.
 
 ### 4.1 A página (Server Component)
 
 ```tsx
 // src/app/admin/applications/page.tsx
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteApplication } from "@/app/_actions/applications";
+import { Plus } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
+import { DeleteApplicationButton } from "@/components/admin/delete-application-button";
 import { PageHeader } from "@/components/admin/page-header";
-import { TableEmptyRow } from "@/components/admin/table-pager";
-import { ApplicationStatusBadge } from "@/components/admin/status-badge";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  LISTING_INDEX_WIDTH,
+  ListingIndexCell,
+  ListingIndexHead,
+  TableEmptyRow,
+} from "@/components/admin/table-pager";
+import { FunnelStageBadge } from "@/components/admin/status-badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
-import { ApplicationDialog } from "./application-dialog";
 import { ApplicationsToolbar } from "./applications-toolbar";
 
 export const dynamic = "force-dynamic"; // guard + searchParams: nunca prerenderize
 
 const PAGE_SIZE = 20;
-const COLS = 5;
+// A12: a coluna de índice entra na conta do `colSpan` das linhas de estado.
+const COLS = 6;
 
 function one(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v) ?? "";
@@ -204,74 +229,85 @@ export default async function ApplicationsPage({
   return (
     <AdminShell email={session.user.email ?? "admin"}>
       <div className="space-y-4">
+        {/* O formulário de candidatura é longo demais para um Dialog: a ação
+            do cabeçalho é um link para a rota de criação (§3). */}
         <PageHeader
           title="Candidaturas"
           description={`${total} registro(s) no funil.`}
-          actions={<ApplicationDialog />}
+          actions={
+            <Button asChild size="sm">
+              <Link href="/admin/applications/new">
+                <Plus className="size-4" />
+                [ nova candidatura ]
+              </Link>
+            </Button>
+          }
         />
 
-        <Card>
-          <CardContent>
-            {/* filtros + pager vivem no mesmo client component: ambos escrevem na URL */}
-            <ApplicationsToolbar
-              status={status}
-              q={q}
-              page={page}
-              totalPages={totalPages}
-              total={total}
-              position="top"
-            />
+        {/* A12: SEM <Card>. A listagem é saída de comando, e saída de comando
+            não mora numa caixa — a bko-03 tirou o cartão de todas as listas. */}
+        {/* filtros + pager vivem no mesmo client component: ambos escrevem na URL */}
+        <ApplicationsToolbar
+          stage={stage}
+          q={q}
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          position="top"
+        />
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Vaga</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aplicado em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+        {/* `table-fixed` só porque os <th> abaixo declaram largura em `ch`:
+            é o que promove a largura à lei da coluna e faz o nome comprido
+            truncar em vez de empurrar as outras colunas. */}
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow>
+              <ListingIndexHead />
+              <TableHead>empresa</TableHead>
+              <TableHead>vaga</TableHead>
+              <TableHead className="w-[24ch]">estagio</TableHead>
+              <TableHead className="w-[18ch]">aplicado</TableHead>
+              <TableHead className="w-[14ch] text-right">acoes</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {failed || !dbConfigured ? (
+              <TableEmptyRow
+                cols={COLS}
+                destructive
+                message="Não foi possível carregar as candidaturas."
+              />
+            ) : rows.length === 0 ? (
+              <TableEmptyRow cols={COLS} />
+            ) : (
+              rows.map((r, i) => (
+                <TableRow key={r.id}>
+                  <ListingIndexCell index={(page - 1) * PAGE_SIZE + i} />
+                  <TableCell className="font-medium">{r.company}</TableCell>
+                  <TableCell className="text-muted-foreground">{r.role ?? "—"}</TableCell>
+                  <TableCell><FunnelStageBadge status={r.stage} /></TableCell>
+                  <TableCell className="tabular-nums">{formatDate(r.appliedAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <DeleteApplicationButton
+                      id={r.id}
+                      company={r.company}
+                      folderName={r.folderName}
+                    />
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {failed || !dbConfigured ? (
-                  <TableEmptyRow
-                    cols={COLS}
-                    destructive
-                    message="Não foi possível carregar as candidaturas."
-                  />
-                ) : rows.length === 0 ? (
-                  <TableEmptyRow cols={COLS} />
-                ) : (
-                  rows.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.company}</TableCell>
-                      <TableCell className="text-muted-foreground">{r.role ?? "—"}</TableCell>
-                      <TableCell><ApplicationStatusBadge status={r.status} /></TableCell>
-                      <TableCell className="tabular-nums">{formatDate(r.appliedAt)}</TableCell>
-                      <TableCell className="text-right">
-                        <ConfirmDeleteDialog
-                          id={r.id}
-                          name={r.company}
-                          entityLabel="candidatura"
-                          action={deleteApplication}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
-            <ApplicationsToolbar
-              status={status}
-              q={q}
-              page={page}
-              totalPages={totalPages}
-              total={total}
-              position="bottom"
-            />
-          </CardContent>
-        </Card>
+        <ApplicationsToolbar
+          stage={stage}
+          q={q}
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          position="bottom"
+        />
       </div>
     </AdminShell>
   );
@@ -373,31 +409,57 @@ export function ApplicationsToolbar(p: Props) {
 > `<SelectItem value="">` é proibido pelo Radix (string vazia é reservada para "sem valor"). Use uma
 > sentinela como `"all"` e converta na borda, como acima.
 
+O `TablePager` desenha a linha de status da listagem —
+`74 registros · página 1/4   [n]ext  [p]rev` — e liga as teclas `n`/`p` no
+`document` (A13). Duas consequências para quem monta uma tela nova:
+
+- **o pager só funciona dentro de um Client Component.** Ele recebe
+  `onPageChange` e registra um listener; importá-lo de um Server Component é
+  erro de compilação. O resto do módulo (`TableLoadingRow`, `TableEmptyRow`,
+  `ListingIndex*`) é marcação pura e continua no servidor — por isso
+  `table-pager.tsx` **não** tem `"use client"` no topo.
+- **não duplique o pager de cima e o de baixo como componentes diferentes.**
+  Duas instâncias montam dois listeners para a mesma tecla; o caso real
+  (`position: "top" | "bottom"`) devolve o `TablePager` só numa das duas.
+
 ---
 
 ## 5. Receita (b) — criar/editar em `Dialog`
 
 Um só componente para os dois casos: sem `initial` é criação, com `initial` é edição.
 
+A implementação de referência **existe no repositório**: `src/app/_actions/contacts.ts`
+(`saveContact`) + `src/app/admin/contacts/contact-dialog.tsx` (`ContactDialog`). Os trechos abaixo
+são esse par, encurtado. Quando os dois divergirem, o arquivo real ganha — e esta seção é corrigida
+junto.
+
+> **Quando NÃO usar Dialog.** Formulário longo mora em rota própria: a candidatura tem ~15 campos e
+> vive em `/admin/applications/new` + `/admin/applications/[id]/edit`, com `useActionState` e
+> `redirect()` no sucesso (§5.3). Dialog é para entidade curta editada sem sair da lista — contato,
+> referência profissional, chave de API, evento do log.
+
 ### 5.1 A action
 
 ```ts
-// src/app/_actions/applications.ts
+// src/app/_actions/contacts.ts
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
-import { APPLICATION_SOURCES, FUNNEL_STAGES } from "@/lib/applications";
 import type { ActionResult } from "./action-result";
 
-const schema = z.object({
-  company: z.string().min(1, "Informe a empresa.").max(160),
-  role: z.string().max(160).optional(),
-  stage: z.enum(FUNNEL_STAGES),
-  source: z.enum(APPLICATION_SOURCES),
+/** Espelho do sentinela do `<Select>`: o Radix proíbe `value=""` (§4.2). */
+const NONE = "none";
+
+const contactSchema = z.object({
+  name: z.string().min(1, "Informe o nome.").max(160),
+  roleTitle: z.string().max(160).optional().or(z.literal("")),
+  companyId: z.string().max(40).optional().or(z.literal("")),
+  email: z.string().email("E-mail inválido.").optional().or(z.literal("")),
 });
 
 async function requireAdmin() {
@@ -405,47 +467,83 @@ async function requireAdmin() {
   if (!session?.user) redirect("/admin/login"); // A2 — fora de try/catch
 }
 
-export async function saveApplication(
+export async function saveContact(
   id: string | null,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
   await requireAdmin();
-  if (!dbConfigured) return { ok: false, message: "Banco indisponível." }; // A3
-
-  const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const key = issue.path.join(".");
-      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
-    }
-    return { ok: false, message: "Confira os campos destacados.", fieldErrors };
+  if (!dbConfigured) {
+    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." }; // A3
   }
+
+  const companyId = trim(formData.get("companyId"));
+  const parsed = contactSchema.safeParse({
+    name: trim(formData.get("name")),
+    roleTitle: trim(formData.get("roleTitle")),
+    companyId: companyId === NONE ? "" : companyId, // sentinela → vazio, na borda
+    email: trim(formData.get("email")),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Confira os campos destacados.",
+      fieldErrors: fieldErrorsOf(parsed.error), // { [nome do campo]: mensagem }
+    };
+  }
+
+  const data = parsed.data;
+  const facts = {
+    name: data.name,
+    roleTitle: emptyToNull(data.roleTitle),
+    companyId: emptyToNull(data.companyId),
+    email: emptyToNull(data.email),
+  };
 
   try {
     const row = id
-      ? await db.application.update({ where: { id }, data: parsed.data })
-      : await db.application.create({ data: parsed.data });
+      ? await db.contact.update({ where: { id }, data: facts, select: { id: true } })
+      : await db.contact.create({
+          data: { ...facts, visibility: "private" },
+          select: { id: true },
+        });
 
-    revalidatePath("/admin/applications"); // === invalidateQueries
-    return { ok: true, data: { id: row.id }, message: id ? "Candidatura atualizada." : "Candidatura criada." };
+    revalidatePath("/admin/contacts"); // === invalidateQueries
+    return {
+      ok: true,
+      data: { id: row.id },
+      message: id ? "Contato atualizado." : "Contato criado.",
+    };
   } catch (err) {
-    console.error("[admin] save application failed", err); // detalhe fica no servidor
-    return { ok: false, message: "Não foi possível salvar a candidatura." };
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      // Violação de `@@unique`: vira erro DE CAMPO, não toast genérico.
+      return {
+        ok: false,
+        message: "Confira os campos destacados.",
+        fieldErrors: { name: "Já existe um contato com esse nome nesta empresa." },
+      };
+    }
+    console.error("[admin] save contact failed", safeError(err)); // detalhe fica no servidor
+    return { ok: false, message: "Não foi possível salvar o contato." };
   }
 }
 ```
 
+> `trim`, `emptyToNull`, `fieldErrorsOf` e `safeError` são helpers locais do módulo. `safeError`
+> existe porque um erro do Prisma carrega os argumentos da consulta — que aqui são o e-mail e o
+> telefone de outra pessoa; ele deixa passar só o nome e o código do erro.
+
 ### 5.2 O dialog
 
 ```tsx
-// src/app/admin/applications/application-dialog.tsx
+// src/app/admin/contacts/contact-dialog.tsx
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { saveApplication } from "@/app/_actions/applications";
+import { saveContact } from "@/app/_actions/contacts";
+import { FieldError, RequiredHint, describedBy } from "@/components/admin/field-output";
+import { submitKeepingValues } from "@/components/admin/form-submit";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -454,24 +552,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type Initial = { id: string; company: string; role: string | null };
+export type ContactInitial = { id: string; name: string; roleTitle: string | null };
 
-export function ApplicationDialog({ initial }: { initial?: Initial }) {
+export function ContactDialog({ initial }: { initial?: ContactInitial }) {
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const res = await saveApplication(initial?.id ?? null, formData);
-      if (!res.ok) {
-        setErrors(res.fieldErrors ?? {});
-        toast.error(res.message); // (d)
+      const result = await saveContact(initial?.id ?? null, formData);
+      if (!result.ok) {
+        setErrors(result.fieldErrors ?? {});
+        toast.error(result.message); // (d)
         return;
       }
       setErrors({});
-      setOpen(false);                                   // fecha só no sucesso
-      toast.success(res.message ?? "Salvo.");           // (d)
+      setOpen(false);                                    // fecha só no sucesso
+      toast.success(result.message ?? "Contato salvo."); // (d)
     });
   }
 
@@ -484,36 +582,54 @@ export function ApplicationDialog({ initial }: { initial?: Initial }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm">
-          {initial ? "Editar" : <><Plus className="size-4" />Nova candidatura</>}
-        </Button>
+        {initial ? (
+          // A10: botão só de ícone — o nome vem do `aria-label`, sem colchetes.
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Editar o contato ${initial.name}`}
+            title="Editar"
+          >
+            <Pencil className="size-4" />
+          </Button>
+        ) : (
+          <Button size="sm">
+            <Plus className="size-4" />
+            [ novo contato ]
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent>
-        {/* action recebe uma função do cliente: React entrega o FormData e
-            NÃO reseta o form sozinho (isso só acontece com Server Action direta). */}
-        <form action={onSubmit}>
+
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
+        {/* A15: `onSubmit` + `submitKeepingValues`, NUNCA `action={onSubmit}`.
+            O React 19 reseta o formulário ao fim de QUALQUER função de
+            `action`, e no caminho de erro isso apagava tudo o que tinha sido
+            digitado. Ver §5.3 e `@/components/admin/form-submit`. */}
+        <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
           <DialogHeader>
-            <DialogTitle>{initial ? "Editar candidatura" : "Nova candidatura"}</DialogTitle>
+            <DialogTitle>{initial ? "Editar contato" : "Novo contato"}</DialogTitle>
             <DialogDescription>
-              Os dados canônicos vêm do MCP. Edite aqui apenas o que for decisão sua.
+              Dados pessoais de terceiros. Ficam privados: nenhuma rota pública lê esta tabela.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 py-4">
+          <div className="grid gap-3 py-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="company">
-                Empresa
+              {/* A9: obrigatoriedade escrita dentro do <Label>, erro com id. */}
+              <Label htmlFor="contact-name">
+                Nome
                 <RequiredHint />
               </Label>
               <Input
-                id="company"
-                name="company"
-                defaultValue={initial?.company ?? ""}
-                aria-invalid={Boolean(errors.company)}
-                aria-describedby={describedBy(errors.company && "company-error")}
+                id="contact-name"
+                name="name"
+                defaultValue={initial?.name ?? ""}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={describedBy(errors.name && "contact-name-error")}
+                autoComplete="off"
                 required
               />
-              <FieldError id="company-error">{errors.company}</FieldError>
+              <FieldError id="contact-name-error">{errors.name}</FieldError>
             </div>
             {/* … demais campos … */}
           </div>
@@ -533,17 +649,69 @@ export function ApplicationDialog({ initial }: { initial?: Initial }) {
 }
 ```
 
-**Por que `useTransition` e não `useActionState`:** `useActionState` só entrega o estado no próximo render,
-então "fechar o dialog + dar toast" exige um `useEffect` observando o estado — que dispara de novo em
-re-render e é exatamente o padrão que o `react-hooks/set-state-in-effect` do ESLint sinaliza. Com
-`startTransition(async …)` o resultado está na mão, na mesma função. Reserve `useActionState` para
-formulários de página inteira, sem dialog e sem toast (é o que o `project-form.tsx` legado usa).
+### 5.3 `onSubmit` e não `action=` — o reset invisível do React 19 (A15)
+
+**O que esta seção ensinava errado** — o código deixou de fazer isso na bko-04, o texto só agora.
+ERRADO, não copie:
+
+```tsx
+{/* ERRADO: action recebe uma função do cliente: React entrega o FormData e
+    NÃO reseta o form sozinho (isso só acontece com Server Action direta). */}
+<form action={onSubmit}>{/* … */}</form>
+```
+
+A afirmação do comentário é falsa: **o React 19 reseta o `<form>` assim que a função de `action`
+termina — qualquer função**, Server Action ou não. O comentário ficou aqui, marcado, só para quem
+encontrar a cópia dele numa tela antiga saber que já foi medido e corrigido.
+
+**O estrago, medido.** `scripts/smoke-admin-write.mjs`, contato com e-mail inválido: depois do toast
+`stderr: E-mail inválido.`, todos os campos não controlados do diálogo voltavam vazios
+(`name=""`, `roleTitle=""`, `email=""`, `phone=""`, …). A tela mandava "confira os campos
+destacados" sobre campos que ela mesma tinha acabado de apagar; e com o obrigatório zerado o segundo
+clique em `[ salvar ]` nem submetia — a validação nativa do navegador barrava, sem toast e sem
+explicação.
+
+**A correção.** `onSubmit={(event) => submitKeepingValues(event, onSubmit)}`. O `preventDefault()`
+tira o formulário do fluxo de ação do React, e é o reset desse fluxo que estamos evitando. O handler
+recebe o mesmo `FormData` que o `action=` entregaria, então o corpo da função de submit não muda.
+
+- **É `(event, handler)`, não uma fábrica `handler => onSubmit`.** A fábrica seria CHAMADA durante a
+  renderização, e o lint do React Compiler reprova (`Cannot access refs during render`) qualquer
+  função criada assim que possa tocar num `ref` — é o caso de `settings/password-form.tsx`, que
+  chama `form.reset()`. Na forma atual a closure é criada, não executada.
+- **Não se perde realce progressivo:** uma função DE CLIENTE não roda sem JS, então estes
+  formulários já dependiam de JS.
+- **Quem fica com `action=`, de propósito:** os dois formulários que passam uma **Server Action
+  direta** — `src/components/admin/application-form.tsx` (via `useActionState`) e
+  `src/components/admin/login-form.tsx`. Lá o reset é o comportamento documentado do React e o
+  `action=` é o que faz o formulário funcionar sem JS; mudar aquilo é mexer no contrato do servidor.
+- **Quem QUER limpar depois do sucesso chama `form.reset()`** (a troca de senha, via `useRef`).
+  Agora essa chamada é a única que reseta, e não uma redundância ao lado de um reset invisível.
+- **O CI trava isso:** `src/components/admin/form-submit.test.tsx` tem o controle negativo
+  (`action={fn}` esvazia o formulário) ao lado da prova de que `submitKeepingValues` entrega o mesmo
+  `FormData` e não esvazia, mais o caso de ponta a ponta no `ContactDialog`.
+
+Usam `submitKeepingValues` hoje: `contacts/contact-dialog.tsx`, `contacts/reference-dialog.tsx`,
+`api-keys/create-key-dialog.tsx`, `settings/password-form.tsx`, `application-detail/key-fields-dialog.tsx`,
+`application-detail/log-event-dialog.tsx`, `generator-form.tsx` e `project-form.tsx`.
+
+**Por que `useTransition` e não `useActionState`:** `useActionState` só entrega o estado no próximo
+render, então "fechar o dialog + dar toast" exige um `useEffect` observando o estado — que dispara de
+novo em re-render e é exatamente o padrão que o `react-hooks/set-state-in-effect` do ESLint sinaliza.
+Com `startTransition(async …)` o resultado está na mão, na mesma função. Reserve `useActionState`
+para formulário de página inteira, sem dialog e sem toast — é o caso de
+`src/components/admin/application-form.tsx`, que redireciona no sucesso.
 
 ---
 
 ## 6. Receita (c) — deletar com confirmação forte
 
 Confirmação forte = o usuário **digita o nome exato** do registro. Nada de `confirm()` do browser.
+
+A instância concreta que já existe é `src/components/admin/delete-application-button.tsx`
+(`DeleteApplicationButton`) — ela importa `deleteApplication` ela mesma e recebe só props
+serializáveis (`id`, `company`, `folderName`). A versão genérica abaixo é o molde para a segunda
+entidade que precisar disso; até lá, o arquivo `confirm-delete-dialog.tsx` **não existe**.
 
 ```tsx
 // src/components/admin/confirm-delete-dialog.tsx  (crie no primeiro uso; é genérico)
@@ -725,12 +893,20 @@ toast.info("Nada mudou desde a última sincronização.");
       `env -u DATABASE_URL pnpm build`.
 - [ ] Filtro e página na **URL**, paginação no **banco** (`skip`/`take`), nunca `.filter()` no cliente.
 - [ ] Os 4 estados da tabela na ordem da §3.
+- [ ] Formulário com `onSubmit` + `submitKeepingValues`, nunca `action={fn}` de cliente (A15, §5.3).
 - [ ] `revalidatePath` em toda action que escreve.
 - [ ] `toast.success` / `toast.error` em toda mutação.
 - [ ] Nenhum `<SelectItem value="">`, nenhum `toLocaleDateString`, nenhum primitivo caseiro.
 - [ ] Rótulos em pt-BR.
 - [ ] Se criou rota nova que já está no `NAV` do `terminal/admin-tree-nav.tsx`, **vire o `ready` para `true`** e tire a entrada do bloco final de `# em breve`.
 - [ ] Se a rota é nova de verdade, acrescente-a à tabela de `terminal/admin-route-chrome.ts` (caminho + comando + destino do `cd ..`) e ao teste dela.
+- [ ] Listagem sem `<Card>`, cabeçalho em minúsculas, coluna de índice, larguras em `ch` (A12).
+- [ ] Atalho novo escrito na tela, e o nome acessível do controle começando pelo rótulo visível (A13).
+- [ ] Animação nova legível no último quadro; conferida com `node scripts/a11y-admin-axe.mjs --motion` (A14).
+- [ ] Token do vocabulário shadcn só dentro do admin (A7) — `pnpm lint` reprova o resto.
+- [ ] Varredura de acessibilidade da rota nova:
+      `ADMIN_EMAIL=… ADMIN_PASSWORD=… node scripts/a11y-admin-axe.mjs --only <rota>`
+      e a mesma coisa com `--keyboard`. Zero `critical`/`serious`, zero parada sem foco visível.
 - [ ] `pnpm lint` e `env -u DATABASE_URL pnpm build` verdes.
 
 ---
@@ -745,7 +921,14 @@ toast.info("Nada mudou desde a última sincronização.");
 | `src/components/admin/terminal/admin-status-bar.tsx` | `AdminStatusBar({ path })` — reusa `terminal.module.css` do site; só o controle `exit` |
 | `src/components/admin/terminal/admin-tree-nav.tsx` | `AdminTreeNav({ pathname, email })` · `NAV` · `isNavItemActive` · `activeNavHref` |
 | `src/components/admin/page-header.tsx` | `PageHeader({ title, description?, actions?, className? })` — `title` vira `<h1 class="sr-only">`: o título visível é o breadcrumb do chrome |
-| `src/components/admin/table-pager.tsx` | `TablePager` · `TableLoadingRow` · `TableEmptyRow` |
+| `src/components/admin/table-pager.tsx` | `TablePager` (linha de status + teclas `n`/`p`) · `TableLoadingRow` · `TableEmptyRow` · `ListingIndexHead`/`ListingIndexCell`/`LISTING_INDEX_WIDTH` · `isEditableTarget` |
+| `src/components/admin/form-submit.ts` | `submitKeepingValues(event, handler)` — submissão que não deixa o React 19 esvaziar o formulário (A15, §5.3) |
+| `src/components/admin/field-output.tsx` | `FieldHelp` · `RequiredHint` · `FieldError` (`stderr:`) · `describedBy` (A9) |
+| `src/components/admin/destructive-echo.tsx` | `DestructiveEcho({ command })` — o `$ rm -rf …` ilustrativo do diálogo de exclusão (A11) |
+| `src/app/admin/admin.css` | os VALORES dos tokens shadcn sob `.admin-root`, com o número de contraste medido ao lado de cada desvio · `.admin-listing` · `.admin-selection` · `.admin-progress` · a régua `──` do título de diálogo · o piso de `:focus-visible` |
+| `scripts/a11y-admin-axe.mjs` | varredura das 18 rotas + overlays: axe-core (padrão), `--keyboard`, `--motion`, `--width 390` |
+| `scripts/a11y-dialog-accname.mjs` | prova de que a régua `──` do título não vaza para o nome acessível |
+| `scripts/check-admin-utilities.ts` | a guarda do `pnpm lint` contra o vazamento do vocabulário shadcn (A7) |
 | `src/components/admin/status-badge.tsx` | `makeStatusBadge` · `StatusBadge` · `statusLabelFrom` · `FunnelStageBadge` · `SponsorshipBadge` · `ApplicationSourceBadge` · badges de status/categoria de projeto e visibilidade |
 | `src/lib/format.ts` | `formatDate` (data de calendário, UTC) · `formatDateTime` (instante, America/Sao_Paulo) · `formatMoney(value, currency = "BRL")` · `formatNumber` · `formatPercent` · `toDateInputValue` (inverso exato de `new Date("YYYY-MM-DD")`) · `EMPTY` (`"—"`) |
 | `src/components/ui/*` | 19 primitivos shadcn (style `radix-lyra`) |

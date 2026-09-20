@@ -123,8 +123,14 @@ function PagerAction({
   return (
     <button
       type="button"
-      // `[n]ext` é desenho; o nome acessível é a frase.
-      aria-label={`${accessibleName} (tecla ${label[1]})`}
+      /* O nome acessível COMEÇA pelo rótulo visível e depois explica.
+         A bko-03 tinha escrito só a frase ("Próxima página (tecla n)") com o
+         argumento de que `[n]ext` é desenho — e isso reprovava a SC 2.5.3
+         (Label in Name, nível A): quem comanda por voz diz o que lê na tela,
+         e "next" não estava no nome. Apanhado pelo Lighthouse na bko-05
+         (`label-content-name-mismatch`). O colchete entra junto porque o
+         rótulo visível é `[n]ext` inteiro. */
+      aria-label={`${label} — ${accessibleName} (tecla ${label[1]})`}
       title={title}
       disabled={disabled}
       onClick={onClick}

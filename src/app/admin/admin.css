@@ -130,8 +130,29 @@
 /* Every visible field in the admin goes through the shadcn primitives, which
    already carry `border-input` at rest and `border-ring` + `ring-ring/50` on
    focus. This is the floor for the elements that carry no focus class of
-   their own — links, <summary>, checkboxes, file pickers. */
-.admin-root :is(input[type="checkbox"], input[type="file"], button, a, summary):focus-visible {
+   their own — links, <summary>, checkboxes, file pickers.
+
+   Também cobre duas paradas de tabulação que NÃO são controles e por isso
+   passaram despercebidas até o percurso de teclado da bko-05:
+   • `[data-slot="tabs-content"]` — o Radix dá `tabindex="0"` ao painel da aba
+     (para o leitor de tela alcançar o conteúdo depois da lista de abas) e o
+     primitive do shadcn escreve `outline-none` em cima. O painel recebia foco
+     e não mostrava absolutamente nada.
+   • `[data-slot="table-container"]` — desde o Chrome 124 um contêiner com
+     rolagem é focável pelo teclado sem `tabindex`, porque rolar sem apontador
+     não tem outro caminho. Aparece no admin quando a listagem estoura a
+     largura (viewport estreito).
+   Este arquivo é importado do TypeScript, então fica fora de todo `@layer` e
+   vence a utility `outline-none` independentemente de especificidade. */
+.admin-root :is(
+  input[type="checkbox"],
+  input[type="file"],
+  button,
+  a,
+  summary,
+  [data-slot="tabs-content"],
+  [data-slot="table-container"]
+):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -201,6 +222,31 @@
 }
 .admin-root .admin-listing tbody tr.hover\:bg-transparent:hover :is(td, td *) {
   color: inherit;
+}
+
+/* ── a linha que abriu um overlay é uma linha SELECIONADA ─────────────────
+   O primitive do shadcn marca a linha que contém um controle expandido com
+   `has-aria-expanded:bg-muted/50` e a linha escolhida com
+   `data-[state=selected]:bg-muted`. As duas repintam o FUNDO e deixam cada
+   célula com a sua própria cor — exatamente o que a regra de hover acima
+   existe para impedir. Medido: meia opacidade de --sel sobre --bg compõe
+   #363948, onde --comment cai a 3.75:1 e --red a 3.68:1; em --sel cheio
+   (o caso `selected`) são 2.98 e 2.93. Encontrado pelo axe na bko-05: abrir
+   o diálogo de excluir numa listagem marcava a linha do gatilho e derrubava
+   o índice `001` e as etiquetas `[…]` em --comment abaixo de AA.
+   Mesma decisão do hover, então mesma pintura: --sel cheio e todo o texto
+   em --fg (10.63:1 sobre o meio-tom, 8.46:1 sobre --sel). */
+.admin-root .admin-listing tbody tr:has([aria-expanded="true"]),
+.admin-root .admin-listing tbody tr[data-state="selected"] {
+  background: var(--sel);
+}
+.admin-root .admin-listing tbody tr:has([aria-expanded="true"]) :is(td, td *),
+.admin-root .admin-listing tbody tr[data-state="selected"] :is(td, td *) {
+  color: var(--fg);
+}
+.admin-root .admin-listing tbody tr:has([aria-expanded="true"]) a.hover\:text-brand:hover,
+.admin-root .admin-listing tbody tr[data-state="selected"] a.hover\:text-brand:hover {
+  color: var(--brand);
 }
 
 /* The same selection, for output that is NOT a <table>: the Kanban card.

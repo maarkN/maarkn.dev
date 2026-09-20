@@ -23,6 +23,14 @@
 .top {
   position: sticky;
   top: 0;
+  /* Item de grid de `.shell`: sem isto o tamanho MÍNIMO automático do item é
+     o min-content do `<header class="bar">`, que contém o caminho da rota com
+     `white-space: nowrap` (`.barPath`, min-width: 8ch). O `overflow: hidden`
+     do próprio `.bar` NÃO zera o min-content do item pai, então a `.shell`
+     inteira ficava mais larga que a viewport e o documento rolava na
+     horizontal — 5 rotas a 390px e 13 a 320px, o limiar do SC 1.4.10 Reflow.
+     `.screen` e `.nav` já declaravam isto; `.top` tinha ficado de fora. */
+  min-width: 0;
   /* Below the skip link's `z-index: 20` (terminal.module.css `.skip`), like
      `page.module.css` does on the site: the bar is opaque and covers exactly
      the top-left corner the focused link appears in, so a tie here would
@@ -227,8 +235,18 @@ a.row:focus-visible {
   caret-color: var(--fg);
 }
 .ttyInput:focus {
-  outline: none;
   border-bottom-color: var(--purple);
+}
+/* O campo do tty NÃO passa pelos primitives do shadcn, então nada lhe dava
+   anel de foco: a regra antiga era `outline: none` mais a troca de cor de uma
+   borda de 1px. O percurso de teclado da bko-05 achou os dois campos do login
+   como as únicas paradas sem foco visível do admin inteiro. A troca de cor
+   fica (é ela que diz "o cursor está aqui" no desenho do terminal) e ganha
+   por baixo o mesmo anel de 2px que todo o resto do admin usa — --purple
+   sobre --bg mede 6.33:1, muito acima dos 3:1 de 1.4.11. */
+.ttyInput:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
 }
 .ttyInput:-webkit-autofill {
   -webkit-text-fill-color: var(--fg);

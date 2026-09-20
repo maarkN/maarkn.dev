@@ -1,9 +1,49 @@
-@import "tailwindcss";
-/* Enter/exit keyframes (`animate-in`, `fade-in-0`, `slide-in-from-top-2`…) used by
-   the Radix-backed primitives in src/components/ui. Tailwind v4 has no built-in
-   equivalent, so the utilities come from this package; without the import the
-   classes simply do not exist and every overlay pops in. */
+@import "tailwindcss" source("../../src");
+/* Enter/exit keyframes used by the Radix-backed primitives in
+   src/components/ui. Tailwind v4 has no built-in equivalent, so the utilities
+   come from this package; without the import the classes simply do not exist
+   and every overlay pops in.
+
+   RESOLVED in bko-05, two questions that had been left open:
+
+   (1) "It is in devDependencies and would break `pnpm install --prod`."
+       It stays there. This is a BUILD-time package, exactly like `tailwindcss`
+       and `@tailwindcss/postcss`, which are in devDependencies too — a `--prod`
+       install cannot build this project with or without it, so moving only
+       this one would be cargo cult. The Dockerfile's deps stage runs
+       `pnpm install --frozen-lockfile` (dev included) and the builder stage
+       consumes that same node_modules; production never installs at all.
+
+   (2) "It reaches the public site." It does, and it stays. Measured in the
+       built CSS: 17 `@property` declarations plus `@keyframes enter`/`exit`,
+       1796 bytes raw out of a 75 690-byte shared chunk — 2.4%, and near
+       nothing after gzip, because it is repetitive boilerplate. The import
+       CANNOT be moved to admin/admin.css: that file is pulled in by
+       TypeScript, not by CSS, and Tailwind only processes `@theme`/`@utility`
+       in the file that carries `@import "tailwindcss"` — the same constraint
+       that forced the token split below. Paying 2.4% of one chunk beats a
+       second Tailwind entry point. */
 @import "tw-animate-css";
+
+/* Por que o `source("../../src")` no @import acima.
+   Por padrão o Tailwind v4 varre o REPOSITÓRIO INTEIRO atrás de nomes de
+   classe, e não distingue markup de PROSA sobre markup. Qualquer arquivo que
+   apenas FALE sobre utilities — um script de lint que lista prefixos, uma
+   linha de documentação que cita as classes certas e as erradas, a nota de
+   uma change no openspec/ — emite aquelas regras no chunk CSS compartilhado
+   que TODA página pública carrega. Aconteceu três vezes só na bko-05:
+   scripts/check-admin-utilities.ts, o AGENTS.md do admin e o tasks.md desta
+   própria change, somando centenas de bytes de CSS morto ao site.
+   Perseguir arquivo por arquivo com `@source not` é corrida atrás do
+   prejuízo: o próximo documento reintroduz. `source(…)` fixa a raiz da
+   detecção automática em `src/`, que é o único lugar onde existe markup —
+   scripts/, openspec/, docs/ e os READMEs ficam de fora por construção.
+   A exclusão abaixo é o resto do mesmo raciocínio dentro de src/: os três
+   `.md` de lá são o AGENTS.md e duas licenças de fonte, nunca conteúdo
+   renderizado (o markdown do site vem do dictionary, em .ts).
+   ATENÇÃO: este arquivo CONTINUA sendo varrido como texto. Nenhum nome de
+   utility é escrito por extenso neste comentário de propósito. */
+@source not "../**/*.md";
 
 /* ════════════════════════════════════════════════
    THEME TOKENS — Dracula. `soft` is the default palette,
@@ -109,10 +149,14 @@
      The `inline` modifier is what makes the split work: the utility emits
      `var(--primary)` instead of resolving to a literal at build time, so
      the variable resolves in the scope where the class is used.
-     Consequence: `bg-background`, `text-muted-foreground`… exist site-wide
-     and resolve to nothing outside `.admin-root`. Keep them inside
-     src/app/admin and src/components/{ui,admin}; change 05 adds the grep
-     that fails the build otherwise. */
+     Consequence: the surface and text utilities built from the names below
+     exist site-wide and resolve to nothing outside `.admin-root`. Keep them
+     inside src/app/admin, src/components/ui and src/components/admin;
+     scripts/check-admin-utilities.ts (bko-05, inside `pnpm lint`) fails the
+     build otherwise — it reads this very block to know what to watch.
+     (No class name is spelled out in this comment on purpose: Tailwind v4
+     scans CSS files as plain text, so a utility written here in prose is
+     enough to emit the rule AND to trip the guard on its own file.) */
   --color-background:               var(--background);
   --color-foreground:               var(--foreground);
   --color-card:                     var(--card);

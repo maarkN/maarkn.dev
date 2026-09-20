@@ -191,13 +191,17 @@ function ClosedColumn({
       accentClassName={accentClassName}
       hiddenCount={Math.max(0, total - cards.length)}
       breakdown={
-        <p className="flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+        <p className="flex flex-wrap gap-x-2 text-[11px] text-muted-foreground">
           {CLOSED_STAGES.filter((stage) => data.counts[stage] > 0).map(
             (stage) => (
+              /* `min-h-6` = 24px: WCAG 2.2 SC 2.5.8 (Target Size, AA). Eram
+                 links de ~17.6px de altura empilhados com 2px entre as
+                 linhas — não passavam nem pelo tamanho mínimo nem pela
+                 exceção de espaçamento. A área cresce; o texto não. */
               <Link
                 key={stage}
                 href={listHref(filters, stage)}
-                className="hover:text-foreground hover:underline"
+                className="inline-flex min-h-6 items-center hover:text-foreground hover:underline"
               >
                 {stage}{" "}
                 <span className="tabular-nums">({data.counts[stage]})</span>

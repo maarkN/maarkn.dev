@@ -196,11 +196,20 @@ async function ContactRows({
                 {row.application && (
                   <Link
                     href={`/admin/applications/${row.application.id}`}
-                    className="inline-flex items-center gap-1 pt-0.5"
+                    /* `min-h-6` = 24px, WCAG 2.2 SC 2.5.8 (Target Size, AA):
+                       o link media 18px de altura e ficava a menos de 24px do
+                       link de e-mail da célula vizinha.
+                       `max-w-full` + `min-w-0` no texto: sem os dois o
+                       `truncate` não truncava (item de flex não encolhe
+                       abaixo do conteúdo) e o link VAZAVA até 200px para
+                       dentro da coluna de contato, cobrindo os links de
+                       e-mail/LinkedIn — o axe media o alvo vizinho como
+                       parcialmente obstruído. */
+                    className="inline-flex min-h-6 max-w-full items-center gap-1 pt-0.5"
                     title={row.application.folderName}
                   >
                     <FunnelStageBadge status={row.application.stage} />
-                    <span className="truncate text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+                    <span className="min-w-0 truncate text-[11px] text-muted-foreground underline-offset-2 hover:underline">
                       {row.application.folderName}
                     </span>
                   </Link>
@@ -447,6 +456,16 @@ function ReferencesTableFrame({ children }: { children: React.ReactNode }) {
 
 /* ── célula de contato, compartilhada pelas duas abas ─────────────────────── */
 
+/**
+ * Links de contato empilhados. `min-h-6` = 24px: WCAG 2.2 SC 2.5.8 (Target
+ * Size, AA). Os três mediam 16px de altura com 2px entre eles — abaixo do
+ * mínimo E abaixo do espaçamento que serve de alternativa, e o axe (regra
+ * `target-size`, serious) marcava os três. São links autônomos empilhados,
+ * não texto corrido, então a exceção "Inline" do critério não se aplica.
+ */
+const CONTACT_LINK =
+  "flex min-h-6 min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline";
+
 function ContactLinks({
   email,
   phone,
@@ -460,11 +479,11 @@ function ContactLinks({
     return <span className="text-muted-foreground">{EMPTY}</span>;
   }
   return (
-    <div className="space-y-0.5 text-xs">
+    <div className="text-xs">
       {email && (
         <a
           href={`mailto:${email}`}
-          className="flex min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={CONTACT_LINK}
           title={email}
         >
           <Mail className="size-3.5 shrink-0" />
@@ -476,7 +495,7 @@ function ContactLinks({
       {phone && (
         <a
           href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-          className="flex min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={CONTACT_LINK}
           title={phone}
         >
           <Phone className="size-3.5 shrink-0" />
@@ -494,7 +513,7 @@ function ContactLinks({
           // `noreferrer` também: o Referer levaria a URL do backoffice
           // (inclusive os filtros) para fora.
           rel="noreferrer"
-          className="flex min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={CONTACT_LINK}
           title={linkedinUrl}
         >
           <ExternalLink className="size-3.5 shrink-0" />
