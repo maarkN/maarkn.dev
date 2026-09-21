@@ -122,6 +122,18 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
+  typescript: {
+    // The Docker build on the EC2 sets SKIP_TYPECHECK=1 (see Dockerfile). The
+    // type check is not skipped, it is MOVED: the `ci` job in
+    // .github/workflows/deploy.yml runs this same `next build` with the check
+    // on, and `deploy` has `needs: ci`, so nothing reaches the EC2 without
+    // passing it. Running it twice is what broke the deploy of 2026-09-20: on
+    // the EC2 the check took 2.9 min before the backoffice landed, and after it
+    // the process was OOM-killed 22 min in (`failed to execute bake: signal:
+    // killed`), while the GitHub runner does the same check in ~6 s.
+    // Never set SKIP_TYPECHECK anywhere a type check has not already run.
+    ignoreBuildErrors: process.env.SKIP_TYPECHECK === "1",
+  },
   experimental: {
     // Tree-shake barrel imports from these heavy packages (smaller client JS).
     optimizePackageImports: ["lucide-react"],

@@ -32,6 +32,9 @@ ENV NEXT_PUBLIC_TERMINAL_ASK_FALLBACK=$NEXT_PUBLIC_TERMINAL_ASK_FALLBACK
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm exec prisma generate
+# Type checking happens in CI, not here — see `typescript.ignoreBuildErrors`
+# in next.config.ts. This host OOM-killed the build during the check.
+ENV SKIP_TYPECHECK=1
 RUN pnpm run build
 
 # --- runner: minimal runtime image ---

@@ -57,7 +57,7 @@ jobs:
     # so GITHUB_TOKEN gets nothing.
     permissions: {}
     steps:
-      - name: SSH deploy (git pull + docker compose up --build)
+      - name: SSH deploy (sync, build, migrate, restart)
         # Pinned to the commit v1.2.0 pointed at. A tag is mutable: whoever can
         # move it in a third-party repo would get the production SSH key handed
         # to their code on the next deploy. Bump deliberately, re-reading the
@@ -78,12 +78,41 @@ jobs:
             git fetch --prune origin
             git reset --hard origin/main   # .env is gitignored, so it survives
 
+            # Build BEFORE migrating. `migrate` is built from this checkout's
+            # `builder` stage, but `docker compose run` reuses an existing image
+            # instead of rebuilding it — so migrating first ran the PREVIOUS
+            # deploy's migrations folder and reported "No pending migrations"
+            # while new ones were waiting. The new app would then have started
+            # against the old schema.
+            # Two separate commands on purpose: one `build app migrate` lets
+            # compose/bake build both targets in parallel, i.e. two `next build`
+            # at once on a host that OOM-killed a single one. `migrate` goes
+            # first (it IS the builder stage); `app` then reuses its cache.
+            echo "==> Building images"
+            docker compose -f docker-compose.prod.yml build migrate
+            docker compose -f docker-compose.prod.yml build app
+
             echo "==> Applying database migrations"
             docker compose -f docker-compose.prod.yml up -d postgres
+            docker compose -f docker-compose.prod.yml exec -T postgres \
+              sh -c 'until pg_isready -q -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done'
+
+            # A dump before EVERY migrate is the only undo for a migration.
+            # The first deploy of the backoffice applies six at once, one of
+            # which converts and then DROPS JobApplication. Custom format (-Fc)
+            # so pg_restore can pick tables; the 5 most recent are kept.
+            # `set -e` aborts here if the dump fails: never migrate without a
+            # way back.
+            mkdir -p "$HOME/db-backups"
+            docker compose -f docker-compose.prod.yml exec -T postgres \
+              sh -c 'pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+              > "$HOME/db-backups/pre-deploy-$(date -u +%Y%m%dT%H%M%SZ).dump"
+            ls -1t "$HOME"/db-backups/pre-deploy-*.dump | tail -n +6 | xargs -r rm --
+
             docker compose -f docker-compose.prod.yml run --rm migrate
 
-            echo "==> Building & restarting the app"
-            docker compose -f docker-compose.prod.yml up -d --build app traefik
+            echo "==> Restarting the app"
+            docker compose -f docker-compose.prod.yml up -d app traefik
 
             echo "==> Pruning dangling images"
             docker image prune -f
