@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  manifestFilters,
   multipartManifest,
   parseManifestRequest,
   PROTOCOL_HEADERS,
@@ -19,17 +20,18 @@ export async function GET(request: Request) {
     parsed.platform,
     parsed.runtimeVersion,
   );
-  if (!stored) return new Response(null, { status: 204, headers: PROTOCOL_HEADERS });
+  const headers = { ...PROTOCOL_HEADERS, "expo-manifest-filters": manifestFilters(parsed.channel) };
+  if (!stored) return new Response(null, { status: 204, headers });
 
   if (!parsed.multipart) {
     return new Response(stored.manifest, {
       headers: {
-        ...PROTOCOL_HEADERS,
+        ...headers,
         "content-type": "application/expo+json",
         "expo-signature": stored.signature,
       },
     });
   }
   const { body, contentType } = multipartManifest(stored.manifest, stored.signature, randomUUID());
-  return new Response(body, { headers: { ...PROTOCOL_HEADERS, "content-type": contentType } });
+  return new Response(body, { headers: { ...headers, "content-type": contentType } });
 }

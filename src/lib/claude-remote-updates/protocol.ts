@@ -53,6 +53,15 @@ export const PROTOCOL_HEADERS = {
   "cache-control": "private, max-age=0",
 } as const;
 
+/**
+ * `expo-manifest-filters` for a channel: the app sets aside stored updates whose signed
+ * `metadata.channel` differs, so switching channels never keeps running the other channel's
+ * newer update. Updates without the key (published before channels) still pass.
+ */
+export function manifestFilters(channel: string): string {
+  return `channel="${channel}"`;
+}
+
 /** `multipart/mixed` body with a single signed `manifest` part, byte-exact. */
 export function multipartManifest(
   manifest: string,
