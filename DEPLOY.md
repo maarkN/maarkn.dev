@@ -172,11 +172,23 @@ docker compose -f docker-compose.prod.yml up -d --build app         # rebuild + 
    repo → Settings → Actions → Runners → *New self-hosted runner* (it expires in
    about an hour), then, as the same user that owns the clone:
    ```bash
-   ./scripts/setup-deploy-runner.sh <REGISTRATION_TOKEN>
+   ./scripts/setup-deploy-runner.sh <REGISTRATION_TOKEN> ~/maarkn.dev
    ```
-   The script checks the host (docker access, arch, swap), installs the runner as
-   a systemd service with the `maarkn-prod` label that `runs-on` asks for, and
-   prints what to close afterwards.
+   The second argument is optional but worth passing: the script then verifies
+   the two things the deploy does first — that the path is a git clone and that
+   this user's git can actually reach the remote — instead of letting the first
+   deploy discover it.
+
+   It also checks docker access, architecture and swap, installs the runner's
+   .NET runtime dependencies (a minimal Ubuntu lacks libicu and registration
+   aborts without it), and installs the runner as a systemd service with the
+   `maarkn-prod` label that `runs-on` asks for.
+
+   On a droplet the user is usually `root`, and that is allowed: the deploy's job
+   is to drive `docker compose`, so its user has to be in the `docker` group —
+   and that group is already root-equivalent, since anything that reaches the
+   socket can mount the host. A separate `deploy` user in that group would buy
+   appearance, not safety.
 
    There is **no SSH key for GitHub to hold**: the runner dials out. That removed
    an inbound port open to the whole internet, a host address in a secret that
