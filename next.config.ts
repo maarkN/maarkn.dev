@@ -104,6 +104,12 @@ export const shortLinks = [
     permanent: false,
   },
   {
+    source: "/claude-remote/install.ps1",
+    destination:
+      "https://raw.githubusercontent.com/maarkN/claude-remote/main/install.ps1",
+    permanent: false,
+  },
+  {
     source: "/claude-remote",
     destination: "https://github.com/maarkN/claude-remote",
     permanent: false,
