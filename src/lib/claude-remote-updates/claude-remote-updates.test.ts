@@ -198,6 +198,8 @@ describe("routes", () => {
     const fetchFor = (channel?: string) =>
       getManifest(new Request(`${ORIGIN}/m`, { headers: appHeaders("ios", "rt-1", channel) }));
     expect((await fetchFor("development")).status).toBe(200);
+    expect((await fetchFor("development")).headers.get("expo-manifest-filters")).toBe('channel="development"');
+    expect((await fetchFor()).headers.get("expo-manifest-filters")).toBe('channel="production"');
     expect((await fetchFor()).status).toBe(204);
     expect((await fetchFor("production")).status).toBe(204);
 
