@@ -134,18 +134,30 @@ docker compose -f docker-compose.prod.yml up -d --build app         # rebuild + 
 ## 8. CI/CD (GitHub Actions)
 `.github/workflows/deploy.yml` runs on every push to `main`:
 1. **CI** (GitHub-hosted runner): `pnpm install` → `pnpm lint` → `pnpm build`.
-2. **Deploy** (only if CI passes): SSH into the EC2, `git reset --hard origin/main`,
-   apply migrations, then `docker compose up -d --build`. The **build happens on the
-   EC2** (this is the "build-on-host" strategy), so the instance needs Docker and
-   enough RAM.
+2. **Deploy** (only if CI passes): runs **on the droplet itself**, through a
+   self-hosted runner, and does `git reset --hard <the commit CI tested>` → build →
+   dump the database → migrate → restart. The **build happens on the droplet**
+   (the "build-on-host" strategy), so the box needs Docker and enough RAM.
 
-### What to do on the EC2 (one-time)
+   The type check does **not** run here: the `ci` job already does it on a
+   GitHub-hosted runner, and `deploy` has `needs: ci`. Running it twice is what
+   killed a deploy — the droplet was OOM-killed 22 minutes into the check, while
+   the GitHub runner does it in ~6 s. `SKIP_TYPECHECK=1` in the Dockerfile moves
+   it, it does not remove it.
+
+   The order matters: `migrate` is built from the `builder` stage, and
+   `docker compose run` reuses an existing image instead of rebuilding. Migrating
+   before building therefore applied the *previous* deploy's migrations and
+   reported "No pending migrations" with six waiting — the new app would have
+   started against the old schema.
+
+### What to do on the droplet (one-time)
 1. **Install Docker + Compose v2** and add your login user to the `docker` group:
    ```bash
    sudo usermod -aG docker "$USER" && newgrp docker
    ```
 2. **Clone the repo** where the deploy will run from (this path becomes the
-   `EC2_APP_DIR` secret). The repo root already contains `docker-compose.prod.yml`:
+   `DEPLOY_APP_DIR` secret). The repo root already contains `docker-compose.prod.yml`:
    ```bash
    git clone git@github.com:maarkN/maarkn.dev.git ~/maarkn.dev
    ```
@@ -156,12 +168,21 @@ docker compose -f docker-compose.prod.yml up -d --build app         # rebuild + 
    printf 'Host github.com\n  IdentityFile ~/.ssh/github_deploy\n  IdentitiesOnly yes\n' >> ~/.ssh/config
    ```
    (Or clone via HTTPS with a PAT — but a deploy key is cleaner.)
-3. **Create the SSH key GitHub Actions uses to log in** to the box:
+3. **Register the box as the deploy runner.** Get a registration token from
+   repo → Settings → Actions → Runners → *New self-hosted runner* (it expires in
+   about an hour), then, as the same user that owns the clone:
    ```bash
-   ssh-keygen -t ed25519 -f ~/.ssh/gh_actions -N ""
-   cat ~/.ssh/gh_actions.pub >> ~/.ssh/authorized_keys   # authorize it
-   cat ~/.ssh/gh_actions                                 # PRIVATE key → GitHub secret EC2_SSH_KEY
+   ./scripts/setup-deploy-runner.sh <REGISTRATION_TOKEN>
    ```
+   The script checks the host (docker access, arch, swap), installs the runner as
+   a systemd service with the `maarkn-prod` label that `runs-on` asks for, and
+   prints what to close afterwards.
+
+   There is **no SSH key for GitHub to hold**: the runner dials out. That removed
+   an inbound port open to the whole internet, a host address in a secret that
+   went stale when the droplet's IP changed (a month of
+   `dial tcp ***:22: i/o timeout`), and the production private key sitting in a
+   GitHub secret.
 4. **Create `~/maarkn.dev/.env`** with the production values from [§2](#2-production-env).
 5. **Run the first deploy manually** ([§3](#3-database--migrations)–[§6](#6-start-the-app--traefik))
    — seed/ingest are first-time only and are **not** re-run by CI.
@@ -171,19 +192,21 @@ docker compose -f docker-compose.prod.yml up -d --build app         # rebuild + 
    sudo mkswap /swapfile && sudo swapon /swapfile
    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
    ```
-7. **Security Group**: inbound **80** + **443** (public), and **22** for the GitHub
-   runner. GitHub-hosted runners have dynamic IPs, so either allow 22 from
-   `0.0.0.0/0` with **key-only auth** (disable password login, add fail2ban), or use
-   a self-hosted runner / AWS SSM tunnel to avoid exposing SSH at all.
+7. **Firewall**: inbound **80** + **443** (public) and **22 for your own IP only**.
+   The deploy no longer needs 22 — that is the point of the runner. Leaving it open
+   to `0.0.0.0/0` was only ever a workaround for GitHub's runner IPs being
+   unenumerable.
 
 ### GitHub secrets (repo → Settings → Secrets and variables → Actions)
 | Secret | Value |
 |---|---|
-| `EC2_HOST` | Public IP or DNS of the instance |
-| `EC2_USER` | Login user (`ubuntu`, `ec2-user`, …) |
-| `EC2_SSH_KEY` | **Private** key from step 3 (`~/.ssh/gh_actions`) |
-| `EC2_APP_DIR` | Absolute path to the clone, e.g. `/home/ubuntu/maarkn.dev` |
-| `EC2_PORT` | *(optional)* SSH port, defaults to `22` |
+| `DEPLOY_APP_DIR` | Absolute path to the clone, e.g. `/home/maarkn/maarkn.dev` |
+
+That is the only one left. `EC2_APP_DIR` still works (the workflow reads either),
+so the rename can wait; the box is a DigitalOcean droplet, not EC2, and the old
+prefix lies. **Delete `EC2_HOST`, `EC2_USER` and `EC2_SSH_KEY`** once a deploy has
+gone through the runner — the runner makes them dead weight, and the third was a
+production private key held by GitHub.
 
 The `deploy` job targets a GitHub **Environment** named `production` — create it
 under repo → Settings → Environments. Leave it unprotected for auto-deploy, or add

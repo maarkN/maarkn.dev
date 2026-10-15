@@ -1,4 +1,4 @@
-# Production self-host stack for maarkn.dev (EC2 / any Docker host).
+# Production self-host stack for maarkn.dev (a DigitalOcean droplet, or any Docker host).
 # Next app (built from Dockerfile) + Postgres/pgvector + Traefik v3.6 (TLS).
 #
 #   docker compose -f docker-compose.prod.yml up -d --build
@@ -13,7 +13,8 @@
 #   docker compose -f docker-compose.prod.yml run --rm migrate
 # (the `migrate` service reuses the build and runs `prisma migrate deploy`).
 #
-# EC2 security group: open inbound 80 (HTTP→HTTPS redirect + ACME) and 443 (HTTPS).
+# Host firewall: open inbound 80 (HTTP→HTTPS redirect + ACME) and 443 (HTTPS).
+# Port 22 only from your own IP — the deploy runs on a runner that lives here.
 # Point an A record for ${APP_DOMAIN} at the instance's public IP before `up`.
 
 services:

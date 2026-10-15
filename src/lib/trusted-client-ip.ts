@@ -16,7 +16,7 @@ import { isIP } from "node:net";
  * ---------------------------------------------------------------------------
  * A regra: ULTIMO SALTO CONFIAVEL, nunca o valor mais a esquerda
  * ---------------------------------------------------------------------------
- * Premissa de topologia (ver `docker-compose.prod.yml`): na EC2 o container da
+ * Premissa de topologia (ver `docker-compose.prod.yml`): no droplet o container da
  * app nao publica porta (`expose: 5050`, sem `ports:`) e so o Traefik v3.6 o
  * alcanca pela rede `web`. Existe EXATAMENTE UM salto confiavel na frente. O
  * Traefik, na configuracao padrao (sem `forwardedHeaders.trustedIPs`),

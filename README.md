@@ -104,7 +104,7 @@ The full spec of every command (arguments, output, errors) lives in `.docs/desig
 | Blog | Ghost CMS Content API (headless, ISR) |
 | Email | Resend (optional) |
 | Tests | Vitest (pure modules + a few jsdom component tests) |
-| Infra | Docker multi-stage image, Traefik v3 (TLS), GitHub Actions deploy to EC2 |
+| Infra | Docker multi-stage image, Traefik v3 (TLS), GitHub Actions deploy to a DigitalOcean droplet |
 
 ---
 
@@ -161,7 +161,7 @@ pnpm db:studio    # Prisma Studio
 
 ### Deploying
 
-The production stack (Docker image, Traefik, Postgres, GitHub Actions → EC2) is documented in [`DEPLOY.md`](./DEPLOY.md).
+The production stack (Docker image, Traefik, Postgres, GitHub Actions → droplet) is documented in [`DEPLOY.md`](./DEPLOY.md).
 
 ---
 

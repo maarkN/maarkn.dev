@@ -13,14 +13,14 @@ embeds each chunk with OpenAI and stores them in the `KnowledgeChunk` table
 ## These files are NOT committed
 
 The real content lives only on the server. Everything in this folder **except this
-README** is git-ignored, so you copy your files straight onto the EC2 and they
+README** is git-ignored, so you copy your files straight onto the droplet and they
 survive every deploy (`git reset --hard` never touches ignored files):
 
 ```bash
-# from your machine → the repo checkout on the EC2:
+# from your machine → the repo checkout on the droplet:
 scp ./knowledge/cv.md            ubuntu@<EC2_HOST>:~/maarkn.dev/knowledge/
 scp -r ./knowledge/projects      ubuntu@<EC2_HOST>:~/maarkn.dev/knowledge/
-# then, on the EC2:
+# then, on the droplet:
 make ingest
 ```
 
