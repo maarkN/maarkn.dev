@@ -77,6 +77,10 @@ jobs:
           APP_DIR: ${{ secrets.DEPLOY_APP_DIR || secrets.EC2_APP_DIR }}
         run: |
           set -euo pipefail
+          # The runner's systemd service starts without HOME, and `set -u` turns
+          # the backup path below into "HOME: unbound variable". Use the home of
+          # the user the runner runs as (root on the droplet → /root).
+          export HOME="${HOME:-$(getent passwd "$(id -u)" | cut -d: -f6)}"
           cd "$APP_DIR"
 
           # Deploy the exact commit that passed `ci`, not whatever `main` points
