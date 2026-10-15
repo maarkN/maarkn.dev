@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ASSET_HASH, ASSETS_PATH, PLATFORMS, RUNTIME_VERSION } from "./protocol";
+import { ASSET_HASH, ASSETS_PATH, DEFAULT_CHANNEL, isChannel, PLATFORMS, RUNTIME_VERSION } from "./protocol";
 
 export const MAX_MANIFEST_BYTES = 1024 * 1024;
 export const MAX_ASSET_BYTES = 50 * 1024 * 1024;
@@ -24,6 +24,7 @@ const Manifest = z.object({
 
 export const PublishBody = z.object({
   platform: z.enum(PLATFORMS),
+  channel: z.string().refine(isChannel).default(DEFAULT_CHANNEL),
   runtimeVersion: z.string().regex(RUNTIME_VERSION),
   /** The exact JSON string that was signed; stored and served as is. */
   manifest: z.string().min(2).max(MAX_MANIFEST_BYTES),

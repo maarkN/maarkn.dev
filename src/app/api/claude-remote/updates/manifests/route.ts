@@ -4,9 +4,10 @@ import { checkManifest, MAX_MANIFEST_BYTES, PublishBody } from "@/lib/claude-rem
 
 export const runtime = "nodejs";
 
-/** Stores a manifest signed by the publisher; its assets must already be uploaded. */
+/** Stores a manifest signed by the publisher in its channel; its assets must already be uploaded. */
 export async function POST(request: Request) {
   if (!publishEnabled()) return new Response("Not found", { status: 404 });
+  // Any publish token gets this far; the channel check comes once the body names the channel.
   if (!authorized(request.headers)) return new Response("Unauthorized", { status: 401 });
   const text = await request.text();
   if (text.length > MAX_MANIFEST_BYTES * 2) return Response.json({ error: "too_large" }, { status: 413 });
@@ -19,6 +20,9 @@ export async function POST(request: Request) {
   }
   const body = PublishBody.safeParse(raw);
   if (!body.success) return Response.json({ error: "body_invalid" }, { status: 400 });
+  if (!authorized(request.headers, body.data.channel)) {
+    return Response.json({ error: "channel_not_allowed" }, { status: 403 });
+  }
   const checked = checkManifest(body.data);
   if (!checked.ok) return Response.json({ error: checked.error }, { status: 400 });
 
@@ -28,7 +32,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "asset_missing", hash }, { status: 409 });
     }
   }
-  await store.putManifest(body.data.platform, body.data.runtimeVersion, checked.manifest, {
+  await store.putManifest(body.data.channel, body.data.platform, body.data.runtimeVersion, checked.manifest, {
     manifest: body.data.manifest,
     signature: body.data.signature,
   });
