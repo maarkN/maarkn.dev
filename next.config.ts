@@ -88,6 +88,29 @@ const CSP_REPORT_ONLY = [
 const HSTS = "max-age=31536000";
 
 /**
+ * Short links for Claude Remote (https://github.com/maarkN/claude-remote).
+ * `curl -fsSL https://maarkn.dev/claude-remote/install.sh | bash` follows the
+ * redirect to the installer on the repo's `main`, so the script has a single
+ * source of truth. Temporary (307) on purpose: the target can move without
+ * clients having cached the old one. `redirects()` runs before `src/proxy.ts`,
+ * so `/claude-remote` is never rewritten to a locale. Exported for
+ * `src/lib/redirects.test.ts`.
+ */
+export const shortLinks = [
+  {
+    source: "/claude-remote/install.sh",
+    destination:
+      "https://raw.githubusercontent.com/maarkN/claude-remote/main/install.sh",
+    permanent: false,
+  },
+  {
+    source: "/claude-remote",
+    destination: "https://github.com/maarkN/claude-remote",
+    permanent: false,
+  },
+];
+
+/**
  * Sent on every response. Exported for `src/lib/security-headers.test.ts`.
  */
 export const securityHeaders: { key: string; value: string }[] = [
@@ -140,6 +163,9 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
+  },
+  async redirects() {
+    return shortLinks;
   },
 };
 
