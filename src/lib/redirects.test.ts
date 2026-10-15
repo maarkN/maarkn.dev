@@ -16,6 +16,15 @@ describe("Claude Remote short links", () => {
     });
   });
 
+  it("point the Windows installer at the raw script on main, temporarily", () => {
+    const installer = shortLinks.find((r) => r.source === "/claude-remote/install.ps1");
+    expect(installer).toEqual({
+      source: "/claude-remote/install.ps1",
+      destination: "https://raw.githubusercontent.com/maarkN/claude-remote/main/install.ps1",
+      permanent: false,
+    });
+  });
+
   it("only send to https destinations", () => {
     for (const link of shortLinks) expect(link.destination).toMatch(/^https:\/\//);
   });
