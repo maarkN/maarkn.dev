@@ -52,7 +52,8 @@ CHAT_IP_SALT=<openssl rand -base64 32>   # strongly recommended: see the note be
 NEXT_PUBLIC_TERMINAL_ASK_FALLBACK=false
 
 # --- optional ---
-# CLAUDE_REMOTE_UPDATES_TOKEN=<openssl rand -base64 32>  # enables publishing Claude Remote OTA updates
+# CLAUDE_REMOTE_UPDATES_TOKEN=<openssl rand -base64 32>      # publishes Claude Remote OTA updates to any channel
+# CLAUDE_REMOTE_UPDATES_DEV_TOKEN=<openssl rand -base64 32>  # only the `development` channel (kept in GitHub Actions)
 RESEND_API_KEY=
 GHOST_URL=
 GHOST_CONTENT_API_KEY=
@@ -230,8 +231,10 @@ under repo → Settings → Environments. Leave it unprotected for auto-deploy, 
 - **Database** → `maarkn-pg-data` volume. Back both up (`docker run --rm -v ...`).
 - **Claude Remote OTA updates** → `claude-remote-updates` volume
   (`/data/claude-remote-updates`): content-addressed assets and signed manifests served
-  under `/api/claude-remote/updates/` (Expo Updates protocol). Publishing needs
-  `CLAUDE_REMOTE_UPDATES_TOKEN` in `.env` (without it the publish routes answer 404) and
+  under `/api/claude-remote/updates/` (Expo Updates protocol), per channel
+  (`expo-channel-name`, default `production`). Publishing needs `CLAUDE_REMOTE_UPDATES_TOKEN`
+  (any channel) or `CLAUDE_REMOTE_UPDATES_DEV_TOKEN` (only `development`) in `.env`
+  (without either the publish routes answer 404) and
   is done from the Claude Remote repo (`pnpm --filter @claude-remote/mobile update:publish`).
   The manifests arrive already signed: the signing key never lives on the server. Losing
   the volume only means publishing again.

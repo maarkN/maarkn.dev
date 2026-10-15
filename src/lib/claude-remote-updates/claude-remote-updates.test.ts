@@ -1,5 +1,5 @@
 import { generateKeyPairSync, randomUUID, sign } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -12,22 +12,27 @@ import { sha256Base64Url, UpdatesStore } from "./store";
 
 const ORIGIN = "https://maarkn.dev";
 const TOKEN = "test-token-0123456789";
+const DEV_TOKEN = "dev-token-0123456789";
 let dir = "";
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), "cr-updates-"));
   process.env.CLAUDE_REMOTE_UPDATES_DIR = dir;
   process.env.CLAUDE_REMOTE_UPDATES_TOKEN = TOKEN;
+  process.env.CLAUDE_REMOTE_UPDATES_DEV_TOKEN = DEV_TOKEN;
 });
 afterEach(async () => {
   delete process.env.CLAUDE_REMOTE_UPDATES_DIR;
   delete process.env.CLAUDE_REMOTE_UPDATES_TOKEN;
+  delete process.env.CLAUDE_REMOTE_UPDATES_DEV_TOKEN;
   await rm(dir, { recursive: true, force: true });
 });
 
 const ctx = (hash: string) => ({ params: Promise.resolve({ hash }) });
 const auth = { authorization: `Bearer ${TOKEN}` };
-const appHeaders = (platform = "ios", runtime = "rt-1") => ({
+const devAuth = { authorization: `Bearer ${DEV_TOKEN}` };
+const appHeaders = (platform = "ios", runtime = "rt-1", channel?: string) => ({
+  ...(channel ? { "expo-channel-name": channel } : {}),
   "expo-protocol-version": "1",
   "expo-platform": platform,
   "expo-runtime-version": runtime,
@@ -68,8 +73,14 @@ describe("protocol", () => {
       ok: true,
       platform: "ios",
       runtimeVersion: "rt-1",
+      channel: "production",
       multipart: true,
     });
+    expect(parseManifestRequest(new Headers(appHeaders("ios", "rt-1", "development")))).toMatchObject({
+      channel: "development",
+    });
+    expect(parseManifestRequest(new Headers(appHeaders("ios", "rt-1", "../x")))).toMatchObject({ status: 400 });
+    expect(parseManifestRequest(new Headers(appHeaders("ios", "rt-1", "ios")))).toMatchObject({ status: 400 });
     expect(parseManifestRequest(new Headers({ ...appHeaders(), "expo-protocol-version": "0" }))).toMatchObject({
       status: 406,
     });
@@ -89,7 +100,10 @@ describe("auth", () => {
     expect(authorized(new Headers(auth))).toBe(true);
     expect(authorized(new Headers({ authorization: "Bearer nope" }))).toBe(false);
     expect(authorized(new Headers())).toBe(false);
-    expect(authorized(new Headers(auth), {})).toBe(false);
+    expect(authorized(new Headers(auth), null, {})).toBe(false);
+    expect(authorized(new Headers(devAuth), "development")).toBe(true);
+    expect(authorized(new Headers(devAuth), "production")).toBe(false);
+    expect(authorized(new Headers(devAuth))).toBe(true);
   });
 });
 
@@ -172,8 +186,52 @@ describe("routes", () => {
     expect((await publish({ platform: "ios", runtimeVersion: "rt-1", manifest: ok, signature: signed(ok) }, {})).status).toBe(401);
   });
 
+  it("keeps channels apart and limits the development token to development", async () => {
+    const { hash } = await upload("dev bundle");
+    const dev = manifestFor(hash, "2026-10-15T13:00:00.000Z");
+    const body = { platform: "ios", runtimeVersion: "rt-1", manifest: dev, signature: signed(dev) };
+
+    expect((await publish({ ...body, channel: "production" }, devAuth)).status).toBe(403);
+    expect((await publish(body, devAuth)).status).toBe(403); // no channel = production
+    expect((await publish({ ...body, channel: "development" }, devAuth)).status).toBe(201);
+
+    const fetchFor = (channel?: string) =>
+      getManifest(new Request(`${ORIGIN}/m`, { headers: appHeaders("ios", "rt-1", channel) }));
+    expect((await fetchFor("development")).status).toBe(200);
+    expect((await fetchFor()).status).toBe(204);
+    expect((await fetchFor("production")).status).toBe(204);
+
+    // The full token publishes anywhere; the dev token can upload assets.
+    const prod = manifestFor(hash, "2026-10-15T14:00:00.000Z");
+    expect((await publish({ ...body, manifest: prod, signature: signed(prod) }, auth)).status).toBe(201);
+    expect(await (await fetchFor()).text()).toContain(prod);
+    expect(await (await fetchFor("development")).text()).toContain(dev);
+    const bytes = new TextEncoder().encode("asset by ci");
+    const put = await putAsset(
+      new Request(`${ORIGIN}/x`, { method: "PUT", headers: devAuth, body: bytes }),
+      ctx(sha256Base64Url(bytes)),
+    );
+    expect(put.status).toBe(201);
+  });
+
+  it("serves manifests published before channels as production", async () => {
+    const { hash } = await upload("legacy");
+    const legacy = manifestFor(hash, "2026-10-15T09:00:00.000Z");
+    const legacyDir = join(dir, "manifests", "ios", "rt-1");
+    await mkdir(legacyDir, { recursive: true });
+    await writeFile(join(legacyDir, `20261015T090000000Z-${randomUUID()}.json`), JSON.stringify({ manifest: legacy, signature: signed(legacy) }));
+    const res = await getManifest(new Request(`${ORIGIN}/m`, { headers: appHeaders() }));
+    expect(await res.text()).toContain(legacy);
+
+    // A newer production update wins over the legacy one.
+    const newer = manifestFor(hash, "2026-10-15T10:00:00.000Z");
+    await publish({ platform: "ios", runtimeVersion: "rt-1", manifest: newer, signature: signed(newer) });
+    expect(await (await getManifest(new Request(`${ORIGIN}/m`, { headers: appHeaders() }))).text()).toContain(newer);
+  });
+
   it("is off without a token", async () => {
     delete process.env.CLAUDE_REMOTE_UPDATES_TOKEN;
+    delete process.env.CLAUDE_REMOTE_UPDATES_DEV_TOKEN;
     expect((await publish({}, auth)).status).toBe(404);
   });
 });
