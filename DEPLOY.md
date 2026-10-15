@@ -52,6 +52,7 @@ CHAT_IP_SALT=<openssl rand -base64 32>   # strongly recommended: see the note be
 NEXT_PUBLIC_TERMINAL_ASK_FALLBACK=false
 
 # --- optional ---
+# CLAUDE_REMOTE_UPDATES_TOKEN=<openssl rand -base64 32>  # enables publishing Claude Remote OTA updates
 RESEND_API_KEY=
 GHOST_URL=
 GHOST_CONTENT_API_KEY=
@@ -227,6 +228,13 @@ under repo → Settings → Environments. Leave it unprotected for auto-deploy, 
 ## Persistence & backups
 - **Uploaded images** → `maarkn-uploads` volume (`/data/uploads` in the app).
 - **Database** → `maarkn-pg-data` volume. Back both up (`docker run --rm -v ...`).
+- **Claude Remote OTA updates** → `claude-remote-updates` volume
+  (`/data/claude-remote-updates`): content-addressed assets and signed manifests served
+  under `/api/claude-remote/updates/` (Expo Updates protocol). Publishing needs
+  `CLAUDE_REMOTE_UPDATES_TOKEN` in `.env` (without it the publish routes answer 404) and
+  is done from the Claude Remote repo (`pnpm --filter @claude-remote/mobile update:publish`).
+  The manifests arrive already signed: the signing key never lives on the server. Losing
+  the volume only means publishing again.
 - The prod Postgres image (`pgvector/pgvector:pg17`) ships the `vector` extension
   natively — no manual install needed.
 
