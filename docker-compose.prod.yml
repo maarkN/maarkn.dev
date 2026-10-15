@@ -114,6 +114,7 @@ services:
     env_file: .env
     volumes:
       - maarkn-uploads:/data/uploads
+      - claude-remote-updates:/data/claude-remote-updates
     depends_on:
       postgres:
         condition: service_healthy
@@ -164,3 +165,5 @@ volumes:
   maarkn-pg-data:
   traefik-letsencrypt:
   maarkn-uploads:
+  # Claude Remote OTA updates (republishable; not in the pre-deploy pg_dump).
+  claude-remote-updates:

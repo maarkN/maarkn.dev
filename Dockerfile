@@ -73,9 +73,11 @@ COPY --from=builder /app/node_modules ./node_modules
 RUN rm -rf ./knowledge ./docs ./openspec ./.claude \
     && rm -f ./.env ./.env.* ./*.md ./Dockerfile ./docker-compose*.yml
 
-# Writable directory for uploaded media (mounted as a named volume in prod).
-RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
+# Writable directories (named volumes in prod): uploaded media and the Claude Remote
+# app's OTA updates. Created here so a fresh volume inherits the nextjs owner.
+RUN mkdir -p /data/uploads /data/claude-remote-updates && chown -R nextjs:nodejs /data
 ENV UPLOAD_DIR=/data/uploads
+ENV CLAUDE_REMOTE_UPDATES_DIR=/data/claude-remote-updates
 
 USER nextjs
 EXPOSE 5050
