@@ -41,8 +41,15 @@ services:
       #   traefik.http.middlewares.hsts.headers.stsSeconds=31536000
       #   traefik.http.routers.<router>.middlewares=hsts
       - --entrypoints.websecure.http.tls=true
-      # --- Let's Encrypt (TLS-ALPN-01 challenge, needs port 443) ---
-      - --certificatesresolvers.le.acme.tlschallenge=true
+      # --- Let's Encrypt (DNS-01 through the Cloudflare API) ---
+      # The domains are proxied by Cloudflare, which terminates TLS at its edge: the
+      # TLS-ALPN-01 challenge never reaches Traefik there ("Cannot negotiate ALPN
+      # protocol") and every restart burned the failed-authorization rate limit.
+      # DNS-01 works proxied or not, and gives the origin a real certificate, so the
+      # zones can use Cloudflare's "Full (strict)" mode.
+      - --certificatesresolvers.le.acme.dnschallenge=true
+      - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.le.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
       - --certificatesresolvers.le.acme.email=${ACME_EMAIL:?set ACME_EMAIL}
       - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
       # --- observability ---
@@ -51,6 +58,10 @@ services:
       - --ping=true
       # --- dashboard (optional): uncomment + the router labels below to expose it
       # - --api.dashboard=true
+    environment:
+      # Cloudflare API token: Zone > DNS > Edit and Zone > Zone > Read on the zones of
+      # every router using the `le` resolver, limited to this server's IP.
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN:?set CF_DNS_API_TOKEN}
     ports:
       - "80:80"
       - "443:443"

@@ -28,6 +28,9 @@ DATABASE_URL=postgresql://maarkn:<strong-random-password>@postgres:5432/maarkn?s
 # --- domain / TLS ---
 APP_DOMAIN=maarkn.dev
 ACME_EMAIL=you@example.com
+# Cloudflare API token for the DNS-01 challenge (Zone > DNS > Edit + Zone > Zone > Read
+# on the zones served here, limited to this server's IP)
+CF_DNS_API_TOKEN=<token>
 
 # --- auth / admin (first login) ---
 AUTH_SECRET=<openssl rand -base64 32>
@@ -120,7 +123,9 @@ Embeds `app/knowledge/**` into pgvector — what `ask` and the admin generator a
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
-Traefik obtains a Let's Encrypt certificate for `APP_DOMAIN` automatically.
+Traefik obtains a Let's Encrypt certificate for `APP_DOMAIN` automatically, through
+the DNS-01 challenge on Cloudflare (`CF_DNS_API_TOKEN`), so it works with the Cloudflare
+proxy on; with real origin certificates the zones can use SSL mode "Full (strict)".
 - Site: `https://maarkn.dev` (the terminal; `?cmd=projects` deep-links work)
 - Admin: `https://maarkn.dev/admin` · Generator: `/admin/generator` · Chat log: `/admin/chat`
 
