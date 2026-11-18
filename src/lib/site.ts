@@ -2,7 +2,7 @@ export const site = {
   name: "Marco Filho",
   nick: "maarkn",
   domain: "maarkn.dev",
-  email: "markimkr@gmail.com",
+  email: "contact@maarkn.dev",
   phone: "+55 62 98173-6748",
   location: { city: "Goiânia", country: "Brazil" },
   social: {

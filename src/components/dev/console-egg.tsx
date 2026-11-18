@@ -26,7 +26,7 @@ export function ConsoleEgg() {
     console.log("%c A few things `help` does not list:", css(comment));
     console.log("%c  sudo · rm -rf / · hack · ping · git · neofetch", css(comment));
     console.log("%c  ask <anything> talks to the AI; mail writes to me.\n", css(comment));
-    console.log("%c reach out · markimkr@gmail.com · linkedin.com/in/maarkn", css(purple));
+    console.log("%c reach out · contact@maarkn.dev · linkedin.com/in/maarkn", css(purple));
     console.log("%c built by Marco Filho · maarkn.dev — say hi!", css(comment));
   }, []);
 

@@ -56,6 +56,28 @@ function staticToRepo(p: Project): RepoProject {
   return { ...p, tagline: null, description: null, role: null, features: [] };
 }
 
+const curatedIndex = new Map(staticProjects.map((p, i) => [p.slug, i]));
+
+/**
+ * Featured first, then the order of the curated list in `lib/projects.ts`;
+ * projects that only exist in the DB (created in the admin) go last, newest
+ * year first. Stable, so ties keep the DB order.
+ */
+export function sortByCuratedOrder<T extends { slug: string; featured: boolean; year: string }>(
+  items: T[]
+): T[] {
+  const position = (slug: string) => curatedIndex.get(slug) ?? Number.POSITIVE_INFINITY;
+  return [...items].sort((a, b) => {
+    if (a.featured !== b.featured) return a.featured ? -1 : 1;
+    const byList = position(a.slug) - position(b.slug);
+    if (byList !== 0 && Number.isFinite(byList)) return byList;
+    if (Number.isFinite(position(a.slug)) !== Number.isFinite(position(b.slug))) {
+      return Number.isFinite(position(a.slug)) ? -1 : 1;
+    }
+    return b.year.localeCompare(a.year);
+  });
+}
+
 /** All projects, DB-first with a static fallback. Deduped within a request. */
 export const getAllProjects = cache(async (): Promise<RepoProject[]> => {
   try {
@@ -63,7 +85,7 @@ export const getAllProjects = cache(async (): Promise<RepoProject[]> => {
       orderBy: [{ featured: "desc" }, { year: "desc" }, { createdAt: "asc" }],
     });
     if (rows.length === 0) return staticProjects.map(staticToRepo);
-    return rows.map(rowToProject);
+    return sortByCuratedOrder(rows.map(rowToProject));
   } catch (err) {
     console.error("[projects-repo] DB read failed; using static fallback", err);
     return staticProjects.map(staticToRepo);

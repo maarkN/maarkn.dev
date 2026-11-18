@@ -286,13 +286,13 @@ function mockStream(
 
 function pickMockReply(prompt: string): string {
   if (/availab/.test(prompt) || /dispon/.test(prompt)) {
-    return "Marco is currently open to new opportunities — both freelance and full-time. The fastest way to start a conversation is the contact form on this site or an email to markimkr@gmail.com.";
+    return "Marco is currently open to new opportunities — both freelance and full-time. The fastest way to start a conversation is the contact form on this site or an email to contact@maarkn.dev.";
   }
   if (/stack|tech|technolog/.test(prompt)) {
-    return "Marco's daily stack is TypeScript, Node.js, NestJS, Next.js and React, with PostgreSQL, MongoDB and Redis on the data side. He's also comfortable with Flutter, Astro and the usual cloud bits (Docker, AWS, GCP).";
+    return "Marco works mostly in Go and TypeScript (NestJS, Node.js), with React, Next.js, React Native and Flutter on the client side, PostgreSQL, MongoDB and Redis for data, and Docker, Traefik and AWS for infra. On the AI side: RAG, LangGraph and the OpenAI and Anthropic APIs.";
   }
   if (/miami|real.?estate|imov/.test(prompt)) {
-    return "He built a WhatsApp assistant for a Miami real-estate agency that captures and qualifies leads, syncs the property catalog from MLS, and walks visitors through neighborhood, price range and bedroom count without ever feeling like a form.";
+    return "He built a WhatsApp AI assistant for a Miami luxury real-estate broker: a routing model hands each conversation to one of five stage agents that follow the broker's own sales method, over a knowledge base built from his files. The engagement ended before launch.";
   }
-  return "I'm running in offline preview mode right now — no OpenAI key set on this deployment. Once a key is configured I'll pull richer answers from the live model. Meanwhile, you can read about Marco's work and reach him via the contact form or markimkr@gmail.com.";
+  return "I'm running in offline preview mode right now — no OpenAI key set on this deployment. Once a key is configured I'll pull richer answers from the live model. Meanwhile, you can read about Marco's work and reach him via the contact form or contact@maarkn.dev.";
 }

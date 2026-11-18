@@ -7,7 +7,7 @@ vi.mock("server-only", () => ({}));
 const findMany = vi.fn();
 vi.mock("@/lib/db", () => ({ db: { project: { findMany } } }));
 
-const { getAllProjects } = await import("@/lib/projects-repo");
+const { getAllProjects, sortByCuratedOrder } = await import("@/lib/projects-repo");
 
 function row(overrides: Record<string, unknown> = {}) {
   return {
@@ -76,5 +76,28 @@ describe("projects-repo — allowlist de esquema no caminho de leitura", () => {
       demo: "http://localhost:5050",
       case: "https://example.com/case",
     });
+  });
+});
+
+describe("projects-repo — ordem curada", () => {
+  const item = (slug: string, featured: boolean, year = "2026") => ({ slug, featured, year });
+
+  it("poe destaques primeiro, segue a lista de lib/projects.ts e deixa os do admin no fim", () => {
+    const sorted = sortByCuratedOrder([
+      item("admin-only-old", false, "2020"),
+      item("cloudscraper-js", false, "2025"),
+      item("admin-only-new", false, "2027"),
+      item("locasty", false, "2021"),
+      item("remote-harness", true),
+      item("maarkn-dev", false),
+    ]);
+    expect(sorted.map((p) => p.slug)).toEqual([
+      "remote-harness",
+      "maarkn-dev",
+      "locasty",
+      "cloudscraper-js",
+      "admin-only-new",
+      "admin-only-old",
+    ]);
   });
 });

@@ -18,15 +18,15 @@ export const seoByLocale: Record<Locale, SeoCopy> = {
   en: {
     title: "Marco Filho — maarkn@dev",
     description:
-      "Marco Filho — Senior AI/LLM & Backend Engineer. 6+ years, 20+ products shipped end-to-end. Open to senior roles in the EU and Canada.",
-    jobTitle: "Senior AI/LLM & Backend Engineer",
+      "Marco Filho — Senior Fullstack Engineer and Tech Lead building Go and TypeScript backends, web and mobile apps, and LLM features. 6+ years, 20+ products built. Open to senior roles, remote or with relocation.",
+    jobTitle: "Senior Fullstack Engineer · Tech Lead",
     ogLocale: "en_US",
   },
   "pt-BR": {
     title: "Marco Filho — maarkn@dev",
     description:
-      "Marco Filho — Engenheiro Sênior de IA/LLM & Backend. 6+ anos, 20+ produtos entregues de ponta a ponta. Aberto a vagas sênior na UE e no Canadá.",
-    jobTitle: "Engenheiro Sênior de IA/LLM & Backend",
+      "Marco Filho — Engenheiro Fullstack Sênior e Tech Lead: backends em Go e TypeScript, apps web e mobile e funcionalidades com LLM. 6+ anos, 20+ produtos construídos. Aberto a vagas sênior, remotas ou com mudança de país.",
+    jobTitle: "Engenheiro Fullstack Sênior · Tech Lead",
     ogLocale: "pt_BR",
   },
 };
@@ -35,7 +35,9 @@ export const seoByLocale: Record<Locale, SeoCopy> = {
 export const KEYWORDS = [
   "Marco Filho",
   "maarkn",
+  "senior fullstack engineer",
   "senior backend engineer",
+  "tech lead",
   "AI engineer",
   "LLM engineer",
   "RAG",
@@ -53,9 +55,10 @@ export const KEYWORDS = [
   "backend architecture",
   "software engineer Brazil",
   "remote software engineer",
-  "relocate EU",
-  "EU Blue Card",
-  "Critical Skills Permit",
+  "React Native",
+  "Kafka",
+  "event-driven",
+  "proptech",
   "healthtech",
   "fintech",
   "govtech",
@@ -89,7 +92,7 @@ export function personLd(locale: Locale) {
     image: `${SITE_URL}/${locale}/opengraph-image`,
     jobTitle: seoByLocale[locale].jobTitle,
     description: seoByLocale[locale].description,
-    email: "mailto:markimkr@gmail.com",
+    email: "mailto:contact@maarkn.dev",
     address: {
       "@type": "PostalAddress",
       addressLocality: "Goiânia",
@@ -104,7 +107,7 @@ export function personLd(locale: Locale) {
       "Go",
       "TypeScript",
       "NestJS",
-      "Distributed systems",
+      "Event-driven systems",
       "API design",
       "PostgreSQL",
     ],

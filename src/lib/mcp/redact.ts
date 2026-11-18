@@ -39,7 +39,7 @@ const PG_URL_RE = /\bpostgres(?:ql)?:\/\/[^\s"']+/gi;
 
 /** Contatos do proprio Marco — os unicos que podem sair em claro. */
 const OWN_CONTACTS = (
-  process.env.GENERATOR_OWN_CONTACTS || "markimkr@gmail.com,+55 62 98173 6748"
+  process.env.GENERATOR_OWN_CONTACTS || "contact@maarkn.dev,markimkr@gmail.com,+55 62 98173 6748"
 )
   .split(",")
   .map((entry) => entry.trim().toLowerCase())
