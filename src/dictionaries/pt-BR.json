@@ -262,7 +262,7 @@
         "role": "Engenheiro fullstack e de dados.",
         "features": [
           "Carregador em lote de dados da Receita Federal, PGFN, RAIS e PNAD no MongoDB (14M+ linhas tiradas do BigQuery)",
-          "Scraper de imóveis rurais do SIGEF com resolução de captcha",
+          "Scraper de imóveis rurais do SIGEF, escrito como código de referência do time",
           "App Flutter com clean architecture, publicado no TestFlight para usuários de teste"
         ]
       },
@@ -408,7 +408,7 @@
           "Publiquei o app Flutter no TestFlight para os usuários de teste, com Firebase e login Google, Apple e Facebook.",
           "Migrei mais de 14 milhões de linhas de dados públicos do BigQuery para o MongoDB para reduzir custo de consulta.",
           "Montei um pipeline de leads com dados públicos em vez de comprar uma base de cerca de R$50 mil.",
-          "Escrevi um scraper de referência do SIGEF (Playwright, resolução de captcha, repository pattern) que virou o padrão de código do time."
+          "Escrevi um scraper de referência do SIGEF (Playwright, repository pattern) que virou o padrão de código do time."
         ],
         "outcome": "O produto não chegou à produção: o dono encerrou o projeto depois que o governo simplificou o pedido de FCO na própria plataforma."
       },

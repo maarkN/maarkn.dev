@@ -262,7 +262,7 @@
         "role": "Fullstack and data engineer.",
         "features": [
           "Batch loader of Receita Federal, PGFN, RAIS and PNAD data into MongoDB (14M+ rows moved off BigQuery)",
-          "SIGEF rural-property scraper with captcha solving",
+          "SIGEF rural-property scraper written as the team's reference code",
           "Flutter app with clean architecture, shipped to TestFlight for test users"
         ]
       },
@@ -408,7 +408,7 @@
           "Shipped the Flutter app to TestFlight for test users, with Firebase and Google, Apple and Facebook sign-in.",
           "Moved 14M+ rows of public data from BigQuery to MongoDB to cut query costs.",
           "Built a lead pipeline on public data instead of buying a lead list of about R$50k.",
-          "Wrote a reference SIGEF scraper (Playwright, captcha solving, repository pattern) that became the team's code standard."
+          "Wrote a reference SIGEF scraper (Playwright, repository pattern) that became the team's code standard."
         ],
         "outcome": "The product never reached production: the owner stopped it after the government simplified FCO applications on its own platform."
       },
