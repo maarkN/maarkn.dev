@@ -18,8 +18,15 @@
 # Point an A record for ${APP_DOMAIN} at the instance's public IP before `up`.
 
 services:
+  # Standalone Traefik, for a host where nothing else terminates TLS. Since
+  # 2026-11-14 the droplet runs ONE shared Traefik (/srv/traefik) on the `web`
+  # network for every site on it, which already owns ports 80/443 -- starting
+  # this one there fails with "driver failed programming external connectivity"
+  # and takes the app down with it. So it only starts on request:
+  #   docker compose -f docker-compose.prod.yml --profile standalone-traefik up -d
   traefik:
     image: traefik:v3.6
+    profiles: ["standalone-traefik"]
     restart: unless-stopped
     command:
       # --- providers ---

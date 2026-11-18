@@ -17,7 +17,7 @@ help: ## Show this help
 		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 # --- lifecycle ---
-up: ## Build & start the whole stack (traefik + postgres + app)
+up: ## Build & start postgres + app (TLS: shared Traefik in /srv/traefik)
 	$(COMPOSE) up -d --build
 
 down: ## Stop & remove containers (volumes/data are kept)
@@ -38,7 +38,7 @@ deploy: ## Manual deploy: sync main, migrate, rebuild app (mirrors CI)
 	git reset --hard origin/main
 	$(COMPOSE) up -d postgres
 	$(COMPOSE) run --rm migrate
-	$(COMPOSE) up -d --build app traefik
+	$(COMPOSE) up -d --build app
 	docker image prune -f
 
 migrate: ## Apply Prisma migrations (prisma migrate deploy)
