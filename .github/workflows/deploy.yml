@@ -125,7 +125,9 @@ jobs:
           docker compose -f docker-compose.prod.yml run --rm migrate
 
           echo "==> Restarting the app"
-          docker compose -f docker-compose.prod.yml up -d app traefik
+          # Only the app: TLS is terminated by the shared Traefik in /srv/traefik
+          # (the `traefik` service here sits behind the standalone-traefik profile).
+          docker compose -f docker-compose.prod.yml up -d app
 
           echo "==> Pruning dangling images"
           docker image prune -f
