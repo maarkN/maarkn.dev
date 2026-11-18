@@ -1,12 +1,13 @@
 type TimelineKey =
+  | "imobitech"
   | "freelance"
   | "nectar"
   | "sevencred"
+  | "collectprime"
   | "ecto"
   | "vendorhub"
   | "ecto1"
-  | "collectgram1"
-  | "collectgram0";
+  | "collectgram1";
 
 export type TimelineEntry = {
   key: TimelineKey;
@@ -23,15 +24,29 @@ export type TimelineEntry = {
   current?: boolean;
 };
 
+/**
+ * Every role, newest first. Facts come from the Career Bank (~/Career/experiences);
+ * the copy for each key lives in the dictionaries (`about.timeline`, `career.details`).
+ */
 export const timeline: TimelineEntry[] = [
+  {
+    key: "imobitech",
+    slug: "imobitech",
+    company: "Imobitech",
+    period: "Apr 2026 — Now",
+    monogram: "IM",
+    accent: { from: "#22d3ee", to: "#4f6ef7" },
+    tech: ["Go", "Apache Kafka", "PostgreSQL", "React", "Flutter"],
+    current: true,
+  },
   {
     key: "freelance",
     slug: "self-employed-freelance",
-    company: "Self-Employed · Freelance",
+    company: "Maarkn Dev Solutions · Consulting",
     period: "Dec 2024 — Now",
-    monogram: "SE",
+    monogram: "MD",
     accent: { from: "#4f6ef7", to: "#22d3ee" },
-    tech: ["TypeScript", "NestJS", "Flutter", "LLM", "AWS"],
+    tech: ["NestJS", "LangGraph", "PostgreSQL", "React", "Flutter"],
     current: true,
   },
   {
@@ -41,7 +56,7 @@ export const timeline: TimelineEntry[] = [
     period: "Jan 2024 — Nov 2024",
     monogram: "NC",
     accent: { from: "#ff6b6b", to: "#ff2d8e" },
-    tech: ["NestJS", "Asterisk", "WebSockets", "MongoDB", "Redis"],
+    tech: ["NestJS", "Asterisk", "MongoDB", "RabbitMQ", "OpenAI Whisper"],
   },
   {
     key: "sevencred",
@@ -50,7 +65,16 @@ export const timeline: TimelineEntry[] = [
     period: "Aug 2022 — Jan 2024",
     monogram: "SC",
     accent: { from: "#7b93ff", to: "#a78bfa" },
-    tech: ["TypeScript", "NestJS", "Flutter", "MongoDB", "Microservices"],
+    tech: ["Flutter", "NestJS", "Apache Kafka", "MongoDB", "Apache Airflow"],
+  },
+  {
+    key: "collectprime",
+    slug: "collectprime",
+    company: "CollectPrime · Volunteer",
+    period: "Nov 2021 — Dec 2025",
+    monogram: "CP",
+    accent: { from: "#a855f7", to: "#22d3ee" },
+    tech: ["Flutter", "In-App Purchase", "Node.js", "NestJS", "MongoDB"],
   },
   {
     key: "ecto",
@@ -59,16 +83,16 @@ export const timeline: TimelineEntry[] = [
     period: "Oct 2021 — Aug 2022",
     monogram: "ED",
     accent: { from: "#16a34a", to: "#facc15" },
-    tech: ["TypeScript", "Express", "PostgreSQL", "WebSockets", "Redis"],
+    tech: ["React", "Node.js", "TypeScript", "PostgreSQL", "Google Cloud Pub/Sub"],
   },
   {
     key: "vendorhub",
     slug: "vendorhub-sistemas",
-    company: "VendorHub",
+    company: "VendorHub Sistemas",
     period: "Jun 2021 — Oct 2021",
     monogram: "VH",
     accent: { from: "#f97316", to: "#fb7185" },
-    tech: ["Vue.js", "Nuxt", "NestJS", "MongoDB", "RabbitMQ"],
+    tech: ["Nuxt.js", "Vue.js", "TypeScript", "NestJS", "MongoDB"],
   },
   {
     key: "ecto1",
@@ -77,7 +101,7 @@ export const timeline: TimelineEntry[] = [
     period: "Feb 2021 — Jun 2021",
     monogram: "ED",
     accent: { from: "#22c55e", to: "#84cc16" },
-    tech: ["React", "Node.js", "TypeScript", "PostgreSQL"],
+    tech: ["React", "Redux", "Node.js", "TypeScript", "PostgreSQL"],
   },
   {
     key: "collectgram1",
@@ -86,16 +110,7 @@ export const timeline: TimelineEntry[] = [
     period: "Feb 2020 — Jan 2021",
     monogram: "CG",
     accent: { from: "#a855f7", to: "#ec4899" },
-    tech: ["Vue.js 2", "Vuex", "Nuxt", "Sass"],
-  },
-  {
-    key: "collectgram0",
-    slug: "collectgram-trainee",
-    company: "Collectgram",
-    period: "Jul 2019 — Jan 2020",
-    monogram: "CG",
-    accent: { from: "#facc15", to: "#22d3ee" },
-    tech: ["Vue.js 2", "Vuex", "Sass", "Pug"],
+    tech: ["Vue.js", "Nuxt.js", "Vuex", "BootstrapVue", "Sass"],
   },
 ];
 

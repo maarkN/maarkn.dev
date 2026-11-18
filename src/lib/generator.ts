@@ -47,7 +47,7 @@ TASK: tailor the materials to the JOB. Mirror the job's real keywords and requir
 
 TONE: plain, confident, honest. No buzzwords or fluff. First person ("I…") in the cover letter and screening answers; standard résumé style in the résumé.
 
-CONTACT (résumé header / sign-off): Marco Filho · markimkr@gmail.com · linkedin.com/in/maarkn · maarkn.dev
+CONTACT (résumé header / sign-off): Marco Filho · contact@maarkn.dev · linkedin.com/in/maarkn · maarkn.dev
 
 OUTPUT: a single JSON object with exactly these string keys, every value written in ${lang} and formatted in Markdown:
 - "resume": a complete one–two page résumé tailored to the job (header, summary, skills, experience with the most relevant bullets, languages).

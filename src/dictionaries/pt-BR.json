@@ -2,56 +2,60 @@
   "bigNumbers": {
     "items": {
       "years": {
-        "value": "6",
-        "label": "Anos entregando software profissionalmente"
+        "value": "6+",
+        "label": "Anos construindo software profissionalmente"
       },
       "projects": {
         "value": "20+",
-        "label": "Produtos e plataformas entregues de ponta a ponta"
+        "label": "Produtos e plataformas construídos"
       },
       "stacks": {
-        "value": "12",
-        "label": "Linguagens e frameworks no dia a dia"
+        "value": "9",
+        "label": "Produtos com funcionalidades de LLM"
       },
       "countries": {
         "value": "2",
-        "label": "Países pra quem já entreguei"
+        "label": "Países onde tive clientes"
       }
     }
   },
   "about": {
     "timeline": {
+      "imobitech": {
+        "role": "Tech Lead",
+        "summary": "Tech Lead numa proptech brasileira. Liderei a reescrita em Go do CRM imobiliário, construí o Backoffice, a documentação e o design system, e hoje escrevo o backend do GO v2, a plataforma fiscal para corretores."
+      },
       "freelance": {
-        "role": "Desenvolvedor Fullstack & Consultor",
-        "summary": "Construindo produtos de ponta a ponta como freelancer: refatoração de um app Flutter com compras in-app, vários assistentes WhatsApp com LLMs, plataforma de relatórios de crédito de carbono, chatbot imobiliário em Miami, e auditorias de segurança e performance."
+        "role": "Consultor de Software Independente",
+        "summary": "Minha consultoria, quase sempre como único engenheiro: um SaaS de dermatologia com IA, um marketplace de plantões médicos, uma plataforma de bulas com LLM, assistentes no WhatsApp com RAG e projetos de dados e KYC."
       },
       "nectar": {
-        "role": "Desenvolvedor Sênior N2",
-        "summary": "Liderei a arquitetura de um produto VoIP integrado ao CRM da empresa. Desenhei regras de tarifação, provisionamento em tempo real, gravação e transcrição de chamadas, multitenancy e gestão de equipes."
+        "role": "Desenvolvedor Sênior (Nível 2)",
+        "summary": "Assumi o SenseVox, o VoIP próprio do CRM, depois que o especialista em telefonia saiu, e o coloquei em produção no lugar do Twilio com custo por serviço cerca de 60% menor e transcrição das ligações com IA."
       },
       "sevencred": {
-        "role": "Engenheiro Fullstack (Remoto)",
-        "summary": "Construí uma API fintech para empréstimos FCO em microsserviços, app Flutter pra solicitação, portal em Ghost e crawlers ingerindo dados de APIs públicas brasileiras."
+        "role": "Engenheiro Full Stack",
+        "summary": "Construí o app Flutter, o backend em NestJS e os pipelines de dados públicos de uma fintech de crédito, e fui mentor de um desenvolvedor júnior. O produto foi encerrado antes do lançamento."
+      },
+      "collectprime": {
+        "role": "Mantenedor Voluntário",
+        "summary": "Mantive sozinho um app de colecionadores depois que o time original saiu: assinaturas pelas lojas de apps, o app de iOS de volta à App Store e uma reescrita em NestJS."
       },
       "ecto": {
-        "role": "Desenvolvedor Fullstack Sênior (Remoto)",
-        "summary": "Migrei a ingestão de avaliações do Google de batch para eventos em tempo real. Liderei dois devs juniores, montei o processo de code review e entreguei um sistema de assinatura pra atender clientes pequenos."
+        "role": "Desenvolvedor Fullstack Sênior",
+        "summary": "Troquei a sincronização noturna de perfis do Google Meu Negócio por eventos em tempo real, e o tempo de atualização caiu de até um dia para segundos. Liderei dois desenvolvedores e implantei code review."
       },
       "vendorhub": {
-        "role": "Desenvolvedor Frontend (Híbrido)",
-        "summary": "Padronizei o UI, refatorei o cadastro de produtos do core e criei uma extensão Chrome pra analisar performance de anúncios do Mercado Livre direto na página."
+        "role": "Especialista Front-End",
+        "summary": "Construí variações de anúncio, um editor de imagens no app e pedidos manuais no frontend Nuxt, na API NestJS e nos schemas compartilhados de uma ferramenta para vendedores do Mercado Livre."
       },
       "ecto1": {
-        "role": "Desenvolvedor Web Fullstack (Remoto)",
-        "summary": "Entreguei features numa plataforma de gestão de listings do Google Meu Negócio, cuidei dos deploys e dei uma melhorada em alguns blogs Gatsby no caminho."
+        "role": "Desenvolvedor Web Fullstack",
+        "summary": "Construí o núcleo de contas, projetos e usuários do Locasty, SaaS de gestão de perfis do Google Meu Negócio, e edições em massa de perfis pela API do Google."
       },
       "collectgram1": {
-        "role": "Desenvolvedor Frontend JR (Remoto)",
-        "summary": "Construí fluxos de indicação e assinatura, corrigi bugs e fiz o painel administrativo evoluir num produto de gestão de coleções."
-      },
-      "collectgram0": {
-        "role": "Trainee Frontend (Híbrido)",
-        "summary": "Onde tudo começou: um dashboard de marketplace em Vue.js e templates de email marketing com Pug e Sass."
+        "role": "Desenvolvedor Front-end",
+        "summary": "Meu primeiro emprego: escrevi a maior parte do backoffice interno em Vue 2 e construí páginas do marketplace no app web em Nuxt de uma plataforma para colecionadores."
       }
     }
   },
@@ -82,95 +86,192 @@
       "archived": "Arquivado"
     },
     "taglines": {
-      "miami-real-estate-assistant": "Assistente WhatsApp pra uma imobiliária em Miami que captura e qualifica leads já na primeira mensagem, sincroniza imóveis do MLS e nunca dorme.",
-      "municipalities-chatbot": "Assistente WhatsApp multitenant que rastreia o site de qualquer prefeitura, indexa o conteúdo e responde cidadãos sobre serviços, horários e documentos — no ar em dias, não meses.",
-      "voip-platform": "Chamadas, gravações, transcrições e tarifação dinâmica num único produto VoIP integrado direto ao CRM da empresa — uma nova vertical vendável.",
-      "fintech-loan-api": "O backend, o app Flutter e os pipelines de dados por trás de uma plataforma de crédito pra um fundo agro brasileiro — com ingestão de dados públicos.",
-      "carbon-credit-platform": "Um chatbot de triagem mais um motor que transforma dados crus de projeto em relatórios de viabilidade com padrão jurídico, prontos pra enviar.",
-      "drug-leaflet-platform": "Referência de bulas de medicamentos com foco em SEO e performance — Astro no front, NestJS e crawler da ANVISA atrás.",
-      "museum-institutional-site": "Site institucional de museu com CMS Ghost self-service e webframes interativos que alimentam os kiosques internos.",
-      "vanilla-farming-assistant": "Assistente agronômico pra produtores de baunilha, baseado em documentação técnica vetorizada — respostas reais, com citações."
+      "remote-harness": "Acompanhe e comande agentes de código com IA pelo celular, com criptografia de ponta a ponta. Em beta.",
+      "go-v2-fiscal-backend": "Backend em Go que emite notas fiscais, guias de imposto e certidões para corretores de imóveis.",
+      "dermatology-ai-platform": "Consultas assistidas por IA para clínicas de dermatologia, com transcrição ao vivo e prescrição com fontes.",
+      "medical-shift-marketplace": "Marketplace de plantões médicos: hospitais publicam, médicos fazem propostas e o contrato é assinado no app.",
+      "drug-leaflet-platform": "Bulas da ANVISA estruturadas todo dia e reescritas em linguagem simples.",
+      "voip-platform": "Telefonia em nuvem dentro de um CRM B2B, com gravação, transcrição por IA e cobrança por uso.",
+      "municipalities-chatbot": "Chatbot de atendimento ao cidadão no WhatsApp, respondendo com o conteúdo oficial do portal de cada prefeitura.",
+      "miami-real-estate-assistant": "Um \"corretor digital\" no WhatsApp que qualifica leads de imóveis de luxo com o método do próprio corretor.",
+      "carbon-credit-platform": "Do número do CAR de um imóvel rural ao parecer de viabilidade ambiental, pedido e pago pelo WhatsApp.",
+      "museum-institutional-site": "Site e primeiro acervo digital do museu da Sociedade Numismática Brasileira, editáveis pela equipe sem desenvolvedor.",
+      "betting-audit-kyc": "Auditoria de segurança de uma plataforma de apostas de 300 mil linhas e um KYC que roda no navegador.",
+      "agritech-field-sales-platform": "App offline-first de visitas de campo para representantes do agro, assumido sem passagem de bastão.",
+      "jobradar-ai": "Pipeline com LLM que transforma vagas em dados estruturados e as ranqueia contra um currículo.",
+      "maarkn-dev": "Este site: um portfólio bilíngue em formato de terminal, com um assistente de IA baseado no meu trabalho.",
+      "collectprime-app": "App de catálogo para colecionadores que mantive sozinho: assinaturas nas lojas, volta ao iOS e reescrita da API.",
+      "locasty": "Um painel para avaliações, perguntas e posts de centenas de unidades no Google.",
+      "fintech-loan-api": "App, API e pipelines de dados públicos para uma ideia de score de crédito regional."
     },
     "details": {
-      "miami-real-estate-assistant": {
-        "description": "Uma imobiliária em Miami queria capturar e qualificar leads na velocidade do WhatsApp. Construímos um assistente que conversa com prospectos em linguagem natural, sincroniza o catálogo de imóveis do MLS local e de um admin interno, e guia o visitante por bairro, faixa de preço e número de quartos sem nunca parecer um formulário.",
-        "role": "Arquitetura, backend, integração MCP com o marketplace do MLS, dashboard admin de leads/imóveis/perfis de corretores, SDK de chat web e um ETL com LLM que importa novos empreendimentos a partir de PDFs, Word e Excel.",
+      "remote-harness": {
+        "description": "App e daemon auto-hospedado, de código aberto (MIT), para acompanhar e comandar agentes de código como Claude Code e Codex pelo iPhone, iPad ou Android. Um daemon em Node roda ao lado dos agentes no tmux, e um relay pequeno em Go só repassa tráfego criptografado entre o celular e o computador. Em beta no TestFlight e na faixa de testes do Google Play.",
+        "role": "Criador e desenvolvedor principal: especificação, arquitetura, daemon, app, relay e publicação nas lojas.",
         "features": [
-          "Captura e roteamento de leads via WhatsApp, com handoff pra corretor humano",
-          "Sincronização com MLS e enriquecimento contínuo dos imóveis com descrições geradas por LLM",
-          "Dashboard administrativo de leads, imóveis e corretores",
-          "SDK de chat web embedável pra sites parceiros"
+          "Aprove ou negue pedidos de permissão dos agentes pelo celular, até na tela de bloqueio (Live Activity no iOS, notificação no Android)",
+          "Criptografia de ponta a ponta com o protocolo Noise, chaves por dispositivo e códigos de pareamento de uso único; o relay só vê dados cifrados",
+          "Daemon para macOS, Linux e Windows (WSL2), instalado com um único comando",
+          "App, CLI e site em inglês, português e espanhol"
         ]
       },
-      "municipalities-chatbot": {
-        "description": "Uma plataforma que permite a qualquer cidade conectar um assistente WhatsApp aos seus serviços ao cidadão em dias. O agente rastreia o site da prefeitura, indexa o conteúdo em uma vector store e responde dúvidas sobre coleta de lixo, horários, documentos e mais em linguagem simples.",
-        "role": "Design do crawler, indexação vetorial, pipeline de retrieval, integração WhatsApp e configuração multitenant pra cada cidade ter sua própria base de conhecimento e tom de voz.",
+      "go-v2-fiscal-backend": {
+        "description": "O redesenho, na Imobitech, de um produto fiscal de seis anos para corretores. Escrevi sozinho o monólito modular em Go, começando pelo contrato da API e com um servidor mock para os times web e Flutter trabalharem em paralelo. Integra provedores de cobrança, nota fiscal eletrônica e contabilidade. O go-live está previsto para dezembro de 2026.",
+        "role": "Tech Lead e único autor do backend.",
         "features": [
-          "Crawl e índice vetorial por cidade, com atualizações agendadas",
-          "Respostas com retrieval-augmented baseadas em conteúdo oficial",
-          "Admin multitenant pra gerenciar cidades, mensagens de fallback e brand voice",
-          "Integração com WhatsApp Business API e analytics de conversas"
+          "Emissão de NFS-e com o layout IBS/CBS da reforma tributária",
+          "Fila de chamadas a provedores externos com backoff, limite de chamadas e fila de exceções",
+          "Escrituração com importação de planilhas, protegida contra injeção de fórmulas em CSV",
+          "CI com cobertura mínima, teste de migrações e checagem de divergência do OpenAPI"
         ]
       },
-      "voip-platform": {
-        "description": "Uma nova vertical pra uma empresa brasileira de CRM: um produto VoIP que não parece grudado. Chamadas, gravações, transcrições e tarifação dinâmica vivem ao lado do registro do cliente, então o vendedor retoma de onde a conversa parou.",
-        "role": "Líder de backend — desenhei a arquitetura, construí regras de tarifação, provisionamento em tempo real de ramais e DIDs, otimização de áudio, multitenancy e gestão de equipes.",
+      "dermatology-ai-platform": {
+        "description": "Plataforma multi-tenant para clínicas de dermatologia e estética que cobre a consulta da gravação à prescrição. Tem plataforma web e app nativo para profissionais, PWA para o paciente e uma API que exige aceite humano em toda saída da IA. Consentimento e auditoria seguem as regras da Resolução CFM 2.454/2026 sobre IA na medicina.",
+        "role": "Único engenheiro: desenho do produto, arquitetura, todos os apps, infraestrutura e builds das lojas.",
         "features": [
-          "Chamadas internas e nacionais com gravação e transcrição",
-          "Regras dinâmicas de tarifação por equipe e tenant",
-          "Provisionamento em tempo real de ramais e DIDs",
-          "Multitenancy, features baseadas em papel e analytics de uso",
-          "Otimização de áudio que reduz banda sem perder qualidade"
+          "Transcrição ao vivo e resumo da consulta por IA",
+          "Sugestão de prescrição com citações (busca híbrida pgvector + texto)",
+          "Prontuário com linha do tempo de fotos antes/depois",
+          "Marca, perfis de acesso e laudos em PDF por clínica"
         ]
       },
-      "fintech-loan-api": {
-        "description": "Plataforma de crédito pra um fundo agro brasileiro. Construímos o backend que sustenta o fluxo de solicitação, o app Flutter que o tomador usa e os pipelines de dados que puxam e normalizam informações de algumas APIs públicas do governo.",
-        "role": "Arquitetura backend em microsserviços, app Flutter pro tomador, ETL de dados públicos (SIGEF, RFB) pra MongoDB, code review e mentoria de um dev júnior.",
+      "medical-shift-marketplace": {
+        "description": "O DoctorX liga médicos a plantões em hospitais e clínicas, no lugar de grupos de WhatsApp e indicações. O plantão tem ciclo completo: propostas, aceite, chat, contrato digital e avaliação mútua. Um só código Flutter atende web, Android e iOS, com uma API em NestJS por trás. Em beta fechado antes do lançamento.",
+        "role": "Backend, painel interno, documentação e infraestrutura; reescrevi a API legada e refiz a maior parte do app Flutter.",
         "features": [
-          "Microsserviços projetados pra escala e segurança de fintech",
-          "App Flutter pra solicitação de empréstimo e onboarding",
-          "Crawlers e pipelines de ETL que normalizam dados públicos",
-          "Portal público construído com Ghost CMS e Handlebars"
-        ]
-      },
-      "carbon-credit-platform": {
-        "description": "Plataforma que ajuda donos de projetos de crédito de carbono a fazer triagem e gerar relatórios de viabilidade. A triagem mora num chatbot; os relatórios saem de um motor automatizado que transforma dados do projeto em um documento jurídico que o time edita e envia.",
-        "role": "Backend, engenharia de prompts e motor de templates de relatório. Trabalhei junto com os fundadores pra traduzir conhecimento de domínio em saídas estruturadas e reprodutíveis.",
-        "features": [
-          "Chatbot de FAQ e triagem baseado na documentação dos projetos",
-          "Geração automática de relatórios de viabilidade com formatação jurídica",
-          "Templates editáveis pra o time de operações refinar a saída",
-          "Exportação pronta pra entrega ao cliente"
+          "Busca de plantões no mapa com PostGIS, alimentada pelo cadastro CNES",
+          "Validação do CRM na API do CFM no cadastro",
+          "Chat em tempo real com texto, imagem e áudio",
+          "Console interno com MFA, auditoria, feature flags e chaves de desligamento de pagamentos"
         ]
       },
       "drug-leaflet-platform": {
-        "description": "Site de referência de bulas de medicamentos no Brasil, focado em velocidade e SEO. O frontend é Astro pra entrega estática rápida; o backend é NestJS com um crawler que ingere dados da ANVISA pra manter as bulas atualizadas.",
-        "role": "Backend em NestJS, crawler da ANVISA, normalização de conteúdo e frontend em Astro pra páginas com performance e SEO acima da média.",
+        "description": "Os sites de bula costumam só repetir os PDFs da ANVISA. O Bula Digital coleta medicamentos, bulas e cadastros todos os dias, transforma tudo em campos estruturados e usa um LLM para escrever versões fáceis para o paciente. O backend é um monólito modular em NestJS; o site é Astro SSR com ilhas React. Feito para a Ecto Digital; em pré-produção.",
+        "role": "Único desenvolvedor: arquitetura, backend, frontend, pipeline de LLM e infraestrutura.",
         "features": [
-          "Frontend em Astro entregando páginas rápidas e SEO-first",
-          "Backend NestJS servindo a API de bulas",
-          "Crawler da ANVISA que mantém o catálogo fresco",
-          "Marcação Schema.org pronta pra ingestão por buscadores"
+          "Sincronização diária com a ANVISA e histórico de versões da bula (11.744 medicamentos e 6.780 bulas estruturados)",
+          "Bulas em linguagem simples a partir de prompts versionados e avaliados com golden set",
+          "Busca textual com filtros no Meilisearch",
+          "Painel com monitoramento do pipeline e uso de LLM"
+        ]
+      },
+      "voip-platform": {
+        "description": "O substituto próprio do Twilio no Nectar CRM, construído sobre Asterisk Realtime e NestJS. Ramais e números são criados na hora, as ligações são gravadas e analisadas por um LLM, e cada serviço é cobrado do saldo da conta. Entrou em produção num piloto fechado com 4 clientes, com custo por serviço cerca de 60% menor que o do Twilio.",
+        "role": "Responsável pelo backend e pelo VoIP; líder técnico da transcrição.",
+        "features": [
+          "Asterisk via ARI, AMI e AGI, com eventos de chamada em fila para a API nunca travar",
+          "Transcrição com VAD + Whisper e resumo de vendas, sentimento e próximos passos",
+          "Contas multi-tenant com chaves de API por cliente e permissões com CASL",
+          "Monitoramento de qualidade das ligações com Homer7 + Grafana"
+        ]
+      },
+      "municipalities-chatbot": {
+        "description": "O cidadão pergunta sobre serviços e informações públicas no WhatsApp, e a resposta vem do portal do próprio município. Um pipeline com filas coletou e limpou os portais dos 246 municípios de Goiás e indexou tudo no Qdrant. Foi demonstrado a prefeituras, mas descontinuado antes da produção.",
+        "role": "Único desenvolvedor: backend, pipeline de scraping, agente RAG, recursos de voz e infraestrutura.",
+        "features": [
+          "Scraping em camadas: API do WordPress, navegador headless e leitura de PDF (6.000+ páginas e 20.000+ publicações indexadas)",
+          "Respostas RAG por um grafo de estados no LangGraph",
+          "Recebe áudio e responde por voz",
+          "Modelo multi-tenant (organização → conta → prefeitura)"
+        ]
+      },
+      "miami-real-estate-assistant": {
+        "description": "Um corretor de imóveis de luxo em Miami queria uma versão digital de si mesmo para atender leads no WhatsApp. Um modelo barato escolhe o agente de cada etapa, e os agentes qualificam o lead, sugerem no máximo três opções e avisam quando o corretor deve assumir. O conhecimento vem do acervo dele no Dropbox, transformado em base vetorial e catálogo estruturado. Descontinuado antes do lançamento.",
+        "role": "Único desenvolvedor: arquitetura, backend, agentes de IA e ingestão de dados.",
+        "features": [
+          "Cinco agentes por etapa (boas-vindas, qualificação, busca, agendamento, fechamento) atrás de um modelo roteador",
+          "Recebe áudio (Whisper) e responde por voz (ElevenLabs)",
+          "Ingestão Dropbox → Qdrant que montou um catálogo com 146 empreendimentos e 6.000+ unidades",
+          "Monólito modular com CQRS sobre MongoDB, eventos no RabbitMQ e multi-tenancy"
+        ]
+      },
+      "carbon-credit-platform": {
+        "description": "Uma startup de crédito de carbono queria um produto de entrada para proprietários rurais: um primeiro parecer sobre se a terra se qualifica para crédito de carbono. Um assistente no WhatsApp vende o parecer e um link do Asaas faz a cobrança. Depois do pagamento, um pipeline cruza o CAR público com 15+ camadas de conformidade geoespacial e escreve o parecer em PDF, em cerca de um minuto e US$ 0,30 por laudo. O MVP cumpriu o marco do edital e depois foi descontinuado.",
+        "role": "Único desenvolvedor: escolha de tecnologia, backend, pipeline do parecer com IA, checkout e infraestrutura.",
+        "features": [
+          "Triagem no WhatsApp com cerca de 10 intenções e passagem para atendente humano",
+          "Checkout Asaas com Pix, boleto e cartão",
+          "Seções do parecer escritas por chamadas paralelas de LLM e exportadas em PDF",
+          "Página web de pedido com validação do CAR e editor do parecer"
         ]
       },
       "museum-institutional-site": {
-        "description": "Site institucional pra um museu, com CMS Ghost que o time curatorial roda sozinho. O site também serve de back-end pros webframes interativos usados nos kiosques físicos do museu.",
-        "role": "Arquitetura, configuração do Ghost e tematização em Handlebars, desenvolvimento dos webframes do kiosque, setup de SEO.",
+        "description": "O site antigo da sociedade só tinha posts. O novo, feito a partir do Figma, traz exposições, eventos, informações de visita e ingressos, e o primeiro acervo digital da instituição. Os curadores editam tudo no Ghost e no Directus, e as páginas continuam abrindo mesmo se o CMS cair. O MVP está pronto; o lançamento depende do museu.",
+        "role": "Único desenvolvedor: frontend, integração com CMS, infraestrutura e deploy.",
         "features": [
-          "Ghost CMS amigável a uso headless pro time curatorial",
-          "Webframes de kiosque pra experiências interativas dentro do museu",
-          "SEO e estratégia de conteúdo pra visibilidade fora do prédio",
-          "Tema alinhado à marca em Handlebars"
+          "Acervo digital com busca e filtros (denominação, autor, classe)",
+          "Ghost para posts e newsletter, Directus para conteúdo estruturado",
+          "Página de quiosque touchscreen para um totem no museu",
+          "Docker Compose + Traefik com TLS automático e guia de operação para a equipe"
         ]
       },
-      "vanilla-farming-assistant": {
-        "description": "Assistente especializado pra produtores de baunilha, baseado em documentação agronômica vetorizada. O produtor pergunta em linguagem natural e recebe respostas vindas de material técnico real, em vez de um modelo genérico.",
-        "role": "Pipeline de ingestão de documentos, setup da vector store, engenharia de prompts e canal de entrega via WhatsApp.",
+      "betting-audit-kyc": {
+        "description": "Uma loteria estadual regulada adquiriu uma plataforma de apostas online e planejava passá-la para uma nova equipe. Auditei seis serviços (cerca de 300 mil linhas de JavaScript sem tipagem e sem testes) em 16 áreas, e o plano de 15 itens prioritários virou o backlog do fornecedor. Também construí o cadastro do apostador: captura de documento, OCR e comparação facial no navegador. A operação foi suspensa antes do lançamento.",
+        "role": "Auditor de código e único desenvolvedor do KYC.",
         "features": [
-          "Biblioteca vetorizada de documentos agronômicos específicos da baunilha",
-          "Respostas com retrieval-augmented citando o material de origem",
-          "Distribuição via WhatsApp pra o produtor não precisar instalar nada",
-          "Loop de feedback que mostra lacunas na documentação base"
+          "Auditoria em 16 áreas com 21 vulnerabilidades críticas e médias e um plano de ação priorizado",
+          "OCR (Tesseract.js) e comparação facial (face-api.js) no navegador",
+          "Passagem do computador para o celular por QR code, sincronizada via Socket.IO e Redis",
+          "PWA mobile-first"
+        ]
+      },
+      "agritech-field-sales-platform": {
+        "description": "Os representantes usam o app para planejar e registrar visitas a produtores rurais, inclusive sem sinal. Recebi o código em arquivos ZIP, sem acesso às contas das lojas nem ao domínio. Primeiro protegi a produção com backups, depois documentei, estabilizei e migrei a plataforma da Oracle Cloud para a AWS, validada numa cópia de produção.",
+        "role": "Único engenheiro depois de assumir: infraestrutura, migração, documentação e app mobile.",
+        "features": [
+          "Registro de visitas offline com sincronização",
+          "Relatório de visita em PDF gerado offline, com fotos",
+          "TLS automático com Traefik e Let's Encrypt, acabando com as quedas por certificado",
+          "Painel de comissões com exportação PDF/Excel, além de CI/CD com GitHub Actions"
+        ]
+      },
+      "jobradar-ai": {
+        "description": "MVP em Python, de código aberto, que extrai vagas para um esquema tipado com LLM, guarda no Qdrant e as ranqueia contra um currículo. A ideia é que a saída do LLM precisa ser medida, por isso há uma avaliação automática que roda pela CLI e no CI. O conjunto de avaliação ainda é pequeno (3 casos sintéticos), e ele trabalha com URLs informadas, não como crawler.",
+        "role": "Único desenvolvedor: desenho do pipeline, camada de LLM, ranqueamento, API, painel, testes e CI.",
+        "features": [
+          "Camada de LLM que alterna entre Anthropic e OpenAI com uma configuração, escalando do modelo barato ao forte e registrando o custo por chamada",
+          "Ingestão com LangGraph (buscar → limpar → extrair → indexar), com falhas isoladas por etapa e deduplicação em duas fases",
+          "Ranqueamento contra o currículo com embeddings no Qdrant e motivos do match explicados",
+          "Avaliação da extração campo a campo pela CLI e no CI; testes offline com mypy strict"
+        ]
+      },
+      "maarkn-dev": {
+        "description": "Meu site pessoal em inglês e português, feito com Next.js 16 e React 19. Tem um chat com IA que responde a partir de uma base sobre meu trabalho, um gerador de currículos limitado a essa mesma base e um painel privado com servidor MCP. Roda no meu próprio servidor, com Docker, Traefik e CI/CD.",
+        "role": "Único desenvolvedor: design, frontend, backend, funcionalidades de IA e infraestrutura própria.",
+        "features": [
+          "Assistente com RAG: embeddings da OpenAI em PostgreSQL + pgvector, respostas em streaming (SSE) e limites de uso",
+          "Gerador de currículos e cartas com saída estruturada e regras contra invenção de fatos",
+          "Servidor MCP com chaves de API com escopo, checagem de permissão por ferramenta e log de auditoria",
+          "Auto-hospedado: Docker + Traefik com Let's Encrypt e deploy por um runner do GitHub Actions; acessibilidade WCAG 2.1 AA verificada com axe-core"
+        ]
+      },
+      "collectprime-app": {
+        "description": "App Flutter para colecionadores catalogarem moedas, cédulas e cards. Depois que o time original saiu, mantive sozinho, como voluntário, app, site e API, lancei as assinaturas pelas lojas e trouxe o app de iOS de volta. O produto foi encerrado no começo de 2026.",
+        "role": "Mantenedor voluntário e único engenheiro.",
+        "features": [
+          "Compra no app com tratamento do StoreKit e restauração de compras",
+          "Validação de recibos da Apple e do Google na API",
+          "Login com Apple vinculado a contas existentes",
+          "Testes de paridade entre a API antiga e a reescrita em NestJS"
+        ]
+      },
+      "locasty": {
+        "description": "SaaS B2B da Ecto Digital para agências e redes de lojas gerirem perfis no Google Meu Negócio. Construí o núcleo de contas e usuários, depois voltei como Sênior e troquei a sincronização em lote noturno pelas notificações em tempo real do Google.",
+        "role": "Desenvolvedor fullstack, depois sênior e principal engenheiro.",
+        "features": [
+          "Sincronização em tempo real de avaliações e perguntas via Pub/Sub",
+          "Edição em massa e posts agendados para várias unidades",
+          "Relatórios de insights com exportação CSV",
+          "Contas com vários usuários e permissões por perfil"
+        ]
+      },
+      "fintech-loan-api": {
+        "description": "Base para uma fintech que queria avaliar empresas de cidades pequenas usando dados públicos. Construí o app em Flutter, o backend em NestJS e os carregadores e scrapers de bases do governo. Parou antes da produção.",
+        "role": "Engenheiro fullstack e de dados.",
+        "features": [
+          "Carregador em lote de dados da Receita Federal, PGFN, RAIS e PNAD no MongoDB (14M+ linhas tiradas do BigQuery)",
+          "Scraper de imóveis rurais do SIGEF com resolução de captcha",
+          "App Flutter com clean architecture, publicado no TestFlight para usuários de teste"
         ]
       }
     },
@@ -182,24 +283,14 @@
       "sub": "Todo o trabalho numa página só, filtrável por categoria — apostas pequenas, plataformas grandes e algumas que me dão orgulho de verdade.",
       "empty": "Nada nessa categoria ainda."
     },
-    "gallery": {
-      "miami-real-estate-assistant": {
-        "shot1": "Tela de captura de lead via WhatsApp",
-        "shot2": "Catálogo de imóveis sincronizado do MLS",
-        "shot3": "Dashboard admin pra corretores e inventário"
-      },
-      "drug-leaflet-platform": {
-        "shot1": "Página de detalhe da bula renderizada em Astro",
-        "shot2": "Painel de status do crawl da ANVISA"
-      }
-    },
+    "gallery": {},
     "galleryHeading": "Do projeto",
     "privateNote": "O código é privado — feliz em apresentar ao vivo pra recrutador ou painel técnico numa call."
   },
   "links": {
     "name": "Marco Filho",
-    "role": "Engenheiro Sênior de IA/LLM & Backend · maarkn",
-    "bio": "Engenheiro sênior focado em backend (Go, TypeScript) e IA aplicada (RAG, agentes de LLM). 6+ anos, 20+ produtos entregues de ponta a ponta. Aberto a vagas sênior na UE e no Canadá.",
+    "role": "Engenheiro Fullstack Sênior · Tech Lead · IA/LLM",
+    "bio": "Engenheiro fullstack sênior e Tech Lead, no Brasil. Construo backends em Go e TypeScript, apps web e mobile e funcionalidades com LLM: RAG, agentes no WhatsApp, pipelines de extração. Aberto a vagas sênior, remotas ou com mudança de país.",
     "available": "Aberto a novas oportunidades",
     "links": {
       "linkedin": {
@@ -231,124 +322,157 @@
   },
   "career": {
     "details": {
-      "self-employed-freelance": {
-        "tagline": "Construindo produtos de ponta a ponta pra clientes na América Latina e nos EUA.",
-        "context": "Depois de seis anos em times de produto dentro de empresas, virei consultor: mesmo cuidado, formato de accountability diferente. Cada engagement é um contrato fino, focado em entregar a menor coisa que ganha a próxima conversa.",
+      "imobitech": {
+        "tagline": "Lidero a engenharia de uma proptech: backends em Go, um design system compartilhado e a reescrita do produto fiscal para corretores.",
+        "context": "A Imobitech é uma proptech de Goiânia que faz split de pagamentos em negócios imobiliários e regularização fiscal de corretores. Tem vários produtos (CRM, Backoffice, GO, pagamentos) e um time pequeno que trabalha em Go.",
         "responsibilities": [
-          "Discovery, scoping e proposta: traduzir um briefing nebuloso num plano de uma página e uma estimativa honesta.",
-          "Arquitetura e escolha de tecnologia: stack chato que cabe no tamanho do time e na velocidade que querem.",
-          "Mão na massa em várias stacks (TypeScript, NestJS, Next.js, React, Flutter) e infra (Docker, AWS, GCP).",
-          "Lado a lado com fundadores e times de produto durante o launch e as primeiras semanas em produção."
+          "Defino os padrões de arquitetura (ADRs, guia de Go) que o time segue em todos os produtos.",
+          "Faço mentoria dos quatro desenvolvedores em desenvolvimento guiado por especificação e assistido por IA.",
+          "Construo e opero plataformas de backend: o CRM, o Backoffice e o backend fiscal do GO v2.",
+          "Organizo a entrega: quadros no GitHub Projects, sprints de duas semanas e um relatório semanal para a diretoria."
         ],
         "achievements": [
-          "Entreguei um assistente WhatsApp imobiliário em Miami que captura e qualifica leads desde a primeira mensagem.",
-          "Desenhei e construí um chatbot multitenant de prefeituras usado por cidades brasileiras.",
-          "Refatorei um app Flutter de Express pra NestJS sem quebrar releases ativas na App Store e Play Store.",
-          "Construí um motor automatizado de relatórios de viabilidade pra plataforma de crédito de carbono."
+          "Reescrevi o backend do CRM de TypeScript para Go em menos de dois meses, com DDD, outbox transacional em Kafka e Connect-RPC, sem quebrar o front-end em produção.",
+          "Transformei o isolamento entre clientes numa checagem que roda a cada build: a análise estática caiu de 79 achados para 0 sem exceções, e 19 testes de mutação provam que cada proteção funciona.",
+          "Reduzi a consulta \"aguardando resposta\" da caixa de entrada de 2.419 ms para 18,8 ms numa base sintética de 200 mil conversas.",
+          "Único autor do backend do GO v2: 16 contextos de negócio e uma API OpenAPI escrita antes do código, com 239 operações e um servidor mock para o time web adiantar o trabalho."
         ],
-        "outcome": "Seis clientes pagantes, todos os retainers renovados, e zero incidentes de rollback em produção."
+        "outcome": "Em andamento. O backend do GO v2 está em alpha, com go-live previsto para dezembro de 2026."
+      },
+      "self-employed-freelance": {
+        "tagline": "Minha consultoria: produtos de IA e plataformas fullstack para startups e instituições, da arquitetura ao deploy.",
+        "context": "A Maarkn Dev Solutions é minha empresa, em Goiânia, e todo o trabalho é remoto. Os clientes chegam direto ou por empresas parceiras: startups e instituições com uma ideia de produto ou um projeto parado. Cuido de toda a parte técnica: arquitetura, backend, web, mobile, IA, infraestrutura e deploy.",
+        "responsibilities": [
+          "Defino escopo com os fundadores e escolho arquitetura e stack.",
+          "Construo backend, web, mobile e IA de ponta a ponta, quase sempre sozinho.",
+          "Monto infraestrutura e deploy: Docker Compose e Traefik, com GitHub Actions nos projetos recentes.",
+          "Faço auditorias técnicas de plataformas existentes."
+        ],
+        "achievements": [
+          "Construí um SaaS multi-tenant de dermatologia com transcrição da consulta ao vivo e sugestão de prescrição apoiada em busca híbrida (pgvector + texto).",
+          "Reescrevi em NestJS + PostGIS a API de um marketplace de plantões médicos, com busca de plantões no mapa, console interno com MFA e pagamentos B2B atrás de feature flags.",
+          "Construí a ingestão diária da ANVISA que estruturou 11.744 medicamentos e 6.780 bulas, com uma camada de LLM versionada e avaliada.",
+          "Entreguei sistemas com RAG e agentes usando LangChain/LangGraph sobre Qdrant e pgvector, e assistentes no WhatsApp que recebem e respondem por voz."
+        ],
+        "outcome": "Em andamento. Vários projetos chegaram a MVP ou piloto; alguns foram descontinuados pelos clientes antes do lançamento."
       },
       "nectar-crm": {
-        "tagline": "Liderei a arquitetura do primeiro produto VoIP da Nectar, integrado de ponta a ponta ao CRM.",
-        "context": "A Nectar é um dos players de CRM mid-market do Brasil. Queriam um VoIP que não parecesse grudado. Entrei como Sênior N2 pra liderar o lado de produto dessa vertical, da arquitetura à otimização de banda.",
+        "tagline": "Assumi um produto de VoIP próprio que estava travado e o coloquei em produção no lugar do Twilio, dentro de um CRM B2B.",
+        "context": "O Nectar CRM é um CRM SaaS B2B. O SenseVox era o módulo próprio de VoIP (números, ramais, ligações gravadas, transcrição com IA, cobrança por uso), criado para substituir a integração com o Twilio. Quando entrei, não dava para criar ramais sem reiniciar o Asterisk, e o especialista em telefonia saiu no meu segundo mês.",
         "responsibilities": [
-          "Desenhei a arquitetura multitenant, o motor de regras de tarifação e o fluxo de provisionamento em tempo real.",
-          "Liderei a implementação de gravação, transcrição e analytics de uso.",
-          "Ajustei a negociação de codecs reduzindo ~30% nos custos de banda sem perder qualidade.",
-          "Trabalhei com produto e ops nos workflows do operador, features role-based e onboarding."
+          "Fui responsável de ponta a ponta pelo backend do SenseVox (NestJS, MongoDB, PostgreSQL, Redis/Bull, RabbitMQ).",
+          "Cuidei da camada Asterisk/VoIP e da sua infraestrutura em Docker (Kamailio, NAT, TLS, fail2ban).",
+          "Desenhei a cobrança por uso de cada serviço, com recarga de saldo via Asaas.",
+          "Fui o líder técnico do serviço de transcrição em Python."
         ],
         "achievements": [
-          "Entreguei chamadas internas e nacionais, gravação e transcrição como first-class feature do CRM.",
-          "Estabilizei o provisionamento em tempo real de ramais e DIDs com transições idempotentes.",
-          "Reduzi a frequência de incidentes reescrevendo a camada de cache com escopo estrito por tenant."
+          "Migrei o Asterisk para o modo Realtime (PJSIP sobre PostgreSQL), e ramais e números passaram a ser criados sem reiniciar; era isso que travava o projeto.",
+          "Substituí o Twilio com custo por serviço cerca de 60% menor, em produção num piloto fechado com 4 clientes.",
+          "Desenhei um pipeline de transcrição em 7 etapas: corte de silêncio antes do Whisper, análise da ligação de vendas por LLM e escolha do modelo pelo número de tokens para controlar custo.",
+          "Liderei um desenvolvedor Python por cerca de 4 meses no serviço de transcrição."
         ],
-        "outcome": "VoIP virou um add-on vendável pros clientes existentes do CRM e um novo canal de aquisição."
+        "outcome": "Entrou em produção como piloto fechado durante meu contrato; saí antes de implementar o desenho de alta disponibilidade para escalar além de uma instância do Asterisk."
       },
       "sevencred": {
-        "tagline": "Construí o backend, o app mobile e os pipelines de dados de uma plataforma de empréstimos FCO.",
-        "context": "Sevencred era uma fintech construindo uma plataforma de crédito sobre o FCO (fundo brasileiro de agro). Time pequeno, superfície regulatória grande. Tomei posse do backend e do app mobile do tomador.",
+        "tagline": "Construí o app, o backend e os pipelines de dados públicos de uma fintech de crédito que não chegou à produção.",
+        "context": "A Sevencred intermediava crédito do FCO (fundo constitucional de financiamento do Centro-Oeste) e queria virar uma fintech com score de crédito regional montado a partir de dados públicos. Começamos do zero.",
         "responsibilities": [
-          "Desenhei APIs em TypeScript + NestJS como microsserviços prontos pra escala e segurança de fintech.",
-          "Construí o app Flutter pra solicitação de empréstimo e onboarding.",
-          "Implementei crawlers e ETL ingerindo dados públicos (SIGEF, RFB) pra MongoDB.",
-          "Mentorei um dev júnior via code review e pair programming."
+          "Construí o app em Flutter para tomadores e empresas.",
+          "Construí o backend em NestJS: monorepo Nx com um microsserviço de pesquisa via Kafka e integração com CRM.",
+          "Carreguei bases públicas brasileiras (Receita Federal, PGFN, RAIS, PNAD) e configurei o Airflow.",
+          "Fui mentor do desenvolvedor Python júnior, ensinando a entregar código atrás de APIs."
         ],
         "achievements": [
-          "Entreguei um onboarding completo que ia das APIs públicas pra um perfil normalizado em segundos.",
-          "Subi um portal público em Ghost pra SEO e marketing de conteúdo.",
-          "Sustentei a ponta técnica do produto early-stage junto com os fundadores."
+          "Publiquei o app Flutter no TestFlight para os usuários de teste, com Firebase e login Google, Apple e Facebook.",
+          "Migrei mais de 14 milhões de linhas de dados públicos do BigQuery para o MongoDB para reduzir custo de consulta.",
+          "Montei um pipeline de leads com dados públicos em vez de comprar uma base de cerca de R$50 mil.",
+          "Escrevi um scraper de referência do SIGEF (Playwright, resolução de captcha, repository pattern) que virou o padrão de código do time."
         ],
-        "outcome": "Projeto pausou pré-MVP por falta de funding, mas o código estava demoable e o time transicionou limpo."
+        "outcome": "O produto não chegou à produção: o dono encerrou o projeto depois que o governo simplificou o pedido de FCO na própria plataforma."
+      },
+      "collectprime": {
+        "tagline": "Mantive sozinho, como voluntário, um app de colecionadores no ar: assinaturas pelas lojas e o app de iOS de volta.",
+        "context": "O CollectPrime é a plataforma de colecionadores do meu primeiro emprego, com outro nome. Com o time original fora, ajudei o dono sem remuneração, algumas horas por semana, como único engenheiro. A assinatura Prime era a fonte de receita do app.",
+        "responsibilities": [
+          "Mantive o app Flutter, o site em Nuxt e a API em Express.",
+          "Gerei e publiquei as versões do app para iOS e Android.",
+          "Cuidei das assinaturas nas duas lojas, com validação de recibos no servidor.",
+          "Planejei e comecei a migração da API para NestJS/TypeScript."
+        ],
+        "achievements": [
+          "Lancei as assinaturas Prime por compra no app no iOS e no Android, com validação de recibos no servidor, e migrei para elas os assinantes que pagavam com cartão.",
+          "Republiquei o app de iOS na App Store em cerca de uma semana depois que ele tinha saído do ar.",
+          "Fiz o rebranding do app de Collectgram para CollectPrime e levei o site para o novo domínio.",
+          "Portei cerca de 70% da API para NestJS, com uma suíte de testes que compara as respostas da API antiga e da nova."
+        ],
+        "outcome": "A reescrita não foi concluída, e a empresa encerrou o produto no começo de 2026."
       },
       "ecto-digital-senior": {
-        "tagline": "Migrei a ingestão de avaliações do Google de batch pra tempo real e entreguei um sistema de assinatura self-serve.",
-        "context": "A Ecto Digital constrói ferramentas pra negócios locais no Brasil em cima da API do Google My Business. Fui promovido de fullstack pra sênior e peguei a liderança em algumas iniciativas transversais.",
+        "tagline": "Voltei como Sênior ao Locasty e troquei a sincronização com o Google Meu Negócio de um lote noturno por eventos em tempo real.",
+        "context": "O Locasty é o SaaS da Ecto Digital para gerir perfis, avaliações e SEO local no Google Meu Negócio, vendido a agências e redes de lojas. Quando saí, gerenciava mais de 400 unidades.",
         "responsibilities": [
-          "Arquitetei a migração de rotinas batch pra um pipeline event-driven em tempo real.",
-          "Introduzi processo de code review e mentorei dois devs juniores.",
-          "Construí um sistema de assinatura self-serve pra onboardar clientes pequenos sem call de vendas.",
-          "Cuidei dos deploys de produção e do plantão pros sistemas que entreguei."
+          "Desenvolvimento fullstack no front-end React e no backend Express/TypeScript/PostgreSQL.",
+          "Desenhei a sincronização orientada a eventos com as notificações do Google Meu Negócio e o Cloud Tasks.",
+          "Liderei e fui mentor de dois desenvolvedores; implantei code review e gitflow.",
+          "Fui responsável pelas versões da v2.0 à v2.3."
         ],
         "achievements": [
-          "Cortei a latência review→dashboard de horária pra segundos.",
-          "Self-serve trouxe uma long tail de pequenos negócios que antes não eram alcançáveis.",
-          "Levei a cobertura de code review pra 100% das mudanças mergeadas em dois meses."
+          "Atualizações de avaliações, perguntas e perfis passaram de até um dia de atraso para poucos segundos, e a carga do servidor se espalhou ao longo do dia.",
+          "Levei posts agendados e edições em massa de várias unidades para filas do Google Cloud Tasks.",
+          "Implantei code review e gitflow num time de três pessoas.",
+          "Entreguei todas as versões da v2.0 à v2.3 e continuei entregando quando o time ficou só comigo."
         ],
-        "outcome": "O pipeline que desenhei continuou rodando depois que saí e o self-serve virou o caminho default de onboarding."
+        "outcome": "A sincronização em tempo real foi para produção; saí para uma vaga em fintech."
       },
       "vendorhub-sistemas": {
-        "tagline": "Padronizei o UI de uma plataforma de integração de marketplaces e construí uma extensão Chrome pro Mercado Livre.",
-        "context": "A VendorHub agrega catálogos de Mercado Livre, Magalu, Shopee e B2W num back office único. O frontend tinha crescido organicamente e precisava de um sistema visual mais apertado.",
+        "tagline": "Construí funcionalidades de anúncios e pedidos num SaaS que ajuda vendedores a gerir várias contas do Mercado Livre.",
+        "context": "A VendorHub é uma startup pequena de Aparecida de Goiânia. O produto, Provendor, se conecta à API do Mercado Livre para gerir anúncios, pedidos, perguntas e concorrentes. Entrei num time de seis desenvolvedores com o produto já no ar.",
         "responsibilities": [
-          "Padronizei padrões core de UI no fluxo de cadastro de produtos.",
-          "Refatorei o form de variações pra que sellers não-técnicos mantivessem consistência nos anúncios.",
-          "Coimplementei melhorias de backend junto com o time de plataforma.",
-          "Setei commit linting e processo de code review."
+          "Construí funcionalidades de anúncios e pedidos no front-end, na API e nos schemas compartilhados.",
+          "Fui mentor de um desenvolvedor júnior e ajudei outro com Vue.",
+          "Propus code review como hábito do time.",
+          "Corrigi problemas de desempenho e de cache no app em produção."
         ],
         "achievements": [
-          "Lancei uma extensão Chrome que analisa performance dos anúncios direto na UI do Mercado Livre — usada por sellers pra ajustar listings sem sair do site."
+          "Deixei a consulta da lista de produtos pelo menos 80% mais rápida; antes levava vários segundos.",
+          "Entreguei pedidos manuais de ponta a ponta, com baixa de estoque de produtos e variações.",
+          "Coloquei um editor de imagens dentro do app (ideia minha), para o vendedor editar fotos sem sair dele.",
+          "Fiz o time adotar code review."
         ],
-        "outcome": "A extensão Chrome continuou viva depois que saí e o refactor de variações cortou pela metade o volume de tickets de suporte naquela área."
+        "outcome": "As funcionalidades foram para o produto em produção; depois de quatro meses voltei à Ecto Digital como Sênior."
       },
       "ecto-digital-fullstack": {
-        "tagline": "Donatário das features, deploys e dois blogs Gatsby legados na fase mais cedo da Ecto.",
-        "context": "Primeira passagem na Ecto, antes da promoção pra sênior. Mandato amplo num time pequeno — eu tanto debugava build do Gatsby quanto fazia deploy pra produção ou conectava uma feature nova baseada em GMB.",
+        "tagline": "Primeira vaga fullstack: construí o núcleo de contas, projetos e usuários de um SaaS para o Google Meu Negócio.",
+        "context": "O Locasty, SaaS da Ecto Digital, permite que agências e redes de lojas gerenciem vários perfis do Google Meu Negócio num só painel. Assumi a vaga de um desenvolvedor sênior que estava saindo, e ele revisou meu código nos primeiros dois meses.",
         "responsibilities": [
-          "Implementei features em cima da API do Google My Business pra gestão de listings.",
-          "Cuidei dos deploys e procedimentos de rollback do pequeno fleet.",
-          "Mantive uns blogs em Gatsby e melhorei o setup de SEO deles."
+          "Construí funcionalidades de ponta a ponta em React e Express/TypeORM.",
+          "Integrei a API do Google Meu Negócio para contas e edições em massa de perfis.",
+          "Construí os fluxos de cadastro, ativação e redefinição de senha com e-mail transacional.",
+          "Corrigi problemas de internacionalização e de renderização no front-end."
         ],
         "achievements": [
-          "Entreguei valor sustentado o suficiente pra ser promovido a Sênior Fullstack."
+          "Fiz uma conta de cliente aceitar vários usuários, cada um com login e permissões próprias, para os logs mostrarem quem fez o quê.",
+          "Criei edições em massa de logo, capa e status em vários perfis pela API do Google Meu Negócio.",
+          "Corrigi um loop infinito na paginação das contas do Google Meu Negócio de um cliente.",
+          "Fui recontratado quatro meses depois como Sênior."
         ],
-        "outcome": "Base sólida na stack do time e no movimento de customer success."
+        "outcome": "Assumi o código quando o sênior saiu; fui para a VendorHub e voltei como Sênior em outubro de 2021."
       },
       "collectgram-jr": {
-        "tagline": "Fiz crescer o painel admin de um produto de gestão de coleções e entreguei o funil de indicação.",
-        "context": "Collectgram é um SaaS pra colecionadores (cartas, moedas, etc.). Depois do trainee, fui pra vaga de JR e comecei a tomar posse de features de várias semanas, ponta a ponta.",
+        "tagline": "Meu primeiro emprego: construí a maior parte do backoffice interno e funcionalidades do marketplace de uma plataforma para colecionadores.",
+        "context": "A Collectgram, startup de Goiânia depois renomeada CollectPrime, é uma plataforma para colecionadores catalogarem suas coleções, com moedas e cédulas como carro-chefe. Tinha um marketplace perto do lançamento e uma assinatura Prime. Eu era o único júnior num time de seniores.",
         "responsibilities": [
-          "Construí a feature de indicação com tracking e lógica de recompensa.",
-          "Desenhei a seção de CTA de assinatura que virou o upsell default.",
-          "Corrigi bugs no painel admin e melhorei a responsividade geral.",
-          "Mantive o codebase Vue.js + Vuex e o design system em SCSS."
+          "Construí o backoffice interno em Vue 2.",
+          "Construí páginas do marketplace no app web em Nuxt.",
+          "Mantive as traduções em inglês e português.",
+          "Entreguei por merge requests no GitLab, revisados pelos desenvolvedores sêniores."
         ],
         "achievements": [
-          "A feature de indicação trouxe um lift mensurável nos signups mensais durante o primeiro trimestre no ar."
+          "Escrevi a maior parte do backoffice: cadastro de usuários com análise de documentos, pedidos, produtos, pedidos de graduação e um MVP de sorteios.",
+          "O dono usava o backoffice todo dia para cuidar do catálogo e responder pedidos de preço.",
+          "Construí no marketplace as páginas de produto, perfis públicos, coleções \"tenho\" e \"quero\", compras e vendas e a gestão de assinatura."
         ],
-        "outcome": "Fechei o ano pronto pra um movimento sênior pra um time maior."
-      },
-      "collectgram-trainee": {
-        "tagline": "Onde tudo começou — admin de marketplace em Vue.js e templates de email marketing com Pug e Sass.",
-        "context": "Primeira experiência profissional. O time confiou em mim com tickets reais de produção desde a primeira semana — sou grato até hoje por isso.",
-        "responsibilities": [
-          "Implementei features no painel admin de marketplace em Vue.js 2.",
-          "Construí templates de email marketing com Pug e Sass num pipeline Node.js.",
-          "Fiz pair com seniors em code review e scoping de feature."
-        ],
-        "achievements": [
-          "Ganhei a promoção pra JR no fim do período de trainee."
-        ],
-        "outcome": "Os primeiros hábitos — testes, code review, comunicação — foram formados aqui."
+        "outcome": "Depois de um ano saí para uma vaga fullstack remota."
       }
     },
     "chrome": {
@@ -373,11 +497,11 @@
       "label": "comandos"
     },
     "motd": {
-      "tagline": "Produtos de IA, entregues de ponta a ponta — muitas vezes sozinho.",
+      "tagline": "Backend, web, mobile e LLM — muitas vezes como único engenheiro.",
       "location": "Goiânia · BR",
-      "summary": "{years} anos entregando · {products} produtos",
+      "summary": "{years} anos · {products} produtos construídos",
       "languages": "pt · en",
-      "status": "aberto a vagas sênior — UE e Canadá"
+      "status": "aberto a vagas sênior — remoto ou com mudança"
     },
     "prompt": {
       "label": "linha de comando",
@@ -480,19 +604,19 @@
       "forwarded": "· perguntando ao assistente"
     },
     "whoami": {
-      "role": "Engenheiro Sênior de IA/LLM & Backend",
-      "location": "· {city}, {country} · trabalhando com times na Europa, nos EUA e na LatAm",
+      "role": "Engenheiro Fullstack Sênior · Tech Lead · Sistemas de IA/LLM",
+      "location": "· {city}, {country} · UTC−3 · remoto",
       "paragraphs": [
-        "Levo produtos de um briefing vago até a produção — arquitetura, APIs, deploy e os dados bagunçados do mundo real no meio do caminho. Já fiz isso {products} vezes em healthtech, govtech, fintech e SaaS, quase sempre como único engenheiro ou líder técnico.",
-        "Agora o foco é IA generativa aplicada em produção: pipelines de RAG, agentes LLM e busca vetorial dentro de produtos que as pessoas realmente usam — não demos. Entrego a arquitetura mais simples que resolve o problema e não vai surpreender quem mantiver depois.",
-        "Uso agentes de código com IA {{(Claude, Cursor, Codex)}} pra entregar mais rápido sem cortar caminho: eles ficam com o boilerplate, eu fico com a arquitetura, os casos de borda e cada linha que vai pra produção.",
-        "Aberto a vagas sênior fora do Brasil — Europa {{(Irlanda, Alemanha, Holanda)}} e Canadá — presencial, híbrido ou remoto. Elegível ao Critical Skills Permit e ao EU Blue Card."
+        "Levo produtos de um briefing vago até um sistema funcionando: arquitetura, APIs, deploy e os dados bagunçados no meio do caminho. Já construí {products} produtos em proptech, healthtech, govtech, fintech e SaaS, quase sempre como único engenheiro ou líder técnico.",
+        "Hoje sou Tech Lead na Imobitech, onde liderei a reescrita em Go do backend do CRM e escrevo o backend da plataforma fiscal. A maior parte do meu trabalho é backend em Go e TypeScript e funcionalidades com LLM dentro de produtos: RAG, agentes no WhatsApp, pipelines de extração com avaliação. Escolho a arquitetura mais simples que resolve o problema e não surpreende quem mantiver depois.",
+        "Trabalho com agentes de código com IA {{(Claude Code, Codex)}}: eles escrevem a maior parte do código; eu fico com a especificação, a arquitetura, a revisão e o que vai para produção.",
+        "Aberto a vagas sênior de backend, fullstack, Tech Lead e IA/LLM: remoto {{(qualquer lugar)}} ou com mudança para Canadá, Irlanda, Alemanha, Espanha ou Holanda."
       ],
       "stats": {
         "years": "anos construindo",
-        "products": "produtos entregues de ponta a ponta",
-        "stacks": "stacks no dia a dia",
-        "countries": "países pra quem já entreguei"
+        "products": "produtos construídos",
+        "stacks": "produtos com LLM",
+        "countries": "países com clientes"
       },
       "footer": "→ {experience} pra ver a linha do tempo · {contact} pra falar comigo"
     },
@@ -546,10 +670,10 @@
       "host": "{city}, BR · UTC−3",
       "uptime": "{years} anos, {products} produtos",
       "shell": "go · typescript",
-      "kernel": "nestjs · react · flutter",
-      "packages": "{stacks} stacks (veja skills)",
-      "editor": "cursor + claude code",
-      "status": "aberto a propostas · UE e Canadá"
+      "kernel": "nestjs · react · react native · flutter",
+      "packages": "{stacks} produtos com LLM",
+      "editor": "claude code + codex",
+      "status": "aberto a propostas · remoto ou mudança"
     },
     "nav": {
       "noSuchDirectory": "cd: {dir}: diretório não existe",

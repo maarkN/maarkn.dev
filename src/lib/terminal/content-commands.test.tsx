@@ -12,7 +12,7 @@ import type { CommandContext, CommandResult, TerminalData } from "./types";
 /* Fixture in the shape `loadTerminalData` produces; content is deliberately
    fake so the assertions prove the commands format `data`, not constants. */
 const data: TerminalData = {
-  numbers: { years: "6", products: "20+", stacks: "12", countries: "2" },
+  numbers: { years: "6+", products: "20+", stacks: "9", countries: "2" },
   experience: [
     { slug: "acme-lead", period: "2024 — Now", company: "Acme", role: "Lead", summary: "Ran it.", current: true },
     { slug: "globex-dev", period: "2020 — 2024", company: "Globex", role: "Dev", summary: "Built it." },
@@ -135,17 +135,17 @@ describe("whoami", () => {
   it("prints identity, paragraphs and the big numbers", async () => {
     const out = text(await harness().run("whoami"));
     expect(out).toContain(`${site.name} · ${site.nick}`);
-    expect(out).toContain("Senior AI/LLM & Backend Engineer · Goiânia, Brazil");
-    expect(out).toContain("Done it 20+ times");
-    expect(out).toContain("6years building");
-    expect(out).toContain("2countries I've delivered for");
+    expect(out).toContain("Senior Fullstack Engineer · Tech Lead · AI/LLM systems · Goiânia, Brazil");
+    expect(out).toContain("I've built 20+ products");
+    expect(out).toContain("6+years building");
+    expect(out).toContain("2countries with clients");
     expect(out).toContain("→ experience for the timeline · contact to reach me");
   });
 
   it("dims the asides and translates in pt-BR", async () => {
     const html = await harness(pt.terminal, {}, "pt-BR").run("whoami");
-    expect(html.join("")).toMatch(/<span class="[^"]*">\(Claude, Cursor, Codex\)<\/span>/);
-    expect(text(html)).toContain("Já fiz isso 20+ vezes");
+    expect(html.join("")).toMatch(/<span class="[^"]*">\(Claude Code, Codex\)<\/span>/);
+    expect(text(html)).toContain("Já construí 20+ produtos");
   });
 });
 
@@ -267,8 +267,8 @@ describe("neofetch", () => {
     const out = text(html);
     expect(out).toContain("maarkn@dev");
     expect(out).toContain(`os${site.domain} ${buildVersion()}`);
-    expect(out).toContain("uptime6 years, 20+ products");
-    expect(out).toContain("packages12 stacks (see skills)");
+    expect(out).toContain("uptime6+ years, 20+ products");
+    expect(out).toContain("packages9 products with LLM features");
     const swatches = html[2]!.match(/background:var\(--[a-z]+\)/g);
     expect(swatches).toEqual(
       ["red", "orange", "yellow", "green", "cyan", "purple", "pink", "fg"].map(
