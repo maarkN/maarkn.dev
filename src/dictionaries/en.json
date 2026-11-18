@@ -94,15 +94,17 @@
       "voip-platform": "Cloud phone system inside a B2B CRM, with recorded calls, AI transcription and pay-as-you-go billing.",
       "municipalities-chatbot": "A citizen-service chatbot on WhatsApp, answering from each city hall's official portal.",
       "miami-real-estate-assistant": "A WhatsApp \"digital broker\" that qualifies luxury real-estate leads using the broker's own sales method.",
-      "carbon-credit-platform": "From a rural property's CAR number to an environmental viability report, ordered and paid on WhatsApp.",
-      "museum-institutional-site": "Website and first digital collection for Brazil's numismatic society museum, editable by staff without a developer.",
-      "betting-audit-kyc": "A security audit of a 300k-line betting platform, and a KYC flow that runs in the browser.",
-      "agritech-field-sales-platform": "An offline-first field-visit app for agribusiness sales reps, taken over without a hand-off.",
-      "jobradar-ai": "An LLM pipeline that turns job postings into structured data and ranks them against a résumé.",
       "maarkn-dev": "This site: a terminal-style bilingual portfolio with an AI assistant grounded in my work.",
+      "jobradar-ai": "An LLM pipeline that turns job postings into structured data and ranks them against a résumé.",
+      "cloudscraper-go": "A Go HTTP client that sends real browser TLS fingerprints, with a crawler and an MCP server.",
+      "museum-institutional-site": "Website and first digital collection for Brazil's numismatic society museum, editable by staff without a developer.",
+      "agritech-field-sales-platform": "An offline-first field-visit app for agribusiness sales reps, taken over without a hand-off.",
+      "carbon-credit-platform": "From a rural property's CAR number to an environmental viability report, ordered and paid on WhatsApp.",
+      "betting-audit-kyc": "A security audit of a 300k-line betting platform, and a KYC flow that runs in the browser.",
+      "fintech-loan-api": "App, API and public-data pipelines for a regional credit-scoring idea.",
       "collectprime-app": "A collectors' catalog app I kept alive solo: store subscriptions, iOS recovery and an API rewrite.",
       "locasty": "One dashboard for the reviews, questions and posts of hundreds of store listings on Google.",
-      "fintech-loan-api": "App, API and public-data pipelines for a regional credit-scoring idea."
+      "cloudscraper-js": "An npm SDK that lets Node.js apps drive the Python cloudscraper library, with tools for AI agents."
     },
     "details": {
       "remote-harness": {
@@ -185,44 +187,14 @@
           "CQRS modular monolith on MongoDB with RabbitMQ events and multi-tenancy"
         ]
       },
-      "carbon-credit-platform": {
-        "description": "A carbon-credit startup wanted an entry product for rural landowners: a first report on whether their land qualifies for carbon credits. A WhatsApp assistant sells the report and an Asaas link collects payment. Once paid, a pipeline crosses public CAR data with 15+ geospatial compliance layers and writes the report as a PDF, in about a minute and US$0.30 per report. The MVP met its grant milestone and was then discontinued.",
-        "role": "Sole developer: technology choices, backend, AI report pipeline, checkout and infrastructure.",
+      "maarkn-dev": {
+        "description": "My personal site in English and Portuguese, built with Next.js 16 and React 19. It has an AI chat that answers from a knowledge base about my work, a résumé generator limited to that same base, and a private admin with an MCP server. It runs on my own server with Docker, Traefik and CI/CD.",
+        "role": "Sole developer: design, frontend, backend, AI features and self-hosted infrastructure.",
         "features": [
-          "WhatsApp triage across about 10 intents, with human handoff",
-          "Asaas checkout with Pix, boleto and card",
-          "Report sections written by parallel LLM calls, exported to PDF",
-          "Web order page with CAR validation and a report editor"
-        ]
-      },
-      "museum-institutional-site": {
-        "description": "The society's old site only had posts. The new one, built from a Figma design, adds exhibitions, events, visit and ticket information, and the institution's first digital collection. Curators edit everything in Ghost and Directus, and pages still render if the CMS is unreachable. The MVP is ready; the launch is on the museum's side.",
-        "role": "Sole developer: frontend, CMS integration, infrastructure and deploy.",
-        "features": [
-          "Digital collection with search and filters (denomination, author, class)",
-          "Ghost for posts and newsletter, Directus for structured content",
-          "Touchscreen kiosk page for a totem inside the museum",
-          "Docker Compose + Traefik with automatic TLS and an operator guide for staff"
-        ]
-      },
-      "betting-audit-kyc": {
-        "description": "A regulated state lottery acquired an online-betting platform and planned to hand it to a new team. I audited six services (about 300k lines of untyped, untested JavaScript) across 16 areas, and the 15-item priority plan became the vendor's backlog. I also built the bettor onboarding: document capture, OCR and face match in the browser. The operation was put on hold before launch.",
-        "role": "Code auditor and sole KYC developer.",
-        "features": [
-          "16-area code audit with 21 critical and medium findings and a prioritised action plan",
-          "In-browser OCR (Tesseract.js) and face match (face-api.js)",
-          "QR-code handoff from desktop to phone, synced over Socket.IO and Redis",
-          "Mobile-first PWA"
-        ]
-      },
-      "agritech-field-sales-platform": {
-        "description": "Sales reps use the app to plan and record visits to rural producers, including where there is no signal. I received the code as ZIP files, with no access to the store or domain accounts. I secured production with backups first, then documented, stabilised and migrated the platform from Oracle Cloud to AWS, validated on a production copy.",
-        "role": "Sole engineer after the takeover: infrastructure, migration, documentation and mobile app.",
-        "features": [
-          "Offline visit recording with sync",
-          "Offline-generated visit PDF report with photos",
-          "Automatic TLS with Traefik and Let's Encrypt, ending certificate outages",
-          "Sales-commission dashboard with PDF/Excel export, plus GitHub Actions CI/CD"
+          "RAG assistant: OpenAI embeddings in PostgreSQL + pgvector, answers streamed over SSE, with rate limits",
+          "Résumé and cover-letter generator with structured output and anti-fabrication rules",
+          "MCP server with scoped API keys, per-tool permission checks and an audit log",
+          "Self-hosted: Docker + Traefik with Let's Encrypt, deployed by a GitHub Actions runner; WCAG 2.1 AA checked with axe-core"
         ]
       },
       "jobradar-ai": {
@@ -235,14 +207,63 @@
           "Field-level extraction evals in the CLI and CI; offline tests with mypy strict"
         ]
       },
-      "maarkn-dev": {
-        "description": "My personal site in English and Portuguese, built with Next.js 16 and React 19. It has an AI chat that answers from a knowledge base about my work, a résumé generator limited to that same base, and a private admin with an MCP server. It runs on my own server with Docker, Traefik and CI/CD.",
-        "role": "Sole developer: design, frontend, backend, AI features and self-hosted infrastructure.",
+      "cloudscraper-go": {
+        "description": "A Go library and CLI that fetch pages by sending the same TLS handshake as Chrome or Firefox, built on uTLS. It also has a rate-limited concurrent crawler, a session daemon and an MCP server for AI agents. It only passes TLS-fingerprint checks: no JavaScript challenges, no Turnstile, and no tagged release yet. Paused.",
+        "role": "Sole developer: library, CLI, crawler, daemon, MCP server, tests and CI.",
         "features": [
-          "RAG assistant: OpenAI embeddings in PostgreSQL + pgvector, answers streamed over SSE, with rate limits",
-          "Résumé and cover-letter generator with structured output and anti-fabrication rules",
-          "MCP server with scoped API keys, per-tool permission checks and an audit log",
-          "Self-hosted: Docker + Traefik with Let's Encrypt, deployed by a GitHub Actions runner; WCAG 2.1 AA checked with axe-core"
+          "Own http.RoundTripper on uTLS browser ClientHellos, speaking HTTP/2 or HTTP/1.1; a fingerprint command checks JA3/JA4 against an external service",
+          "Concurrent crawler with a bounded worker pool, per-host rate limit and Prometheus metrics",
+          "Retries with backoff and jitter that honor Retry-After; HTTP CONNECT and SOCKS5 proxies",
+          "About 40% of the code is offline tests; CI runs -race on two Go versions plus golangci-lint"
+        ]
+      },
+      "museum-institutional-site": {
+        "description": "The society's old site only had posts. The new one, built from a Figma design, adds exhibitions, events, visit and ticket information, and the institution's first digital collection. Curators edit everything in Ghost and Directus, and pages still render if the CMS is unreachable. The MVP is ready; the launch is on the museum's side.",
+        "role": "Sole developer: frontend, CMS integration, infrastructure and deploy.",
+        "features": [
+          "Digital collection with search and filters (denomination, author, class)",
+          "Ghost for posts and newsletter, Directus for structured content",
+          "Touchscreen kiosk page for a totem inside the museum",
+          "Docker Compose + Traefik with automatic TLS and an operator guide for staff"
+        ]
+      },
+      "agritech-field-sales-platform": {
+        "description": "Sales reps use the app to plan and record visits to rural producers, including where there is no signal. I received the code as ZIP files, with no access to the store or domain accounts. I secured production with backups first, then documented, stabilised and migrated the platform from Oracle Cloud to AWS, validated on a production copy.",
+        "role": "Sole engineer after the takeover: infrastructure, migration, documentation and mobile app.",
+        "features": [
+          "Offline visit recording with sync",
+          "Offline-generated visit PDF report with photos",
+          "Automatic TLS with Traefik and Let's Encrypt, ending certificate outages",
+          "Sales-commission dashboard with PDF/Excel export, plus GitHub Actions CI/CD"
+        ]
+      },
+      "carbon-credit-platform": {
+        "description": "A carbon-credit startup wanted an entry product for rural landowners: a first report on whether their land qualifies for carbon credits. A WhatsApp assistant sells the report and an Asaas link collects payment. Once paid, a pipeline crosses public CAR data with 15+ geospatial compliance layers and writes the report as a PDF, in about a minute and US$0.30 per report. The MVP met its grant milestone and was then discontinued.",
+        "role": "Sole developer: technology choices, backend, AI report pipeline, checkout and infrastructure.",
+        "features": [
+          "WhatsApp triage across about 10 intents, with human handoff",
+          "Asaas checkout with Pix, boleto and card",
+          "Report sections written by parallel LLM calls, exported to PDF",
+          "Web order page with CAR validation and a report editor"
+        ]
+      },
+      "betting-audit-kyc": {
+        "description": "A regulated state lottery acquired an online-betting platform and planned to hand it to a new team. I audited six services (about 300k lines of untyped, untested JavaScript) across 16 areas, and the 15-item priority plan became the vendor's backlog. I also built the bettor onboarding: document capture, OCR and face match in the browser. The operation was put on hold before launch.",
+        "role": "Code auditor and sole KYC developer.",
+        "features": [
+          "16-area code audit with 21 critical and medium findings and a prioritised action plan",
+          "In-browser OCR (Tesseract.js) and face match (face-api.js)",
+          "QR-code handoff from desktop to phone, synced over Socket.IO and Redis",
+          "Mobile-first PWA"
+        ]
+      },
+      "fintech-loan-api": {
+        "description": "Groundwork for a fintech that wanted to score small-town businesses using public data. I built the Flutter app, the NestJS backend and the loaders and scrapers for government datasets. It stopped before production.",
+        "role": "Fullstack and data engineer.",
+        "features": [
+          "Batch loader of Receita Federal, PGFN, RAIS and PNAD data into MongoDB (14M+ rows moved off BigQuery)",
+          "SIGEF rural-property scraper with captcha solving",
+          "Flutter app with clean architecture, shipped to TestFlight for test users"
         ]
       },
       "collectprime-app": {
@@ -265,13 +286,14 @@
           "Multi-user accounts with profile-based permissions"
         ]
       },
-      "fintech-loan-api": {
-        "description": "Groundwork for a fintech that wanted to score small-town businesses using public data. I built the Flutter app, the NestJS backend and the loaders and scrapers for government datasets. It stopped before production.",
-        "role": "Fullstack and data engineer.",
+      "cloudscraper-js": {
+        "description": "A Node.js/TypeScript SDK on top of the Python cloudscraper library, published on npm. I forked an older wrapper by Eltik and rebuilt nearly all of it, with a long-lived Python daemon, reusable sessions and tools for AI agents. The Python library does the actual Cloudflare handling; this package manages it from Node. No longer maintained.",
+        "role": "Forked and rebuilt an existing TypeScript wrapper; maintained the npm package.",
         "features": [
-          "Batch loader of Receita Federal, PGFN, RAIS and PNAD data into MongoDB (14M+ rows moved off BigQuery)",
-          "SIGEF rural-property scraper with captcha solving",
-          "Flutter app with clean architecture, shipped to TestFlight for test users"
+          "Long-lived Python daemon that keeps sessions warm, talking to Node over NDJSON with a buffered decoder",
+          "Exposed to AI agents as an MCP server, a LangChain tool and function-calling schemas, all on one set of handlers",
+          "Sticky proxy per session, with an explicit error when the proxy changes mid-session",
+          "Removed a sudo / curl | bash postinstall and added a non-root Docker image"
         ]
       }
     },

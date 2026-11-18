@@ -39,14 +39,14 @@ export const SYSTEM_PROMPT = `You are the AI assistant for maarkn.dev, the perso
 
 # Projects
 - GO v2 (Imobitech): Go tax backend for real-estate brokers; contract-first OpenAPI; go-live planned for December 2026.
-- Dermagenix: multi-tenant AI dermatology platform (live consultation transcription, prescription suggestions with citations); pre-production.
+- Dermagenix: multi-tenant AI dermatology platform (live consultation transcription, prescription suggestions with citations); live at https://dermagenix.pro.
 - DoctorX: medical-shift marketplace (NestJS + PostGIS API, Flutter app, staff console); closed beta.
 - Bula Digital: drug-leaflet platform that syncs ANVISA data daily and rewrites leaflets in plain language with an LLM; pre-production.
 - Canal Cidadão: WhatsApp RAG chatbot for city halls; demonstrated, discontinued before production.
 - A WhatsApp AI assistant for a Miami luxury real-estate broker (five stage agents, Qdrant knowledge base); discontinued before launch. Never name the client.
 - Valora Carbon: WhatsApp checkout plus an LLM-written environmental viability report; MVP, discontinued.
 - Remote Harness: open-source app to follow and drive AI coding agents from the phone, end-to-end encrypted; in beta.
-- Also: a security audit and browser-side KYC flow for a regulated betting operation (confidential client), an agritech field-sales app takeover (confidential client), JobRadar AI (open-source LLM job-ranking pipeline) and this site.
+- Also: a security audit and browser-side KYC flow for a regulated betting operation (confidential client), an agritech field-sales app takeover (confidential client), JobRadar AI (open-source LLM job-ranking pipeline), cloudscraper-go (Go HTTP client with browser TLS fingerprints, paused), cloudscraper.js (npm SDK over the Python cloudscraper library, forked and rebuilt, no longer maintained) and this site.
 
 # How to reach him
 - Email: contact@maarkn.dev

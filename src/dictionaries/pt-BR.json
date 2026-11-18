@@ -94,15 +94,17 @@
       "voip-platform": "Telefonia em nuvem dentro de um CRM B2B, com gravação, transcrição por IA e cobrança por uso.",
       "municipalities-chatbot": "Chatbot de atendimento ao cidadão no WhatsApp, respondendo com o conteúdo oficial do portal de cada prefeitura.",
       "miami-real-estate-assistant": "Um \"corretor digital\" no WhatsApp que qualifica leads de imóveis de luxo com o método do próprio corretor.",
-      "carbon-credit-platform": "Do número do CAR de um imóvel rural ao parecer de viabilidade ambiental, pedido e pago pelo WhatsApp.",
-      "museum-institutional-site": "Site e primeiro acervo digital do museu da Sociedade Numismática Brasileira, editáveis pela equipe sem desenvolvedor.",
-      "betting-audit-kyc": "Auditoria de segurança de uma plataforma de apostas de 300 mil linhas e um KYC que roda no navegador.",
-      "agritech-field-sales-platform": "App offline-first de visitas de campo para representantes do agro, assumido sem passagem de bastão.",
-      "jobradar-ai": "Pipeline com LLM que transforma vagas em dados estruturados e as ranqueia contra um currículo.",
       "maarkn-dev": "Este site: um portfólio bilíngue em formato de terminal, com um assistente de IA baseado no meu trabalho.",
+      "jobradar-ai": "Pipeline com LLM que transforma vagas em dados estruturados e as ranqueia contra um currículo.",
+      "cloudscraper-go": "Cliente HTTP em Go que envia a impressão TLS de um navegador real, com crawler e servidor MCP.",
+      "museum-institutional-site": "Site e primeiro acervo digital do museu da Sociedade Numismática Brasileira, editáveis pela equipe sem desenvolvedor.",
+      "agritech-field-sales-platform": "App offline-first de visitas de campo para representantes do agro, assumido sem passagem de bastão.",
+      "carbon-credit-platform": "Do número do CAR de um imóvel rural ao parecer de viabilidade ambiental, pedido e pago pelo WhatsApp.",
+      "betting-audit-kyc": "Auditoria de segurança de uma plataforma de apostas de 300 mil linhas e um KYC que roda no navegador.",
+      "fintech-loan-api": "App, API e pipelines de dados públicos para uma ideia de score de crédito regional.",
       "collectprime-app": "App de catálogo para colecionadores que mantive sozinho: assinaturas nas lojas, volta ao iOS e reescrita da API.",
       "locasty": "Um painel para avaliações, perguntas e posts de centenas de unidades no Google.",
-      "fintech-loan-api": "App, API e pipelines de dados públicos para uma ideia de score de crédito regional."
+      "cloudscraper-js": "SDK no npm que permite a apps Node.js controlar a biblioteca Python cloudscraper, com ferramentas para agentes de IA."
     },
     "details": {
       "remote-harness": {
@@ -185,44 +187,14 @@
           "Monólito modular com CQRS sobre MongoDB, eventos no RabbitMQ e multi-tenancy"
         ]
       },
-      "carbon-credit-platform": {
-        "description": "Uma startup de crédito de carbono queria um produto de entrada para proprietários rurais: um primeiro parecer sobre se a terra se qualifica para crédito de carbono. Um assistente no WhatsApp vende o parecer e um link do Asaas faz a cobrança. Depois do pagamento, um pipeline cruza o CAR público com 15+ camadas de conformidade geoespacial e escreve o parecer em PDF, em cerca de um minuto e US$ 0,30 por laudo. O MVP cumpriu o marco do edital e depois foi descontinuado.",
-        "role": "Único desenvolvedor: escolha de tecnologia, backend, pipeline do parecer com IA, checkout e infraestrutura.",
+      "maarkn-dev": {
+        "description": "Meu site pessoal em inglês e português, feito com Next.js 16 e React 19. Tem um chat com IA que responde a partir de uma base sobre meu trabalho, um gerador de currículos limitado a essa mesma base e um painel privado com servidor MCP. Roda no meu próprio servidor, com Docker, Traefik e CI/CD.",
+        "role": "Único desenvolvedor: design, frontend, backend, funcionalidades de IA e infraestrutura própria.",
         "features": [
-          "Triagem no WhatsApp com cerca de 10 intenções e passagem para atendente humano",
-          "Checkout Asaas com Pix, boleto e cartão",
-          "Seções do parecer escritas por chamadas paralelas de LLM e exportadas em PDF",
-          "Página web de pedido com validação do CAR e editor do parecer"
-        ]
-      },
-      "museum-institutional-site": {
-        "description": "O site antigo da sociedade só tinha posts. O novo, feito a partir do Figma, traz exposições, eventos, informações de visita e ingressos, e o primeiro acervo digital da instituição. Os curadores editam tudo no Ghost e no Directus, e as páginas continuam abrindo mesmo se o CMS cair. O MVP está pronto; o lançamento depende do museu.",
-        "role": "Único desenvolvedor: frontend, integração com CMS, infraestrutura e deploy.",
-        "features": [
-          "Acervo digital com busca e filtros (denominação, autor, classe)",
-          "Ghost para posts e newsletter, Directus para conteúdo estruturado",
-          "Página de quiosque touchscreen para um totem no museu",
-          "Docker Compose + Traefik com TLS automático e guia de operação para a equipe"
-        ]
-      },
-      "betting-audit-kyc": {
-        "description": "Uma loteria estadual regulada adquiriu uma plataforma de apostas online e planejava passá-la para uma nova equipe. Auditei seis serviços (cerca de 300 mil linhas de JavaScript sem tipagem e sem testes) em 16 áreas, e o plano de 15 itens prioritários virou o backlog do fornecedor. Também construí o cadastro do apostador: captura de documento, OCR e comparação facial no navegador. A operação foi suspensa antes do lançamento.",
-        "role": "Auditor de código e único desenvolvedor do KYC.",
-        "features": [
-          "Auditoria em 16 áreas com 21 vulnerabilidades críticas e médias e um plano de ação priorizado",
-          "OCR (Tesseract.js) e comparação facial (face-api.js) no navegador",
-          "Passagem do computador para o celular por QR code, sincronizada via Socket.IO e Redis",
-          "PWA mobile-first"
-        ]
-      },
-      "agritech-field-sales-platform": {
-        "description": "Os representantes usam o app para planejar e registrar visitas a produtores rurais, inclusive sem sinal. Recebi o código em arquivos ZIP, sem acesso às contas das lojas nem ao domínio. Primeiro protegi a produção com backups, depois documentei, estabilizei e migrei a plataforma da Oracle Cloud para a AWS, validada numa cópia de produção.",
-        "role": "Único engenheiro depois de assumir: infraestrutura, migração, documentação e app mobile.",
-        "features": [
-          "Registro de visitas offline com sincronização",
-          "Relatório de visita em PDF gerado offline, com fotos",
-          "TLS automático com Traefik e Let's Encrypt, acabando com as quedas por certificado",
-          "Painel de comissões com exportação PDF/Excel, além de CI/CD com GitHub Actions"
+          "Assistente com RAG: embeddings da OpenAI em PostgreSQL + pgvector, respostas em streaming (SSE) e limites de uso",
+          "Gerador de currículos e cartas com saída estruturada e regras contra invenção de fatos",
+          "Servidor MCP com chaves de API com escopo, checagem de permissão por ferramenta e log de auditoria",
+          "Auto-hospedado: Docker + Traefik com Let's Encrypt e deploy por um runner do GitHub Actions; acessibilidade WCAG 2.1 AA verificada com axe-core"
         ]
       },
       "jobradar-ai": {
@@ -235,14 +207,63 @@
           "Avaliação da extração campo a campo pela CLI e no CI; testes offline com mypy strict"
         ]
       },
-      "maarkn-dev": {
-        "description": "Meu site pessoal em inglês e português, feito com Next.js 16 e React 19. Tem um chat com IA que responde a partir de uma base sobre meu trabalho, um gerador de currículos limitado a essa mesma base e um painel privado com servidor MCP. Roda no meu próprio servidor, com Docker, Traefik e CI/CD.",
-        "role": "Único desenvolvedor: design, frontend, backend, funcionalidades de IA e infraestrutura própria.",
+      "cloudscraper-go": {
+        "description": "Biblioteca e CLI em Go que buscam páginas enviando o mesmo handshake TLS do Chrome ou do Firefox, sobre uTLS. Inclui um crawler concorrente com limite de taxa, um daemon de sessões e um servidor MCP para agentes de IA. Passa apenas em verificações de impressão TLS: não resolve desafios JavaScript nem Turnstile, e ainda não tem release. Pausado.",
+        "role": "Único desenvolvedor: biblioteca, CLI, crawler, daemon, servidor MCP, testes e CI.",
         "features": [
-          "Assistente com RAG: embeddings da OpenAI em PostgreSQL + pgvector, respostas em streaming (SSE) e limites de uso",
-          "Gerador de currículos e cartas com saída estruturada e regras contra invenção de fatos",
-          "Servidor MCP com chaves de API com escopo, checagem de permissão por ferramenta e log de auditoria",
-          "Auto-hospedado: Docker + Traefik com Let's Encrypt e deploy por um runner do GitHub Actions; acessibilidade WCAG 2.1 AA verificada com axe-core"
+          "http.RoundTripper próprio sobre ClientHellos de navegador do uTLS, com HTTP/2 ou HTTP/1.1; o comando fingerprint confere o JA3/JA4 num serviço externo",
+          "Crawler concorrente com pool limitado de workers, limite de taxa por host e métricas no Prometheus",
+          "Retentativas com backoff e jitter que respeitam o Retry-After; proxies HTTP CONNECT e SOCKS5",
+          "Cerca de 40% do código são testes offline; o CI roda -race em duas versões do Go, mais golangci-lint"
+        ]
+      },
+      "museum-institutional-site": {
+        "description": "O site antigo da sociedade só tinha posts. O novo, feito a partir do Figma, traz exposições, eventos, informações de visita e ingressos, e o primeiro acervo digital da instituição. Os curadores editam tudo no Ghost e no Directus, e as páginas continuam abrindo mesmo se o CMS cair. O MVP está pronto; o lançamento depende do museu.",
+        "role": "Único desenvolvedor: frontend, integração com CMS, infraestrutura e deploy.",
+        "features": [
+          "Acervo digital com busca e filtros (denominação, autor, classe)",
+          "Ghost para posts e newsletter, Directus para conteúdo estruturado",
+          "Página de quiosque touchscreen para um totem no museu",
+          "Docker Compose + Traefik com TLS automático e guia de operação para a equipe"
+        ]
+      },
+      "agritech-field-sales-platform": {
+        "description": "Os representantes usam o app para planejar e registrar visitas a produtores rurais, inclusive sem sinal. Recebi o código em arquivos ZIP, sem acesso às contas das lojas nem ao domínio. Primeiro protegi a produção com backups, depois documentei, estabilizei e migrei a plataforma da Oracle Cloud para a AWS, validada numa cópia de produção.",
+        "role": "Único engenheiro depois de assumir: infraestrutura, migração, documentação e app mobile.",
+        "features": [
+          "Registro de visitas offline com sincronização",
+          "Relatório de visita em PDF gerado offline, com fotos",
+          "TLS automático com Traefik e Let's Encrypt, acabando com as quedas por certificado",
+          "Painel de comissões com exportação PDF/Excel, além de CI/CD com GitHub Actions"
+        ]
+      },
+      "carbon-credit-platform": {
+        "description": "Uma startup de crédito de carbono queria um produto de entrada para proprietários rurais: um primeiro parecer sobre se a terra se qualifica para crédito de carbono. Um assistente no WhatsApp vende o parecer e um link do Asaas faz a cobrança. Depois do pagamento, um pipeline cruza o CAR público com 15+ camadas de conformidade geoespacial e escreve o parecer em PDF, em cerca de um minuto e US$ 0,30 por laudo. O MVP cumpriu o marco do edital e depois foi descontinuado.",
+        "role": "Único desenvolvedor: escolha de tecnologia, backend, pipeline do parecer com IA, checkout e infraestrutura.",
+        "features": [
+          "Triagem no WhatsApp com cerca de 10 intenções e passagem para atendente humano",
+          "Checkout Asaas com Pix, boleto e cartão",
+          "Seções do parecer escritas por chamadas paralelas de LLM e exportadas em PDF",
+          "Página web de pedido com validação do CAR e editor do parecer"
+        ]
+      },
+      "betting-audit-kyc": {
+        "description": "Uma loteria estadual regulada adquiriu uma plataforma de apostas online e planejava passá-la para uma nova equipe. Auditei seis serviços (cerca de 300 mil linhas de JavaScript sem tipagem e sem testes) em 16 áreas, e o plano de 15 itens prioritários virou o backlog do fornecedor. Também construí o cadastro do apostador: captura de documento, OCR e comparação facial no navegador. A operação foi suspensa antes do lançamento.",
+        "role": "Auditor de código e único desenvolvedor do KYC.",
+        "features": [
+          "Auditoria em 16 áreas com 21 vulnerabilidades críticas e médias e um plano de ação priorizado",
+          "OCR (Tesseract.js) e comparação facial (face-api.js) no navegador",
+          "Passagem do computador para o celular por QR code, sincronizada via Socket.IO e Redis",
+          "PWA mobile-first"
+        ]
+      },
+      "fintech-loan-api": {
+        "description": "Base para uma fintech que queria avaliar empresas de cidades pequenas usando dados públicos. Construí o app em Flutter, o backend em NestJS e os carregadores e scrapers de bases do governo. Parou antes da produção.",
+        "role": "Engenheiro fullstack e de dados.",
+        "features": [
+          "Carregador em lote de dados da Receita Federal, PGFN, RAIS e PNAD no MongoDB (14M+ linhas tiradas do BigQuery)",
+          "Scraper de imóveis rurais do SIGEF com resolução de captcha",
+          "App Flutter com clean architecture, publicado no TestFlight para usuários de teste"
         ]
       },
       "collectprime-app": {
@@ -265,13 +286,14 @@
           "Contas com vários usuários e permissões por perfil"
         ]
       },
-      "fintech-loan-api": {
-        "description": "Base para uma fintech que queria avaliar empresas de cidades pequenas usando dados públicos. Construí o app em Flutter, o backend em NestJS e os carregadores e scrapers de bases do governo. Parou antes da produção.",
-        "role": "Engenheiro fullstack e de dados.",
+      "cloudscraper-js": {
+        "description": "SDK em Node.js/TypeScript sobre a biblioteca Python cloudscraper, publicado no npm. Fiz o fork de um wrapper antigo do Eltik e reconstruí quase tudo, com um daemon Python de longa duração, sessões reutilizáveis e ferramentas para agentes de IA. A biblioteca Python faz o trabalho com o Cloudflare; este pacote a controla a partir do Node. Não é mais mantido.",
+        "role": "Fork e reconstrução de um wrapper TypeScript existente; mantive o pacote no npm.",
         "features": [
-          "Carregador em lote de dados da Receita Federal, PGFN, RAIS e PNAD no MongoDB (14M+ linhas tiradas do BigQuery)",
-          "Scraper de imóveis rurais do SIGEF com resolução de captcha",
-          "App Flutter com clean architecture, publicado no TestFlight para usuários de teste"
+          "Daemon Python de longa duração que mantém as sessões ativas, falando com o Node via NDJSON com um decodificador com buffer",
+          "Exposto a agentes de IA como servidor MCP, ferramenta LangChain e schemas de function calling, todos sobre os mesmos handlers",
+          "Proxy fixo por sessão, com erro explícito quando o proxy muda no meio da sessão",
+          "Removi um postinstall com sudo / curl | bash e criei uma imagem Docker sem root"
         ]
       }
     },
