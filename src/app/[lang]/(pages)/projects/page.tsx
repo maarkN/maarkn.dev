@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { clsx } from "clsx";
 import { getDictionary, hasLocale } from "@/i18n/config";
 import { routeAlternates } from "@/lib/seo";
-import { getAllProjects, buildTaglines, projectCategories } from "@/lib/projects-repo";
+import { langAttr } from "@/lib/project-text";
+import { getAllProjects, projectCategories } from "@/lib/projects-repo";
 import type { ProjectCategory } from "@/lib/projects";
 import { projectsLines } from "@/lib/terminal/listings";
 import { D } from "@/components/terminal/primitives";
@@ -48,8 +49,7 @@ export default async function ProjectsIndexPage({
   const dict = await getDictionary(lang);
   const p = dict.projects;
   const labels = dict.terminal.pages.projects;
-  const all = await getAllProjects();
-  const taglines = buildTaglines(all, p.taglines);
+  const all = await getAllProjects(lang);
   const shown = active ? all.filter((project) => project.category === active) : all;
 
   const header = active
@@ -96,7 +96,8 @@ export default async function ProjectsIndexPage({
             category: project.category,
             status: project.status,
             stack: project.stack,
-            tagline: taglines[project.slug] ?? "",
+            tagline: project.tagline?.value ?? "",
+            taglineLang: langAttr(project.tagline, lang),
           })),
           { lang, categories: p.categories, statuses: p.statuses },
         )
