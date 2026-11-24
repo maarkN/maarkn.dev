@@ -189,11 +189,6 @@
   color: var(--on-beam);
   font-weight: 600;
 }
-/* Its fill is what the text is read against: opaque, and hit-testable so that
-   contrast tools, which skip `pointer-events: none`, see it. */
-.primary .frame {
-  pointer-events: auto;
-}
 .primary .fill {
   background-color: var(--beam);
   background-image:
