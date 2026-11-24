@@ -13,15 +13,19 @@ O anúncio publicado por uma empresa. Existe mesmo que ninguém se candidate a e
 _Avoid_: Oportunidade, posição
 
 **Empresa** (`Company`):
-Quem anuncia a vaga. O que se sabe sobre ela vale para todas as candidaturas feitas lá.
+Quem anuncia a vaga. O que se sabe sobre ela (`aboutMd`) vale para todas as candidaturas feitas lá.
 
-**Contexto do projeto** (`project_info`):
+**Contexto do projeto** (`projectInfoMd`):
 O produto ou o time em que se trabalharia se a candidatura desse certo.
 _Avoid_: Projeto (sozinho)
 
 **Entrevista** (`Interview`):
 Uma etapa do processo seletivo, prevista ou marcada, com ou sem data.
 _Avoid_: Etapa, meeting, call
+
+**Situação da entrevista** (`InterviewStatus`):
+Prevista (sem data), marcada (com data), realizada (com data) ou cancelada. O resultado de uma entrevista realizada é outra coisa.
+_Avoid_: Status, estado
 
 **Evento da candidatura** (`ApplicationEvent`):
 Algo que aconteceu com a candidatura, registrado na linha do tempo. Não tem futuro.
@@ -31,7 +35,7 @@ _Avoid_: Evento (sozinho), compromisso
 O PDF exato que o recrutador recebeu. Não muda depois do envio.
 _Avoid_: Currículo (sozinho), anexo
 
-**Motivo de encerramento**:
+**Motivo de encerramento** (`ClosureReason`):
 A categoria que explica por que uma candidatura recusada ou retirada acabou. Silêncio do recrutador não é motivo, é estágio.
 _Avoid_: Rejection cause, causa de rejeição
 
