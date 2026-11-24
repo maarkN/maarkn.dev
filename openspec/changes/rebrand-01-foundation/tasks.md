@@ -1,6 +1,6 @@
 ## 1. Pré-condições
 
-- [ ] 1.1 Criar `feat/rebranding` a partir da `main` e proteger contra push direto; verificar no GitHub
+- [x] 1.1 Criar `feat/rebranding` a partir da `main` e proteger contra push direto; verificar no GitHub
 - [x] 1.2 Ler `docs/design/fundamentos.md` e `docs/design/moldura.md` e o guia de fontes e CSS em `node_modules/next/dist/docs/`; listar no PR o que difere
 
 ## 2. Temas
