@@ -533,14 +533,16 @@
 }
 .windowBody {
   position: relative;
-  padding: 16px 34px 32px;
+  /* What scrolls, and its bar, stop short of the lines of the frame. */
+  margin: 0 10px 10px;
+  padding: 16px 24px 22px;
   overflow: auto;
   overscroll-behavior: contain;
 }
-/* A scrolling body is a tab stop in some engines; it needs its own focus mark. */
+/* A body that scrolls is a tab stop (dialog.tsx), and not a hologram. */
 .windowBody:focus-visible {
   outline: 2px solid var(--beam-3);
-  outline-offset: -6px;
+  outline-offset: -2px;
 }
 
 @keyframes rise {

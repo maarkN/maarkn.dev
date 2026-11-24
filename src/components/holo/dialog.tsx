@@ -1,14 +1,49 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { X } from "lucide-react";
 import clsx from "clsx";
 import { HoloIconButton } from "./button";
 import { HoloFrame } from "./frame";
+import { observeSize } from "./size-observer";
 import styles from "./holo.module.css";
 
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE = "a[href], :is(button, input, select, textarea):not(:disabled), summary, [tabindex]";
+
+/**
+ * What scrolls in a window. While there is something to scroll it is a tab
+ * stop: text alone gives the keyboard nothing else to hold on to, and not every
+ * browser makes a scrolling box focusable by itself.
+ */
+function WindowBody({ labelledBy, children }: { labelledBy: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scrolls, setScrolls] = useState(false);
+
+  useLayoutEffect(() => {
+    const body = ref.current;
+    const content = body?.firstElementChild;
+    if (!body || !content) return;
+    const measure = () =>
+      setScrolls(
+        body.scrollHeight > body.clientHeight ||
+          body.scrollWidth > body.clientWidth ||
+          // Not under whoever is on it: the focus would be lost.
+          document.activeElement === body,
+      );
+    const stops = [observeSize(body, measure), observeSize(content, measure)];
+    return () => stops.forEach((stop) => stop());
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={styles.windowBody}
+      {...(scrolls && { tabIndex: 0, role: "region", "aria-labelledby": labelledBy })}
+    >
+      <div>{children}</div>
+    </div>
+  );
+}
 
 /**
  * A window, on the native <dialog>: the top layer makes everything behind it
@@ -57,16 +92,16 @@ export function HoloDialog({
   // controls: past the last element, Tab would leave the window.
   const keepInside = (event: KeyboardEvent<HTMLDialogElement>) => {
     const dialog = ref.current;
-    if (event.key !== "Tab" || !dialog) return;
-    const stops = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-      (element) => element.checkVisibility?.() ?? true,
-    );
-    const from = event.shiftKey ? stops[0] : stops[stops.length - 1];
-    const to = event.shiftKey ? stops[stops.length - 1] : stops[0];
     const active = document.activeElement;
-    if (active !== from && active !== dialog && dialog.contains(active)) return;
+    if (event.key !== "Tab" || !dialog || !active) return;
+    const stops = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+      (element) => element.tabIndex >= 0 && (element.checkVisibility?.() ?? true),
+    );
+    // While there is a stop on the way, the browser is the one who moves.
+    const ahead = event.shiftKey ? Node.DOCUMENT_POSITION_PRECEDING : Node.DOCUMENT_POSITION_FOLLOWING;
+    if (dialog.contains(active) && stops.some((stop) => active.compareDocumentPosition(stop) & ahead)) return;
     event.preventDefault();
-    to?.focus();
+    stops.at(event.shiftKey ? -1 : 0)?.focus();
   };
 
   return (
@@ -109,7 +144,7 @@ export function HoloDialog({
               <X aria-hidden="true" />
             </HoloIconButton>
           </div>
-          <div className={styles.windowBody}>{children}</div>
+          <WindowBody labelledBy={titleId}>{children}</WindowBody>
         </div>
       )}
     </dialog>

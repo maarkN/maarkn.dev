@@ -415,6 +415,122 @@ describe("HoloDialog", () => {
     expect(tab.defaultPrevented).toBe(false);
   });
 
+  it("keeps Tab inside where the last stop is not the last control", () => {
+    function Page() {
+      const [isOpen, setOpen] = useState(false);
+      return (
+        <>
+          <button id="opener" onClick={() => setOpen(true)}>abrir</button>
+          <HoloDialog open={isOpen} onClose={() => setOpen(false)} title="x" closeLabel="Fechar">
+            <button id="last">um</button>
+            <h3 id="heading" tabIndex={-1}>para onde um salto leva</h3>
+            <button tabIndex={-1}>fora da ordem</button>
+            <fieldset disabled>
+              <button>desligado pelo grupo</button>
+            </fieldset>
+          </HoloDialog>
+        </>
+      );
+    }
+    render(<Page />);
+    open();
+    const close = $('dialog button[aria-label="Fechar"]');
+    const last = $("#last");
+    for (const from of [last, $("#heading")]) {
+      act(() => from.focus());
+      press(from, "Tab");
+      expect(document.activeElement).toBe(close);
+    }
+    press(close, "Tab", { shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  describe("taller than the screen", () => {
+    /* jsdom has neither layout nor ResizeObserver: the test says what fits. */
+    let content: number;
+    let resized: () => void;
+    const VISIBLE = 400;
+
+    beforeEach(() => {
+      content = 3000;
+      const all: { callback: ResizeObserverCallback; targets: Set<Element> }[] = [];
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          targets = new Set<Element>();
+          constructor(public callback: ResizeObserverCallback) {
+            all.push(this);
+          }
+          observe = (el: Element) => this.targets.add(el);
+          unobserve = (el: Element) => this.targets.delete(el);
+          disconnect = () => this.targets.clear();
+        },
+      );
+      resized = () =>
+        act(() => {
+          for (const { callback, targets } of all) {
+            const entries = [...targets].map((target) => ({
+              target,
+              borderBoxSize: [{ inlineSize: 600, blockSize: target.matches("dialog div > div > div") ? content : VISIBLE }],
+            }));
+            callback(entries as unknown as ResizeObserverEntry[], {} as ResizeObserver);
+          }
+        });
+      vi.spyOn(Element.prototype, "scrollHeight", "get").mockImplementation(() => content);
+      vi.spyOn(Element.prototype, "clientHeight", "get").mockImplementation(() => VISIBLE);
+    });
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    });
+
+    function Long() {
+      const [isOpen, setOpen] = useState(false);
+      return (
+        <>
+          <button id="opener" onClick={() => setOpen(true)}>abrir</button>
+          <HoloDialog open={isOpen} onClose={() => setOpen(false)} title="Termos" closeLabel="Fechar">
+            <p>só texto</p>
+          </HoloDialog>
+        </>
+      );
+    }
+    const body = () => $("dialog p").parentElement!.parentElement!;
+
+    it("is a named tab stop, in the loop, so the keyboard can scroll it", () => {
+      render(<Long />);
+      open();
+      resized();
+      const close = $('dialog button[aria-label="Fechar"]');
+      expect([body().tabIndex, body().getAttribute("role"), nameOf(body())]).toEqual([0, "region", "Termos"]);
+      // Forwards the browser gets there by itself; backwards it is the last one.
+      const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+      act(() => {
+        close.dispatchEvent(tab);
+      });
+      expect(tab.defaultPrevented).toBe(false);
+      press(close, "Tab", { shiftKey: true });
+      expect(document.activeElement).toBe(body());
+      press(body(), "Tab");
+      expect(document.activeElement).toBe(close);
+    });
+
+    it("follows the content, and keeps the focus of whoever is on it", () => {
+      content = VISIBLE;
+      render(<Long />);
+      open();
+      resized();
+      expect([body().hasAttribute("tabindex"), body().hasAttribute("role")]).toEqual([false, false]);
+      content = 3000;
+      resized();
+      expect(body().tabIndex).toBe(0);
+      act(() => body().focus());
+      content = VISIBLE;
+      resized();
+      expect([document.activeElement === body(), body().tabIndex]).toEqual([true, 0]);
+    });
+  });
+
   it("gives the focus back when it is removed while open", () => {
     function Page() {
       const [there, setThere] = useState(true);
