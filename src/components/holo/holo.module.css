@@ -616,9 +616,9 @@ textarea.input {
 @media (hover: hover) {
   .fieldBox:hover { --bridge: 1; }
 }
+/* The bridges stay open: closing them is the answer to the pointer. */
 .fieldBox[data-invalid] {
   --stroke: var(--bad);
-  --bridge: 1;
 }
 .fieldBox:focus-within {
   --stroke: var(--beam-3);
