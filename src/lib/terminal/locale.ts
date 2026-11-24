@@ -1,9 +1,9 @@
 /**
- * Language switching, shared by the `lang` command and the status bar. The
- * preference lives in the `locale` cookie that `src/proxy.ts` reads for
- * prefix-less URLs, so `lang pt` today means `/` lands on `/pt-BR` tomorrow.
- * Client-only helpers (cookie, `location`); nothing here imports the
- * server-only i18n config.
+ * Language switching, shared by the `lang` command, the status bar and the
+ * site's top and search. The preference lives in the `locale` cookie that
+ * `src/proxy.ts` reads for prefix-less URLs, so `lang pt` today means `/` lands
+ * on `/pt-BR` tomorrow. Client-only helpers (cookie, `location`); nothing here
+ * imports the server-only i18n config.
  */
 
 const LOCALES = ["en", "pt-BR"] as const;

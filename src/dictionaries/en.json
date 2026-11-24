@@ -505,6 +505,10 @@
     }
   },
   "terminal": {
+    "meta": {
+      "title": "CLI version",
+      "description": "Marco Filho's portfolio as a terminal: type a command to read about the career, the projects and the stack, or ask the assistant."
+    },
     "bar": {
       "title": "senior ai/llm & backend engineer · 6y",
       "theme": "theme",
@@ -512,7 +516,8 @@
       "themeTitle": "switch palette",
       "fontTitle": "switch font",
       "lang": "lang",
-      "langTitle": "switch language"
+      "langTitle": "switch language",
+      "site": "back to the site"
     },
     "menu": {
       "title": "commands",
@@ -768,9 +773,167 @@
     },
     "a11y": {
       "skipToPrompt": "skip to command line",
-      "skipToContent": "skip to content",
       "outputOf": "output of {cmd}",
       "breadcrumb": "breadcrumb"
+    }
+  },
+  "site": {
+    "skip": "Skip to content",
+    "brand": "maarkn.dev, home",
+    "pagesLabel": "Pages",
+    "pages": {
+      "home": "Home",
+      "career": "Career",
+      "projects": "Projects",
+      "blog": "Notes",
+      "links": "Links"
+    },
+    "sections": {
+      "contact": "Contact"
+    },
+    "contact": "Talk to me",
+    "cli": "CLI version",
+    "language": {
+      "names": {
+        "en": "English",
+        "pt-BR": "Português"
+      },
+      "switch": {
+        "en": "EN: switch to English",
+        "pt-BR": "PT: switch to Portuguese"
+      }
+    },
+    "theme": {
+      "label": "Theme",
+      "names": {
+        "dusk": "Soft dark",
+        "light": "Soft light",
+        "dracula": "Dracula"
+      },
+      "next": "Theme: {current}. Switch to {next}"
+    },
+    "status": {
+      "available": "open to senior roles",
+      "clock": "Goiânia {time} UTC−3"
+    },
+    "menu": "Menu",
+    "search": {
+      "open": "Search",
+      "title": "Search the site",
+      "label": "A page, a project, a company or a technology",
+      "close": "Close search",
+      "results": "Results",
+      "count": {
+        "one": "1 result",
+        "many": "{count} results"
+      },
+      "none": "Nothing here matches “{query}”.",
+      "ask": "Ask the assistant: “{query}”",
+      "loading": "Loading the index…",
+      "failed": "The search index did not load.",
+      "retry": "Try again",
+      "kinds": {
+        "section": "Section",
+        "page": "Page",
+        "cli": "CLI",
+        "project": "Project",
+        "experience": "Experience",
+        "theme": "Theme",
+        "language": "Language",
+        "cv": "PDF"
+      },
+      "terms": {
+        "pages": {
+          "home": [
+            "start",
+            "Marco Filho",
+            "maarkn"
+          ],
+          "career": [
+            "experience",
+            "jobs",
+            "companies"
+          ],
+          "projects": [
+            "portfolio",
+            "work",
+            "products"
+          ],
+          "blog": [
+            "blog",
+            "posts",
+            "articles",
+            "writing"
+          ],
+          "links": [
+            "LinkedIn",
+            "GitHub",
+            "Instagram",
+            "WhatsApp",
+            "email"
+          ]
+        },
+        "sections": {
+          "contact": [
+            "talk",
+            "hire",
+            "email",
+            "WhatsApp",
+            "message"
+          ]
+        },
+        "cli": [
+          "terminal",
+          "command line",
+          "prompt",
+          "console"
+        ],
+        "themes": {
+          "dusk": [
+            "theme",
+            "dark",
+            "color"
+          ],
+          "light": [
+            "theme",
+            "color",
+            "bright"
+          ],
+          "dracula": [
+            "theme",
+            "dark",
+            "color"
+          ]
+        },
+        "languages": {
+          "en": [
+            "language",
+            "English",
+            "inglês"
+          ],
+          "pt-BR": [
+            "language",
+            "Portuguese",
+            "português"
+          ]
+        },
+        "cv": [
+          "CV",
+          "résumé",
+          "curriculum",
+          "PDF",
+          "download"
+        ]
+      }
+    },
+    "footer": {
+      "label": "Site",
+      "contact": "I read every message and reply within a couple of working days."
+    },
+    "opening": {
+      "title": "From a rough brief to a live product.",
+      "available": "open to senior roles, remote or with relocation",
+      "numbers": "In numbers"
     }
   }
 }

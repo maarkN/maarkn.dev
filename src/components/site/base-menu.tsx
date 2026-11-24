@@ -1,0 +1,96 @@
+"use client";
+
+import { Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, type FocusEvent, type KeyboardEvent } from "react";
+import { clsx } from "clsx";
+import { controlClass } from "@/components/holo/button";
+import { HoloFrame } from "@/components/holo/frame";
+import { HoloLink } from "@/components/holo/link";
+import { ariaCurrent, currentPage, pageHref, PAGES, SECTIONS, sectionHref } from "@/lib/site/pages";
+import { useHomeLink } from "./links";
+import type { SiteLabels } from "./labels";
+import styles from "./site.module.css";
+
+/**
+ * Pages and sections, at the base of the screen, where the top has no room for
+ * them. A <details>, so it opens and its links work without JavaScript; with
+ * it, choosing, `Esc`, the focus leaving and a tap outside close it.
+ */
+export function BaseMenu({ locale, labels }: { locale: string; labels: SiteLabels }) {
+  const pathname = usePathname();
+  const home = useHomeLink(locale);
+  const details = useRef<HTMLDetailsElement>(null);
+  const here = currentPage(pathname)?.page ?? "home";
+
+  const close = () => {
+    if (details.current) details.current.open = false;
+  };
+
+  useEffect(close, [pathname]);
+
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      if (!details.current?.contains(event.target as Node)) close();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key !== "Escape" || !details.current?.open) return;
+    event.preventDefault();
+    close();
+    details.current.querySelector("summary")?.focus();
+  };
+
+  const onBlur = (event: FocusEvent) => {
+    if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) close();
+  };
+
+  return (
+    <nav className={clsx("site-root site-island", styles.base)} aria-label={labels.menu}>
+      <details ref={details} onKeyDown={onKeyDown} onBlur={onBlur}>
+        <summary data-holo="" className={controlClass({ size: "lg", className: styles.baseButton })}>
+          <HoloFrame seed={labels.menu} />
+          <span className={styles.baseLabel}>
+            <Menu className={styles.whenClosed} aria-hidden="true" />
+            <X className={styles.whenOpen} aria-hidden="true" />
+            <span>{labels.menu}</span>
+            <span className={styles.baseHere}>{labels.pages[here]}</span>
+          </span>
+        </summary>
+        <div className={styles.basePanel}>
+          <ul>
+            {PAGES.map((page) => (
+              <li key={page}>
+                <HoloLink
+                  href={pageHref(locale, page)}
+                  aria-current={ariaCurrent(pathname, page)}
+                  {...(page === "home" && {
+                    ...home,
+                    onClick: (event) => {
+                      home.onClick(event);
+                      close();
+                    },
+                  })}
+                >
+                  {labels.pages[page]}
+                </HoloLink>
+              </li>
+            ))}
+          </ul>
+          <ul>
+            {SECTIONS.map((section) => (
+              <li key={section}>
+                <HoloLink href={sectionHref(locale, section)} onClick={close}>
+                  {labels.sections[section]}
+                </HoloLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </details>
+    </nav>
+  );
+}

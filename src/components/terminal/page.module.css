@@ -16,35 +16,14 @@
   color: var(--fg);
 }
 
-/* skip link: visually hidden until it has focus */
-.skip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 20;
-  padding: 6px 14px;
-  background: var(--purple);
-  color: var(--bg);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: none;
+/* Where a scroll stops: below the site's top and this page's bar. */
+.page * {
+  scroll-margin-top: calc(var(--site-top, 0px) + 48px);
 }
-.skip:not(:focus) {
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-.skip:focus-visible {
-  outline: 2px solid var(--fg);
-  outline-offset: -2px;
-}
-
+/* Under the site's own top, which is sticky too. */
 .top {
   position: sticky;
-  top: 0;
+  top: var(--site-top, 0px);
   z-index: 5;
 }
 
@@ -159,11 +138,6 @@
 .filterOn {
   color: var(--pink);
   border-bottom: 1px solid var(--pink);
-}
-
-/* anchors from /career#<slug> land below the sticky bar */
-.anchor {
-  scroll-margin-top: 48px;
 }
 
 /* ── gallery: plain figures with a caption ─────────────────────── */

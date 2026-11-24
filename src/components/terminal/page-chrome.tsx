@@ -2,23 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Ps1 } from "./prompt";
 import { StatusBar } from "./status-bar";
 import { describeRoute } from "./route-chrome";
-import { arrivedByNavigation, rememberRoute } from "./route-focus";
 import s from "./page.module.css";
 import type { TerminalLabels } from "./types";
 
-/** `id` of the page content — the skip link's target. */
+/** `id` of the page content — the target of the site's skip link. */
 const CONTENT_ID = "content";
 
 /**
  * Frame for the inner pages (`/projects`, `/blog`, `/career`, `/links`):
  * the shell's status bar showing the page location, a breadcrumb written as
  * the command that "opened" the page, the content, and a `cd ..` link back
- * to the listing (or to the home with the matching command). Everything is
- * derived from the pathname, so the `(pages)` layout applies it once.
+ * to the listing (or to the CLI version with the matching command). Everything
+ * is derived from the pathname, so the `(pages)` layout applies it once. It
+ * sits between the site's top and foot, so the frame itself is the `main`: its
+ * bar and its foot belong to the page, not to the document. The focus after a
+ * navigation is the site's (`components/site/page-passage.tsx`).
  */
 export function PageChrome({
   labels,
@@ -38,24 +40,9 @@ export function PageChrome({
   const pathname = usePathname();
   const route = describeRoute(pathname);
   const locale = pathname.split("/").filter(Boolean)[0] ?? "en";
-  const main = useRef<HTMLElement>(null);
-
-  // After a client-side navigation (`open 1`, a listing link) the focus goes
-  // to the page title, so keyboard and screen-reader users land on the
-  // content instead of at the top of the document. A fresh load is left
-  // alone: its first Tab must reach the skip link.
-  useEffect(() => {
-    if (arrivedByNavigation(pathname)) {
-      main.current?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true });
-    }
-    rememberRoute(pathname);
-  }, [pathname]);
 
   return (
-    <div className={s.page}>
-      <a href={`#${CONTENT_ID}`} className={s.skip}>
-        {a11y.skipToContent}
-      </a>
+    <main className={s.page}>
       <div className={s.top}>
         <StatusBar labels={labels} locale={locale} path={route.path} />
       </div>
@@ -69,17 +56,17 @@ export function PageChrome({
             <span lang="en">{route.command}</span>
           </nav>
 
-          <main id={CONTENT_ID} ref={main} tabIndex={-1} className={s.main}>
+          <div id={CONTENT_ID} tabIndex={-1} className={s.main}>
             {children}
-          </main>
+          </div>
 
-          {/* `cd ..` and the links line share the page's footer landmark. */}
+          {/* `cd ..` and the links line share the page's footer. */}
           <footer>
             <p className={s.back}>
               <span aria-hidden="true">
                 <Ps1 />
               </span>
-              <Link href={route.back} className={s.cd} lang="en">
+              <Link href={route.back} prefetch={false} className={s.cd} lang="en">
                 {backLabel}
               </Link>
             </p>
@@ -88,6 +75,6 @@ export function PageChrome({
           </footer>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

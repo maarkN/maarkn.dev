@@ -17,6 +17,10 @@ vi.mock("@/lib/projects-repo", () => ({
 const paths = async () => (await sitemap()).map((e) => new URL(e.url).pathname);
 
 describe("sitemap", () => {
+  it("leaves the CLI version out, indexable as it is", async () => {
+    expect((await paths()).filter((u) => u.includes("terminal"))).toEqual([]);
+  });
+
   it("lists /projects in both locales and never /chat", async () => {
     const urls = await paths();
     expect(urls).toContain("/en/projects");

@@ -1,9 +1,9 @@
 /*
- * Where focus goes after a client-side navigation. The inner pages move it
- * to their `<h1>` — but only when the visitor arrived from another route of
+ * Where focus goes after a client-side navigation. The pages of the site move
+ * it to their `<h1>` — but only when the visitor arrived from another route of
  * this same document (the terminal's `open 1`, a listing link), never on a
  * fresh page load, where the first Tab must still reach the skip link. Both
- * the terminal and the page chrome record the route they show; a page whose
+ * the terminal and the site record the route they show; a page whose
  * pathname differs from the last recorded one was navigated to.
  */
 

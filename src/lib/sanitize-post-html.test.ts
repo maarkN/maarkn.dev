@@ -151,7 +151,7 @@ describe("a pagina do post nao entrega HTML cru ao React", () => {
   // alguem voltar a passar `post.html` direto para `dangerouslySetInnerHTML`,
   // este teste cai antes do deploy.
   const page = readFileSync(
-    fileURLToPath(new URL("../app/[lang]/(pages)/blog/[slug]/page.tsx", import.meta.url)),
+    fileURLToPath(new URL("../app/[lang]/(site)/(pages)/blog/[slug]/page.tsx", import.meta.url)),
     "utf8",
   );
 

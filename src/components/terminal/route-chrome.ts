@@ -1,3 +1,5 @@
+import { terminalHref } from "@/lib/terminal/address";
+
 /**
  * Maps an inner-page pathname to the terminal chrome it wears: the location
  * shown in the status bar, the fake command in the breadcrumb and where
@@ -17,30 +19,30 @@ type Section = {
   list: string;
   /** Detail command for a slug. */
   detail: (slug: string) => string;
-  /** Terminal command that shows the same list on the home; `cd ..` from the listing. */
-  homeCommand: string;
+  /** Command that shows the same list on the CLI version; `cd ..` from the listing. */
+  terminalCommand: string;
 };
 
 const SECTIONS: Record<string, Section> = {
   projects: {
     list: "ls projects/",
     detail: (slug) => `cat projects/${slug}.md`,
-    homeCommand: "projects",
+    terminalCommand: "projects",
   },
   career: {
     list: "ls career/",
     detail: (slug) => `cat career/${slug}.log`,
-    homeCommand: "experience",
+    terminalCommand: "experience",
   },
   blog: {
     list: "ls blog/",
     detail: (slug) => `less blog/${slug}.md`,
-    homeCommand: "writing",
+    terminalCommand: "writing",
   },
   links: {
     list: "cat links.sh",
     detail: () => "cat links.sh",
-    homeCommand: "contact",
+    terminalCommand: "contact",
   },
 };
 
@@ -69,6 +71,6 @@ export function describeRoute(pathname: string): RouteChrome {
   return {
     path: `~/${section}`,
     command: known.list,
-    back: `${home}?cmd=${known.homeCommand}`,
+    back: terminalHref(lang, `?cmd=${known.terminalCommand}`),
   };
 }

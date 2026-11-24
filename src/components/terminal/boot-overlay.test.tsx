@@ -11,7 +11,7 @@ import { TerminalShell } from "./terminal-shell";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => "/en",
+  usePathname: () => "/en/terminal",
   useSearchParams: () => new URLSearchParams(),
 }));
 

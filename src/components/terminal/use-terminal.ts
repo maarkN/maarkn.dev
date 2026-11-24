@@ -15,6 +15,7 @@ import { abortError } from "@/lib/terminal/abort";
 import { resetConversation } from "@/lib/terminal/ask-command";
 import { complete } from "@/lib/terminal/complete";
 import { parseDeepLink } from "@/lib/terminal/deeplink";
+import { takeQuestion } from "@/lib/terminal/handoff";
 import { createHistory, readStoredHistory } from "@/lib/terminal/history";
 import { parse } from "@/lib/terminal/parse";
 import { createRegistry, TERMINAL_ALIASES } from "@/lib/terminal/registry";
@@ -305,9 +306,9 @@ export function useTerminal({
       data,
       theme,
       navigate: (href) => {
-        // `cd ~` from `/en?cmd=skills`: after a hard load Next keeps the
+        // `cd ~` from `/en/terminal?cmd=skills`: after a hard load Next keeps the
         // document's URL (query string included) as the canonical URL of the
-        // route it seeded the cache with, so `router.push("/en")` resolves to
+        // route it seeded the cache with, so `router.push` of the bare path resolves to
         // that entry and puts `?cmd=skills` back. The History API is wired
         // into the router (`useSearchParams` follows it) and has no such
         // cache, so a same-page move goes through it.
@@ -392,12 +393,17 @@ export function useTerminal({
    * `?cmd=` as the URL carries it. Sanitised against the registry and run
    * after the screen was rebuilt — unless the rebuilt screen already ends
    * with these very lines (the link that brought the visitor here, or the
-   * `cd ..` of a listing they had already printed).
+   * `cd ..` of a listing they had already printed). `?cmd=ask` is only typed,
+   * unless the visitor sent a question along from the site's search.
    */
   const runDeepLink = useCallback(
     (raw: string) => {
       const link = parseDeepLink(raw, (name) => registry.resolve(name) !== undefined);
-      if (link.prefill !== undefined) setValue(link.prefill);
+      if (link.prefill !== undefined) {
+        const question = takeQuestion();
+        if (question) void ensureRestored().then(() => execute(link.prefill + question));
+        else setValue(link.prefill);
+      }
       if (link.run.length === 0) return;
 
       void (async () => {

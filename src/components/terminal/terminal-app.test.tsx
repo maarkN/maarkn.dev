@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/dictionaries/en.json";
 import { ThemeProvider } from "@/components/theme-provider";
+import { leaveQuestion } from "@/lib/terminal/handoff";
 import { EMPTY_TERMINAL_DATA, type TerminalData } from "@/lib/terminal/types";
 import { initialOutput } from "./initial-output";
 import { TerminalApp } from "./terminal-app";
@@ -15,7 +16,7 @@ const push = vi.fn();
 let search = "";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
-  usePathname: () => "/en",
+  usePathname: () => "/en/terminal",
   useSearchParams: () => new URLSearchParams(search),
 }));
 
@@ -289,16 +290,16 @@ describe("TerminalApp", () => {
 
     it("cd and cd ~ go home only when somewhere else", async () => {
       const pushState = vi.spyOn(window.history, "pushState");
-      window.history.replaceState(null, "", "/en");
+      window.history.replaceState(null, "", "/en/terminal");
       await enter("cd");
       expect(push).not.toHaveBeenCalled();
       expect(pushState).not.toHaveBeenCalled();
       // Same page, only the query string goes: the router-integrated History
       // API, not `router.push` (which would resolve back to `?cmd=skills`).
-      window.history.replaceState(null, "", "/en?cmd=skills");
+      window.history.replaceState(null, "", "/en/terminal?cmd=skills");
       await enter("cd ~");
-      expect(pushState).toHaveBeenCalledWith(null, "", "/en");
-      expect(window.location.pathname + window.location.search).toBe("/en");
+      expect(pushState).toHaveBeenCalledWith(null, "", "/en/terminal");
+      expect(window.location.pathname + window.location.search).toBe("/en/terminal");
       expect(push).not.toHaveBeenCalled();
       pushState.mockRestore();
     });
@@ -312,14 +313,14 @@ describe("TerminalApp", () => {
     });
 
     it("lang remembers the cookie and moves to the same screen in the other locale", async () => {
-      window.history.replaceState(null, "", "/en?cmd=skills");
+      window.history.replaceState(null, "", "/en/terminal?cmd=skills");
       await enter("lang pt");
       expect(document.cookie).toContain("locale=pt-BR");
-      expect(push).toHaveBeenCalledWith("/pt-BR?cmd=skills");
+      expect(push).toHaveBeenCalledWith("/pt-BR/terminal?cmd=skills");
       expect(screenText()).toContain("lang → pt-BR");
 
       await enter("lang");
-      expect(push).toHaveBeenLastCalledWith("/pt-BR?cmd=skills");
+      expect(push).toHaveBeenLastCalledWith("/pt-BR/terminal?cmd=skills");
       expect(push).toHaveBeenCalledTimes(2);
 
       await enter("lang en");
@@ -411,6 +412,25 @@ describe("TerminalApp", () => {
       expect(outputText()).not.toContain("maarkn@dev:~$ ask");
     });
 
+    it("?cmd=ask asks the question sent from the site's search, once", async () => {
+      const fetchChat = vi.fn(async () => new Response("", { status: 503 }));
+      vi.stubGlobal("fetch", fetchChat);
+      leaveQuestion("quanto custa um app?");
+      search = "cmd=ask";
+      remount();
+      await settle();
+      expect(screenText()).toContain("maarkn@dev:~$ ask quanto custa um app?");
+      expect(fetchChat).toHaveBeenCalledTimes(1);
+      expect(input().value).toBe("");
+
+      // The question went with the visitor, not with the link.
+      remount();
+      await settle();
+      expect(input().value).toBe("ask ");
+      expect(fetchChat).toHaveBeenCalledTimes(1);
+      vi.unstubAllGlobals();
+    });
+
     it("runs a deep-link once per value, not again after clear + a re-render", async () => {
       search = "cmd=projects";
       remount();
@@ -423,24 +443,24 @@ describe("TerminalApp", () => {
     });
 
     it("an old #contact anchor becomes ?cmd=contact in place", async () => {
-      window.history.replaceState(null, "", "/en#contact");
+      window.history.replaceState(null, "", "/en/terminal#contact");
       remount();
       await settle();
       expect(window.location.hash).toBe("");
       expect(window.location.search).toBe("?cmd=contact");
-      expect(window.location.pathname).toBe("/en");
+      expect(window.location.pathname).toBe("/en/terminal");
 
-      window.history.replaceState(null, "", "/en?cmd=skills#about");
+      window.history.replaceState(null, "", "/en/terminal?cmd=skills#about");
       remount();
       await settle();
       expect(window.location.search).toBe("?cmd=skills");
-      window.history.replaceState(null, "", "/en#team");
+      window.history.replaceState(null, "", "/en/terminal#team");
       remount();
       await settle();
       expect(window.location.hash).toBe("#team");
 
       // A fragment change on the already mounted page converts too.
-      window.history.replaceState(null, "", "/en");
+      window.history.replaceState(null, "", "/en/terminal");
       await act(async () => {
         window.location.hash = "#projects";
       });
@@ -543,7 +563,7 @@ describe("TerminalApp", () => {
       expect(JSON.parse(window.sessionStorage.getItem("maarkn-term")!).cmd).toBe("projects");
 
       // …and the back button after `whoami` + `open 1` lands on that same
-      // `/en?cmd=projects` entry: the screen is rebuilt, the link not re-run.
+      // `/en/terminal?cmd=projects` entry: the screen is rebuilt, the link not re-run.
       await enter("whoami");
       await enter("open 1");
       remount();

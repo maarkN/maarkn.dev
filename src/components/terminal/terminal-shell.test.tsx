@@ -11,7 +11,7 @@ import { TerminalShell } from "./terminal-shell";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => "/en",
+  usePathname: () => "/en/terminal",
   useSearchParams: () => new URLSearchParams(),
 }));
 // `mail` sends through a server action; the shell tests fake the transport.
@@ -111,6 +111,24 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   vi.restoreAllMocks();
+});
+
+describe("the way back to the site", () => {
+  it("is a link in the bar, after the skip link", () => {
+    const stops = [...container.querySelectorAll("a[href], button, input")];
+    expect(stops[0].textContent).toBe("skip to command line");
+    expect(stops[1].getAttribute("href")).toBe("/en");
+    expect(stops[1].querySelector("span")!.textContent).toBe("back to the site");
+    expect(container.querySelector("header")!.contains(stops[1])).toBe(true);
+  });
+
+  it("is the page the visitor came from", () => {
+    act(() => root.unmount());
+    container.remove();
+    window.sessionStorage.setItem("maarkn-place", "/pt-BR/projects?cat=ai");
+    mount();
+    expect(container.querySelector("header a")!.getAttribute("href")).toBe("/en/projects?cat=ai");
+  });
 });
 
 describe("terminal shell", () => {

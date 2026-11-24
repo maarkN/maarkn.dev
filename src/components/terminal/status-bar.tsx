@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
+import { BackToSite } from "@/components/site/back-to-site";
 import { useTheme } from "@/components/theme-provider";
 import { isTerminalLocale, otherLocale, shortLocale, switchLocale } from "@/lib/terminal/locale";
 import { PROMPT_USER } from "./prompt";
@@ -15,6 +16,7 @@ export function StatusBar({
   labels,
   locale,
   path,
+  withSite = false,
   onLang,
   onActivate,
 }: {
@@ -26,6 +28,8 @@ export function StatusBar({
    * profile title; it stays visible on narrow screens.
    */
   path?: string;
+  /** The CLI version offers the way back; the inner pages are already on the site. */
+  withSite?: boolean;
   /**
    * The terminal runs its `lang` command (echoed on screen) instead of the
    * bar switching on its own, which is what the inner pages do.
@@ -47,6 +51,11 @@ export function StatusBar({
     <header className={s.bar}>
       <span className={s.barUser}>{PROMPT_USER}</span>
       <span className={clsx(s.barTitle, path && s.barPath)}>{path ?? labels.title}</span>
+      {withSite && (
+        <BackToSite locale={locale} className={clsx(s.barBtn, s.barLink)}>
+          <b aria-hidden="true">←</b> <span className={s.barBtnLabel}>{labels.site}</span>
+        </BackToSite>
+      )}
       <button
         type="button"
         className={s.barBtn}

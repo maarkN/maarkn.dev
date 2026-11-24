@@ -2,6 +2,7 @@
    inside <Line>, never as a React child array, so keys are meaningless here. */
 import { A, C, D } from "@/components/terminal/primitives";
 import type { TerminalLabels } from "@/components/terminal/types";
+import { terminalHref } from "./address";
 import {
   isTerminalLocale,
   otherLocale,
@@ -14,8 +15,9 @@ import { rich } from "./rich";
 import type { Command } from "./types";
 
 /*
- * Moving around from the prompt: `cd <dir>` opens an inner route, `cd`/`cd ~`
- * comes back home, `pwd` says where we are and `lang` switches the locale.
+ * Moving around from the prompt: `cd <dir>` opens a page of the site, `cd`/`cd ~`
+ * comes back to the terminal as it opens, `pwd` says where we are and `lang`
+ * switches the locale.
  * Registered by the host after the content commands and before the system
  * ones; all three stay out of the `help` table (listed under "also try").
  */
@@ -49,7 +51,7 @@ function normalizeDir(arg: string | undefined): string {
     .replace(/\/+$/, "");
 }
 
-/** `/en?cmd=skills` as the browser shows it; empty outside the browser. */
+/** `/en/terminal?cmd=skills` as the browser shows it; empty outside the browser. */
 function currentLocation(): { pathname: string; search: string } {
   if (typeof window === "undefined") return { pathname: "", search: "" };
   return { pathname: window.location.pathname, search: window.location.search };
@@ -66,7 +68,7 @@ export function createNavCommands(labels: TerminalLabels): Command[] {
     hidden: true,
     run: ([arg], ctx) => {
       const dir = normalizeDir(arg);
-      const home = `/${ctx.locale}`;
+      const home = terminalHref(ctx.locale);
 
       if (dir === "") {
         const { pathname, search } = currentLocation();
@@ -78,7 +80,7 @@ export function createNavCommands(labels: TerminalLabels): Command[] {
       const route = DIRECTORIES[dir.toLowerCase()];
       if (!route) return [rich(nav.noSuchDirectory, { dir: arg ?? "" })];
 
-      const href = `${home}/${route}`;
+      const href = `/${ctx.locale}/${route}`;
       ctx.navigate(href);
       return [
         <>
