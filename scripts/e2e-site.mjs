@@ -12,6 +12,10 @@
  *   node scripts/e2e-site.mjs             # ou: pnpm test:e2e
  *   … --width 390 --height 844            # viewport estreita
  *   … --only home:pt-BR                   # só os casos cujo nome contém isso
+ *   … --holo                              # só a referência do holograma, que
+ *                                         # não vai para produção: precisa de
+ *                                         # HOLO_REFERENCE=1 pnpm build
+ *   … --holo --shots <pasta>              # também grava as capturas
  *   … --verbose                           # lista também o que passou
  *   … --json
  *
@@ -30,6 +34,8 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { holoCases } from "./e2e-holo.mjs";
+import { themeCases } from "./e2e-theme.mjs";
 
 const CHROME =
   process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -47,6 +53,8 @@ const HEIGHT = Number(flag("height", 900));
 const ONLY = flag("only", null);
 const AS_JSON = argv.includes("--json");
 const VERBOSE = argv.includes("--verbose");
+const HOLO = argv.includes("--holo");
+const SHOTS = flag("shots", null);
 
 /* ── os casos ────────────────────────────────────────────────────────────── */
 
@@ -125,10 +133,15 @@ async function walkHome(page, t, locale) {
   t.equal(page.errors, [], "nenhum erro no console");
 }
 
-const CASES = ["en", "pt-BR"].map((locale) => ({
-  name: `home:${locale}`,
-  run: (page, t) => walkHome(page, t, locale),
-}));
+const CASES = HOLO
+  ? holoCases({ shots: SHOTS, width: WIDTH })
+  : [
+      ...["en", "pt-BR"].map((locale) => ({
+        name: `home:${locale}`,
+        run: (page, t) => walkHome(page, t, locale),
+      })),
+      ...themeCases,
+    ];
 
 /* ── asserções ───────────────────────────────────────────────────────────── */
 
@@ -268,7 +281,9 @@ async function createPage(cdp) {
     throw new Error(`esperei ${timeout / 1000}s por: ${label}`);
   };
 
-  const open = async (path) => {
+  /** `until: "dom"` não espera o `load`, que espera pelas fontes. */
+  const open = async (path, { until = "load" } = {}) => {
+    const event = until === "dom" ? "Page.domContentEventFired" : "Page.loadEventFired";
     response = null;
     const loaded = new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -276,7 +291,7 @@ async function createPage(cdp) {
         reject(new Error(`${path} não carregou em 30s`));
       }, 30000);
       const stop = cdp.on((msg) => {
-        if (msg.sessionId !== sessionId || msg.method !== "Page.loadEventFired") return;
+        if (msg.sessionId !== sessionId || msg.method !== event) return;
         clearTimeout(timer);
         stop();
         resolve();
@@ -346,6 +361,7 @@ async function createPage(cdp) {
         )
       : { x: WIDTH / 2, y: HEIGHT / 2 };
     let state = await settled(within);
+    let idle = 0;
     await onStep?.(state);
     for (let i = 0; i < 400; i++) {
       const target = to === "top" ? 0 : to === "bottom" ? state.max : Math.min(to, state.max);
@@ -359,9 +375,13 @@ async function createPage(cdp) {
         deltaY: Math.sign(left) * step,
       });
       const next = await settled(within);
-      const stuck = next.top === state.top;
+      const moved = next.top !== state.top;
       state = next;
-      if (stuck) break; // a roda não move mais nada: quem chamou confere a posição
+      /* Com a máquina ocupada, uma volta da roda pode render só depois da
+         espera. Várias seguidas sem mover nada é que é o fim (ou a rolagem
+         travada): quem chamou confere a posição. */
+      idle = moved ? 0 : idle + 1;
+      if (idle >= 5) break;
       await onStep?.(state);
     }
     return state;
@@ -379,6 +399,65 @@ async function createPage(cdp) {
       })()`,
     );
 
+  /** Roda em todo documento novo desta aba, antes de qualquer script da página. */
+  const beforeLoad = (source) => call("Page.addScriptToEvaluateOnNewDocument", { source });
+
+  /** Preferências do sistema: `{ scheme: "light", motion: "reduce" }`. */
+  const prefer = ({ scheme = "dark", motion = "no-preference" }) =>
+    call("Emulation.setEmulatedMedia", {
+      features: [
+        { name: "prefers-color-scheme", value: scheme },
+        { name: "prefers-reduced-motion", value: motion },
+      ],
+    });
+
+  const density = (deviceScaleFactor, size = {}) =>
+    call("Emulation.setDeviceMetricsOverride", {
+      width: WIDTH,
+      height: HEIGHT,
+      mobile: false,
+      ...size,
+      deviceScaleFactor,
+    });
+
+  /** Leva o ponteiro ao centro do elemento, ou a um ponto. */
+  const hover = async (target) => {
+    const { x, y } = typeof target === "string" ? await center(target) : target;
+    await call("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+    return { x, y };
+  };
+
+  const mouse = (type, { x, y }) =>
+    call("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 });
+
+  /** Uma tecla de verdade: `press("Tab", { shift: true })`. */
+  const press = async (key, { shift = false } = {}) => {
+    const codes = { Tab: 9, Enter: 13, Escape: 27, " ": 32, End: 35, Home: 36, ArrowLeft: 37, ArrowRight: 39 };
+    const base = {
+      key,
+      code: key === " " ? "Space" : key,
+      windowsVirtualKeyCode: codes[key] ?? 0,
+      modifiers: shift ? 8 : 0,
+    };
+    const text = key === "Enter" ? "\r" : key === " " ? " " : undefined;
+    await call("Input.dispatchKeyEvent", { type: text ? "keyDown" : "rawKeyDown", ...base, text });
+    await call("Input.dispatchKeyEvent", { type: "keyUp", ...base });
+  };
+
+  /** Escreve no elemento com foco, como quem digita. */
+  const type = (text) => call("Input.insertText", { text });
+
+  /** PNG ou WebP da viewport, de um recorte ou da página inteira. */
+  const screenshot = async ({ format = "png", quality, clip, full = false } = {}) => {
+    const { data } = await call("Page.captureScreenshot", {
+      format,
+      quality,
+      captureBeyondViewport: full,
+      clip: clip && { scale: 1, ...clip },
+    });
+    return Buffer.from(data, "base64");
+  };
+
   return {
     errors,
     open,
@@ -388,6 +467,21 @@ async function createPage(cdp) {
     scroll,
     scrollState,
     inView,
+    beforeLoad,
+    prefer,
+    density,
+    center,
+    hover,
+    mouse,
+    press,
+    type,
+    screenshot,
+    call,
+    /** Eventos CDP desta aba. Devolve o desligamento. */
+    on: (method, handler) =>
+      cdp.on((msg) => {
+        if (msg.sessionId === sessionId && msg.method === method) handler(msg.params);
+      }),
     async close() {
       off();
       await cdp.send("Target.disposeBrowserContext", { browserContextId });

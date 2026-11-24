@@ -45,3 +45,22 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 
 32. Nenhum erro no console.
 33. Rolagem contínua da home acima de 45 quadros por segundo.
+
+**Temas**
+
+34. O tema entra antes da primeira pintura: primeira visita, preferência salva, valor inválido e armazenamento bloqueado.
+35. Trocar a paleta ou a fonte da Versão CLI não altera o tema do site.
+36. A Versão CLI não baixa as fontes do site.
+
+**Referência do holograma** (`--holo`, com `HOLO_REFERENCE=1 pnpm build`)
+
+37. Cada estado responde em até 100 ms e se distingue dos outros sem a cor do traço.
+38. Com movimento reduzido nada anima, e os estados continuam distinguíveis.
+39. Card parado não tem transform; a tela projetada só se move com o ponteiro ou o foco.
+40. Janela, abas e chave por teclado; todo foco é visível.
+41. Trocar o tema muda tudo sem recarregar e não altera a Versão CLI; trocar de idioma mantém o tema.
+42. Sem JavaScript, o tema segue o sistema e os controles têm contorno.
+43. Fontes atrasadas: texto legível e CLS 0 na troca.
+44. Cem molduras sem tarefa longa, e nada recalculado em repouso.
+45. As retas são nítidas em 1x e 2x.
+46. Sem rolagem horizontal em 390 e 1.440 px, alvos de 44 px no toque e axe sem violação, nos três temas.
