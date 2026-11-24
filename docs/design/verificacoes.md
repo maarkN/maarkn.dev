@@ -57,10 +57,12 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 37. Cada estado responde em até 100 ms e se distingue dos outros sem a cor do traço.
 38. Com movimento reduzido nada anima, e os estados continuam distinguíveis.
 39. Card parado não tem transform; a tela projetada só se move com o ponteiro ou o foco.
-40. Janela, abas e chave por teclado; todo foco é visível.
-41. Trocar o tema muda tudo sem recarregar e não altera a Versão CLI; trocar de idioma mantém o tema.
+40. Janela, abas e chave por teclado; uma janela mais alta que a tela rola pelo teclado; todo foco é visível.
+41. Trocar o tema muda tudo sem recarregar e não altera a Versão CLI; duas trocas seguidas não deixam erro; trocar de idioma mantém o tema.
 42. Sem JavaScript, o tema segue o sistema e os controles têm contorno.
 43. Fontes atrasadas: texto legível e CLS 0 na troca.
 44. Cem molduras sem tarefa longa, e nada recalculado em repouso.
 45. As retas são nítidas em 1x e 2x.
 46. Sem rolagem horizontal em 390 e 1.440 px, alvos de 44 px no toque e axe sem violação, nos três temas.
+47. Todo holograma responde ao ponteiro, inclusive o campo com erro, e o primário selecionado se distingue do repouso.
+48. Todo texto atinge 4.5:1 e todo ícone 3:1 contra os pixels que estão atrás, na página, no card com a luz e na janela, nos três temas.

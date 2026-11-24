@@ -46,7 +46,8 @@ Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every elemen
 
 - A layout that shows site screens renders `.site-root` with `siteFontVars` (`src/app/site-fonts.ts`), imports `src/app/site.css` and mounts `SiteThemeSync`. Outside `.site-root` the site's tokens do not exist; the CLI version keeps its own, under some of the same names.
 - Theme: `useSiteTheme` / `setSiteTheme` (`src/components/site-theme.tsx`). The inline boot script (`src/lib/theme-boot.ts`) is the only one; add to it, never a second.
-- Colours come from the tokens. `--ink-3`, `--beam`, `--beam-2` and `--bad` are for large bold text, icons and edges on `--bg-3`; text inside a hologram is `--ink` (or `--ink-2` in cards and windows).
+- Colours come from the tokens. `--ink-3`, `--beam`, `--beam-2` and `--bad` are for large bold text, icons and edges on `--bg-3`, so a `BeamLink` or a `HoloField` goes on the other surfaces. Text inside a hologram is `--ink` (or `--ink-2` in cards and windows); `BeamLink` and `HoloField` already switch to it there.
+- Cards go on `--bg` or `--bg-2`, and the tag of a section on `--bg`. A new colour in `holo.module.css` enters `WRITTEN` (`src/lib/theme-audit.ts`) with the places it is read over.
 - Primitives carry no visible string: names such as `closeLabel` come from the dictionaries through props.
 - `/[lang]/holo` shows every primitive and state. It exists in `pnpm dev` and in `HOLO_REFERENCE=1 pnpm build` (`*.dev.tsx`), never in production. A new state or primitive goes there, and `node scripts/e2e-site.mjs --holo` covers it.
 
