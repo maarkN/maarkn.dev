@@ -186,13 +186,15 @@
 
 .primary {
   --inner-stroke: var(--on-beam);
+  --dense: 0%;
   color: var(--on-beam);
   font-weight: 600;
 }
 .primary .fill {
   background-color: var(--beam);
   background-image:
-    repeating-linear-gradient(180deg, color-mix(in srgb, var(--on-beam) 7%, transparent) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(180deg, color-mix(in srgb, var(--on-beam) var(--primary-scan), transparent) 0 1px, transparent 1px 4px),
+    linear-gradient(color-mix(in srgb, var(--ink) var(--dense), transparent) 0 100%),
     linear-gradient(90deg, var(--beam), color-mix(in srgb, var(--beam) 72%, var(--beam-2)));
 }
 /* Solid: at rest its own edge is the outline, and the outer line shows up when
@@ -204,10 +206,17 @@
 .primary:active :is(.outer, .halo) {
   opacity: 1;
 }
+.primary:where([aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])) {
+  --stroke: var(--ink);
+  --dense: var(--primary-dense);
+}
+.primary:where([aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])) :is(.outer, .halo) {
+  opacity: 1;
+}
 .primary .light {
   background: radial-gradient(
     circle 150px at var(--holo-x, 50%) var(--holo-y, 50%),
-    color-mix(in srgb, var(--beam-3) 45%, transparent),
+    color-mix(in srgb, var(--beam-3) var(--primary-light), transparent),
     transparent 75%
   );
 }

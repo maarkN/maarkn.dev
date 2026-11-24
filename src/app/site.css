@@ -134,8 +134,9 @@
 
   /* How much beam goes into a hologram: its fill at rest and selected, its scan
      lines and the pointer light. Panels (cards, windows) carry running text in
-     `--ink-2`, so theirs is thinner. check-contrast.ts measures the text over
-     the worst stack of each. */
+     `--ink-2`, so theirs is thinner. A primary is solid beam: what it carries is
+     scan lines in `--on-beam`, the light in `--beam-3` and, selected, some
+     `--ink`. check-contrast.ts measures the text over the worst stack of each. */
   --fill-rest:  6%;
   --fill-dense: 14%;
   --fill-scan:  6%;
@@ -143,6 +144,9 @@
   --panel-rest:  5%;
   --panel-scan:  4%;
   --panel-light: 6%;
+  --primary-scan:  7%;
+  --primary-light: 45%;
+  --primary-dense: 30%;
 
   /* Halo under every stroke (docs/design/moldura.md). */
   --halo: .16;

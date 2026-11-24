@@ -69,8 +69,13 @@ export function readPalettes(blocks = readBlocks()): Record<SiteTheme, Tokens> {
   return palettes;
 }
 
-/** How much beam each layer of a hologram carries, 0–1 (`--fill-*`, `--panel-*`). */
-export type Fills = Record<"rest" | "dense" | "scan" | "light" | "panelRest" | "panelScan" | "panelLight", number>;
+/** How much each layer of a hologram carries, 0–1 (`--fill-*`, `--panel-*`, `--primary-*`). */
+export type Fills = Record<
+  | "rest" | "dense" | "scan" | "light"
+  | "panelRest" | "panelScan" | "panelLight"
+  | "primaryDense" | "primaryScan" | "primaryLight",
+  number
+>;
 
 export function readFills(blocks = readBlocks()): Fills {
   const tokens = Object.assign({}, ...blocks.map((block) => block.tokens)) as Tokens;
@@ -87,5 +92,8 @@ export function readFills(blocks = readBlocks()): Fills {
     panelRest: amount("--panel-rest"),
     panelScan: amount("--panel-scan"),
     panelLight: amount("--panel-light"),
+    primaryDense: amount("--primary-dense"),
+    primaryScan: amount("--primary-scan"),
+    primaryLight: amount("--primary-light"),
   };
 }
