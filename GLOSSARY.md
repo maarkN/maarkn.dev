@@ -95,7 +95,7 @@ _Avoid_: Leader, linha
 O tratamento visual de tudo o que é interativo. O que não é interativo nunca é holograma.
 
 **Moldura**:
-O contorno quebrado, com três cantos cortados, que todo holograma tem.
+O contorno quebrado, com três cantos cortados, que todo holograma tem. A janela também tem, sem ser clicável.
 _Avoid_: Borda, contorno (sozinho)
 
 **Feixe**:
