@@ -28,11 +28,15 @@ O JavaScript específico da home (excluindo o runtime do framework) MUST ser inf
 - **THEN** nenhum chunk do renderizador de markdown é baixado
 
 ### Requirement: Fontes
-Apenas a fonte padrão MUST ser pré-carregada; a fonte alternativa MUST ser baixada somente quando selecionada. As fontes MUST incluir os glifos necessários para pt-BR.
+No site, apenas as fontes da primeira tela MUST ser pré-carregadas. Na Versão CLI, apenas a fonte padrão MUST ser pré-carregada e a alternativa MUST ser baixada somente quando selecionada. Nenhuma experiência SHALL baixar fontes exclusivas da outra. As fontes MUST incluir os glifos necessários para pt-BR.
 
 #### Scenario: Acentos
 - **WHEN** um texto com `ã`, `ç`, `é` é exibido
 - **THEN** os glifos vêm da fonte ativa, sem fallback visível
+
+#### Scenario: Site não baixa a fonte alternativa
+- **WHEN** a home é carregada
+- **THEN** nenhuma requisição à DaddyTimeMono é feita
 
 ### Requirement: Indexação
 O sitemap SHALL listar home, projetos, carreira, blog e links nos dois idiomas e MUST NOT listar `/chat`. Toda rota pública MUST declarar `hreflang` para os dois idiomas e um único `h1`. O JSON-LD de pessoa e site MUST validar sem erros.

@@ -58,4 +58,4 @@ O site SHALL usar fontes proporcionais para títulos e textos, e monoespaçada s
 
 #### Scenario: Rede lenta
 - **WHEN** as fontes demoram a chegar
-- **THEN** o texto já está legível e nada se desloca quando elas chegam
+- **THEN** o texto já está legível na fonte substituta, nada se desloca quando elas chegam, e a carga seguinte usa as fontes do site

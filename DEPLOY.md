@@ -247,11 +247,9 @@ under repo → Settings → Environments. Leave it unprotected for auto-deploy, 
   natively — no manual install needed.
 
 ## Notes
-- **Fonts.** The site is monospace only: Cascadia Code comes from Google Fonts
-  through `next/font/google` and is **downloaded by the builder stage at build
-  time** (the build host needs outbound HTTPS; there is no runtime request to
-  Google). DaddyTimeMono is self-hosted from `src/app/fonts/` via
-  `next/font/local`. Both end up in `.next/static/media`, which the Dockerfile
+- **Fonts.** Every face is self-hosted from `src/app/fonts/` via
+  `next/font/local`: the build downloads nothing and there is no runtime request
+  to Google. They end up in `.next/static/media`, which the Dockerfile
   already copies next to `public/` — there is no `public/fonts` folder to mount
   or copy.
 - Local dev uses an isolated pgvector container on host port **5433**

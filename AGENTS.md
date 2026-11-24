@@ -24,7 +24,32 @@ These files describe what exists today. The task that invalidates a written rule
 - Behavior changes go through OpenSpec: `/openspec-propose`, `/openspec-apply-change`, `/openspec-archive-change`. Artifacts are in Brazilian Portuguese; structural headings and SHALL/MUST stay in English. `openspec validate --all --strict` passes before a commit.
 - A push to `main` deploys to production. Work on a branch. The rebranding (`rebrand-*` changes) lands on `feat/rebranding` and reaches `main` once, in `rebrand-12-cutover`; every other change goes to `main`.
 - `deploy.yml` runs on a self-hosted runner and stays free of `pull_request` triggers; `self-hosted` appears in no other workflow.
-- Gates: `pnpm lint` (ESLint, dictionary parity, admin utility guard), `pnpm test`, `pnpm build`. Run the build without `DATABASE_URL`, as CI does.
+- Gates: `pnpm lint` (ESLint, dictionary parity, admin utility guard, theme contrast), `pnpm test`, `pnpm build`. Run the build without `DATABASE_URL`, as CI does.
+
+## Site UI
+
+Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every element that answers a click uses a primitive of `src/components/holo/`; what does not answer never gets a frame, except the window.
+
+| Primitive | Use |
+|---|---|
+| `HoloButton`, `HoloIconButton` (`button.tsx`) | Actions. 34, 44 or 50 px; `variant="primary"`; `pressed` for a toggle |
+| `HoloLink` (`link.tsx`) | A link that looks like a button |
+| `BeamLink` (`link.tsx`) | A link inside running text |
+| `HoloTag` (`tag.tsx`) | The label of a section, and the rail item it becomes |
+| `HoloCard`, `HoloScreen` (`card.tsx`) | A card with one target; the screen is a card with an image |
+| `HoloDialog` (`dialog.tsx`) | Window: traps the focus, closes with `Esc`, button or click outside |
+| `HoloField` (`field.tsx`) | Labelled text field, with hint and error |
+| `HoloSwitch` (`switch.tsx`) | On or off, at once |
+| `HoloTabs` (`tabs.tsx`) | Tabs |
+| `HoloNotice` (`notice.tsx`) | Result of an action. Content, so solid |
+| `HoloFrame` (`frame.tsx`) | The frame itself, for a new primitive only. Geometry is `src/lib/frame/` (pure) |
+
+- A layout that shows site screens renders `.site-root` with `siteFontVars` (`src/app/site-fonts.ts`), imports `src/app/site.css` and mounts `SiteThemeSync`. Outside `.site-root` the site's tokens do not exist; the CLI version keeps its own, under some of the same names.
+- Theme: `useSiteTheme` / `setSiteTheme` (`src/components/site-theme.tsx`). The inline boot script (`src/lib/theme-boot.ts`) is the only one; add to it, never a second.
+- Colours come from the tokens. `--ink-3`, `--beam`, `--beam-2` and `--bad` are for large bold text, icons and edges on `--bg-3`, so a `BeamLink` or a `HoloField` goes on the other surfaces. Text inside a hologram is `--ink` (or `--ink-2` in cards and windows); `BeamLink` and `HoloField` already switch to it there.
+- Cards go on `--bg` or `--bg-2`, and the tag of a section on `--bg`. A new colour in `holo.module.css` enters `WRITTEN` (`src/lib/theme-audit.ts`) with the places it is read over.
+- Primitives carry no visible string: names such as `closeLabel` come from the dictionaries through props.
+- `/[lang]/holo` shows every primitive and state. It exists in `pnpm dev` and in `HOLO_REFERENCE=1 pnpm build` (`*.dev.tsx`), never in production. A new state or primitive goes there, and `node scripts/e2e-site.mjs --holo` covers it.
 
 ## Invariants
 

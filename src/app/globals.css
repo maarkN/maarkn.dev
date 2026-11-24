@@ -46,9 +46,11 @@
 @source not "../**/*.md";
 
 /* ════════════════════════════════════════════════
-   THEME TOKENS — Dracula. `soft` is the default palette,
+   CLI VERSION TOKENS — Dracula. `soft` is the default palette,
    `classic` the original one. Selected via data-theme on <html>;
    the monospace font via data-font (caskaydia | daddytime).
+   The site has its own themes (data-site-theme), scoped to `.site-root`
+   in site.css; some names (`--bg`) exist in both and mean different things.
    Reference: .docs/design/maarkn-terminal.html
    ════════════════════════════════════════════════ */
 
@@ -69,7 +71,7 @@
   --red:     #EE6666;
   --yellow:  #E7EE98;
 
-  --font: var(--font-caskaydia), "Cascadia Code Fallback", ui-monospace, Menlo, Consolas, monospace;
+  --font: var(--font-caskaydia), "Cascadia Code Blocks", "Cascadia Code Fallback", ui-monospace, Menlo, Consolas, monospace;
   --fs:   0.875rem;
 }
 
@@ -89,6 +91,16 @@
 
 :root[data-font="daddytime"] {
   --font: var(--font-daddytime), "DaddyTimeMono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* Box drawing and block elements of Cascadia Code. Only requested when one of
+   these characters is on screen. */
+@font-face {
+  font-family: "Cascadia Code Blocks";
+  src: url("./fonts/CascadiaCode-blocks.woff2") format("woff2");
+  font-weight: 200 700;
+  font-display: swap;
+  unicode-range: U+2000-2001, U+2004-2008, U+200A, U+23B8-23BD, U+2500-259F;
 }
 
 /* Fallback shown while Cascadia Code (font-display: swap) is still loading:
@@ -139,6 +151,31 @@
   --font-sans:    var(--font);
   --font-display: var(--font);
   --font-mono:    var(--font);
+
+  /* ─── site vocabulary ─────────────────────────────────────────────────
+     Names only; the values live in site.css, scoped to `.site-root`, and
+     resolve to nothing outside it. `--color-bg` above is shared: it reads
+     whichever `--bg` is in scope. */
+  --color-bg-2:     var(--bg-2);
+  --color-bg-3:     var(--bg-3);
+  --color-sunk:     var(--sunk);
+  --color-ink:      var(--ink);
+  --color-ink-2:    var(--ink-2);
+  --color-ink-3:    var(--ink-3);
+  --color-beam:     var(--beam);
+  --color-beam-2:   var(--beam-2);
+  --color-beam-3:   var(--beam-3);
+  --color-on-beam:  var(--on-beam);
+  --color-ok:       var(--ok);
+  --color-warn:     var(--warn);
+  --color-bad:      var(--bad);
+  --color-plate:    var(--plate);
+  --color-c1:       var(--c1);
+  --color-c2:       var(--c2);
+
+  --font-title:     var(--type-title);
+  --font-text:      var(--type-text);
+  --font-label:     var(--type-label);
 
   /* ─── shadcn vocabulary ───────────────────────────────────────────────
      Names only. The values live in admin/admin.css under `.admin-root`,

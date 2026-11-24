@@ -1,0 +1,810 @@
+/* ════════════════════════════════════════════════
+   HOLOGRAM — docs/design/moldura.md.
+   Only what is interactive is a hologram; content is solid. An element framed
+   here that does not answer a click is a defect, and so is the opposite.
+
+   State lives in custom properties set on the framed element (`.holo`) and
+   inherited by its frame: every state is one block that says what changes.
+   No state depends on colour alone: hovering closes the bridges and splits the
+   text, focusing closes them inside a ring, pressing recoils, selecting thickens
+   the fill.
+
+   Motion: transitions are 60ms, under the 100ms an interaction may take to
+   answer. The global reduced-motion rule (globals.css) cuts every transition
+   and animation to its last frame; what would still move or follow the pointer
+   is switched off at the end of this file.
+   ════════════════════════════════════════════════ */
+
+.holo {
+  --stroke: var(--beam);
+  --inner-stroke: var(--stroke);
+  --fill: var(--fill-rest);
+  --scan: var(--fill-scan);
+  --light: var(--fill-light);
+  --bridge: 0;
+  --ring: 0;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Cards and windows: they carry running text, so less beam goes under it. A
+   control inside one has that beam under its own. */
+.panel {
+  --fill: var(--panel-rest);
+}
+.panel,
+.panel :is(.control, .track) {
+  --scan: var(--panel-scan);
+  --light: var(--panel-light);
+}
+
+/* ── the frame ───────────────────────────────────────────────────────────── */
+
+/* Painted first, under the content, which is positioned in every primitive. Not
+   with a negative z-index: contrast tools would stop at the page behind it. */
+.frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--beam) var(--fill), transparent);
+  background-image: repeating-linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--beam) var(--scan), transparent) 0 1px,
+    transparent 1px 4px
+  );
+  transition: background-color 60ms;
+}
+
+/* Not drawn yet, or no JavaScript: still a thing with a border. */
+.frame:not([data-drawn]) .fill {
+  box-shadow: inset 0 0 0 1.5px var(--stroke);
+}
+
+.light {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    circle 150px at var(--holo-x, 50%) var(--holo-y, 50%),
+    color-mix(in srgb, var(--beam) var(--light), transparent),
+    transparent 75%
+  );
+  transition: opacity 60ms;
+}
+
+.pulse {
+  position: absolute;
+  opacity: 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 40%, var(--beam-3) 92%, transparent);
+}
+
+/* The beam that comes down once. */
+.fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--beam) 34%, transparent) 50%, transparent 65%);
+}
+
+.lines,
+.echo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.lines path,
+.echo path {
+  fill: none;
+  stroke: var(--stroke);
+  stroke-width: 1.5px;
+  transition: stroke 60ms, opacity 60ms;
+}
+
+.lines .halo,
+.lines .haloBridge {
+  stroke-width: 3.6px;
+  stroke-opacity: var(--halo);
+}
+
+/* The focus ring: the whole outline in one stroke, so nothing overlaps. */
+.lines .ring {
+  stroke-width: 8px;
+  opacity: var(--ring);
+  transition: none;
+}
+
+.lines .inner {
+  stroke: var(--inner-stroke);
+  stroke-opacity: .62;
+}
+
+.lines .bridge,
+.lines .haloBridge {
+  opacity: var(--bridge);
+}
+
+/* ── button, link, tag, tab: the control states ──────────────────────────── */
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: var(--control-height);
+  padding: 4px var(--control-pad);
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--type-text);
+  font-size: var(--control-size);
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-shadow: 0 0 transparent, 0 0 transparent;
+  transition: text-shadow 60ms, transform 60ms, color 60ms;
+  /* Only forced-colors modes paint it; the frame is the focus indicator. */
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6em;
+}
+.label svg {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.sm { --control-height: 34px; --control-pad: 14px; --control-size: .875rem; }
+.md { --control-height: 44px; --control-pad: 20px; --control-size: 1rem; }
+.lg { --control-height: 50px; --control-pad: 26px; --control-size: 1.0625rem; }
+
+/* 44px of touch target for the 34px control, without moving anything. */
+@media (pointer: coarse) {
+  .sm::before {
+    content: "";
+    position: absolute;
+    inset: -5px 0;
+  }
+  .sm.icon::before { inset: -5px; }
+}
+
+.primary {
+  --inner-stroke: var(--on-beam);
+  --dense: 0%;
+  color: var(--on-beam);
+  font-weight: 600;
+}
+.primary .fill {
+  background-color: var(--beam);
+  background-image:
+    repeating-linear-gradient(180deg, color-mix(in srgb, var(--on-beam) var(--primary-scan), transparent) 0 1px, transparent 1px 4px),
+    linear-gradient(color-mix(in srgb, var(--ink) var(--dense), transparent) 0 100%),
+    linear-gradient(90deg, var(--beam), color-mix(in srgb, var(--beam) 72%, var(--beam-2)));
+}
+/* Solid: at rest its own edge is the outline, and the outer line shows up when
+   there is something to say. */
+.primary :is(.outer, .halo) {
+  opacity: 0;
+}
+.primary:focus-visible :is(.outer, .halo),
+.primary:active :is(.outer, .halo) {
+  opacity: 1;
+}
+.primary:where([aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])) {
+  --stroke: var(--ink);
+  --dense: var(--primary-dense);
+}
+.primary:where([aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])) :is(.outer, .halo) {
+  opacity: 1;
+}
+.primary .light {
+  background: radial-gradient(
+    circle 150px at var(--holo-x, 50%) var(--holo-y, 50%),
+    color-mix(in srgb, var(--beam-3) var(--primary-light), transparent),
+    transparent 75%
+  );
+}
+.primary .fill::after {
+  background: linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--on-beam) 22%, transparent) 50%, transparent 65%);
+}
+
+.control[aria-pressed="true"],
+.control[aria-selected="true"],
+.control[aria-current]:not([aria-current="false"]) {
+  --bridge: 1;
+  --fill: var(--fill-dense);
+}
+
+@media (hover: hover) {
+  .control:hover:not(:disabled, [aria-disabled="true"]) {
+    --bridge: 1;
+    text-shadow:
+      -1px 0 color-mix(in srgb, var(--beam) 55%, transparent),
+      1px 0 color-mix(in srgb, var(--beam-2) 55%, transparent);
+  }
+  .primary:hover :is(.outer, .halo) { opacity: 1; }
+  .primary:hover:not(:disabled, [aria-disabled="true"]) {
+    --stroke: var(--ink);
+    text-shadow:
+      -1px 0 color-mix(in srgb, var(--beam-2) 55%, transparent),
+      1px 0 color-mix(in srgb, var(--beam-3) 55%, transparent);
+  }
+  .control:hover .light { opacity: 1; }
+  .control:hover .fill::after { animation: sweep 520ms var(--ease-in) 1; }
+}
+
+.control:focus-visible {
+  --stroke: var(--beam-3);
+  --bridge: 1;
+  --ring: .45;
+}
+.primary:focus-visible,
+.primary:active {
+  --inner-stroke: var(--on-beam);
+}
+
+.control:active:not(:disabled, [aria-disabled="true"]) {
+  --stroke: var(--beam-3);
+  --bridge: 1;
+  transform: scale(.975);
+}
+
+.control:disabled,
+.control[aria-disabled="true"] {
+  opacity: .45;
+  pointer-events: none;
+}
+
+@keyframes sweep {
+  from { opacity: 1; transform: translateY(-60%); }
+  to   { opacity: 1; transform: translateY(60%); }
+}
+
+/* ── the beam: a link inside running text ────────────────────────────────── */
+
+.beam {
+  color: var(--beam);
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat;
+  padding-bottom: 2px;
+  transition: background-size 60ms;
+  border-radius: 1px;
+}
+@media (hover: hover) {
+  .beam:hover { background-size: 100% 3px; }
+}
+.beam:focus-visible {
+  color: var(--beam-3);
+  background-size: 100% 3px;
+  outline: 2px solid var(--beam-3);
+  outline-offset: 3px;
+}
+.beam:active {
+  color: var(--beam-3);
+  background-size: 100% 2px;
+}
+/* Over a panel's own beam, only the inks read in the three themes: there the
+   words are ink, and the beam is the underline alone. */
+.panel .beam {
+  color: var(--ink);
+  background-image: linear-gradient(var(--beam), var(--beam));
+}
+.panel .beam:is(:focus-visible, :active) {
+  background-image: linear-gradient(var(--beam-3), var(--beam-3));
+}
+
+/* ── tag ─────────────────────────────────────────────────────────────────── */
+
+.tag {
+  font-family: var(--type-label);
+  font-weight: 400;
+}
+.tagRail {
+  --control-height: 42px;
+  --control-pad: 18px;
+  --control-size: .8125rem;
+}
+.tagSection {
+  --control-height: 88px;
+  --control-pad: 48px;
+  --control-size: 1.375rem;
+  color: var(--beam);
+}
+/* The beam is only legible on the fill at rest; lit or selected, it is ink. */
+.tagSection[aria-current] { color: var(--ink); }
+@media (hover: hover) {
+  .tagSection:hover { color: var(--ink); }
+}
+@media (pointer: coarse) {
+  .tagRail { --control-height: 44px; }
+}
+
+/* ── card and projected screen ───────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
+.tilt {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  transition: transform 60ms;
+}
+
+.content {
+  position: relative;
+  padding: 26px 30px 28px;
+  transition: transform 60ms;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+}
+
+/* The link covers the whole card, which answers as one; controls inside stay above it. */
+.stretched {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.stretched::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* Only forced-colors modes paint it. */
+  outline: 2px solid transparent;
+}
+.card :is(a, button, input, select, textarea):not(.stretched) {
+  position: relative;
+  z-index: 2;
+}
+
+.cone {
+  position: absolute;
+  top: 100%;
+  left: 10%;
+  right: 10%;
+  height: 36px;
+  opacity: 0;
+  pointer-events: none;
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+  background: radial-gradient(60% 100% at 50% 0, color-mix(in srgb, var(--beam) 34%, transparent), transparent);
+  transition: opacity 60ms;
+}
+
+.echo {
+  opacity: 0;
+  transition: opacity 60ms, transform 60ms;
+}
+.echo path { stroke-opacity: .4; }
+
+@media (hover: hover) {
+  .card:hover { --bridge: 1; }
+  .card:hover .light,
+  .card:hover .cone { opacity: 1; }
+  .card:hover .fill::after { animation: sweep 620ms var(--ease-in) 1; }
+}
+
+/* At rest nothing has a 3D transform: perspective would turn the lines into a
+   texture. The tilt only exists under a precise pointer that accepts motion. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .card:hover .tilt {
+    isolation: auto;
+    transform-style: preserve-3d;
+    transform: perspective(900px) rotateX(var(--holo-rx, 0deg)) rotateY(var(--holo-ry, 0deg));
+  }
+  .card:hover .content { transform: translateZ(18px); }
+  .card:hover .echo {
+    opacity: 1;
+    transform: translate(10px, 12px);
+  }
+}
+
+.card:has(.stretched:focus-visible) {
+  --stroke: var(--beam-3);
+  --bridge: 1;
+  --ring: .45;
+}
+.card:has(.stretched:active) {
+  --stroke: var(--beam-3);
+  --bridge: 1;
+}
+.card:has(.stretched:active) .tilt {
+  transform: scale(.99);
+}
+@supports not selector(:has(a)) {
+  .card:focus-within {
+    --stroke: var(--beam-3);
+    --bridge: 1;
+    --ring: .45;
+  }
+}
+
+.media {
+  position: relative;
+  overflow: hidden;
+  clip-path: var(--holo-clip-image);
+}
+.media > :is(img, video, picture, svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Scan lines at rest; the light that comes down only with someone there. */
+.media::before,
+.scan {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.media::before {
+  z-index: 1;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--beam) 9%, transparent) 0 1px, transparent 1px 4px);
+}
+.scan {
+  z-index: 1;
+  display: none;
+  background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--beam) 42%, transparent) 50%, transparent 52%);
+}
+.caption {
+  padding-top: 14px;
+}
+
+@media (hover: hover) {
+  .screen:hover .scan {
+    display: block;
+    animation: scan 2.6s linear infinite;
+  }
+  .screen:hover .lines .inner {
+    stroke-dasharray: 16 8;
+    stroke-opacity: 1;
+    animation: march 900ms linear infinite;
+  }
+}
+.screen:has(.stretched:focus-visible) .scan {
+  display: block;
+  animation: scan 2.6s linear infinite;
+}
+.screen:has(.stretched:focus-visible) .lines .inner {
+  stroke-dasharray: 16 8;
+  stroke-opacity: 1;
+  animation: march 900ms linear infinite;
+}
+
+@keyframes scan {
+  from { transform: translateY(-60%); }
+  to   { transform: translateY(60%); }
+}
+@keyframes march {
+  to { stroke-dashoffset: -24; }
+}
+
+/* ── window ──────────────────────────────────────────────────────────────── */
+
+.dialog {
+  width: min(var(--window-width, 640px), calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  overflow: visible;
+}
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--plate, #1f2731) 72%, transparent);
+  backdrop-filter: blur(8px);
+}
+.dialog[open] {
+  animation: rise 160ms var(--ease-in);
+}
+.window {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+}
+.windowPlate {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-2);
+  clip-path: var(--holo-clip);
+}
+.windowHead {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 30px 30px 0 34px;
+}
+.windowTitle {
+  margin: 0;
+  font-size: 1.75rem;
+}
+.windowBody {
+  position: relative;
+  /* What scrolls, and its bar, stop short of the lines of the frame. */
+  margin: 0 10px 10px;
+  padding: 16px 24px 22px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* A body that scrolls is a tab stop (dialog.tsx), and not a hologram. */
+.windowBody:focus-visible {
+  outline: 2px solid var(--beam-3);
+  outline-offset: -2px;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+/* ── field ───────────────────────────────────────────────────────────────── */
+
+.fieldLabel {
+  display: block;
+  font-weight: 500;
+  color: var(--ink);
+}
+.fieldHint {
+  margin: 2px 0 0;
+  font-size: .875rem;
+  color: var(--ink-2);
+}
+.fieldError {
+  display: flex;
+  gap: .5em;
+  align-items: flex-start;
+  margin: 8px 0 0;
+  font-size: .875rem;
+  color: var(--bad);
+}
+.fieldError svg {
+  flex: none;
+  width: 1.15em;
+  height: 1.4em;
+}
+/* In a panel the red is the icon's, and the words are ink: see `.panel .beam`. */
+.panel .fieldError {
+  color: var(--ink);
+}
+.panel .fieldError svg {
+  color: var(--bad);
+}
+.fieldBox {
+  display: flex;
+  margin-top: 8px;
+}
+/* A place to write: solid, with neither scan lines nor light under the text. */
+.fieldBox .fill {
+  background: var(--sunk);
+}
+.input {
+  position: relative;
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 18px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--type-text);
+  font-size: 1rem;
+  line-height: 1.5;
+  /* Only forced-colors modes paint it; the frame is the focus indicator. */
+  outline: 2px solid transparent;
+}
+.input::placeholder {
+  color: var(--ink-2);
+  opacity: 1;
+}
+textarea.input {
+  min-height: 132px;
+  resize: vertical;
+}
+@media (hover: hover) {
+  .fieldBox:hover { --bridge: 1; }
+}
+/* The bridges stay open: closing them is the answer to the pointer. */
+.fieldBox[data-invalid] {
+  --stroke: var(--bad);
+}
+.fieldBox:focus-within {
+  --stroke: var(--beam-3);
+  --bridge: 1;
+  --ring: .45;
+}
+.fieldBox[data-disabled] {
+  opacity: .45;
+  pointer-events: none;
+}
+
+/* ── switch ──────────────────────────────────────────────────────────────── */
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--type-text);
+  font-size: 1rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  -webkit-tap-highlight-color: transparent;
+  isolation: isolate;
+}
+.track {
+  flex: none;
+  width: 58px;
+  height: 30px;
+}
+.thumb {
+  position: absolute;
+  top: 8px;
+  left: 9px;
+  width: 14px;
+  height: 14px;
+  /* Ink, like the icon of a button: over the dense fill the beam is not 3:1. */
+  border: 1.5px solid var(--ink);
+  transition: transform 60ms, background-color 60ms, border-color 60ms;
+}
+.switch[aria-checked="true"] .track {
+  --bridge: 1;
+  --fill: var(--fill-dense);
+}
+.switch[aria-checked="true"] .thumb {
+  background: var(--ink);
+  transform: translateX(26px);
+}
+@media (hover: hover) {
+  .switch:hover .track { --bridge: 1; }
+  .switch:hover .light { opacity: 1; }
+  .switch:hover .thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--beam) 35%, transparent); }
+}
+.switch:focus-visible .track {
+  --stroke: var(--beam-3);
+  --bridge: 1;
+  --ring: .45;
+}
+.switch:active .track {
+  --stroke: var(--beam-3);
+  --bridge: 1;
+  transform: scale(.975);
+}
+.switch:disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+/* ── tabs ────────────────────────────────────────────────────────────────── */
+
+.tabList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.tabPanel {
+  padding-top: 20px;
+}
+.tabPanel:focus-visible {
+  outline: 2px solid var(--beam-3);
+  outline-offset: 6px;
+}
+
+/* ── notice: content, so it is solid; only its button is a hologram ──────── */
+
+.notice {
+  --tone: var(--beam);
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 560px;
+  padding: 16px 18px 16px 24px;
+  /* Not --bg-3: a link in the text would miss 4.5:1 there. */
+  background: var(--bg-2);
+  color: var(--ink);
+  /* The silhouette of the frame, with `c` = 14px and without its lines. */
+  clip-path: polygon(
+    14px 0, calc(100% - 20px) 0, 100% 12px,
+    100% calc(100% - 15px), calc(100% - 10px) 100%,
+    0 100%, 0 18px
+  );
+}
+.notice::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--tone);
+}
+.notice > svg {
+  flex: none;
+  width: 22px;
+  height: 24px;
+  color: var(--tone);
+}
+.notice[data-tone="ok"]   { --tone: var(--ok); }
+.notice[data-tone="warn"] { --tone: var(--warn); }
+.notice[data-tone="bad"]  { --tone: var(--bad); }
+.noticeText {
+  flex: 1;
+  min-width: 0;
+}
+.noticeTitle {
+  margin: 0;
+  font-weight: 600;
+}
+.noticeText p:not(.noticeTitle) {
+  margin: 2px 0 0;
+  color: var(--ink-2);
+}
+
+/* ── square button with an icon only (close, dismiss) ────────────────────── */
+
+.icon {
+  --control-pad: 0px;
+  flex: none;
+  width: var(--control-height);
+  min-width: var(--control-height);
+}
+
+/* ── reduced motion and forced colours ───────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .light,
+  .pulse,
+  .scan,
+  .echo,
+  .cone,
+  .fill::after {
+    display: none !important;
+  }
+  .screen .lines .inner {
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .lines path { stroke: ButtonText; }
+  .fill { forced-color-adjust: none; background: none; }
+  .primary { color: ButtonText; }
+}

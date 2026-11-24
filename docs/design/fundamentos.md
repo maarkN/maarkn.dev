@@ -33,7 +33,7 @@ Primeira visita: segue a preferência do sistema (claro ou escuro). O tema é ap
 
 `--c1` e `--c2` são validadas para daltonismo, luminosidade e contraste contra `--bg-2`. Trocar uma exige validar o par de novo.
 
-Contraste mínimo: 4.5:1 para texto sobre a superfície em que ele aparece, 3:1 para borda de controle e para texto a partir de 18 px em negrito.
+Contraste mínimo: 4.5:1 para texto sobre a superfície em que ele aparece, 3:1 para borda de controle e para texto a partir de 18 px em negrito. Sobre `--bg-3`, `--ink-3`, `--beam`, `--beam-2` e `--bad` ficam abaixo de 4.5:1 em ao menos um tema: ali servem só para texto a partir de 18 px em negrito, ícone e borda. Dentro de card e janela, texto é `--ink` ou `--ink-2`: sobre o preenchimento com luz, nenhuma outra cor atinge 4.5:1 nos três temas. Ali o link é `--ink` com o sublinhado em `--beam`, e a mensagem de erro é `--ink` com o ícone em `--bad`. Um card fica sobre `--bg` ou `--bg-2`. Nenhum token de texto é legível sobre `--plate` no claro (`--ink` dá 1,09:1): a cor do texto da dica se decide antes de existir a primeira. `scripts/check-contrast.ts` mede os pares.
 
 ## Tipografia
 
@@ -44,7 +44,7 @@ Contraste mínimo: 4.5:1 para texto sobre a superfície em que ele aparece, 3:1 
 | Números grandes | Mona Sans, peso 640 | Métricas: o zero da Hubot Sans é cortado |
 | Rótulos | Cascadia Code | Tags, trilho, datas, dados tabulares |
 
-Só o subconjunto latino (cobre pt-BR). Rótulo em caixa-alta espaçada não é usado.
+Só o subconjunto latino (cobre pt-BR). Hubot Sans e Mona Sans usam `font-display: optional`: a que perde a primeira pintura espera a próxima carga, e nada se desloca. Rótulo em caixa-alta espaçada não é usado.
 
 ## Movimento
 
