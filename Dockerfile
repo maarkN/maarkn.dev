@@ -47,9 +47,8 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-# .next/static also carries the fonts next/font emitted at build time: Cascadia
-# Code (fetched from Google Fonts by the builder) and the self-hosted
-# DaddyTimeMono from src/app/fonts/.
+# .next/static also carries the fonts next/font emitted at build time, all of
+# them self-hosted in src/app/fonts/.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Prisma needs the schema + the generated client & query engine at runtime.
 # Copy the whole node_modules from the builder (over the standalone's traced

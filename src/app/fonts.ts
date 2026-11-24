@@ -1,15 +1,16 @@
-import { Cascadia_Code } from "next/font/google";
 import localFont from "next/font/local";
 
-// Default monospace face (variable font, 200–700). Preloaded. Only the
-// latin subset: every letter the site prints (en, pt-BR accents included)
-// lives there. The arrows/bullet (→ ● ↗) are in no subset and fall back;
-// the block glyph (█, U+2588) sits in the box-drawing slice that Google
-// Fonts ships anyway (U+2500–259F), fetched once on the first `skills` /
-// `neofetch` — nothing extra on the LCP path.
-export const caskaydia = Cascadia_Code({
+// Cascadia Code (variable, 200–700), preloaded: the default face of the CLI
+// version and the label face of the site, so the one file serves both. Latin
+// only: every letter printed here (en, pt-BR accents included) lives there.
+// The arrows/bullet (→ ● ↗) are in no slice and fall back; the block glyph
+// (█, U+2588) sits in the box-drawing slice declared in globals.css, fetched
+// once on the first `skills` / `neofetch` — nothing extra on the LCP path.
+// OFL 1.1 — see ./fonts/CascadiaCode-LICENSE.md.
+export const caskaydia = localFont({
+  src: "./fonts/CascadiaCode-latin.woff2",
   variable: "--font-caskaydia",
-  subsets: ["latin"],
+  weight: "200 700",
   display: "swap",
   // next/font can only size-adjust Arial/Times, which are proportional: text
   // set in them wraps differently and shifts on swap. globals.css declares a

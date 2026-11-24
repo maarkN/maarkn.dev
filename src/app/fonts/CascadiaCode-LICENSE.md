@@ -1,6 +1,6 @@
 Cascadia Code, Copyright (c) 2019 - Present, Microsoft Corporation, with Reserved Font Name Cascadia Code.
 
-The two `CascadiaCode-*.og.ttf` files in this folder are subsets (Regular and Bold, Basic Latin + Latin-1 Supplement + a few box/arrow/bullet symbols, hinting stripped, built with `pyftsubset` from the v2407.24 release at https://github.com/microsoft/cascadia-code) used only by the Open Graph image renderer (`src/lib/og.tsx`). The web font itself comes from Google Fonts through `next/font`.
+The two `CascadiaCode-*.og.ttf` files in this folder are subsets (Regular and Bold, Basic Latin + Latin-1 Supplement + a few box/arrow/bullet symbols, hinting stripped, built with `pyftsubset` from the v2407.24 release at https://github.com/microsoft/cascadia-code) used only by the Open Graph image renderer (`src/lib/og.tsx`). `CascadiaCode-latin.woff2` (Latin) and `CascadiaCode-blocks.woff2` (box drawing and block elements, U+2500-259F) are the web font: the two slices of v2407.24 that Google Fonts serves, unchanged.
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 
