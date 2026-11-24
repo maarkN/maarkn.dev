@@ -174,6 +174,17 @@ async function reducedMotion(page, t) {
     "none",
     "o card não inclina",
   );
+  t.equal(
+    await page.evaluate(
+      `(() => {
+        const card = ${$("#cards article")};
+        const fill = card.querySelector("svg").parentElement.firstElementChild;
+        return [...fill.children, card.querySelector(":scope > span"), card.querySelector("svg")].map((el) => getComputedStyle(el).display);
+      })()`,
+    ),
+    ["none", "none", "none", "none"],
+    "sem luz, pulso, cone nem camada de trás",
+  );
   await page.hover("#telas article");
   await sleep(120);
   t.equal(
@@ -431,6 +442,10 @@ async function fonts(page, t) {
   await sleep(800);
   t.ok(held.length >= 3, "as três fontes foram pedidas e seguradas", requested.join(", "));
   t.equal(requested.filter((f) => /daddy/i.test(f)), [], "a fonte da Versão CLI não é pedida no site");
+  t.ok(
+    !/daddy/i.test(await page.evaluate(`getComputedStyle(${$(".site-root")}).getPropertyValue("--font")`)),
+    "nem está ao alcance de um elemento do site",
+  );
   const words = `(() => { const r = document.createRange(); r.selectNodeContents(${$("#tipografia p")}); return [...r.getClientRects()].map((b) => Math.round(b.width)).join() })()`;
   const fallback = await page.evaluate(words);
   t.ok(
@@ -545,18 +560,20 @@ async function sharp(page, t) {
       const paper = Math.max(...values);
       const ink = Math.min(...values);
       const strong = values.map((v) => (paper - v) / (paper - ink));
-      /* Trechos seguidos com mais da metade da tinta: a externa e a interna. */
-      const runs = [];
-      strong.forEach((s, i) => {
-        if (s <= 0.55) return;
-        if (runs.at(-1)?.end === i - 1) runs.at(-1).end = i;
-        else runs.push({ start: i, end: i });
-      });
-      const outer = runs[0];
-      const width = outer ? outer.end - outer.start + 1 : 0;
+      /* 1,5 px de traço: em 1x, um pixel cheio e o vizinho de dentro pela
+         metade; em 2x, três pixels cheios. Fora disso, só o halo. Vale para a
+         linha externa e para a interna, que é mais clara. */
+      const expected = dpr === 1 ? [1, 0.58] : [1, 1, 1];
+      const first = strong.findIndex((s) => s > 0.3);
+      const second = strong.findIndex((s, i) => i > first + expected.length && s > 0.3);
+      const crisp = (at, ink) =>
+        at > 0 &&
+        expected.every((share, i) => Math.abs(strong[at + i] - share * ink) < 0.08) &&
+        strong[at - 1] < 0.25 &&
+        strong[at + expected.length] < 0.25;
       t.ok(
-        outer && width <= (dpr === 1 ? 2 : 3) && strong[outer.start - 2] < 0.3 && strong[outer.end + 2] < 0.45,
-        `${dpr}x, ${side}: uma reta só, nítida`,
+        crisp(first, 1) && crisp(second, 0.69),
+        `${dpr}x, ${side}: duas retas, nítidas`,
         strong.map((s) => s.toFixed(2)).join(" "),
       );
     }
