@@ -15,7 +15,7 @@ function pickLocale(request: NextRequest): string {
 }
 
 /**
- * Two redirects, both temporary and both with the query string untouched:
+ * Two redirects, both temporary and both with the same query string:
  * a path without a locale gets one, and a home that carries `?cmd=` (the
  * CLI version used to live there) goes to the CLI version, whatever the
  * value is: the terminal is the one that decides what may run.
