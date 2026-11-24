@@ -75,14 +75,36 @@ model Project {
   repoUrl          String?
   demoUrl          String?
   caseUrl          String?
-  /// Plain-language tagline shown on cards.
+  /// Project text, one column per language (ADR 0003). The unsuffixed columns
+  /// are the English ones: they existed first and the migration was additive.
+  /// An empty column is not an empty field on the site: `projects-repo` falls
+  /// back to the other language and then to the seed in the dictionaries.
+  ///
+  /// Plain-language summary shown on cards.
   tagline          String?
+  taglinePt        String?
   /// Long-form description rendered on the detail page.
   description      String?
+  descriptionPt    String?
   /// Short paragraph describing Marco's role on the project.
   role             String?
+  rolePt           String?
   /// JSON-encoded array of bullet strings.
   featuresJson     String   @default("[]")
+  featuresPtJson   String   @default("[]")
+  /// Success case ("caso de sucesso"): problem, work and result.
+  caseProblemEn    String?
+  caseProblemPt    String?
+  caseWorkEn       String?
+  caseWorkPt       String?
+  caseResultEn     String?
+  caseResultPt     String?
+  /// Order among the success cases of the home, or null when it is not one.
+  /// At most three: the migration adds a CHECK (1 to 3) next to this unique
+  /// index, and another CHECK that refuses a position while any of the six
+  /// columns above is empty. Prisma has no syntax for CHECK; they live only in
+  /// the `portfolio_content` migration.
+  casePosition     Int?     @unique
   /// "public" exposes the repo button when repoUrl is set; "private" hides it
   /// in favor of a "Private project" pill.
   sourceVisibility String   @default("public")
@@ -96,8 +118,29 @@ model Project {
   /// metadado de relacao (nao adiciona coluna nem altera nenhuma query atual).
   careerProject CareerProject?
 
+  images ProjectImage[]
+
   @@index([featured])
   @@index([category])
+}
+
+/// One image of a project's gallery. The file lives in `/uploads`, which is
+/// public and cached forever: fine for images meant to be public, and the
+/// reason nothing with personal data ever goes there.
+model ProjectImage {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// Order in the gallery, from 1.
+  position  Int
+  /// Path served by this site, e.g. "/uploads/<uuid>.webp". Never a full URL.
+  path      String
+  captionEn String?
+  captionPt String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, position])
 }
 
 /// RAG knowledge base: chunked, embedded slices of Marco's curated CV/dossiers.
