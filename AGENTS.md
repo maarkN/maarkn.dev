@@ -15,7 +15,7 @@ Public portfolio (`src/app/[lang]`) and a private backoffice (`src/app/admin`) w
 - `docs/design/` before building any screen of the rebranding: themes, hologram frame, projection, every screen and its copy.
 - `src/app/admin/AGENTS.md` before touching `src/app/admin`, `src/app/_actions`, `src/components/admin` or `src/components/ui`.
 - `src/lib/terminal/AGENTS.md` before touching `src/lib/terminal` or `src/components/terminal` (the CLI version of the site).
-- `openspec/config.yaml` before writing a change.
+- `openspec/config.yaml` before writing a change, and `docs/roteiro.md` before starting one: it holds the order and the dependencies.
 
 These files describe what exists today. The task that invalidates a written rule rewrites it in the same change.
 

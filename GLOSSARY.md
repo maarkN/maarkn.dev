@@ -87,6 +87,10 @@ _Avoid_: Menu, sidebar
 O objeto de partículas que acompanha a rolagem e muda de forma a cada seção.
 _Avoid_: Orb, partículas
 
+**Linha-guia**:
+O traço que liga a projeção à tag da seção atual.
+_Avoid_: Leader, linha
+
 **Holograma**:
 O tratamento visual de tudo o que é interativo. O que não é interativo nunca é holograma.
 

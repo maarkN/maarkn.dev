@@ -10,6 +10,7 @@ Fonte de verdade visual e de comportamento do site e do backoffice novos. As cha
 | [site.md](./site.md) | Mapa de telas do site, uma a uma, com os textos novos |
 | [backoffice.md](./backoffice.md) | Mapa de telas do backoffice |
 | [commands.md](./commands.md) | Comandos da Versão CLI |
+| [verificacoes.md](./verificacoes.md) | O que o teste de ponta a ponta precisa cobrir |
 | [screens/](./screens) | Capturas do protótipo |
 
 As capturas vêm de um protótipo local que não é versionado. Onde a captura e o texto divergirem, **vale o texto**.
