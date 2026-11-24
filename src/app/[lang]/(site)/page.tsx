@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale, defaultLocale } from "@/i18n/config";
-import { BeamLink, HoloLink } from "@/components/holo/link";
+import { BeamLink } from "@/components/holo/link";
 import { HomeScroll } from "@/components/site/home-scroll";
+import { SectionLink } from "@/components/site/links";
 import styles from "@/components/site/site.module.css";
 import { routeAlternates } from "@/lib/seo";
 import { site } from "@/lib/site";
-import { sectionHref } from "@/lib/site/pages";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]">): Promise<Metadata> {
   const { lang } = await params;
@@ -36,9 +36,9 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         </h1>
         <p className={styles.lead}>{dict.links.bio}</p>
         <p className={styles.actions}>
-          <HoloLink size="lg" variant="primary" href={sectionHref(lang, "contact")}>
+          <SectionLink locale={lang} section="contact" size="lg" variant="primary">
             {dict.site.contact}
-          </HoloLink>
+          </SectionLink>
           <BeamLink href={site.cvPath} prefetch={false} target="_blank" rel="noopener noreferrer">
             {dict.links.links.cv.label}
           </BeamLink>

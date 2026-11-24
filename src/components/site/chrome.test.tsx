@@ -15,6 +15,11 @@ import { SiteTop } from "./site-top";
 
 let pathname = "/en";
 let query = "";
+/** Where the visitor is, for the router and for the browser. */
+function at(address: string) {
+  window.history.replaceState(null, "", address);
+  pathname = window.location.pathname;
+}
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => pathname,
@@ -39,13 +44,13 @@ beforeEach(() => {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  pathname = "/en";
+  at("/en");
   query = "";
   localStorage.clear();
   document.cookie = "locale=; max-age=0";
   document.documentElement.setAttribute("data-site-theme", "dusk");
-  window.history.replaceState(null, "", "/en");
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+  Element.prototype.scrollIntoView = vi.fn();
 });
 
 afterEach(() => {
@@ -184,21 +189,87 @@ describe("theme", () => {
   });
 });
 
-describe("brand", () => {
-  it("goes home from another page, and to the top from the home", () => {
-    pathname = "/en/projects";
-    top();
-    click($("header a"), { metaKey: true });
-    expect(window.scrollTo).not.toHaveBeenCalled();
+describe("a link to where the visitor already is", () => {
+  const Page = () => (
+    <>
+      <SiteTop locale="en" labels={LABELS.en} available />
+      <main id="content">
+        <h1 tabIndex={-1}>Title</h1>
+      </main>
+      <SiteFooter locale="en" labels={LABELS.en} channels={en.links.links} />
+      <BaseMenu locale="en" labels={LABELS.en} />
+    </>
+  );
+  const answered = () => vi.mocked(window.scrollTo).mock.calls.flat();
+  beforeEach(() => vi.mocked(window.scrollTo).mockClear());
 
-    pathname = "/en";
-    top();
-    window.history.replaceState(null, "", "/en#contact");
+  it("goes to the top of the page, and to its title", () => {
+    for (const address of ["/en", "/en/career", "/en/projects"]) {
+      at(address);
+      render(<Page />);
+      for (const part of ["header", "footer", "details"]) {
+        $("header button").focus();
+        vi.mocked(window.scrollTo).mockClear();
+        expect(click($(`${part} a[href="${address}"]`)), `${part} ${address}`).toBe(true);
+        expect(answered()).toEqual([{ top: 0, behavior: "smooth" }]);
+        expect(document.activeElement).toBe($("h1"));
+        expect(window.location.pathname).toBe(address);
+      }
+    }
+  });
+
+  it("takes the section out of the address", () => {
+    at("/en#contact");
+    render(<Page />);
     expect(click($("header a"))).toBe(true);
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    expect(answered()).toEqual([{ top: 0, behavior: "smooth" }]);
     expect(window.location.hash).toBe("");
-    // A new tab is the browser's.
-    expect(click($("header a"), { ctrlKey: true })).toBe(false);
+  });
+
+  it("goes to the section again, as often as it is asked for", () => {
+    at("/en#contact");
+    render(<Page />);
+    for (const link of $$('header a[href="/en#contact"], details a[href="/en#contact"]')) {
+      $("header button").focus();
+      vi.mocked(Element.prototype.scrollIntoView).mockClear();
+      expect(click(link)).toBe(true);
+      expect(vi.mocked(Element.prototype.scrollIntoView).mock.contexts).toEqual([$("#contact")]);
+      expect(document.activeElement).toBe($("#contact"));
+    }
+    expect(window.location.hash).toBe("#contact");
+  });
+
+  it("does not animate under reduced motion", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    at("/en/projects");
+    render(<Page />);
+    click($('header a[href="/en/projects"]'));
+    expect(answered()).toEqual([{ top: 0, behavior: "instant" }]);
+    vi.unstubAllGlobals();
+  });
+
+  it("leaves a filter for the router to take out", () => {
+    at("/en/projects?cat=ai");
+    render(<Page />);
+    // Next's own link answers: the event is prevented, and the address is still the old one.
+    click($('header a[href="/en/projects"]'));
+    expect(answered()).toEqual([{ top: 0, behavior: "instant" }]);
+    expect(window.location.search).toBe("?cat=ai");
+  });
+
+  it("is not one to another page, to another section, or to a new tab", () => {
+    at("/en/projects");
+    render(<Page />);
+    click($('header a[href="/en/career"]'));
+    click($('header a[href="/en"]'));
+    click($('header a[href="/en#contact"]'));
+    expect(click($('header a[href="/en/projects"]'), { metaKey: true })).toBe(false);
+    expect(click($('header a[href="/en/projects"]'), { ctrlKey: true })).toBe(false);
+    at("/en");
+    render(<Page />);
+    click($('header a[href="/en#contact"]'));
+    expect(answered()).toEqual([]);
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
   });
 });
 
@@ -233,7 +304,7 @@ describe("menu at the base", () => {
     menu();
     expect(details().open).toBe(false);
 
-    // Choosing the page one is already on goes nowhere, and closes all the same.
+    // Choosing the page one is already on closes it all the same.
     details().open = true;
     click($('details a[href="/en/career"]'));
     expect(details().open).toBe(false);

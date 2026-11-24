@@ -7,8 +7,8 @@ import { clsx } from "clsx";
 import { controlClass } from "@/components/holo/button";
 import { HoloFrame } from "@/components/holo/frame";
 import { HoloLink } from "@/components/holo/link";
-import { ariaCurrent, currentPage, pageHref, PAGES, SECTIONS, sectionHref } from "@/lib/site/pages";
-import { useHomeLink } from "./links";
+import { ariaCurrent, currentPage, PAGES, SECTIONS } from "@/lib/site/pages";
+import { pageLink, SectionLink } from "./links";
 import type { SiteLabels } from "./labels";
 import styles from "./site.module.css";
 
@@ -19,7 +19,6 @@ import styles from "./site.module.css";
  */
 export function BaseMenu({ locale, labels }: { locale: string; labels: SiteLabels }) {
   const pathname = usePathname();
-  const home = useHomeLink(locale);
   const details = useRef<HTMLDetailsElement>(null);
   const here = currentPage(pathname)?.page ?? "home";
 
@@ -69,11 +68,7 @@ export function BaseMenu({ locale, labels }: { locale: string; labels: SiteLabel
           <ul>
             {PAGES.map((page) => (
               <li key={page}>
-                <HoloLink
-                  href={pageHref(locale, page)}
-                  aria-current={ariaCurrent(pathname, page)}
-                  {...(page === "home" && home)}
-                >
+                <HoloLink {...pageLink(locale, page)} aria-current={ariaCurrent(pathname, page)}>
                   {labels.pages[page]}
                 </HoloLink>
               </li>
@@ -82,7 +77,9 @@ export function BaseMenu({ locale, labels }: { locale: string; labels: SiteLabel
           <ul>
             {SECTIONS.map((section) => (
               <li key={section}>
-                <HoloLink href={sectionHref(locale, section)}>{labels.sections[section]}</HoloLink>
+                <SectionLink locale={locale} section={section}>
+                  {labels.sections[section]}
+                </SectionLink>
               </li>
             ))}
           </ul>

@@ -58,8 +58,8 @@ Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every elemen
 - A page of the site is a `<main id="content" tabIndex={-1} className="site-root">` with one `<h1 tabIndex={-1}>`, which takes the focus after a navigation (`page-passage.tsx`). The pages under `(site)/(pages)` still wear the CLI version's look: a change that redesigns one takes it out of that group.
 - The chrome is dressed by itself, as `site-root site-island`: only a `.site-root` that is not an island changes the colours of the document around it.
 - A page or a section enters `src/lib/site/pages.ts` with the screen that makes it exist. Top, menu, foot and search list what is there. What else finds it in the search is in the dictionaries, under `site.search.terms`.
-- Links: to the home through `useHomeLink` (it restores its own scroll, so the router must not), to the CLI version through `CliLink`, to the other language as a document load (`LanguageLink`). A client navigation between languages replaces `<html>` and loses the CLI version's palette and font.
-- What sticks under the top uses `--site-top`; what stays above the menu at the base, `--site-base`.
+- Links: to a page of the site through `pageLink` and to a section through `SectionLink` (they answer when the visitor is already there, which the router does not; the home restores its own scroll), to the CLI version through `CliLink`, to the other language as a document load (`LanguageLink`). A client navigation between languages replaces `<html>` and loses the CLI version's palette and font.
+- What sticks under the top, or stops a scroll there, uses `--site-top`; what stays above the menu at the base, `--site-base`.
 
 ## Invariants
 

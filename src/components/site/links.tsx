@@ -4,31 +4,39 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, type ComponentProps, type MouseEvent } from "react";
 import { HoloAnchor, HoloLink } from "@/components/holo/link";
 import { localizedHref, otherLocale, rememberLocale, type TerminalLocale } from "@/lib/terminal/locale";
+import { pageHref, sectionHref, type PageKey, type SectionKey } from "@/lib/site/pages";
 import { terminalHref } from "@/lib/terminal/address";
+import { arriveAgain } from "./arrival";
 
 /** A plain left click: the one a client navigation answers. */
 export const plainClick = (event: MouseEvent) =>
   event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 
+/** A link that still answers when the visitor is already there. */
+const linkTo = (href: string) => ({
+  href,
+  onClick: (event: MouseEvent) => {
+    if (plainClick(event) && arriveAgain(href)) event.preventDefault();
+  },
+});
+
 /**
- * A link to the home. The home puts itself back where the visitor left it
- * (home-scroll.tsx), so the router must not take it to the top first; from the
- * home, the way to the top is this link.
+ * What makes a link one to a page of the site. The home puts itself back where
+ * the visitor left it (home-scroll.tsx), so the router must not take it to the
+ * top first; from the home, the way to the top is this link.
  */
-export function useHomeLink(locale: string) {
-  const href = `/${locale}`;
-  const there = usePathname() === href;
-  return {
-    href,
-    scroll: false,
-    onClick: (event: MouseEvent<HTMLAnchorElement>) => {
-      if (!there || !plainClick(event)) return;
-      event.preventDefault();
-      if (window.location.hash) window.history.replaceState(null, "", href);
-      const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-      window.scrollTo({ top: 0, behavior: still ? "instant" : "smooth" });
-    },
-  };
+export const pageLink = (locale: string, page: PageKey) => ({
+  ...linkTo(pageHref(locale, page)),
+  scroll: page !== "home",
+});
+
+/** To a section of the home. */
+export function SectionLink({
+  locale,
+  section,
+  ...props
+}: Omit<ComponentProps<typeof HoloLink>, "href"> & { locale: string; section: SectionKey }) {
+  return <HoloLink {...props} {...linkTo(sectionHref(locale, section))} />;
 }
 
 /** The CLI version. Not prefetched: it is a whole other experience to download. */

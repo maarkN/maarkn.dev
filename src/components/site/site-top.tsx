@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import { HoloLink } from "@/components/holo/link";
 import { useClock } from "@/components/terminal/use-clock";
-import { ariaCurrent, pageHref, sectionHref, TOP_PAGES } from "@/lib/site/pages";
+import { ariaCurrent, TOP_PAGES } from "@/lib/site/pages";
 import { otherLocale, shortLocale, type TerminalLocale } from "@/lib/terminal/locale";
 import { Mark } from "./icons";
-import { CliLink, LanguageLink, useHomeLink } from "./links";
+import { CliLink, LanguageLink, pageLink, SectionLink } from "./links";
 import { SearchButton } from "./search-button";
 import { ThemeControl } from "./theme-control";
 import styles from "./site.module.css";
@@ -54,14 +54,13 @@ export function SiteTop({
   available: boolean;
 }) {
   const pathname = usePathname();
-  const home = useHomeLink(locale);
   const next = otherLocale(locale);
 
   return (
     <header className={clsx("site-root site-island", styles.top)}>
       <div className={styles.row}>
         <HoloLink
-          {...home}
+          {...pageLink(locale, "home")}
           size="sm"
           className={styles.brand}
           aria-label={labels.brand}
@@ -77,11 +76,7 @@ export function SiteTop({
           <ul>
             {TOP_PAGES.map((page) => (
               <li key={page}>
-                <HoloLink
-                  size="sm"
-                  href={pageHref(locale, page)}
-                  aria-current={ariaCurrent(pathname, page)}
-                >
+                <HoloLink {...pageLink(locale, page)} size="sm" aria-current={ariaCurrent(pathname, page)}>
                   {labels.pages[page]}
                 </HoloLink>
               </li>
@@ -103,17 +98,18 @@ export function SiteTop({
               {">_"}
             </span>
           </CliLink>
-          <HoloLink
+          <SectionLink
+            locale={locale}
+            section="contact"
             size="sm"
             variant="primary"
             className={styles.contact}
-            href={sectionHref(locale, "contact")}
             aria-label={labels.contact}
             seed={labels.contact}
           >
             <Mail aria-hidden="true" />
             <span className={styles.contactText}>{labels.contact}</span>
-          </HoloLink>
+          </SectionLink>
         </div>
       </div>
       <Notch labels={labels.status} available={available} />

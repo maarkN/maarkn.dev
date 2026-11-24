@@ -11,6 +11,7 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from "react";
+import { flushSync } from "react-dom";
 import { HoloButton, controlClass } from "@/components/holo/button";
 import { HoloDialog } from "@/components/holo/dialog";
 import { HoloField } from "@/components/holo/field";
@@ -20,6 +21,7 @@ import { search, type SearchItem } from "@/lib/site/search";
 import { terminalHref } from "@/lib/terminal/address";
 import { leaveQuestion } from "@/lib/terminal/handoff";
 import { localizedHref, otherLocale, rememberLocale, type TerminalLocale } from "@/lib/terminal/locale";
+import { arriveAgain } from "./arrival";
 import type { SiteLabels } from "./labels";
 import styles from "./site.module.css";
 
@@ -65,7 +67,8 @@ export function SearchWindow({ open, onClose, locale, labels }: SearchWindowProp
   }, [open]);
 
   const choose = (option: Option) => {
-    onClose();
+    // The window is gone, and has given the focus back, before anything moves it.
+    flushSync(onClose);
     if ("ask" in option) {
       leaveQuestion(option.ask);
       router.push(terminalHref(locale, "?cmd=ask"));
@@ -87,6 +90,7 @@ export function SearchWindow({ open, onClose, locale, labels }: SearchWindowProp
         window.open(target.href, "_blank", "noopener");
         return;
       default:
+        if (arriveAgain(target.href)) return;
         // The home puts itself back where it was (home-scroll.tsx).
         router.push(target.href, { scroll: target.href !== `/${locale}` });
     }

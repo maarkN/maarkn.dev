@@ -10,6 +10,8 @@ import { chromeLabels } from "./labels";
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const push = vi.fn();
+/** The browser is at the same address, unless a test says otherwise. */
+const HERE = "/en/projects?cat=ai";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
   usePathname: () => "/en/projects",
@@ -27,6 +29,8 @@ const page = (id: string, title: string, terms: string[] = []): SearchItem => ({
 const INDEX: SearchItem[] = [
   page("home", "Home"),
   page("career", "Career", ["experience"]),
+  page("projects", "Projects"),
+  { id: "section-contact", kind: "section", title: "Contact", terms: [], target: { type: "page", href: "/en#contact" } },
   { id: "cli", kind: "cli", title: "CLI version", terms: ["terminal"], target: { type: "page", href: "/en/terminal" } },
   { id: "shifts", kind: "project", title: "DoctorX", terms: ["Flutter"], target: { type: "page", href: "/en/projects/shifts" } },
   { id: "acme", kind: "experience", title: "Acme", detail: "Tech Lead", terms: ["Flutter"], target: { type: "page", href: "/en/career/acme" } },
@@ -91,10 +95,12 @@ beforeEach(async () => {
   proto.close = function () {
     this.open = false;
   };
-  Element.prototype.scrollIntoView = () => {};
+  Element.prototype.scrollIntoView = vi.fn();
   fetchIndex = vi.fn(async () => Response.json(INDEX));
   vi.stubGlobal("fetch", fetchIndex);
   push.mockReset();
+  window.history.replaceState(null, "", HERE);
+  window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
   sessionStorage.clear();
   document.documentElement.setAttribute("data-site-theme", "dusk");
   document.cookie = "locale=; max-age=0";
@@ -109,6 +115,7 @@ beforeEach(async () => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -169,8 +176,9 @@ describe("opening", () => {
 describe("results", () => {
   it("filter as one types, and the count is announced", async () => {
     await open();
-    expect(shown()).toEqual(["home", "career", "cli", "dusk", "light", "dracula", "language", "cv"]);
-    expect(status()).toBe("8 results");
+    const everything = ["home", "career", "projects", "section-contact", "cli", "dusk", "light", "dracula", "language", "cv"];
+    expect(shown()).toEqual(everything);
+    expect(status()).toBe("10 results");
     type("flutter");
     expect(shown()).toEqual(["shifts", "acme"]);
     expect(status()).toBe("2 results");
@@ -254,6 +262,57 @@ describe("choosing", () => {
     expect(assign).toHaveBeenCalledWith("/pt-BR/projects?cat=ai");
     expect(document.cookie).toContain("locale=pt-BR");
     expect(push).not.toHaveBeenCalled();
+  });
+});
+
+describe("choosing where the visitor already is", () => {
+  let content: HTMLElement;
+  /** Whether the window was open when each of them took the focus: the page under it is inert. */
+  let under: boolean[];
+  beforeEach(() => {
+    under = [];
+    content = document.createElement("main");
+    content.addEventListener("focusin", () => under.push(isOpen()));
+    content.id = "content";
+    content.innerHTML = '<h1 tabindex="-1">Title</h1><section id="contact" tabindex="-1"></section>';
+    document.body.append(content);
+  });
+  afterEach(() => content.remove());
+
+  const choose = async (text: string) => {
+    await open();
+    vi.mocked(Element.prototype.scrollIntoView).mockClear();
+    type(text);
+    key("Enter");
+    expect(isOpen()).toBe(false);
+  };
+
+  it("goes to the top of the page, with the focus on its title", async () => {
+    for (const [address, text] of [["/en", "home"], ["/en/projects", "projects"], ["/en/projects/shifts", "doctorx"]]) {
+      window.history.replaceState(null, "", address);
+      vi.mocked(window.scrollTo).mockClear();
+      await choose(text);
+      expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 0, behavior: "smooth" });
+      expect(document.activeElement, address).toBe(content.querySelector("h1"));
+    }
+    expect(under).toEqual([false, false, false]);
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("goes to the section again", async () => {
+    window.history.replaceState(null, "", "/en#contact");
+    await choose("contact");
+    const section = content.querySelector("section");
+    expect(vi.mocked(Element.prototype.scrollIntoView).mock.contexts.at(-1)).toBe(section);
+    expect(document.activeElement).toBe(section);
+    expect(push).not.toHaveBeenCalled();
+    expect(window.location.hash).toBe("#contact");
+  });
+
+  it("leaves the filter for the router to take out", async () => {
+    await choose("projects");
+    expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 0, behavior: "instant" });
+    expect(push).toHaveBeenCalledExactlyOnceWith("/en/projects", { scroll: true });
   });
 });
 

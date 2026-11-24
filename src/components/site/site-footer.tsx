@@ -4,8 +4,8 @@ import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import { BeamLink } from "@/components/holo/link";
 import { site } from "@/lib/site";
-import { ariaCurrent, PAGES, pageHref } from "@/lib/site/pages";
-import { CliLink, useHomeLink } from "./links";
+import { ariaCurrent, PAGES } from "@/lib/site/pages";
+import { CliLink, pageLink } from "./links";
 import type { SiteLabels } from "./labels";
 import styles from "./site.module.css";
 
@@ -21,7 +21,6 @@ export function SiteFooter({
   channels: Record<"email" | "linkedin" | "github" | "whatsapp" | "cv", { label: string }>;
 }) {
   const pathname = usePathname();
-  const home = useHomeLink(locale);
   const contact = [
     ["email", `mailto:${site.email}`],
     ["linkedin", site.social.linkedin],
@@ -37,11 +36,7 @@ export function SiteFooter({
           <ul className={styles.footerLinks}>
             {PAGES.map((page) => (
               <li key={page}>
-                <BeamLink
-                  href={pageHref(locale, page)}
-                  aria-current={ariaCurrent(pathname, page)}
-                  {...(page === "home" && home)}
-                >
+                <BeamLink {...pageLink(locale, page)} aria-current={ariaCurrent(pathname, page)}>
                   {labels.pages[page]}
                 </BeamLink>
               </li>
