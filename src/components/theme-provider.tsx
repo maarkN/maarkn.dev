@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { FONT_KEY, THEME_KEY } from "@/lib/theme-boot";
 
 /** Dracula palettes. `soft` is the default; `classic` the original colours. */
 export type Theme = "soft" | "classic";
@@ -20,9 +21,6 @@ export type ThemeApi = {
 };
 
 const ThemeCtx = createContext<ThemeApi | null>(null);
-
-const THEME_KEY = "maarkn-theme";
-const FONT_KEY = "maarkn-font";
 
 const isTheme = (v: unknown): v is Theme => THEMES.includes(v as Theme);
 const isFont = (v: unknown): v is Font => FONTS.includes(v as Font);
@@ -85,15 +83,3 @@ export function useTheme() {
   if (!ctx) throw new Error("useTheme must be used inside ThemeProvider");
   return ctx;
 }
-
-/* Inline pre-hydration script: applies palette + font before first paint and
-   migrates legacy values (dark|dev → soft, light → classic). */
-export const themeBootScript = `
-(function(){var d=document.documentElement;try{
-  var t=localStorage.getItem('${THEME_KEY}');
-  if(t!=='soft'&&t!=='classic'){t=(t==='light')?'classic':'soft';localStorage.setItem('${THEME_KEY}',t);}
-  var f=localStorage.getItem('${FONT_KEY}');
-  if(f!=='caskaydia'&&f!=='daddytime'){f='caskaydia';}
-  d.setAttribute('data-theme',t);d.setAttribute('data-font',f);
-}catch(e){d.setAttribute('data-theme','soft');d.setAttribute('data-font','caskaydia');}})();
-`;

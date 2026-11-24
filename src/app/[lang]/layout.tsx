@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import "../globals.css";
 import { fontVars } from "../fonts";
-import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import { ConsoleEgg } from "@/components/dev/console-egg";
 import { hasLocale, locales, defaultLocale, type Locale } from "@/i18n/config";
+import { themeBootScript } from "@/lib/theme-boot";
 import {
   SITE_URL,
   SITE_NAME,
@@ -99,9 +99,10 @@ export default async function LocaleLayout({
       className={fontVars}
     >
       <body className="min-h-dvh antialiased">
-        <Script id="theme-boot" strategy="beforeInteractive">
-          {themeBootScript}
-        </Script>
+        {/* A plain <script>, not next/script: `beforeInteractive` queues inline
+            code for the Next runtime, an async chunk that runs after the first
+            paint. The parser runs this one before painting anything. */}
+        <script id="theme-boot" dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

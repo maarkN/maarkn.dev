@@ -1,0 +1,308 @@
+/* ════════════════════════════════════════════════
+   SITE THEMES — site and backoffice (docs/design/fundamentos.md).
+   Imported by the layouts that render `.site-root`, never by the CLI version.
+
+   Two systems share <html>: the CLI version reads `data-theme` and the tokens
+   of globals.css, the site reads `data-site-theme` and the tokens below. Some
+   names coincide, so every block here is scoped to `.site-root`. The mirror on
+   `:root:has(.site-root)` exists for what paints outside the subtree (canvas,
+   overscroll, scrollbars) and only while a site screen is mounted; `:is()` is
+   forgiving, so an engine without `:has()` loses the mirror, not the theme.
+
+   The attribute is written before the first paint by the boot script
+   (src/lib/theme-boot.ts). Without JavaScript there is no attribute, and the
+   `:not([data-site-theme])` blocks follow the system preference.
+
+   `site-theme.test.ts` compares these blocks with the table in fundamentos.md and
+   `scripts/check-contrast.ts` (in `pnpm lint`) measures the pairs.
+   ════════════════════════════════════════════════ */
+
+/* dusk: the default */
+:is(
+  :root[data-site-theme="dusk"]:has(.site-root),
+  :root[data-site-theme="dusk"] .site-root,
+  :root:not([data-site-theme]):has(.site-root),
+  :root:not([data-site-theme]) .site-root
+) {
+  color-scheme: dark;
+  --bg:      #27303b;
+  --bg-2:    #2e3946;
+  --bg-3:    #384554;
+  --sunk:    #222a34;
+  --ink:     #e8eef4;
+  --ink-2:   #b3c0ce;
+  --ink-3:   #a0afc0;
+  --beam:    #8ed6f0;
+  --beam-2:  #bab6ff;
+  --beam-3:  #ffcfa8;
+  --on-beam: #17222c;
+  --ok:      #93dcae;
+  --warn:    #f2d08d;
+  --bad:     #f5a3a0;
+  --plate:   #1f2731;
+  --c1:      #3f9fc8;
+  --c2:      #c97a3f;
+}
+
+/* light */
+:is(
+  :root[data-site-theme="light"]:has(.site-root),
+  :root[data-site-theme="light"] .site-root
+) {
+  color-scheme: light;
+  --bg:      #dfe4ee;
+  --bg-2:    #e8ecf4;
+  --bg-3:    #f3f5fa;
+  --sunk:    #d5dbe8;
+  --ink:     #282e45;
+  --ink-2:   #4c5573;
+  --ink-3:   #535c7b;
+  --beam:    #6238d6;
+  --beam-2:  #08688a;
+  --beam-3:  #a8306a;
+  --on-beam: #ffffff;
+  --ok:      #186b42;
+  --warn:    #7f5200;
+  --bad:     #a92b37;
+  --plate:   #2d3350;
+  --c1:      #6238d6;
+  --c2:      #b83a72;
+}
+
+/* light, no attribute: the system preference of whoever has no JavaScript */
+@media (prefers-color-scheme: light) {
+  :is(
+    :root:not([data-site-theme]):has(.site-root),
+    :root:not([data-site-theme]) .site-root
+  ) {
+    color-scheme: light;
+    --bg:      #dfe4ee;
+    --bg-2:    #e8ecf4;
+    --bg-3:    #f3f5fa;
+    --sunk:    #d5dbe8;
+    --ink:     #282e45;
+    --ink-2:   #4c5573;
+    --ink-3:   #535c7b;
+    --beam:    #6238d6;
+    --beam-2:  #08688a;
+    --beam-3:  #a8306a;
+    --on-beam: #ffffff;
+    --ok:      #186b42;
+    --warn:    #7f5200;
+    --bad:     #a92b37;
+    --plate:   #2d3350;
+    --c1:      #6238d6;
+    --c2:      #b83a72;
+  }
+}
+
+/* dracula */
+:is(
+  :root[data-site-theme="dracula"]:has(.site-root),
+  :root[data-site-theme="dracula"] .site-root
+) {
+  color-scheme: dark;
+  --bg:      #282a36;
+  --bg-2:    #303341;
+  --bg-3:    #44475a;
+  --sunk:    #21222c;
+  --ink:     #f8f8f2;
+  --ink-2:   #c6c9dd;
+  --ink-3:   #a8b1d4;
+  --beam:    #bd93f9;
+  --beam-2:  #ff79c6;
+  --beam-3:  #8be9fd;
+  --on-beam: #21222c;
+  --ok:      #50fa7b;
+  --warn:    #f1fa8c;
+  --bad:     #ff7b7b;
+  --plate:   #1e1f29;
+  --c1:      #9d6ff0;
+  --c2:      #e0589f;
+}
+
+/* ════════════════════════════════════════════════
+   What does not change with the theme.
+   ════════════════════════════════════════════════ */
+:is(:root:has(.site-root), .site-root) {
+  --type-title: var(--font-hubot), "Hubot Sans Fallback", system-ui, sans-serif;
+  --type-text:  var(--font-mona), "Mona Sans Fallback", system-ui, sans-serif;
+  --type-label: var(--font-caskaydia), "Cascadia Code Fallback", ui-monospace, Menlo, Consolas, monospace;
+
+  --ease-in:     cubic-bezier(.2, .8, .2, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+
+  /* How much beam goes into a hologram: its fill at rest and selected, its scan
+     lines and the pointer light. Panels (cards, windows) carry running text in
+     `--ink-2`, so theirs is thinner. check-contrast.ts measures the text over
+     the worst stack of each. */
+  --fill-rest:  6%;
+  --fill-dense: 14%;
+  --fill-scan:  6%;
+  --fill-light: 10%;
+  --panel-rest:  5%;
+  --panel-scan:  4%;
+  --panel-light: 6%;
+
+  /* Halo under every stroke (docs/design/moldura.md). */
+  --halo: .16;
+}
+:is(
+  :root[data-site-theme="light"]:has(.site-root),
+  :root[data-site-theme="light"] .site-root
+) {
+  --halo: .1;
+}
+@media (prefers-color-scheme: light) {
+  :is(
+    :root:not([data-site-theme]):has(.site-root),
+    :root:not([data-site-theme]) .site-root
+  ) {
+    --halo: .1;
+  }
+}
+
+/* The CLI version animates its palette change on <body>; the site swaps at
+   once (or through a View Transition). */
+:root:has(.site-root) {
+  scrollbar-color: var(--ink-3) var(--bg);
+}
+:root:has(.site-root) body {
+  transition: none;
+}
+
+.site-root {
+  /* Nothing in the site may resolve to the CLI version's face: with
+     `data-font="daddytime"` saved, that would download DaddyTimeMono. */
+  --font: var(--type-text);
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--type-text);
+  font-weight: 400;
+  line-height: 1.6;
+}
+.site-root :is(h1, h2, h3) {
+  font-family: var(--type-title);
+  font-weight: 560;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.site-root :is(strong, b) {
+  font-weight: 600;
+}
+.site-root h1 { font-stretch: 112%; }
+.site-root h2 { font-stretch: 108%; }
+.site-root h3 { font-stretch: 104%; }
+
+.site-root ::selection {
+  background: var(--beam);
+  color: var(--on-beam);
+}
+
+/* ── theme change ─────────────────────────────────────────────────────────
+   `setSiteTheme` already skips the View Transition under reduced motion; this
+   is the floor for any other transition that starts while it is on. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ════════════════════════════════════════════════
+   Metric-matched fallbacks, shown while the faces load (font-display: swap).
+   `size-adjust` is the width of the text of both dictionaries set in the web
+   face over its width in Arial, measured in the browser, one face per instance
+   the site sets; the overrides restore Mona's and Hubot's box (1.09 / 0.32 em)
+   after the scaling. `local()` needs full or PostScript names, hence the pairs.
+   ════════════════════════════════════════════════ */
+@font-face {
+  font-family: "Mona Sans Fallback";
+  font-weight: 200 499;
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Helvetica");
+  size-adjust: 104.02%;
+  ascent-override: 104.79%;
+  descent-override: 30.76%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Mona Sans Fallback";
+  font-weight: 500 549;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 98.42%;
+  ascent-override: 110.75%;
+  descent-override: 32.51%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Mona Sans Fallback";
+  font-weight: 550 589;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 99.36%;
+  ascent-override: 109.7%;
+  descent-override: 32.21%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Mona Sans Fallback";
+  font-weight: 590 619;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 99.98%;
+  ascent-override: 109.02%;
+  descent-override: 32.01%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Mona Sans Fallback";
+  font-weight: 620 669;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 100.61%;
+  ascent-override: 108.34%;
+  descent-override: 31.81%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Mona Sans Fallback";
+  font-weight: 670 900;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 101.55%;
+  ascent-override: 107.34%;
+  descent-override: 31.51%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Hubot Sans Fallback";
+  font-weight: 200 900;
+  font-stretch: 75% 106%;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 101.42%;
+  ascent-override: 107.47%;
+  descent-override: 31.55%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Hubot Sans Fallback";
+  font-weight: 200 900;
+  font-stretch: 106.1% 110%;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 103.68%;
+  ascent-override: 105.13%;
+  descent-override: 30.86%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Hubot Sans Fallback";
+  font-weight: 200 900;
+  font-stretch: 110.1% 125%;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Helvetica Bold"), local("Helvetica-Bold");
+  size-adjust: 105.95%;
+  ascent-override: 102.88%;
+  descent-override: 30.2%;
+  line-gap-override: 0%;
+}

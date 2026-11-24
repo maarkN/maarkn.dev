@@ -30,15 +30,15 @@ const CSP_ENFORCED = [
  * in the violation reports until they are fixed:
  *
  *  1. `script-src 'self'` — `src/app/[lang]/layout.tsx` renders the theme
- *     bootstrap (`themeBootScript`) as an inline `<Script strategy="before
- *     Interactive">` to avoid a flash of the wrong theme. Enforcing this needs
- *     a per-request nonce, which in Next means adding a `middleware.ts` that
- *     generates the nonce and rewrites the CSP header on every request. This
- *     repo has no middleware today, so that is a change of its own — not a
- *     drive-by in a headers pass. (The `application/ld+json` block in the same
- *     file is *not* a blocker: CSP does not apply to non-executable script
- *     types.) The alternative, `'unsafe-inline'`, would make `script-src`
- *     decorative, so it is not used here.
+ *     bootstrap (`themeBootScript`, the CLI version's palette and the site's
+ *     theme) as one inline `<script>`, to avoid a flash of the wrong theme.
+ *     Enforcing this needs a per-request nonce, which in Next means adding a
+ *     `middleware.ts` that generates the nonce and rewrites the CSP header on
+ *     every request. This repo has no middleware today, so that is a change of
+ *     its own — not a drive-by in a headers pass. (The `application/ld+json`
+ *     block in the same file is *not* a blocker: CSP does not apply to
+ *     non-executable script types.) The alternative, `'unsafe-inline'`, would
+ *     make `script-src` decorative, so it is not used here.
  *  2. `style-src 'self'` — Radix UI (admin) and Sonner (toasts) set inline
  *     `style` attributes and inject `<style>` elements at runtime. Those need
  *     the same nonce plumbing, or `'unsafe-inline'` scoped to styles.
