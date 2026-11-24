@@ -47,6 +47,23 @@ class Table {
     this.rows[index] = this.save(this.rows[index], data);
     return { ...this.rows[index] };
   };
+  updateMany = async ({ where, data }: { where: Where; data: Where }): Promise<{ count: number }> => {
+    const found = this.rows.filter((row) => matches(row, where));
+    for (const row of found) this.rows[this.rows.indexOf(row)] = this.save(row, data);
+    return { count: found.length };
+  };
+  /** A taken `sourceKey` is refused, or skipped when the caller asks for it. */
+  createManyAndReturn = async (args: { data: Where[]; skipDuplicates?: boolean }): Promise<Row[]> => {
+    const created: Row[] = [];
+    for (const data of args.data) {
+      if (!this.rows.some((row) => row.sourceKey === data.sourceKey)) {
+        created.push(await this.create({ data }));
+      } else if (!args.skipDuplicates) {
+        throw new Error(`UNIQUE ${this.name}.sourceKey`);
+      }
+    }
+    return created;
+  };
   upsert = async (args: { where: Where; create: Where; update: Where }): Promise<Row> =>
     this.rows.some((row) => matches(row, args.where))
       ? this.update({ where: args.where, data: args.update })

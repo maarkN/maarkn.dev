@@ -354,6 +354,60 @@ describe.skipIf(!SERVER)("dossier fields on a real Postgres", () => {
         ]);
       });
 
+      it("reopened again on the same day: the first event keeps the reason it removed", async () => {
+        const { id } = await acme();
+        const reopen = () => run("update_application_stage", { folderName: "acme", stage: "interview" });
+        await run("upsert_application", { folderName: "acme", stage: "rejected", closureReason: "visa" });
+        const first = await reopen();
+        await run("upsert_application", { folderName: "acme", stage: "rejected" });
+        const second = await reopen();
+
+        expect(
+          await db.applicationEvent.findMany({
+            where: { applicationId: id, fromStage: "rejected" },
+            orderBy: { createdAt: "asc" },
+            select: { id: true, bodyMd: true },
+          }),
+        ).toEqual([
+          { id: first.eventoId, bodyMd: "Motivo de encerramento removido: Visto." },
+          { id: second.eventoId, bodyMd: null },
+        ]);
+      });
+
+      it("the same reopening many times at once is one event, with the reason", async () => {
+        const { id } = await db.application.update({
+          where: { folderName: "acme" },
+          data: { stage: "rejected", closureReason: "visa" },
+        });
+        await Promise.allSettled(
+          Array.from({ length: 8 }, () =>
+            run("update_application_stage", { folderName: "acme", stage: "interview" }),
+          ),
+        );
+        expect(await acme()).toMatchObject({ stage: "interview", closureReason: null });
+        expect(await db.applicationEvent.findMany({ where: { applicationId: id } })).toMatchObject([
+          { fromStage: "rejected", bodyMd: "Motivo de encerramento removido: Visto." },
+        ]);
+      });
+
+      it("the same key at once in different applications: each one keeps its event", async () => {
+        const folders = Array.from({ length: 6 }, (_, index) => `shared-${index}`);
+        await db.application.createMany({
+          data: folders.map((folderName) => ({ folderName, stage: "rejected", closureReason: "visa" })),
+        });
+        await Promise.all(
+          folders.map((folderName) =>
+            run("update_application_stage", { folderName, stage: "interview", sourceKey: "shared" }),
+          ),
+        );
+        const events = await db.applicationEvent.findMany({ include: { application: true } });
+        expect(events.map((event) => event.application.folderName).sort()).toEqual(folders);
+        expect(events.map((event) => event.sourceKey).sort()).toEqual([
+          "shared",
+          ...[2, 3, 4, 5, 6].map((nth) => `shared#${nth}`),
+        ]);
+      });
+
       it("reverting a run undoes what it did to interviews and reasons", async () => {
         const AT = "2026-12-01T17:30:00.000Z";
         await run("upsert_interview", { folderName: "acme", sourceKey: "kept", kind: "technical", notesMd: "n" });

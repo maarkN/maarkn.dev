@@ -439,11 +439,32 @@ type StageChangeResult = {
 };
 
 /**
+ * Grava o evento de UMA mudanca de estagio, nunca por cima de outro: o evento e
+ * o unico lugar do historico que diz qual motivo a mudanca apagou. A chave nao
+ * distingue duas mudancas (a candidatura pode ser reaberta duas vezes no mesmo
+ * dia), entao a chave ja usada ganha '#2', '#3'...
+ */
+async function createStageChangeEvent(
+  key: string,
+  data: Omit<Prisma.ApplicationEventCreateManyInput, "sourceKey">
+): Promise<{ id: string }> {
+  for (let nth = 1; ; nth += 1) {
+    const sourceKey = nth === 1 ? key : `${key}#${nth}`;
+    const [event] = await db.applicationEvent.createManyAndReturn({
+      data: [{ ...data, sourceKey }],
+      skipDuplicates: true,
+      select: { id: true },
+    });
+    if (event) return event;
+  }
+}
+
+/**
  * Move o estagio e grava o `ApplicationEvent` correspondente.
  *
  * Idempotencia: se o estagio ja e o pedido, NADA acontece — nem update, nem
  * evento. E o que impede a segunda rodada de encher a linha do tempo de
- * "stage_change" identicos.
+ * "stage_change" identicos; a chave do evento nao tem esse papel.
  */
 async function applyStageChange(args: {
   applicationId: string;
@@ -488,8 +509,14 @@ async function applyStageChange(args: {
   const reason = args.closureReason ? { closureReason: args.closureReason } : closure.patch;
 
   const before = { stage: args.from, ...(current ?? {}) };
-  await db.application.update({
-    where: { id: args.applicationId },
+  // O que foi lido entra no WHERE: de duas chamadas iguais ao mesmo tempo, so
+  // uma encontra a candidatura como leu, e so ela grava o evento e o motivo.
+  const moved = await db.application.updateMany({
+    where: {
+      id: args.applicationId,
+      stage: args.from,
+      closureReason: current?.closureReason ?? null,
+    },
     data: {
       stage: args.to,
       ...derived,
@@ -499,12 +526,17 @@ async function applyStageChange(args: {
       lastSyncRunId: args.sync.syncRunId ?? null,
     },
   });
+  if (moved.count === 0) {
+    throw new McpToolError(
+      `O estagio ou o motivo da candidatura '${args.folderName}' mudou durante esta chamada, entao ela nao foi movida para '${args.to}'. Repita a chamada.`
+    );
+  }
 
   const sourceKey =
     args.sourceKey ??
     `${args.folderName}#stage#${args.from}->${args.to}@${occurredAt.toISOString().slice(0, 10)}`;
 
-  const eventFacts = {
+  const event = await createStageChangeEvent(sourceKey, {
     applicationId: args.applicationId,
     occurredAt,
     type: "stage_change",
@@ -514,12 +546,7 @@ async function applyStageChange(args: {
     subject: `${args.from} -> ${args.to}`,
     bodyMd:
       [args.note, closureReasonRemovedNote(closure.removed)].filter(Boolean).join("\n\n") || null,
-  };
-  const event = await db.applicationEvent.upsert({
-    where: { sourceKey },
-    create: { sourceKey, ...eventFacts, ...childStamp(args.ctx, args.sync) },
-    update: { ...eventFacts, ...childStamp(args.ctx, args.sync) },
-    select: { id: true },
+    ...childStamp(args.ctx, args.sync),
   });
 
   await finishWrite({
@@ -784,7 +811,7 @@ export const updateApplicationStage = defineMcpTool({
     occurredAt: dateSchema.optional().describe("Quando a mudanca aconteceu de verdade (default: agora)."),
     note: markdownSchema.optional().describe("Contexto da mudanca; vira o corpo do evento."),
     channel: shortSchema.optional().describe("email | linkedin | phone | portal ..."),
-    sourceKey: keySchema.optional().describe("Chave estavel do evento. Default: '<pasta>#stage#<de>-><para>@<data>'."),
+    sourceKey: keySchema.optional().describe("Chave estavel do evento. Default: '<pasta>#stage#<de>-><para>@<data>'. Se ela ja for de outro evento, esta mudanca ganha o proprio, com '#2', '#3'... no fim: uma mudanca nunca e gravada por cima de outra."),
     syncRunId: syncRunIdSchema.optional(),
   },
   annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: false },

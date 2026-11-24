@@ -43,6 +43,10 @@ Candidatura recusada ou retirada SHALL aceitar um motivo entre: salário, visto,
 - **WHEN** uma candidatura recusada volta para um estágio aberto
 - **THEN** o motivo é removido e a mudança fica no histórico
 
+#### Scenario: Candidatura reaberta mais de uma vez
+- **WHEN** a mesma candidatura é recusada e reaberta de novo, ainda que no mesmo dia
+- **THEN** cada reabertura fica no histórico com o motivo que removeu, e nenhuma substitui a anterior
+
 ### Requirement: Descrição da vaga no dossiê
 O dossiê SHALL exibir a descrição da vaga associada à candidatura.
 

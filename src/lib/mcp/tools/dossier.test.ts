@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createFakeDb, type FakeDb } from "@/lib/mcp/test/fake-db";
@@ -256,6 +256,111 @@ describe("the closure reason", () => {
         after: { stage: "interview", closureReason: null },
       });
       expect(JSON.stringify(result)).toContain('"motivoRemovido":"visa"');
+    },
+  );
+
+  describe("reopened more than once on the same day", () => {
+    const TOOLS = ["upsert_application", "update_application_stage"];
+    const reject = (closureReason?: string) =>
+      ok("upsert_application", {
+        folderName: "a",
+        stage: "rejected",
+        ...(closureReason ? { closureReason } : {}),
+      });
+    const reopenings = () =>
+      db.rows.applicationEvent().filter((event) => event.fromStage === "rejected");
+
+    beforeEach(async () => {
+      vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-24T12:00:00Z") });
+      await reject("visa");
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it.each(TOOLS)("%s: the second one had no reason, the first keeps its own", async (tool) => {
+      await ok(tool, { folderName: "a", stage: "interview" });
+      await reject();
+      await ok(tool, { folderName: "a", stage: "interview" });
+
+      expect(reopenings().map((event) => event.bodyMd)).toEqual([
+        "Motivo de encerramento removido: Visto.",
+        null,
+      ]);
+    });
+
+    it.each(TOOLS)("%s: each reopening says the reason it removed", async (tool) => {
+      const eventIds = [];
+      for (const reason of ["salary", "job_closed", undefined]) {
+        const result = await ok(tool, { folderName: "a", stage: "interview" });
+        eventIds.push(((result.estagio ?? result) as Json).eventoId);
+        if (reason) await reject(reason);
+      }
+
+      expect(reopenings().map((event) => event.bodyMd)).toEqual([
+        "Motivo de encerramento removido: Visto.",
+        "Motivo de encerramento removido: Salário.",
+        "Motivo de encerramento removido: Vaga fechada.",
+      ]);
+      expect(reopenings().map((event) => event.id)).toEqual(eventIds);
+      const key = "a#stage#rejected->interview@2026-11-24";
+      expect(reopenings().map((event) => event.sourceKey)).toEqual([key, `${key}#2`, `${key}#3`]);
+    });
+
+    it("not even with the same key, date and note sent again", async () => {
+      const move = (note: string) =>
+        ok("update_application_stage", {
+          folderName: "a",
+          stage: "interview",
+          occurredAt: "2026-11-24",
+          sourceKey: "a#reopened",
+          note,
+        });
+      await move("first");
+      await reject();
+      await move("second");
+
+      expect(reopenings()).toMatchObject([
+        { sourceKey: "a#reopened", bodyMd: "first\n\nMotivo de encerramento removido: Visto." },
+        { sourceKey: "a#reopened#2", bodyMd: "second" },
+      ]);
+    });
+
+    it("the same call repeated is still one event", async () => {
+      for (let time = 0; time < 3; time += 1) {
+        await ok("update_application_stage", { folderName: "a", stage: "interview", sourceKey: "k" });
+        await ok("update_application_stage", { folderName: "a", stage: "interview" });
+      }
+      expect(db.rows.applicationEvent()).toHaveLength(1);
+    });
+  });
+
+  it("a key that belongs to the event of another application leaves that event alone", async () => {
+    await ok("upsert_application", { folderName: "a", stage: "rejected", closureReason: "visa" });
+    await ok("upsert_application", { folderName: "b", stage: "rejected", closureReason: "salary" });
+    for (const folderName of ["a", "b"]) {
+      await ok("update_application_stage", { folderName, stage: "interview", sourceKey: "shared" });
+    }
+    expect(db.rows.applicationEvent()).toMatchObject([
+      { applicationId: app("a").id, bodyMd: "Motivo de encerramento removido: Visto." },
+      { applicationId: app("b").id, bodyMd: "Motivo de encerramento removido: Salário." },
+    ]);
+  });
+
+  it.each([{ stage: "withdrawn" }, { closureReason: "salary" }])(
+    "changed to %o by someone else during the call: not moved, and nothing is removed",
+    async (change) => {
+      await ok("upsert_application", { folderName: "a", stage: "rejected", closureReason: "visa" });
+      const read = db.application.findUnique;
+      vi.spyOn(db.application, "findUnique").mockImplementation(async (args) => {
+        const row = await read(args);
+        if ("select" in args && (args.select as Json).closureReason) Object.assign(app("a"), change);
+        return row;
+      });
+
+      const text = await refused("update_application_stage", { folderName: "a", stage: "interview" });
+
+      expect(text).toContain("Repita a chamada");
+      expect(app("a")).toMatchObject({ stage: "rejected", closureReason: "visa", ...change });
+      expect(db.rows.applicationEvent()).toHaveLength(0);
     },
   );
 
