@@ -1,32 +1,64 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# Injetado em TODO artefato. Só entra o que não se descobre lendo o código:
+# stack e comandos estão em package.json e no AGENTS.md da raiz.
+context: |
+  Language: Portuguese (pt-BR). Write every artifact in Brazilian Portuguese,
+  with full accents. Keep OpenSpec structural headings (Purpose, Requirements,
+  ADDED/MODIFIED/REMOVED, Requirement, Scenario, WHEN/THEN) and the SHALL/MUST
+  keywords in English. Code identifiers, routes and commands stay in English.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Vocabulário: GLOSSARY.md é obrigatório. Use os termos de lá e respeite os
+  `_Avoid_` (ex.: Candidatura, nunca "aplicação"; Compromisso, nunca "evento").
+  Termo novo entra no glossário na mesma change.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  Decisões: docs/adr/. Uma change que contrarie um ADR precisa dizer qual e por quê.
+  Design: docs/design/ é a fonte de verdade visual e de comportamento do rebranding.
+  Os rascunhos locais (pasta ignorada pelo git) não são fonte: nunca os cite.
+  Instruções por área: AGENTS.md (raiz), src/app/admin/AGENTS.md, src/lib/terminal/AGENTS.md.
+
+  Restrições que não aparecem no código:
+  - O repositório é PÚBLICO e pode ser forkado. Nada de segredo, dado pessoal de
+    terceiros, nome de cliente sob NDA ou imagem de terceiros.
+  - Push na `main` publica em produção. O rebranding vive em `feat/rebranding`
+    e só chega à `main` na change `rebrand-12-cutover`.
+  - `next build` e o site público funcionam sem DATABASE_URL.
+  - Toda página sob /admin começa com a checagem de sessão; toda Server Action,
+    com requireAdmin(). Não há middleware protegendo /admin.
+  - Migrações são aditivas: duas branches mexem no schema ao mesmo tempo.
+  - Tudo que o MCP grava nasce privado. Nenhuma tool nova apaga registros (a única
+    que apaga é revert_sync_run), e agente só publica nos termos do ADR 0005.
+
+rules:
+  proposal:
+    - Termine "What Changes" com um parágrafo "Fora do escopo".
+    - Em "Impact", declare "Branch" (main ou feat/rebranding) e "Depende de" (changes, por nome, ou nenhuma).
+    - Marque com **BREAKING** toda mudança de URL pública, contrato de tool MCP ou schema.
+    - Cada requisito existente é alterado por uma única change aberta; se outra já o altera, ajuste lá.
+  specs:
+    - Descreva comportamento observável. Caminho de arquivo, biblioteca e nome de função vão para design ou tasks.
+    - Cada requisito tem ao menos um cenário de falha, vazio ou limite, além do caminho feliz.
+    - Uma capability nova nasce em uma só change; as seguintes usam apenas ADDED nela.
+    - Aposentar uma capability (retire_capabilities) só na change que entrega a substituta.
+    - Requisito de tela pública cobre PT e EN, os três temas, 390 px e movimento reduzido.
+  design:
+    - Só existe quando há alternativa real, migração, segurança ou desempenho em jogo.
+    - Cite o ADR quando a decisão já estiver registrada, em vez de repeti-la.
+  tasks:
+    - Cada tarefa diz como verificar, no próprio item.
+    - O primeiro grupo verifica o que a change assume (dependências entregues, branch certa).
+    - Tarefa de UI verifica nos três temas, em 390 px e 1440 px, com teclado e com movimento reduzido.
+    - Quando uma regra escrita deixa de valer, a tarefa que a invalida atualiza o AGENTS.md correspondente.
+    - "Gates é a última tarefa: pnpm lint, pnpm test e pnpm build (sem DATABASE_URL) passam."
+
+operations:
+  apply:
+    guidance:
+      - Rode os gates antes de marcar a última tarefa; cole a saída quando falhar.
+      - Trabalhe na branch declarada em Impact; não faça push na main.
+      - Ao descobrir que um requisito está errado, pare e revise os artefatos em vez de implementar diferente.
+  archive:
+    guidance:
+      - Rode `openspec validate --all --strict` antes e depois.
+      - Confira se o GLOSSARY.md cobre os termos novos e se algum ADR precisa mudar de status.
+      - Corrija à mão o Purpose das specs que mudaram de sentido; o archive não o reescreve.

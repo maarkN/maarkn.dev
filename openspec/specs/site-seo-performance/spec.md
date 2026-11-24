@@ -7,11 +7,14 @@ Estabelece os limites de desempenho e os requisitos de indexação e compartilha
 ## Requirements
 
 ### Requirement: Core Web Vitals da home
-Em auditoria Lighthouse mobile com o perfil de throttling padrão (Moto G Power, CPU 4×, 1.6 Mbps / 150 ms RTT) contra a URL de produção, a home MUST atingir LCP ≤ 2.0s, CLS ≤ 0.02, INP ≤ 200ms e pontuação de desempenho ≥ 95. O elemento LCP MUST ser texto renderizado pelo servidor. Em auditoria contra `localhost`, onde o modelo simulado (Lantern) trata os scripts como pré-requisito do paint e infla o LCP por construção, o LCP MUST ser lido com o mesmo throttling aplicado às requisições (`--throttling-method=devtools`); os demais limites valem nos dois modos.
+Em auditoria Lighthouse mobile com o perfil de throttling padrão (Moto G Power, CPU 4×, 1.6 Mbps / 150 ms RTT) contra a URL de produção, a home MUST atingir LCP ≤ 2.0s, CLS ≤ 0.02, INP ≤ 200ms e pontuação de desempenho ≥ 95. O elemento LCP MUST ser texto renderizado pelo servidor.
 
 #### Scenario: Auditoria pós-migração
 - **WHEN** a home é auditada em produção após o deploy
 - **THEN** todos os limites acima são atendidos e o resultado é registrado
+
+### Requirement: Medição local da home
+Em auditoria contra `localhost`, onde o modelo simulado (Lantern) trata os scripts como pré-requisito do paint e infla o LCP por construção, o LCP MUST ser lido com o mesmo throttling aplicado às requisições (`--throttling-method=devtools`); os demais limites da home valem nos dois modos.
 
 #### Scenario: Auditoria local antes do merge
 - **WHEN** a home é auditada contra `localhost` a partir de `pnpm build && next start`

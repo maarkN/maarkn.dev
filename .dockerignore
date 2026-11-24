@@ -20,6 +20,7 @@ docs
 # Local planning / agent docs: never needed by any build stage.
 openspec
 .claude
+.agents
 
 # NOTE on knowledge/ (the private corpus: CV + project dossiers).
 # It is deliberately NOT ignored here: `npm run db:ingest` reads it from

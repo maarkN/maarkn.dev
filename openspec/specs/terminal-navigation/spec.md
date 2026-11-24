@@ -54,11 +54,14 @@ Ao navegar para uma página interna e retornar à home na mesma sessão, o termi
 - **THEN** a saída de `contact` é exibida
 
 ### Requirement: Retorno das páginas internas
-O link `cd ..` das páginas internas SHALL levar à home com o comando de contexto (`?cmd=projects`, `?cmd=experience`, `?cmd=writing`) quando a página não tiver listagem própria. O comando de contexto MUST NOT ser impresso uma segunda vez quando a tela reconstruída já o contém — porque a sessão já chegou à home por esse mesmo `?cmd` ou porque a saída reconstruída já termina com ele. Em ambos os casos o `?cmd` conta como consumido: voltar depois a essa mesma URL pelo botão do navegador reconstrói a tela sem reimprimir o comando.
+O link `cd ..` das páginas internas SHALL levar à home com o comando de contexto (`?cmd=projects`, `?cmd=experience`, `?cmd=writing`) quando a página não tiver listagem própria.
 
 #### Scenario: Voltar de um post
 - **WHEN** o visitante ativa `cd ..` em `/en/blog/<slug>`
 - **THEN** navega para `/en/blog`
+
+### Requirement: Comando de contexto impresso uma vez
+O comando de contexto MUST NOT ser impresso uma segunda vez quando a tela reconstruída já o contém, seja porque a sessão já chegou à home por esse mesmo `?cmd`, seja porque a saída reconstruída já termina com ele. Em ambos os casos o `?cmd` conta como consumido: voltar depois a essa mesma URL pelo botão do navegador reconstrói a tela sem reimprimir o comando.
 
 #### Scenario: Voltar para uma listagem já impressa
 - **WHEN** o visitante executou `projects`, abriu `/en/projects` e ativa `cd ..`

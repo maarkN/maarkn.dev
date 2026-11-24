@@ -1,0 +1,78 @@
+name: PR checks
+
+# Every pull request -> the same gates a contributor runs locally: lint (with
+# dictionary parity), tests, a build without a database, OpenSpec validation.
+#
+# Why this is not a job in deploy.yml: the deploy job runs on the droplet's own
+# runner and this repository is PUBLIC, so deploy.yml must never react to a pull
+# request (see the header there). A pull request is someone else's code, and
+# everything below executes it: install scripts, tests, the build. So this file
+# only ever runs on throwaway GitHub-hosted machines. Pointing any job here at
+# the droplet's runner would let anyone who opens a pull request run commands
+# on the production host.
+#
+# The same reasoning fixes the rest of the file:
+#   - `pull_request`, never `pull_request_target`: the latter runs with the base
+#     repository's credentials.
+#   - the token can only read the contents, and it is not left in .git/config.
+#   - no secrets are referenced, so a fork's pull request and a branch's behave
+#     alike.
+#   - the end-to-end script (scripts/e2e-site.mjs) stays out: it needs a browser
+#     with a GPU. Run it locally.
+on:
+  pull_request:
+    branches: [main, feat/rebranding]
+
+# A new push to the same pull request makes the previous run pointless.
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read   # actions/checkout
+
+jobs:
+  checks:
+    name: Lint, test, build & specs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # pnpm/action-setup reads the version from package.json#packageManager.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Test
+        run: pnpm run test
+
+      # `next build` also type-checks. DATABASE_URL is unset on purpose: the
+      # build and every public page have to work without a database.
+      - name: Build (no DATABASE_URL)
+        run: |
+          if [ -n "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL is set; this build has to run without a database"
+            exit 1
+          fi
+          pnpm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      # Pinned and fetched on the spot: the CLI is a tool for writing changes,
+      # not a dependency of the site. Bump it together with the generated skills.
+      - name: Validate OpenSpec
+        run: pnpm dlx @fission-ai/openspec@2.1.1 validate --all --strict
+        env:
+          OPENSPEC_TELEMETRY: "0"
