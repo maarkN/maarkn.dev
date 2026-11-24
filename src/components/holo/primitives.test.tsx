@@ -10,7 +10,7 @@ import { HoloButton, HoloIconButton } from "./button";
 import { HoloCard, HoloScreen } from "./card";
 import { HoloDialog } from "./dialog";
 import { HoloField } from "./field";
-import { BeamLink, HoloLink } from "./link";
+import { BeamLink, HoloAnchor, HoloLink } from "./link";
 import { HoloNotice } from "./notice";
 import { HoloSwitch } from "./switch";
 import { HoloTabs } from "./tabs";
@@ -120,6 +120,20 @@ describe("HoloLink and BeamLink", () => {
     expect($("a").getAttribute("aria-disabled")).toBe("true");
     expect($("a").getAttribute("role")).toBe("link");
     expect($("a").hasAttribute("tabindex")).toBe(false);
+  });
+
+  it("with an icon only, are named by their label", () => {
+    render(<HoloLink href="/en/terminal" icon aria-label="Versão CLI"><svg aria-hidden="true" /></HoloLink>);
+    expect(nameOf($("a"))).toBe("Versão CLI");
+    expect(framed($("a"))).toBe(true);
+  });
+
+  it("to another document, are plain anchors with the same frame", () => {
+    render(<HoloAnchor href="/pt-BR/projects" hrefLang="pt-BR" aria-label="PT: mudar para português">PT</HoloAnchor>);
+    expect($("a").getAttribute("href")).toBe("/pt-BR/projects");
+    expect($("a").getAttribute("hreflang")).toBe("pt-BR");
+    expect(nameOf($("a"))).toBe("PT: mudar para português");
+    expect(framed($("a"))).toBe(true);
   });
 
   it("inside running text there is no frame", () => {
