@@ -46,7 +46,7 @@ async function openPage(page, { theme = "dusk", motion, path = PAGE, extra = {} 
   await page.beforeLoad(save({ "maarkn-site-theme": theme, ...extra }) + WATCH_FIRST_PAINT + PRELOAD_FACES);
   await page.open(path);
   await page.waitFor(DRAWN, "as molduras desenhadas");
-  await useFaces(page, path);
+  await settleFaces(page, path);
 }
 
 /** As fontes do site estão em uso? A que não chegou a tempo não vale nem para texto novo. */
@@ -66,7 +66,7 @@ const FACES_IN_USE = `(() => {
 })()`;
 
 /** A fonte que não chega antes da primeira pintura espera a carga seguinte. */
-async function useFaces(page, path) {
+async function settleFaces(page, path) {
   for (let i = 0; i < 6; i++) {
     await page.waitFor(`document.fonts.status === "loaded"`, "as fontes");
     await sleep(150);
@@ -526,7 +526,7 @@ async function fonts(page, t) {
   await page.call("Fetch.disable");
   await page.open(PAGE);
   await page.waitFor(DRAWN, "as molduras");
-  t.ok(await useFaces(page, PAGE), "nas cargas seguintes, as fontes do site");
+  t.ok(await settleFaces(page, PAGE), "nas cargas seguintes, as fontes do site");
   const real = await page.evaluate(words);
   t.ok(real.every((width, i) => width !== fallback[i]), "e o texto é desenhado com elas", `${fallback} e ${real}`);
   t.ok((await page.evaluate(cls)) === 0, "com CLS 0 também", JSON.stringify(await page.evaluate(`window.__shifts`)));
