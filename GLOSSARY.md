@@ -94,6 +94,26 @@ _Avoid_: Leader, linha
 **Holograma**:
 O tratamento visual de tudo o que é interativo. O que não é interativo nunca é holograma.
 
+**Moldura**:
+O contorno quebrado, com três cantos cortados, que todo holograma tem.
+_Avoid_: Borda, contorno (sozinho)
+
+**Feixe**:
+A cor de tudo o que é clicável e, em um link dentro de texto corrido, o sublinhado que o marca no lugar da moldura.
+_Avoid_: Destaque, accent
+
+**Tela projetada**:
+Um card cujo corpo é uma imagem, recortada em paralelo à moldura.
+_Avoid_: Thumbnail, preview
+
+**Tema** (`dusk`, `light`, `dracula`):
+A combinação de cores do site e do backoffice escolhida por quem visita.
+_Avoid_: Paleta, modo
+
+**Paleta** (`soft`, `classic`):
+A combinação de cores da Versão CLI, independente do tema.
+_Avoid_: Tema
+
 **Versão CLI**:
 A experiência de terminal do site, alternativa à home, com paletas e fontes próprias.
 _Avoid_: Modo terminal, home antiga

@@ -95,7 +95,7 @@ A spec completa de cada comando (argumentos, saída, erros) fica em [`docs/desig
 | Framework | Next.js 16 (App Router, Turbopack, `output: standalone`) com React 19 |
 | Linguagem | TypeScript 5 |
 | Estilo | CSS custom properties (Dracula `soft` / `classic`) + CSS Modules + Tailwind CSS v4 (admin) |
-| Fontes | Cascadia Code via `next/font/google` · DaddyTimeMono via `next/font/local` (self-hosted, OFL) |
+| Fontes | `next/font/local`, todas self-hosted (OFL): Cascadia Code e DaddyTimeMono na Versão CLI; Hubot Sans, Mona Sans e Cascadia Code no site |
 | Animação | Só CSS (`@keyframes` para boot, entrada de linhas e cursor) |
 | i18n | Padrão de dicionários do Next.js (`getDictionary`), roteamento de locale em `src/proxy.ts` |
 | Dados | Postgres + pgvector via Prisma 6 (projetos, candidaturas, chunks de conhecimento, log de chat) |
@@ -130,9 +130,10 @@ pnpm test:e2e
 
 ### Verificações de ponta a ponta
 
-O `scripts/e2e-site.mjs` dirige o Chrome headless pelo site público como o `pnpm start` o serve: abre cada página, rola com a roda do mouse de verdade e relata cada asserção. Hoje ele percorre a home nos dois idiomas; a lista completa do que precisa cobrir ao fim do rebranding está em [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), e cada change `rebrand-*` acrescenta os seus casos em `CASES`.
+O `scripts/e2e-site.mjs` dirige o Chrome headless pelo site público como o `pnpm start` o serve: abre cada página, rola com a roda do mouse de verdade e relata cada asserção. Hoje ele percorre a home nos dois idiomas e confere que o tema já está lá na primeira pintura; a lista completa do que precisa cobrir ao fim do rebranding está em [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), e cada change `rebrand-*` acrescenta os seus casos em `CASES`.
 
 - `--width 390 --height 844` para a viewport estreita, `--only home:pt-BR` para parte dos casos, `--verbose` para listar o que passou, `--json` para o resultado cru.
+- `--holo` roda no lugar deles os casos da referência do holograma (`/[lang]/holo`), uma página interna que a produção não tem: gere com `HOLO_REFERENCE=1 pnpm build`, ou use `pnpm dev`. `--shots <pasta>` também grava as capturas nos três temas, em 1x e 2x.
 - `E2E_BASE` aponta para outro endereço, `CHROME_PATH` para outro Chrome (o padrão é o caminho do macOS), `CDP_PORT` para outra porta de depuração.
 - Sai 0 quando tudo passou, 1 quando alguma asserção falhou e 2 quando nada pôde ser medido (servidor fora do ar, Chrome ausente, nenhum caso com aquele nome).
 
@@ -184,7 +185,8 @@ A stack de produção (imagem Docker, Traefik, Postgres, GitHub Actions → drop
 src/
 ├── app/
 │   ├── globals.css                 # tokens Dracula (soft/classic), fontes, estilos base
-│   ├── fonts.ts · fonts/           # Cascadia Code (Google) + DaddyTimeMono (self-hosted, OFL)
+│   ├── fonts.ts · fonts/           # Cascadia Code + DaddyTimeMono (self-hosted, OFL)
+│   ├── site.css · site-fonts.ts    # temas do site (dusk/light/dracula), Hubot Sans + Mona Sans
 │   ├── manifest.ts · robots.ts · sitemap.ts
 │   ├── _actions/                   # server actions: contato, auth, CRUD do admin, gerador
 │   ├── api/chat/route.ts           # assistente em streaming (RAG + rate limit + fallback mock)
@@ -196,6 +198,7 @@ src/
 │       ├── (pages)/                # rotas internas com o chrome do terminal
 │       │   ├── projects/ · career/ · blog/ · links/
 │       │   └── */opengraph-image.tsx
+│       ├── (dev)/holo/             # referência interna do holograma (*.dev.tsx, nunca em produção)
 │       └── chat/route.ts           # 308 → /[lang]?cmd=ask
 ├── components/
 │   ├── terminal/
@@ -206,7 +209,9 @@ src/
 │   │   ├── output.tsx · line.tsx · primitives.tsx · markdown.tsx · motd.tsx · initial-output.tsx
 │   │   ├── page-chrome.tsx · page-footer.tsx · route-chrome.ts · route-focus.ts
 │   │   └── terminal.module.css · page.module.css · prose.css
-│   ├── theme-provider.tsx          # estado de paleta + fonte, script de boot pré-hidratação
+│   ├── theme-provider.tsx          # Versão CLI: estado de paleta + fonte
+│   ├── site-theme.tsx              # site: estado do tema (o script de boot dos dois é lib/theme-boot.ts)
+│   ├── holo/                       # os primitivos do holograma (moldura, botão, card, janela, …), ver AGENTS.md
 │   ├── admin/                      # o backoffice: moldura de terminal, listagens, formulários, diálogos, kanban
 │   └── ui/                         # primitives shadcn — importados só pelo /admin (ver check-admin-utilities)
 ├── lib/
@@ -225,7 +230,7 @@ src/
 ├── i18n/config.ts
 └── proxy.ts                        # roteamento de locale (o middleware do Next 16)
 prisma/                             # schema, migrations, seed
-scripts/                            # check-dictionaries, check-admin-utilities (lint), ingest-knowledge,
+scripts/                            # check-dictionaries, check-admin-utilities, check-contrast (lint), ingest-knowledge,
                                     # check-commands-doc, a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + dossiês de projeto para a assistente (ignorado pelo git)
 ```
@@ -245,7 +250,7 @@ knowledge/                          # CV + dossiês de projeto para a assistente
 
 ## Licença
 
-O código-fonte é distribuído sob a licença MIT. O texto pessoal, o CV e a base de conhecimento são © Marco Filho — por favor, não reutilize sem permissão. Fontes: Cascadia Code (OFL 1.1) e DaddyTimeMono (OFL 1.1), licenças ao lado dos arquivos em `src/app/fonts/`.
+O código-fonte é distribuído sob a licença MIT. O texto pessoal, o CV e a base de conhecimento são © Marco Filho — por favor, não reutilize sem permissão. Fontes: Cascadia Code, DaddyTimeMono, Hubot Sans e Mona Sans (OFL 1.1), licenças ao lado dos arquivos em `src/app/fonts/`.
 
 ---
 

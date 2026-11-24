@@ -95,7 +95,7 @@ The full spec of every command (arguments, output, errors) lives in [`docs/desig
 | Framework | Next.js 16 (App Router, Turbopack, `output: standalone`) on React 19 |
 | Language | TypeScript 5 |
 | Styling | CSS custom properties (Dracula `soft` / `classic`) + CSS Modules + Tailwind CSS v4 (admin) |
-| Fonts | Cascadia Code via `next/font/google` · DaddyTimeMono via `next/font/local` (self-hosted, OFL) |
+| Fonts | `next/font/local`, all self-hosted (OFL): Cascadia Code and DaddyTimeMono in the CLI version; Hubot Sans, Mona Sans and Cascadia Code in the site |
 | Animation | CSS only (`@keyframes` for the boot, line entrance and cursor) |
 | i18n | Next.js dictionary pattern (`getDictionary`), locale routing in `src/proxy.ts` |
 | Data | Postgres + pgvector via Prisma 6 (projects, applications, knowledge chunks, chat log) |
@@ -130,9 +130,10 @@ pnpm test:e2e
 
 ### End-to-end checks
 
-`scripts/e2e-site.mjs` drives headless Chrome over the public site as `pnpm start` serves it: it opens each page, scrolls with real wheel input and reports every assertion. Today it walks the home in both locales; the full list it has to cover by the end of the rebranding is in [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), and each `rebrand-*` change adds its own cases to `CASES`.
+`scripts/e2e-site.mjs` drives headless Chrome over the public site as `pnpm start` serves it: it opens each page, scrolls with real wheel input and reports every assertion. Today it walks the home in both locales and checks that the theme is in place before the first paint; the full list it has to cover by the end of the rebranding is in [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), and each `rebrand-*` change adds its own cases to `CASES`.
 
 - `--width 390 --height 844` for the narrow viewport, `--only home:pt-BR` for some of the cases, `--verbose` to list what passed, `--json` for the raw result.
+- `--holo` runs the cases of the hologram reference (`/[lang]/holo`) instead, an internal page that production does not have: build with `HOLO_REFERENCE=1 pnpm build`, or use `pnpm dev`. `--shots <folder>` also saves its captures in the three themes, at 1x and 2x.
 - `E2E_BASE` points it at another address, `CHROME_PATH` at another Chrome (the default is the macOS path), `CDP_PORT` at another debugging port.
 - It exits 0 when everything passed, 1 when an assertion failed and 2 when nothing could be measured (server down, Chrome missing, no case matched).
 
@@ -184,7 +185,8 @@ The production stack (Docker image, Traefik, Postgres, GitHub Actions → drople
 src/
 ├── app/
 │   ├── globals.css                 # Dracula tokens (soft/classic), fonts, base styles
-│   ├── fonts.ts · fonts/           # Cascadia Code (Google) + DaddyTimeMono (self-hosted, OFL)
+│   ├── fonts.ts · fonts/           # Cascadia Code + DaddyTimeMono (self-hosted, OFL)
+│   ├── site.css · site-fonts.ts    # site themes (dusk/light/dracula), Hubot Sans + Mona Sans
 │   ├── manifest.ts · robots.ts · sitemap.ts
 │   ├── _actions/                   # server actions: contact, auth, admin CRUD, generator
 │   ├── api/chat/route.ts           # streaming assistant (RAG + rate limit + mock fallback)
@@ -196,6 +198,7 @@ src/
 │       ├── (pages)/                # inner routes with the terminal chrome
 │       │   ├── projects/ · career/ · blog/ · links/
 │       │   └── */opengraph-image.tsx
+│       ├── (dev)/holo/             # internal hologram reference (*.dev.tsx, never in production)
 │       └── chat/route.ts           # 308 → /[lang]?cmd=ask
 ├── components/
 │   ├── terminal/
@@ -206,7 +209,9 @@ src/
 │   │   ├── output.tsx · line.tsx · primitives.tsx · markdown.tsx · motd.tsx · initial-output.tsx
 │   │   ├── page-chrome.tsx · page-footer.tsx · route-chrome.ts · route-focus.ts
 │   │   └── terminal.module.css · page.module.css · prose.css
-│   ├── theme-provider.tsx          # palette + font state, pre-hydration boot script
+│   ├── theme-provider.tsx          # CLI version: palette + font state
+│   ├── site-theme.tsx              # site: theme state (the boot script of both is lib/theme-boot.ts)
+│   ├── holo/                       # the hologram primitives (frame, button, card, dialog, …), see AGENTS.md
 │   ├── admin/                      # the backoffice: terminal chrome, listings, forms, dialogs, kanban
 │   └── ui/                         # shadcn primitives — imported only from /admin (see check-admin-utilities)
 ├── lib/
@@ -225,7 +230,7 @@ src/
 ├── i18n/config.ts
 └── proxy.ts                        # locale routing (Next 16's middleware)
 prisma/                             # schema, migrations, seed
-scripts/                            # check-dictionaries, check-admin-utilities (lint), ingest-knowledge,
+scripts/                            # check-dictionaries, check-admin-utilities, check-contrast (lint), ingest-knowledge,
                                     # check-commands-doc, a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + project dossiers for the assistant (gitignored)
 ```
@@ -245,7 +250,7 @@ knowledge/                          # CV + project dossiers for the assistant (g
 
 ## License
 
-Source code is released under the MIT License. The personal copy, the CV and the knowledge base are © Marco Filho — please do not reuse them without permission. Fonts: Cascadia Code (OFL 1.1) and DaddyTimeMono (OFL 1.1), licenses next to the files in `src/app/fonts/`.
+Source code is released under the MIT License. The personal copy, the CV and the knowledge base are © Marco Filho — please do not reuse them without permission. Fonts: Cascadia Code, DaddyTimeMono, Hubot Sans and Mona Sans (OFL 1.1), licenses next to the files in `src/app/fonts/`.
 
 ---
 
