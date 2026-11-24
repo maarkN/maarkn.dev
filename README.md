@@ -121,9 +121,22 @@ pnpm dev
 pnpm lint
 pnpm test
 pnpm build && pnpm start
+
+# end to end: headless Chrome against the server started above
+pnpm test:e2e
 ```
 
 > Port `5050` is used because `5000` is taken by the macOS AirPlay Receiver and `3000` was unstable locally. Override with `next dev -p <port>`.
+
+### End-to-end checks
+
+`scripts/e2e-site.mjs` drives headless Chrome over the public site as `pnpm start` serves it: it opens each page, scrolls with real wheel input and reports every assertion. Today it walks the home in both locales; the full list it has to cover by the end of the rebranding is in [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), and each `rebrand-*` change adds its own cases to `CASES`.
+
+- `--width 390 --height 844` for the narrow viewport, `--only home:pt-BR` for some of the cases, `--verbose` to list what passed, `--json` for the raw result.
+- `E2E_BASE` points it at another address, `CHROME_PATH` at another Chrome (the default is the macOS path), `CDP_PORT` at another debugging port.
+- It exits 0 when everything passed, 1 when an assertion failed and 2 when nothing could be measured (server down, Chrome missing, no case matched).
+
+It needs a browser with a GPU, so it is not part of the pull request checks (`.github/workflows/pr.yml`: lint, tests, build without a database, OpenSpec validation). Run it locally.
 
 ### Environment variables
 
@@ -213,7 +226,7 @@ src/
 └── proxy.ts                        # locale routing (Next 16's middleware)
 prisma/                             # schema, migrations, seed
 scripts/                            # check-dictionaries, check-admin-utilities (lint), ingest-knowledge,
-                                    # check-commands-doc, a11y-admin-axe, a11y-dialog-accname
+                                    # check-commands-doc, a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + project dossiers for the assistant (gitignored)
 ```
 

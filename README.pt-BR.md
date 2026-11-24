@@ -121,9 +121,22 @@ pnpm dev
 pnpm lint
 pnpm test
 pnpm build && pnpm start
+
+# ponta a ponta: Chrome headless contra o servidor que subiu acima
+pnpm test:e2e
 ```
 
 > A porta `5050` é usada porque a `5000` é ocupada pelo AirPlay Receiver do macOS e a `3000` estava instável localmente. Sobrescreva com `next dev -p <porta>`.
+
+### Verificações de ponta a ponta
+
+O `scripts/e2e-site.mjs` dirige o Chrome headless pelo site público como o `pnpm start` o serve: abre cada página, rola com a roda do mouse de verdade e relata cada asserção. Hoje ele percorre a home nos dois idiomas; a lista completa do que precisa cobrir ao fim do rebranding está em [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), e cada change `rebrand-*` acrescenta os seus casos em `CASES`.
+
+- `--width 390 --height 844` para a viewport estreita, `--only home:pt-BR` para parte dos casos, `--verbose` para listar o que passou, `--json` para o resultado cru.
+- `E2E_BASE` aponta para outro endereço, `CHROME_PATH` para outro Chrome (o padrão é o caminho do macOS), `CDP_PORT` para outra porta de depuração.
+- Sai 0 quando tudo passou, 1 quando alguma asserção falhou e 2 quando nada pôde ser medido (servidor fora do ar, Chrome ausente, nenhum caso com aquele nome).
+
+Ele precisa de um navegador com GPU, então não faz parte das verificações de pull request (`.github/workflows/pr.yml`: lint, testes, build sem banco, validação do OpenSpec). Rode localmente.
 
 ### Variáveis de ambiente
 
@@ -213,7 +226,7 @@ src/
 └── proxy.ts                        # roteamento de locale (o middleware do Next 16)
 prisma/                             # schema, migrations, seed
 scripts/                            # check-dictionaries, check-admin-utilities (lint), ingest-knowledge,
-                                    # check-commands-doc, a11y-admin-axe, a11y-dialog-accname
+                                    # check-commands-doc, a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + dossiês de projeto para a assistente (ignorado pelo git)
 ```
 
