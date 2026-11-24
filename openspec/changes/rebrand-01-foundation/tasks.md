@@ -1,7 +1,7 @@
 ## 1. Pré-condições
 
 - [ ] 1.1 Criar `feat/rebranding` a partir da `main` e proteger contra push direto; verificar no GitHub
-- [ ] 1.2 Ler `docs/design/fundamentos.md` e `docs/design/moldura.md` e o guia de fontes e CSS em `node_modules/next/dist/docs/`; listar no PR o que difere
+- [x] 1.2 Ler `docs/design/fundamentos.md` e `docs/design/moldura.md` e o guia de fontes e CSS em `node_modules/next/dist/docs/`; listar no PR o que difere
 
 ## 2. Temas
 
@@ -20,7 +20,7 @@
 
 - [x] 4.1 Botão, link, card, tag, tela projetada, janela, campo, chave, abas e aviso, com todos os estados da tabela; testes de teclado e de nome acessível
 - [x] 4.2 Luz, inclinação e pulso com um ouvinte só e sem efeito sob movimento reduzido; teste
-- [ ] 4.3 Página de referência fora de produção; capturas nos três temas, em 1x e 2x, anexadas ao PR
+- [x] 4.3 Página de referência fora de produção; capturas nos três temas, em 1x e 2x, anexadas ao PR
 
 ## 5. Fechamento
 
