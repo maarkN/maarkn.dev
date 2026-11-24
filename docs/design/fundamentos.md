@@ -33,7 +33,7 @@ Primeira visita: segue a preferência do sistema (claro ou escuro). O tema é ap
 
 `--c1` e `--c2` são validadas para daltonismo, luminosidade e contraste contra `--bg-2`. Trocar uma exige validar o par de novo.
 
-Contraste mínimo: 4.5:1 para texto sobre a superfície em que ele aparece, 3:1 para borda de controle e para texto a partir de 18 px em negrito.
+Contraste mínimo: 4.5:1 para texto sobre a superfície em que ele aparece, 3:1 para borda de controle e para texto a partir de 18 px em negrito. Sobre `--bg-3`, `--ink-3`, `--beam`, `--beam-2` e `--bad` ficam abaixo de 4.5:1 em ao menos um tema: ali servem só para texto a partir de 18 px em negrito, ícone e borda. `scripts/check-contrast.ts` mede os pares.
 
 ## Tipografia
 
