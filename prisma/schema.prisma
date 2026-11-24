@@ -264,6 +264,39 @@ enum SponsorshipSignal {
   @@map("sponsorship_signal")
 }
 
+/// Motivo de encerramento: a categoria que explica por que uma candidatura
+/// `rejected` ou `withdrawn` acabou. Silencio do recrutador nao e motivo, e
+/// estagio (`no_response`, `ghosted`). O texto livre continua em
+/// `Application.outcomeReason`. Um CHECK (migration `dossier_fields`) impede o
+/// motivo em qualquer outro estagio.
+enum ClosureReason {
+  salary
+  visa
+  technical_fit
+  seniority
+  language
+  location
+  job_closed
+  internal_candidate
+  withdrawal // desistencia de Marco
+  not_informed
+  other
+
+  @@map("closure_reason")
+}
+
+/// Situacao da entrevista. Coerente com a data por CHECK (migration
+/// `dossier_fields`): `scheduled` e `completed` tem `scheduledAt`, `planned`
+/// nao tem, `cancelled` pode ter ou nao.
+enum InterviewStatus {
+  planned
+  scheduled
+  completed
+  cancelled
+
+  @@map("interview_status")
+}
+
 /// Tipos de arquivo por pasta de candidatura no vault.
 enum DocKind {
   cv
@@ -449,6 +482,8 @@ model Company {
   vendorCompanyId String?
   vendorCompany   Company?  @relation("CompanyVendor", fields: [vendorCompanyId], references: [id], onDelete: SetNull)
   vendorClients   Company[] @relation("CompanyVendor")
+  /// O que se sabe da empresa. Vale para todas as candidaturas feitas nela.
+  aboutMd         String?
   notesMd         String?
 
   visibility       Visibility        @default(private)
@@ -588,8 +623,13 @@ model Application {
   appliedAt       DateTime?
   firstResponseAt DateTime?
   closedAt        DateTime?
+  /// Categoria do encerramento, so em `rejected` e `withdrawn`.
+  closureReason   ClosureReason?
+  /// Texto livre do desfecho; vale em qualquer estagio.
   outcomeReason   String?
   targetSalary    String?
+  /// Contexto do projeto: o produto ou o time em que se trabalharia.
+  projectInfoMd   String?
   summaryMd       String?
   notesMd         String?
 
@@ -786,12 +826,16 @@ model ApplicationEvent {
 }
 
 model Interview {
-  id            String      @id @default(cuid())
+  id            String          @id @default(cuid())
   applicationId String
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  /// Posicao no processo seletivo (0 = primeira).
+  orderIndex    Int             @default(0)
+  status        InterviewStatus @default(planned)
   round         Int?
   /// screening | technical | system_design | culture | final ...
   kind          String
+  /// Nulo enquanto a entrevista e so prevista.
   scheduledAt   DateTime?
   durationMin   Int?
   /// video | phone | onsite
@@ -799,10 +843,10 @@ model Interview {
   timezone      String?
   interviewers  String[]
   contactId     String?
-  contact       Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contact       Contact?        @relation(fields: [contactId], references: [id], onDelete: SetNull)
   prepMd        String?
   notesMd       String?
-  /// passed | failed | pending | cancelled
+  /// passed | failed | pending. `cancelled` e legado: hoje e `status`.
   outcome       String?
 
   sourceKey     String?    @unique
