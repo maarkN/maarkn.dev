@@ -166,6 +166,8 @@
    once (or through a View Transition). */
 :root:has(.site-root) {
   scrollbar-color: var(--ink-3) var(--bg);
+  /* A page that grows past the fold while it streams must not move sideways. */
+  scrollbar-gutter: stable;
 }
 :root:has(.site-root) body {
   transition: none;
@@ -216,7 +218,8 @@
 }
 
 /* ════════════════════════════════════════════════
-   Metric-matched fallbacks, shown while the faces load (font-display: swap).
+   Metric-matched fallbacks, shown to whoever the faces do not reach in time
+   (`display` in site-fonts.ts).
    `size-adjust` is the width of the text of both dictionaries set in the web
    face over its width in Arial, measured in the browser, one face per instance
    the site sets; the overrides restore Mona's and Hubot's box (1.09 / 0.32 em)
