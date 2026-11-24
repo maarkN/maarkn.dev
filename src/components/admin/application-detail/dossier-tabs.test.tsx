@@ -2,7 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ApplicationDossierTabs } from "./dossier-tabs";
+import { ApplicationDossierTabs, type DossierInterview } from "./dossier-tabs";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -21,7 +21,7 @@ afterEach(() => {
   container.remove();
 });
 
-function renderTabs() {
+function renderTabs(interviews: DossierInterview[] = []) {
   act(() =>
     root.render(
       <ApplicationDossierTabs
@@ -31,7 +31,7 @@ function renderTabs() {
         coverages={[]}
         questions={[]}
         honestyNotes={[]}
-        interviews={[]}
+        interviews={interviews}
         checklistItems={[]}
         checklistAction={async () => ({ ok: true as const })}
       />,
@@ -92,5 +92,68 @@ describe("abas do dossiê", () => {
       (n) => n.textContent,
     );
     expect(hidden).toEqual(["[", "]"]);
+  });
+});
+
+describe("aba de entrevistas", () => {
+  function interview(
+    over: Partial<DossierInterview> & Pick<DossierInterview, "id" | "status" | "kind">,
+  ): DossierInterview {
+    return {
+      round: null,
+      scheduledAt: null,
+      durationMin: null,
+      mode: null,
+      timezone: null,
+      interviewers: [],
+      prepMd: null,
+      notesMd: null,
+      outcome: null,
+      contact: null,
+      ...over,
+    };
+  }
+
+  async function openTab(interviews: DossierInterview[]): Promise<string[][]> {
+    const tabs = renderTabs(interviews);
+    const tab = tabs.find((t) => t.textContent?.includes("entrevistas"))!;
+    await act(async () => {
+      tab.focus();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = container.querySelector('[role="tabpanel"][data-state="active"]')!;
+    return [...panel.querySelectorAll("tr")].map((row) =>
+      [...row.querySelectorAll("th, td")].map((cell) => cell.textContent ?? ""),
+    );
+  }
+
+  it("mostra as três do processo em ordem, a primeira marcada e as outras previstas", async () => {
+    const [head, ...rows] = await openTab([
+      interview({
+        id: "1",
+        kind: "screening",
+        status: "scheduled",
+        scheduledAt: new Date("2026-12-01T17:30:00.000Z"),
+      }),
+      interview({ id: "2", kind: "technical", status: "planned", round: 2 }),
+      interview({ id: "3", kind: "final", status: "planned" }),
+    ]);
+
+    expect(head.slice(0, 4)).toEqual(["#", "Tipo", "Situação", "Quando"]);
+    expect(rows.map((row) => row.slice(0, 4))).toEqual([
+      ["1", "Triagem", "[scheduled]", "01/12/2026, 14:30"],
+      ["2", "Técnicarodada 2", "[planned]", "—"],
+      ["3", "Final", "[planned]", "—"],
+    ]);
+    const titles = [...container.querySelectorAll('[data-slot="status-tag"]')].map((n) =>
+      n.getAttribute("title"),
+    );
+    expect(titles).toEqual(["Marcada", "Prevista", "Prevista"]);
+  });
+
+  it("sem nenhuma, diz que não há, em vez de inventar", async () => {
+    const [head, ...rows] = await openTab([]);
+    expect(head).toHaveLength(7);
+    expect(rows).toEqual([["# Nenhuma entrevista registrada."]]);
   });
 });
