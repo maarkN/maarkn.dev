@@ -480,6 +480,30 @@ describe("HoloNotice", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
+  it("stays while the focus is on it, even if the pointer comes and goes", () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    render(<HoloNotice title="x" onDismiss={onDismiss} dismissLabel="Dispensar" duration={5000} />);
+    // React's enter and leave come from these two.
+    const pointer = (type: "pointerover" | "pointerout") =>
+      act(() => {
+        $("[data-tone]").dispatchEvent(new PointerEvent(type, { bubbles: true, relatedTarget: document.body }));
+      });
+    act(() => $("button").focus());
+    pointer("pointerover");
+    pointer("pointerout");
+    act(() => vi.advanceTimersByTime(60000));
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    pointer("pointerover");
+    act(() => $("button").blur());
+    act(() => vi.advanceTimersByTime(60000));
+    expect(onDismiss).not.toHaveBeenCalled();
+    pointer("pointerout");
+    act(() => vi.advanceTimersByTime(5000));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
   it("stays when it has no duration", () => {
     vi.useFakeTimers();
     const onDismiss = vi.fn();

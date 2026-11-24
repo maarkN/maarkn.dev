@@ -32,7 +32,9 @@ export function HoloNotice({
   | { onDismiss?: undefined; dismissLabel?: undefined }
 )) {
   const Icon = ICONS[tone];
-  const [held, setHeld] = useState(false);
+  const [pointed, setPointed] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const held = pointed || focused;
   const dismiss = useRef(onDismiss);
   useEffect(() => {
     dismiss.current = onDismiss;
@@ -49,10 +51,10 @@ export function HoloNotice({
       role={tone === "bad" ? "alert" : "status"}
       data-tone={tone}
       className={styles.notice}
-      onPointerEnter={() => setHeld(true)}
-      onPointerLeave={() => setHeld(false)}
-      onFocus={() => setHeld(true)}
-      onBlur={() => setHeld(false)}
+      onPointerEnter={() => setPointed(true)}
+      onPointerLeave={() => setPointed(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
     >
       <Icon aria-hidden="true" />
       <div className={styles.noticeText}>
