@@ -61,10 +61,11 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 53. Sem JavaScript, as páginas, o idioma e a Versão CLI são links que funcionam, e o que não responderia não aparece.
 54. No toque, todo alvo do topo, do menu e do rodapé tem 44 px, e nenhum invade outro.
 55. Todo texto do topo, do menu, da busca, do rodapé e da abertura atinge 4.5:1 contra os pixels atrás dele, e o axe não acha violação, nos três temas.
-56. A busca só é baixada ao abrir; acha por tecnologia, sem acento e em maiúsculas; funciona só com o teclado; sem resultado, leva a frase à assistente fora do endereço.
+56. A busca só é baixada ao abrir; acha por tecnologia, sem acento e em maiúsculas; funciona só com o teclado; sem resultado, leva a frase à assistente fora do endereço; escolher onde já se está leva ao topo da página, ou à seção.
 57. O idioma leva à página equivalente, com o filtro, vale na próxima visita e não altera a paleta nem a fonte da Versão CLI.
-58. Ao trocar de página o foco vai ao título, ou à seção pedida, com uma transição por troca; uma carga não anima; sem suporte a transições tudo funciona.
+58. Ao trocar de página o foco vai ao título, ou à seção pedida, com uma transição por troca; uma carga não anima; sem suporte a transições tudo funciona. Um link abre a página no topo, com o título à vista, por pouco que a anterior estivesse rolada; voltar e avançar pelo navegador trazem cada uma onde estava; um link para onde já se está leva ao topo dela, ou à seção, outra vez.
 59. Voltar à home restaura a rolagem pelo navegador, pela marca, pelo menu da base e pela Versão CLI.
+66. `/career#<slug>` para com a experiência à vista, abaixo do topo e da barra da página, na carga e ao trocar de âncora.
 
 **Versão CLI**
 

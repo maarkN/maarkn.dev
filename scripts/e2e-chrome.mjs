@@ -19,6 +19,22 @@ const visible = (selector) =>
 const address = `location.pathname + location.search + location.hash`;
 const focused = `(() => { const el = document.activeElement; return el.tagName + ": " + (el.getAttribute("aria-label") || el.textContent.trim()) })()`;
 
+/**
+ * O que cobre o elemento (o topo, a barra da página, o menu da base), ou por que
+ * não se vê; `null` quando o começo da primeira linha está à vista.
+ */
+const covered = (selector) => `(() => {
+  const el = ${$(selector)};
+  if (!el) return "não existe";
+  const r = el.getBoundingClientRect();
+  for (const y of [r.top + 1, r.top + 10]) {
+    if (y < 0 || y > innerHeight) return "fora da tela: " + Math.round(r.top);
+    const hit = document.elementFromPoint(r.left + 4, y);
+    if (hit !== el && !el.contains(hit)) return "em " + Math.round(y) + " px: " + (hit?.tagName + " " + hit?.className);
+  }
+  return null;
+})()`;
+
 /** React assumiu a página, e os efeitos já rodaram. */
 const HYDRATED = `(() => {
   const el = document.querySelector("button[aria-keyshortcuts]");
@@ -45,13 +61,14 @@ async function ready(page) {
 async function arrive(page, path, label = path) {
   await page.waitFor(`${address} === ${JSON.stringify(path)}`, `chegar a ${label}`, 8000);
   await sleep(250);
-  /* Enquanto a transição dura, quem recebe o ponteiro é ela. */
-  await page.waitFor(
-    `document.getAnimations().every((a) => !a.effect?.pseudoElement?.startsWith("::view-transition"))`,
-    "a transição terminar",
-    5000,
-  );
-  await sleep(60);
+  /* Enquanto uma transição dura, quem recebe o ponteiro é ela; com a máquina
+     ocupada, uma página às vezes chega em duas. */
+  const fading = `document.getAnimations().some((a) => a.effect?.pseudoElement?.startsWith("::view-transition"))`;
+  for (let quiet = 0, i = 0; quiet < 3; i++) {
+    if (i > 80) throw new Error(`esperei 5s por: a transição de ${label} terminar`);
+    quiet = (await page.evaluate(fading)) ? 0 : quiet + 1;
+    await sleep(60);
+  }
 }
 
 async function openSearch(page, text) {
@@ -658,6 +675,40 @@ async function searchActs(page, t) {
   off();
 }
 
+/** Escolher onde já se está leva de novo ao começo: o router, sozinho, não sai do lugar. */
+async function searchHere(page, t) {
+  for (const [from, text, to] of [
+    ["/en", "home", "/en"],
+    ["/en/projects", "projects", "/en/projects"],
+    ["/en/projects?cat=ai", "projects", "/en/projects"],
+    ["/en/projects/remote-harness", "remote harness", "/en/projects/remote-harness"],
+    ["/en#contact", "home", "/en"],
+    ["/en/career", "career", "/en/career"],
+  ]) {
+    const label = `${from}, busca "${text}"`;
+    await site(page, from);
+    const { top: y } = await page.scroll({ to: "bottom" });
+    t.ok(y > 100, `${label}: no fim da página`, `${y}px`);
+    await openSearch(page, text);
+    await page.press("Enter");
+    await arrive(page, to, label);
+    await page.waitFor(`scrollY === 0`, "o topo", 4000).catch(() => {});
+    t.equal((await page.scrollState(null)).top, 0, `${label}: volta ao topo`);
+    t.equal(await page.evaluate(`document.activeElement.tagName`), "H1", `${label}: com o foco no título`);
+    t.equal(await page.evaluate(covered("h1")), null, `${label}: que está à vista`);
+  }
+  await site(page, "/en#contact");
+  await page.scroll({ to: "top" });
+  await page.evaluate(`document.activeElement.blur()`);
+  await openSearch(page, "contact");
+  await page.press("Enter");
+  await sleep(900);
+  t.equal(await page.evaluate(address), "/en#contact", "a mesma seção: o mesmo endereço");
+  t.equal(await page.evaluate(`document.activeElement.id`), "contact", "com o foco nela");
+  t.equal(await page.evaluate(covered("#contact h2")), null, "que está à vista");
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
 async function searchLook(page, t, { theme }) {
   await site(page, "/pt-BR", { theme });
   await openSearch(page, "flutter");
@@ -768,6 +819,120 @@ async function anchor(page, t) {
   }
   await page.press("Tab");
   t.equal(await page.evaluate(`document.activeElement.getAttribute("href")`), "mailto:contact@maarkn.dev", "e dali o Tab segue para os canais");
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
+/** `/career#<slug>`: na carga e na própria página, cada experiência para à vista. */
+async function careerAnchors(page, t) {
+  for (const path of ["/en/career#nectar-crm", "/pt-BR/career#imobitech"]) {
+    await site(page, path);
+    await sleep(300);
+    const id = path.split("#")[1];
+    t.ok((await page.scrollState(null)).top > 0, `${path}: a página rola até a experiência`);
+    t.equal(await page.evaluate(covered(`#${id}`)), null, `${path}: e ela está à vista`);
+  }
+  const ids = await page.evaluate(`[...document.querySelectorAll("#content [id]")].map((el) => el.id)`);
+  t.ok(ids.length > 3, "há experiências com âncora", ids.join(" "));
+  for (const id of ids) {
+    await page.evaluate(`location.hash = ${JSON.stringify(`#${id}`)}`);
+    await sleep(150);
+    t.equal(await page.evaluate(covered(`[id="${id}"]`)), null, `#${id}: à vista`);
+  }
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
+/**
+ * De uma lista um pouco rolada a um item dela, com a roda e o ponteiro. O router
+ * só rola quando o começo da página nova está fora da tela, e atrás do topo
+ * ainda é dentro: entre uns 70 e 200 px, ele não rolaria.
+ */
+async function opensAtTop(page, t) {
+  const item = (list) => `(() => {
+    for (const a of document.querySelectorAll('main a[href^="${list}/"]')) {
+      const r = a.getClientRects()[0];
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      if (y > 0 && y < innerHeight && a.contains(document.elementFromPoint(x, y))) return { x, y, href: a.getAttribute("href") };
+    }
+  })()`;
+  for (const [list, offsets] of [
+    ["/en/projects", [60, 100, 140, 180, 240, 400]],
+    ["/en/career", [100, 140, 180]],
+    ["/en/blog", [100, 140]],
+    ["/pt-BR/projects", [140]],
+  ]) {
+    for (const offset of offsets) {
+      const label = `${list}, de ${offset} px`;
+      await site(page, list);
+      const { top: left } = await page.scroll({ to: offset });
+      t.ok(Math.abs(left - offset) <= 1, `${label}: a lista rolada`, `${left}px`);
+      const point = await page.evaluate(item(list));
+      if (!point) {
+        t.ok(false, `${label}: um item à vista`);
+        continue;
+      }
+      await page.mouse("mousePressed", point);
+      await page.mouse("mouseReleased", point);
+      await arrive(page, point.href);
+      await sleep(300);
+      t.equal((await page.scrollState(null)).top, 0, `${label}: a página abre no topo`);
+      t.equal(await page.evaluate(`document.activeElement.tagName`), "H1", `${label}: com o foco no título`);
+      t.equal(await page.evaluate(covered("h1")), null, `${label}: que está à vista`);
+      t.equal(await page.evaluate(covered("main nav")), null, `${label}: com o caminho acima dele`);
+
+      await page.scroll({ to: "bottom" });
+      await page.evaluate(`history.back()`);
+      await arrive(page, list);
+      await sleep(300);
+      const { top: back } = await page.scrollState(null);
+      t.ok(Math.abs(back - left) <= 1, `${label}: voltar pelo navegador traz a lista onde estava`, `esperado ${left}, veio ${back}`);
+    }
+  }
+  /* Para a frente, pelo histórico: também é o navegador que lembra. */
+  await page.evaluate(`history.forward()`);
+  await page.waitFor(`location.pathname.startsWith("/pt-BR/projects/")`, "o projeto", 8000);
+  await sleep(700);
+  const there = await page.scrollState(null);
+  t.ok(there.top > 0, "avançar pelo histórico traz o projeto onde estava", `${there.top}px`);
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
+/** Um link para onde já se está: o topo da página, ou a seção, outra vez. */
+async function linksHere(page, t, width) {
+  const choose = async (path) => {
+    if (width < PAGES_IN_TOP) {
+      await page.click("nav summary");
+      await page.waitFor(`${$("details")}.open`, "o menu", 3000);
+      await page.click(`details a[href="${path}"]`);
+    } else {
+      await page.click(`header a[href="${path}"]`);
+    }
+  };
+  const top = async (label) => {
+    await page.waitFor(`scrollY === 0`, "o topo", 4000).catch(() => {});
+    t.equal((await page.scrollState(null)).top, 0, `${label}: volta ao topo`);
+    t.equal(await page.evaluate(`document.activeElement.tagName`), "H1", `${label}: com o foco no título`);
+  };
+  for (const [from, path] of [["/en/projects", "/en/projects"], ["/en/career", "/en/career"], ["/en/projects?cat=ai", "/en/projects"]]) {
+    await site(page, from);
+    await page.scroll({ to: "bottom" });
+    await choose(path);
+    await arrive(page, path);
+    await top(`${from}, ${width < PAGES_IN_TOP ? "menu da base" : "topo"}`);
+    await page.scroll({ to: "bottom" });
+    await page.click(`footer.site-root a[href="${path}"]`);
+    await top(`${from}, rodapé`);
+  }
+  for (const link of ['header a[href="/en#contact"]', 'main a[href="/en#contact"]']) {
+    await site(page, "/en");
+    for (const time of ["uma vez", "e outra"]) {
+      await page.scroll({ to: "top" });
+      await page.click(link);
+      await sleep(900);
+      t.equal(await page.evaluate(address), "/en#contact", `${link}, ${time}: o endereço da seção`);
+      t.equal(await page.evaluate(`document.activeElement.id`), "contact", `${link}, ${time}: o foco vai a ela`);
+      t.equal(await page.evaluate(covered("#contact h2")), null, `${link}, ${time}: que está à vista`);
+    }
+  }
   t.equal(page.errors, [], "nenhum erro no console");
 }
 
@@ -889,11 +1054,15 @@ export function chromeCases({ width, height }) {
     { name: "busca:encontrar", run: searchFinds },
     { name: "busca:só teclado", run: searchKeyboard },
     { name: "busca:tema, idioma, seção e assistente", run: searchActs },
+    { name: "busca:onde já se está", run: searchHere },
     ...THEMES.map((theme) => ({ name: `busca:${theme}`, run: (page, t) => searchLook(page, t, { theme }) })),
     { name: "idioma:página equivalente", run: language },
     { name: "idioma:home em inglês", run: onlyEnglish },
     { name: "passagem:foco no título", run: (page, t) => focusTitle(page, t, width) },
     { name: "passagem:âncora", run: anchor },
+    { name: "passagem:âncora da carreira", run: careerAnchors },
+    { name: "passagem:abre no topo", run: opensAtTop },
+    { name: "passagem:link para onde já se está", run: (page, t) => linksHere(page, t, width) },
     { name: "passagem:carga", run: plainLoad },
     { name: "passagem:sem transições", run: (page, t) => withoutTransitions(page, t, width) },
     { name: "passagem:rolagem da home", run: (page, t) => homeScroll(page, t, width) },
