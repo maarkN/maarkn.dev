@@ -170,10 +170,10 @@ pnpm db:ingest    # embeda knowledge/**/*.md no pgvector (precisa de OPENAI_API_
 pnpm db:studio    # Prisma Studio
 
 pnpm db:sync-projects       # cria os projetos que faltam no banco; nunca mexe em texto
-pnpm db:fill-project-text   # copia o texto da semente para colunas vazias; nunca sobrescreve
+pnpm db:fill-project-text   # copia o texto da semente para colunas vazias, uma vez por banco; nunca sobrescreve
 ```
 
-**O banco é a fonte do texto dos projetos**, em português e inglês, e é em `/admin/projects` que ele se edita. `lib/projects.ts` e os dicionários são a **semente**: preenchem o que falta no banco e são o que o site mostra sem ele, então corrigir o texto de um projeto no dicionário não muda um site que tem banco ([ADR 0003](./docs/adr/0003-banco-como-fonte-do-portfolio.md), [`DEPLOY.md` §7](./DEPLOY.md#7-project-text)).
+**O banco é a fonte do texto dos projetos**, em português e inglês, e é em `/admin/projects` que ele se edita. `lib/projects.ts` e os dicionários são a **semente**: completam o banco uma vez, dão texto aos projetos novos e são o que o site mostra sem ele, então corrigir o texto de um projeto no dicionário não muda um site que tem banco ([ADR 0003](./docs/adr/0003-banco-como-fonte-do-portfolio.md), [`DEPLOY.md` §7](./DEPLOY.md#7-project-text)).
 
 Os testes que precisam de um Postgres de verdade rodam quando `TEST_DATABASE_URL` existe (para o container acima, `postgresql://maarkn:maarkn@localhost:5433/maarkn_website`); eles criam e apagam um banco próprio. Sem a variável, são pulados.
 
@@ -225,7 +225,7 @@ src/
 │   │   ├── ask-command.tsx · mail-command.tsx
 │   │   ├── data.ts                 # monta TerminalData no servidor
 │   │   ├── deeplink.ts · session.ts · anchors.ts · locale.ts · files.ts · listings.tsx · rich.tsx
-│   ├── projects-repo.ts · project-text.ts · project-seed.ts · projects.ts · timeline.ts · toolkit.ts · site.ts · ghost.ts
+│   ├── projects-repo.ts · project-text.ts · project-seed.ts · project-fill.ts · projects.ts · timeline.ts · toolkit.ts · site.ts · ghost.ts
 │   ├── chat-client.ts · chat-system-prompt.ts · chat-log.ts · rag.ts · embeddings.ts · rate-limit.ts
 │   ├── contact-schema.ts · seo.ts · og.tsx · db.ts · auth.ts · uploads.ts
 ├── dictionaries/en.json · pt-BR.json
@@ -233,7 +233,7 @@ src/
 └── proxy.ts                        # roteamento de locale (o middleware do Next 16)
 prisma/                             # schema, migrations, seed
 scripts/                            # check-dictionaries, check-admin-utilities (lint), ingest-knowledge,
-                                    # sync-projects, fill-project-text, check-commands-doc,
+                                    # sync-projects, fill-project-text, align-english-text, check-commands-doc,
                                     # a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + dossiês de projeto para a assistente (ignorado pelo git)
 ```

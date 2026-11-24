@@ -55,7 +55,7 @@ O dossiê privado de um trabalho feito, do qual um projeto público pode derivar
 _Avoid_: Projeto (sozinho)
 
 **Semente**:
-O conteúdo dos projetos guardado no repositório: preenche o que falta no banco e aparece quando não há banco. Nunca vence um texto do banco.
+O conteúdo dos projetos guardado no repositório: preenche o banco uma vez, dá texto ao projeto novo e aparece quando não há banco ou texto em nenhum dos idiomas. Nunca vence um texto do banco.
 _Avoid_: Fallback, mock, texto padrão
 
 **Caso de sucesso**:

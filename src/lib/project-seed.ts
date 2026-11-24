@@ -13,7 +13,7 @@ import type { Project } from "@/lib/projects";
 /**
  * What the seed may write in the `Project` table. Pure: the scripts that own
  * the connection (`prisma/seed.ts`, `scripts/sync-projects.ts`,
- * `scripts/fill-project-text.ts`) apply these, and the rule they share is the
+ * `project-fill.ts`) apply these, and the rule they share is the
  * one of ADR 0003: the seed creates and fills in what is missing, and never
  * changes text that is already there.
  */
@@ -74,8 +74,10 @@ function emptyColumns<T extends Record<string, string | null>>(row: T, seed: T):
 /**
  * The seed text a row lacks, column by column; `{}` when there is nothing to
  * write. The success case goes in whole or not at all: a row with any case text
- * was written by hand. Its position goes with it, and only then, so unmarking a
- * case in the backoffice is never undone by a later run.
+ * was written by hand. Its position goes with it, and only while nobody chose any.
+ *
+ * It cannot tell a field nobody wrote from one somebody cleared: only
+ * `fillProjectText` may call it, and that runs once per database.
  */
 export function missingText(
   slug: string,

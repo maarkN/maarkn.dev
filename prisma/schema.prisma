@@ -143,6 +143,13 @@ model ProjectImage {
   @@unique([projectId, position])
 }
 
+/// One-off content scripts that already ran on this database. A row here is
+/// what makes a script that runs on every deploy act on the first one only.
+model DataMigration {
+  name      String   @id
+  appliedAt DateTime @default(now())
+}
+
 /// RAG knowledge base: chunked, embedded slices of Marco's curated CV/dossiers.
 /// The `embedding` column is a pgvector type; it is written and queried via raw
 /// SQL (Prisma cannot express vector operators), so it is typed Unsupported.
