@@ -84,6 +84,7 @@ const look = (selector) => `(() => {
   const line = (kind) => [...el.querySelectorAll("svg path")].filter((p) => p.dataset.line === kind);
   return {
     bridges: Number(css(line("bridges").at(-1), "opacity")),
+    outer: Number(css(line("outer").at(-1), "opacity")),
     stroke: css(line("outer").at(-1), "stroke"),
     halo: css(line("outer inner")[0], "strokeWidth"),
     ring: Number(css(el.querySelector('svg path[data-line="outline"]'), "opacity")),
@@ -96,8 +97,9 @@ const look = (selector) => `(() => {
 
 const different = (a, b) => JSON.stringify(a) !== JSON.stringify(b);
 /** Diferente sem contar cor: o que muda é forma, espessura, recuo ou densidade. */
-const shape = ({ bridges, ring, transform, shadow }) => ({
+const shape = ({ bridges, outer, ring, transform, shadow }) => ({
   bridges,
+  outer,
   ring,
   transform,
   split: shadow.match(/-?[\d.]+px/g)?.join() ?? "",
@@ -178,6 +180,7 @@ async function states(page, t) {
   await page.hover({ x: 2, y: 2 });
   await page.waitFor(`${look('[data-shot="selected"]')}.fill !== ${JSON.stringify(selected.fill)}`, "o preenchimento mudar", 2000);
   t.equal((await page.evaluate(look('[data-shot="disabled"]'))).opacity, "0.45", "desligado: 45%");
+  await primarySelected(page, t);
   await page.hover('[data-shot="disabled"]');
   await sleep(120);
   t.equal((await page.evaluate(look('[data-shot="disabled"]'))).bridges, 0, "desligado: não responde ao ponteiro");
@@ -192,6 +195,108 @@ async function states(page, t) {
     }
   }
   t.equal(page.errors, [], "nenhum erro no console");
+}
+
+/** Fração dos pixels de um elemento que muda entre duas capturas, por mais de 8 níveis. */
+async function changed(page, before, after) {
+  return page.evaluate(`(async () => {
+    const pixels = async (data) => {
+      const img = await createImageBitmap(await (await fetch("data:image/png;base64," + data)).blob());
+      const g = new OffscreenCanvas(img.width, img.height).getContext("2d");
+      g.drawImage(img, 0, 0);
+      return g.getImageData(0, 0, img.width, img.height).data;
+    };
+    const [a, b] = [await pixels("${before.toString("base64")}"), await pixels("${after.toString("base64")}")];
+    let count = 0;
+    for (let i = 0; i < a.length; i += 4) {
+      if (Math.max(...[0, 1, 2].map((c) => Math.abs(a[i + c] - b[i + c]))) > 8) count++;
+    }
+    return count / (a.length / 4);
+  })()`);
+}
+
+/** O primário é cheio: selecionado, o contorno inteiro aparece fechado e o preenchimento adensa. */
+async function primarySelected(page, t) {
+  const target = '[data-shot="selected-primary"]';
+  const shoot = async () => {
+    const { x, y, width, height } = await page.evaluate(`(() => {
+      const r = ${$(target)}.getBoundingClientRect();
+      return { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height };
+    })()`);
+    return page.screenshot({ clip: { x, y, width, height } });
+  };
+  const toggle = async (on) => {
+    await page.click(target);
+    await page.hover({ x: 2, y: 2 });
+    await page.evaluate(`document.activeElement.blur()`);
+    await page.waitFor(`${$(target)}.getAttribute("aria-pressed") === "${on}"`, "o botão alternar", 2000);
+    await sleep(700);
+  };
+  for (const theme of THEMES) {
+    await openPage(page, { theme });
+    await page.hover({ x: 2, y: 2 });
+    await page.center(target);
+    await sleep(150);
+    const selected = await page.evaluate(look(target));
+    const on = await shoot();
+    t.ok(selected.bridges === 1 && selected.outer === 1, `${theme}, primário selecionado: o contorno inteiro, fechado`);
+    const current = await page.evaluate(look('[data-shot="current-primary"]'));
+    t.ok(current.bridges === 1 && current.outer === 1, `${theme}, link primário atual: o mesmo`);
+    await toggle(false);
+    const rest = await page.evaluate(look(target));
+    const off = await shoot();
+    t.ok(different(shape(rest), shape(selected)), `${theme}, primário: selecionado se distingue do repouso sem a cor`);
+    const share = await changed(page, on, off);
+    t.ok(share > 0.4, `${theme}, primário selecionado: o preenchimento adensa`, `${(share * 100).toFixed(0)}% dos pixels mudam`);
+    await page.hover(target);
+    await sleep(150);
+    const hover = await page.evaluate(look(target));
+    t.ok(different(shape(hover), shape(selected)), `${theme}, primário: selecionado se distingue do ponteiro sem a cor`);
+  }
+}
+
+/** Todo holograma que não está desligado responde ao ponteiro, e não só com cor. */
+async function pointer(page, t) {
+  await openPage(page);
+  const names = await page.evaluate(`[...document.querySelectorAll("main [data-holo]")]
+    .filter((el) => !el.closest('dialog, :disabled, [aria-disabled="true"], [data-disabled]'))
+    .map((el, i) => {
+      el.dataset.probe = i;
+      const field = el.querySelector("input, textarea");
+      return field ? field.name : (el.getAttribute("aria-label") || el.textContent || el.parentElement.textContent).trim().slice(0, 32);
+    })`);
+  const read = (i) =>
+    page.evaluate(`(() => {
+      const el = ${$(`[data-probe="${i}"]`)};
+      const lengths = (value) => value.match(/-?[\\d.]+px/g)?.join() ?? "";
+      return JSON.stringify([el, ...el.querySelectorAll("*")].map((node) => {
+        const s = getComputedStyle(node);
+        return [s.opacity, s.transform, lengths(s.textShadow), lengths(s.boxShadow), s.strokeDasharray, s.display];
+      }));
+    })()`);
+  const settled = async (i) => {
+    for (let last = await read(i); ; ) {
+      await sleep(120);
+      const now = await read(i);
+      if (now === last) return now;
+      last = now;
+    }
+  };
+  const silent = [];
+  for (const [i, name] of names.entries()) {
+    await page.hover({ x: 2, y: 2 });
+    await page.center(`[data-probe="${i}"]`);
+    const rest = await settled(i);
+    await page.hover(`[data-probe="${i}"]`);
+    let answered = false;
+    for (let wait = 0; wait < 10 && !answered; wait++) {
+      await sleep(50);
+      answered = (await read(i)) !== rest;
+    }
+    if (!answered) silent.push(name);
+  }
+  t.equal(silent, [], "todo holograma responde ao ponteiro");
+  t.ok(names.length > 30 && names.includes("email"), "o campo com erro entre eles", `${names.length} hologramas`);
 }
 
 async function reducedMotion(page, t) {
@@ -369,6 +474,41 @@ async function keyboard(page, t) {
   await page.waitFor(`!${$("dialog")}.open`, "o clique fora fechar", 3000);
   t.ok(await active(opener), "o clique fora devolve o foco");
 
+  t.equal(await page.evaluate(`document.querySelectorAll('[role="region"]').length`), 0, "a janela que cabe na tela não ganha parada de Tab");
+
+  /* Só texto, mais alta que a tela: quem rola recebe o foco, e o laço passa por ele. */
+  await page.evaluate(`${$("[data-open-long]")}.focus()`);
+  await page.press("Enter");
+  await page.waitFor(`${$('dialog[open] [role="region"]')} !== null`, "a janela longa abrir", 3000);
+  const region = 'dialog[open] [role="region"]';
+  const scrolled = `${$(region)}.scrollTop`;
+  const onClose = `document.activeElement === ${$("dialog[open] button[aria-label]")}`;
+  t.ok(await page.evaluate(onClose), "janela longa: o foco entra no botão");
+  await page.press("Tab");
+  t.ok(await active(region), "janela longa: Tab chega ao texto");
+  t.ok(
+    await page.evaluate(`(() => { const s = getComputedStyle(${$(region)}); return s.outlineStyle === "solid" && s.outlineWidth === "2px" })()`),
+    "janela longa: com o foco à vista",
+  );
+  await page.press("PageDown");
+  await page.waitFor(`${scrolled} > 200`, "PageDown rolar", 3000).then(
+    () => t.ok(true, "janela longa: PageDown rola"),
+    () => t.ok(false, "janela longa: PageDown rola"),
+  );
+  await page.press("End");
+  const atEnd = `Math.abs(${$(region)}.scrollHeight - ${$(region)}.clientHeight - ${scrolled}) <= 1`;
+  await page.waitFor(atEnd, "End chegar ao fim", 3000).then(
+    () => t.ok(true, "janela longa: End chega ao fim"),
+    () => t.ok(false, "janela longa: End chega ao fim"),
+  );
+  await page.press("Tab");
+  t.ok(await page.evaluate(onClose), "janela longa: do texto, Tab volta ao botão");
+  await page.press("Tab", { shift: true });
+  t.ok(await active(region), "janela longa: e Shift+Tab vai ao texto");
+  await page.press("Escape");
+  await page.waitFor(`!${$("dialog[open]")}`, "Esc fechar a janela longa", 3000);
+  t.ok(await active("[data-open-long]"), "janela longa: Esc devolve o foco");
+
   await page.evaluate(`${$('[role="tab"][aria-selected="true"]')}.focus()`);
   const tab = () => page.evaluate(`[document.activeElement.textContent, ${$('[role="tabpanel"]')}.textContent]`);
   await page.press("ArrowRight");
@@ -435,6 +575,23 @@ async function themes(page, t) {
     ["classic", "daddytime", "classic", "light"],
     "a Versão CLI não muda",
   );
+
+  /* Duas trocas seguidas: a segunda interrompe a transição da primeira. */
+  await page.evaluate(`(() => {
+    const [dusk, , dracula] = document.querySelectorAll("[data-theme-choice]");
+    dusk.click();
+    dracula.click();
+  })()`);
+  await page.evaluate(`window.__vt`);
+  t.equal(await page.evaluate(`document.documentElement.dataset.siteTheme`), "dracula", "duas trocas seguidas: vale a última");
+  await page.click('[data-theme-choice="light"]');
+  await sleep(40);
+  await page.evaluate(`${$('[data-theme-choice="dracula"]')}.click()`);
+  await sleep(40);
+  await page.evaluate(`${$('[data-theme-choice="light"]')}.click()`);
+  await page.waitFor(`document.documentElement.dataset.siteTheme === "light"`, "o tema voltar", 3000);
+  await page.evaluate(`window.__vt`);
+  t.equal(page.errors, [], "duas trocas seguidas: nenhum erro no console");
 
   /* Trocar de idioma recria o <html> sem recarregar: o tema continua. */
   await page.click("[data-other-locale]");
@@ -690,10 +847,12 @@ async function axe(page, t) {
   const source = axeSource();
   for (const theme of THEMES) {
     await openPage(page, { theme });
-    for (const surface of ["página", "janela"]) {
-      if (surface === "janela") {
-        await page.click("[data-open-window]");
-        await page.waitFor(`${$("dialog")}.open`, "a janela", 3000);
+    for (const surface of ["página", "janela", "janela longa"]) {
+      if (surface !== "página") {
+        await page.press("Escape");
+        await page.waitFor(`!${$("dialog[open]")}`, "a anterior fechar", 3000);
+        await page.click(surface === "janela" ? "[data-open-window]" : "[data-open-long]");
+        await page.waitFor(`${$("dialog[open]")} !== null`, "a janela", 3000);
         await sleep(300);
       }
       await page.evaluate(`${source}; 0`);
@@ -708,6 +867,138 @@ async function axe(page, t) {
       t.ok(found.contrast + found.unsure > 0, `axe, ${theme}, ${surface}: olhou o contraste`);
       if (surface === "página") t.ok(found.contrast > 30, `axe, ${theme}: mediu o texto fora das molduras`, `${found.contrast}`);
     }
+  }
+}
+
+/** Os textos e ícones à vista em `scope`: a cor, o mínimo e onde estão, na página. */
+const readInks = (scope) => `(() => {
+  const root = ${$(scope)};
+  const found = [];
+  const add = (el, label, color, rects, min) => {
+    if (el.closest(':disabled, [aria-disabled="true"], [data-disabled], dialog:not([open])')) return;
+    for (const r of rects) {
+      if (r.width < 2 || r.height < 2) continue;
+      found.push({ label: label.trim().slice(0, 40), color, min, x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height });
+    }
+  };
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const el = node.parentElement;
+    if (!node.data.trim() || el.closest("svg")) continue;
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    add(el, node.data, getComputedStyle(el).color, range.getClientRects(), 4.5);
+  }
+  for (const el of root.querySelectorAll("input, textarea")) {
+    /* Onde se escreve, sem a entrelinha: no canto dela passa a diagonal da moldura. */
+    const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+    const [side, top] = [parseFloat(s.paddingLeft) + 2, parseFloat(s.paddingTop) + 2];
+    const box = new DOMRect(r.left + side, r.top + top, r.width - 2 * side, r.height - 2 * top);
+    add(el, el.name, s.color, [box], 4.5);
+    if (el.placeholder) add(el, el.placeholder, getComputedStyle(el, "::placeholder").color, [box], 4.5);
+  }
+  for (const el of root.querySelectorAll("svg.lucide")) {
+    add(el, "ícone em " + (el.parentElement.textContent || el.parentElement.parentElement.getAttribute("aria-label")), getComputedStyle(el).color, [el.getBoundingClientRect()], 3);
+  }
+  for (const el of root.querySelectorAll('[role="switch"] [data-holo] > span:last-child')) {
+    add(el, "chave " + el.closest("button").textContent, getComputedStyle(el).borderTopColor, [el.getBoundingClientRect()], 3);
+  }
+  return found;
+})()`;
+
+/**
+ * Cada texto contra os pixels que estão atrás dele, um a um: a linha de
+ * varredura e a luz do ponteiro entram na conta, o que o axe não faz. Os textos
+ * são lidos, escondidos, e o que sobra na captura é o fundo.
+ */
+async function contrast(page, t) {
+  /* Também o que cerca um texto sem ficar atrás dele: sublinhado, anel e alça. */
+  const HIDE = `
+    * { -webkit-text-fill-color: transparent !important; text-shadow: none !important; caret-color: transparent !important }
+    a:not([data-holo]) { background-image: none !important; outline-color: transparent !important }
+    textarea { resize: none !important }
+    svg.lucide, [role="switch"] [data-holo] > span:last-child { visibility: hidden !important }
+  `;
+  const measure = async (label, scope, atLeast) => {
+    const inks = await page.evaluate(readInks(scope));
+    await page.evaluate(`document.head.append(Object.assign(document.createElement("style"), { id: "hide", textContent: ${JSON.stringify(HIDE)} }))`);
+    const { width, height } = await page.evaluate(`({ width: document.documentElement.clientWidth, height: document.documentElement.scrollHeight })`);
+    /* A janela é fixa na tela: capturar além dela a moveria. */
+    const view = await page.evaluate(`({ x: scrollX, y: scrollY, width: innerWidth, height: innerHeight })`);
+    const full = scope === "main";
+    const clip = full ? { x: 0, y: 0, width, height } : view;
+    const png = await page.screenshot({ full, clip });
+    await page.evaluate(`document.getElementById("hide").remove()`);
+    const low = await page.evaluate(`(async () => {
+      const img = await createImageBitmap(await (await fetch("data:image/png;base64,${png.toString("base64")}")).blob());
+      const g = new OffscreenCanvas(img.width, img.height).getContext("2d", { willReadFrequently: true });
+      g.drawImage(img, 0, 0);
+      const linear = (c) => ((c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      const light = ([r, g, b]) => 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+      const measured = [];
+      for (const ink of ${JSON.stringify(inks)}) {
+        const x0 = Math.max(0, Math.ceil(ink.x - ${clip.x})), y0 = Math.max(0, Math.ceil(ink.y - ${clip.y}));
+        const x1 = Math.min(img.width, Math.floor(ink.x - ${clip.x} + ink.w)), y1 = Math.min(img.height, Math.floor(ink.y - ${clip.y} + ink.h));
+        if (x1 <= x0 || y1 <= y0) continue;
+        const { data } = g.getImageData(x0, y0, x1 - x0, y1 - y0);
+        const text = light(ink.color.match(/[\\d.]+/g).map(Number));
+        let worst = 21;
+        const seen = new Set();
+        for (let i = 0; i < data.length; i += 4) {
+          const key = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const under = light([data[i], data[i + 1], data[i + 2]]);
+          worst = Math.min(worst, (Math.max(text, under) + 0.05) / (Math.min(text, under) + 0.05));
+        }
+        measured.push({ ...ink, worst });
+      }
+      return measured.map(({ label, color, worst, min }) => ({ label, color, worst, min }));
+    })()`);
+    t.ok(low.length >= atLeast, `${label}: há o que medir`, `${low.length}`);
+    t.equal(
+      low.filter(({ worst, min }) => worst < min).map(({ label, color, worst }) => `${label} (${color}) ${worst.toFixed(2)}`),
+      [],
+      `${label}: todo texto atinge 4.5:1, e todo ícone 3:1`,
+    );
+  };
+
+  for (const theme of THEMES) {
+    await openPage(page, { theme });
+    await page.hover({ x: 2, y: 2 });
+    await sleep(200);
+    await measure(`${theme}, página`, "main", 90);
+
+    const card = "#cards article:nth-of-type(3)";
+    const link = `${card} p a`;
+    const button = `${card} button`;
+    await page.evaluate(`${$(card)}.scrollIntoView({ block: "center", behavior: "instant" })`);
+    await page.hover(link);
+    await sleep(900);
+    t.ok((await page.evaluate(`Number(getComputedStyle(${$(card)}.querySelector("[data-holo-pulse]").previousElementSibling).opacity)`)) === 1, `${theme}, card: a luz está acesa`);
+    await measure(`${theme}, card com a luz no link`, card, 4);
+    await page.evaluate(`${$(link)}.focus({ focusVisible: true })`);
+    await sleep(120);
+    await measure(`${theme}, card com o link em foco`, card, 4);
+    await page.evaluate(`${$(button)}.setAttribute("aria-pressed", "true")`);
+    await page.hover(button);
+    await sleep(900);
+    await measure(`${theme}, card com um botão selecionado`, card, 4);
+    t.equal(
+      await page.evaluate(`["--light", "--scan"].map((name) => getComputedStyle(${$(button)}).getPropertyValue(name))`),
+      await page.evaluate(`["--panel-light", "--panel-scan"].map((name) => getComputedStyle(${$(".site-root")}).getPropertyValue(name))`),
+      `${theme}, card: o botão de dentro tem a luz do painel`,
+    );
+
+    await page.hover({ x: 2, y: 2 });
+    await page.click("[data-open-window]");
+    await page.waitFor(`${$("dialog[open]")} !== null`, "a janela", 3000);
+    await page.hover({ x: 2, y: 2 });
+    await sleep(300);
+    await measure(`${theme}, janela`, "dialog[open]", 9);
+    await page.evaluate(`${$("dialog[open] p a")}.focus({ focusVisible: true })`);
+    await sleep(120);
+    await measure(`${theme}, janela com o link em foco`, "dialog[open]", 9);
   }
 }
 
@@ -794,6 +1085,7 @@ async function shots(page, t, folder, width) {
 export function holoCases({ shots: folder, width }) {
   return [
     { name: "holo:estados", run: states },
+    { name: "holo:ponteiro", run: pointer },
     { name: "holo:movimento reduzido", run: reducedMotion },
     { name: "holo:cards e telas", run: cards },
     { name: "holo:teclado", run: keyboard },
@@ -805,6 +1097,7 @@ export function holoCases({ shots: folder, width }) {
     { name: "holo:reflow", run: reflow },
     { name: "holo:toque", run: touch },
     { name: "holo:axe", run: axe },
+    { name: "holo:contraste", run: contrast },
     ...(folder ? [{ name: "holo:capturas", run: (page, t) => shots(page, t, folder, Math.min(width, 1200)) }] : []),
   ];
 }

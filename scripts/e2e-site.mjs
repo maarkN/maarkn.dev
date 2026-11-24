@@ -432,7 +432,10 @@ async function createPage(cdp) {
 
   /** Uma tecla de verdade: `press("Tab", { shift: true })`. */
   const press = async (key, { shift = false } = {}) => {
-    const codes = { Tab: 9, Enter: 13, Escape: 27, " ": 32, End: 35, Home: 36, ArrowLeft: 37, ArrowRight: 39 };
+    const codes = {
+      Tab: 9, Enter: 13, Escape: 27, " ": 32, PageDown: 34, End: 35, Home: 36,
+      ArrowLeft: 37, ArrowRight: 39, ArrowDown: 40,
+    };
     const base = {
       key,
       code: key === " " ? "Space" : key,

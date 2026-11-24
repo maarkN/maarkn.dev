@@ -47,6 +47,7 @@ export function Reference({ lang }: { lang: string }) {
   const [on, setOn] = useState(true);
   const [off, setOff] = useState(false);
   const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
   const [notices, setNotices] = useState(["ok", "warn", "bad", "info"] as const as readonly ("ok" | "warn" | "bad" | "info")[]);
   const [stress, setStress] = useState(false);
   const [narrow, setNarrow] = useState(false);
@@ -115,6 +116,9 @@ export function Reference({ lang }: { lang: string }) {
           <HoloButton pressed={pressed} onClick={() => setPressed(!pressed)} data-shot="selected">
             Selecionado
           </HoloButton>
+          <HoloButton variant="primary" pressed={pressed} onClick={() => setPressed(!pressed)} data-shot="selected-primary">
+            Selecionado
+          </HoloButton>
           <HoloButton disabled data-shot="disabled">Desligado</HoloButton>
           <HoloButton variant="primary" disabled>Desligado</HoloButton>
           <HoloIconButton label="Buscar">
@@ -134,6 +138,7 @@ export function Reference({ lang }: { lang: string }) {
           </HoloLink>
           <HoloLink href="#links" variant="primary">Abrir projeto</HoloLink>
           <HoloLink href="#links" aria-current="page">Página atual</HoloLink>
+          <HoloLink href="#links" variant="primary" aria-current="page" data-shot="current-primary">Projeto atual</HoloLink>
           <HoloLink href="#links" disabled>Em breve</HoloLink>
         </div>
         <p id="feixe">
@@ -161,7 +166,9 @@ export function Reference({ lang }: { lang: string }) {
             <p>Um card que faz algo em vez de levar a outra tela.</p>
           </HoloCard>
           <HoloCard title="SenseVox" href="#cards">
-            <p>Telefonia própria no lugar de uma ferramenta de terceiros.</p>
+            <p>
+              Telefonia própria no lugar de <BeamLink href="#cards">uma ferramenta de terceiros</BeamLink>.
+            </p>
             <div className={styles.row} style={{ marginTop: 14 }}>
               <HoloButton size="sm" onClick={() => setPressed(!pressed)}>Copiar link</HoloButton>
             </div>
@@ -183,13 +190,27 @@ export function Reference({ lang }: { lang: string }) {
 
       <section id="janela" aria-labelledby="t-janela">
         <h2 id="t-janela">Janela</h2>
-        <HoloButton onClick={() => setOpen(true)} data-open-window="">Abrir a janela</HoloButton>
+        <div className={styles.row}>
+          <HoloButton onClick={() => setOpen(true)} data-open-window="">Abrir a janela</HoloButton>
+          <HoloButton onClick={() => setLong(true)} data-open-long="">Abrir uma janela longa</HoloButton>
+        </div>
         <HoloDialog open={open} onClose={() => setOpen(false)} title="Nectar CRM" closeLabel="Fechar">
-          <p>Assumi um produto de VoIP próprio que estava travado e o coloquei em produção.</p>
+          <p>
+            Assumi um produto de <BeamLink href="#janela">VoIP próprio</BeamLink> que estava travado e o coloquei em
+            produção.
+          </p>
+          <div style={{ marginTop: 20 }}>
+            <HoloField label="E-mail" name="window-email" hint="Só para responder você." defaultValue="sem-arroba" error="Falta o @ no endereço." />
+          </div>
           <div className={styles.row} style={{ marginTop: 20 }}>
             <HoloButton onClick={() => setOpen(false)} variant="primary">Entendi</HoloButton>
             <HoloLink href="#janela">Ver carreira</HoloLink>
           </div>
+        </HoloDialog>
+        <HoloDialog open={long} onClose={() => setLong(false)} title="Só texto" closeLabel="Fechar">
+          {Array.from({ length: 60 }, (_, i) => (
+            <p key={i}>{`Parágrafo ${i + 1}: texto corrido, mais alto que a tela e sem nenhum controle.`}</p>
+          ))}
         </HoloDialog>
       </section>
 
