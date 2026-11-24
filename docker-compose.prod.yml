@@ -11,7 +11,8 @@
 #
 # First deploy — apply migrations before the app serves traffic:
 #   docker compose -f docker-compose.prod.yml run --rm migrate
-# (the `migrate` service reuses the build and runs `prisma migrate deploy`).
+# (the `migrate` service reuses the build, runs `prisma migrate deploy` and then
+# fills in the projects' text from the seed).
 #
 # Host firewall: open inbound 80 (HTTP→HTTPS redirect + ACME) and 443 (HTTPS).
 # Port 22 only from your own IP — the deploy runs on a runner that lives here.
@@ -153,6 +154,7 @@ services:
   # because it has the full toolchain (Prisma CLI v6, tsx) that the slim runtime
   # image deliberately lacks. Not started by `up` (manual "tools" profile).
   #   migrate: docker compose -f docker-compose.prod.yml run --rm migrate
+  #   sync:    docker compose -f docker-compose.prod.yml run --rm --entrypoint sh migrate -c "npm run db:sync-projects"
   #   seed:    docker compose -f docker-compose.prod.yml run --rm --entrypoint sh migrate -c "npm run db:seed"
   #   ingest:  docker compose -f docker-compose.prod.yml run --rm --entrypoint sh migrate -c "npm run db:ingest"
   migrate:
@@ -168,7 +170,14 @@ services:
     networks:
       - web        # seed/ingest reach external APIs (OpenAI embeddings) via here
       - internal   # reaches Postgres
-    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+    # Schema, then content, before the new app starts. The database is the source
+    # of the projects' text (ADR 0003), so a row whose Portuguese is still empty
+    # would be shown in English on the Portuguese pages. The script only writes
+    # empty columns: after the first run it finds nothing to do.
+    command:
+      - sh
+      - -c
+      - node_modules/.bin/prisma migrate deploy && node_modules/.bin/tsx scripts/fill-project-text.ts
 
 networks:
   # public-facing: Traefik <-> app
