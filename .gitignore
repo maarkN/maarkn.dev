@@ -58,3 +58,4 @@ next-env.d.ts
 
 # local planning docs (task breakdowns, design references) — not versioned
 /.docs
+/.annotations

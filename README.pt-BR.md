@@ -82,7 +82,7 @@ O que o `help` imprime, mais os que ele só menciona em *also try* e os easter e
 | `ping` · `git` · `reboot` | | Teste de latência, remotes, roda o boot de novo |
 | `sudo` · `rm` · `exit` · `logout` · `hack` | | Experimenta |
 
-A spec completa de cada comando (argumentos, saída, erros) fica em `.docs/design/commands.md` (notas locais de design, não versionadas).
+A spec completa de cada comando (argumentos, saída, erros) fica em [`docs/design/commands.md`](./docs/design/commands.md).
 
 ![neofetch](./docs/media/neofetch.png)
 

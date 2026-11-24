@@ -1,21 +1,20 @@
 /**
  * Commands documentation check — every command the terminal registers must
- * have a `### <name>` section in `.docs/design/commands.md`, and every alias
+ * have a `### <name>` section in `docs/design/commands.md`, and every alias
  * in `TERMINAL_ALIASES` must appear in that file's alias table.
  *
  *   pnpm docs:commands        (= pnpm exec tsx scripts/check-commands-doc.ts)
  *
  * The command modules import React components and CSS modules, so instead of
  * building the registry this scans their sources for `name: "<command>"`
- * literals — the same shape every `Command` object uses. `.docs/` is local
- * (gitignored), which is why this runs on demand rather than in `pnpm lint`.
+ * literals — the same shape every `Command` object uses.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TERMINAL_ALIASES } from "../src/lib/terminal/registry";
 
 const ROOT = process.cwd();
-const DOC = join(ROOT, ".docs", "design", "commands.md");
+const DOC = join(ROOT, "docs", "design", "commands.md");
 const COMMAND_FILES = [
   "content-commands.tsx",
   "system-commands.tsx",
@@ -42,7 +41,7 @@ function documentedCommands(doc: string): string[] {
 }
 
 if (!existsSync(DOC)) {
-  console.error(`check-commands-doc: ${DOC} not found (the .docs folder is local; see README).`);
+  console.error(`check-commands-doc: ${DOC} not found.`);
   process.exit(1);
 }
 
@@ -70,5 +69,5 @@ if (problems.length > 0) {
 }
 
 console.log(
-  `check-commands-doc: ${registered.length} commands and ${Object.keys(TERMINAL_ALIASES).length} aliases documented in .docs/design/commands.md`,
+  `check-commands-doc: ${registered.length} commands and ${Object.keys(TERMINAL_ALIASES).length} aliases documented in docs/design/commands.md`,
 );

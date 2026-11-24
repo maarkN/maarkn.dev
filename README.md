@@ -82,7 +82,7 @@ What `help` prints, plus the ones it only mentions under *also try* and the east
 | `ping` · `git` · `reboot` | | Latency check, remotes, run the boot again |
 | `sudo` · `rm` · `exit` · `logout` · `hack` | | Try them |
 
-The full spec of every command (arguments, output, errors) lives in `.docs/design/commands.md` (local design notes, not versioned).
+The full spec of every command (arguments, output, errors) lives in [`docs/design/commands.md`](./docs/design/commands.md).
 
 ![neofetch](./docs/media/neofetch.png)
 
