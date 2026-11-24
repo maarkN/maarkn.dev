@@ -125,10 +125,62 @@ async function walkHome(page, t, locale) {
   t.equal(page.errors, [], "nenhum erro no console");
 }
 
-const CASES = ["en", "pt-BR"].map((locale) => ({
-  name: `home:${locale}`,
-  run: (page, t) => walkHome(page, t, locale),
-}));
+/**
+ * Os projetos: a lista e o detalhe de cada um, no idioma da rota, venha o texto
+ * do banco ou da semente. Nenhum campo pode aparecer vazio, e o que só existe
+ * no outro idioma precisa dizer em qual está.
+ */
+async function walkProjects(page, t, locale) {
+  await page.open(`/${locale}/projects`);
+  t.equal(await page.evaluate(`document.documentElement.lang`), locale, "idioma do documento");
+  const links = await page.evaluate(
+    `[...new Set([...document.querySelectorAll("main a[href]")]
+       .map((a) => a.getAttribute("href"))
+       .filter((href) => href.startsWith("/${locale}/projects/")))]`,
+  );
+  t.ok(links.length > 0, "a lista tem projetos");
+
+  for (const href of links) {
+    await page.open(href);
+    const found = await page.evaluate(
+      `(() => {
+        const article = document.querySelector("article");
+        const text = (el) => (el ? el.textContent.trim() : null);
+        const prose = [...article.querySelectorAll(".prose-term > p, .prose-term li")];
+        const lead = article.querySelector("h1 + p");
+        const gallery = article.querySelector('section[aria-labelledby="gallery"]');
+        const marked = [...article.querySelectorAll("[lang]")].map((el) => el.lang);
+        return {
+          h1: [...document.querySelectorAll("h1")].map(text),
+          empty: [...article.querySelectorAll("p, h2, li, figcaption")].filter((el) => !text(el) && !el.querySelector("img")).length,
+          lead: text(lead),
+          prose: prose.length,
+          headings: article.querySelectorAll(".prose-term h2").length,
+          description: document.querySelector('meta[name="description"]')?.content ?? null,
+          images: gallery ? gallery.querySelectorAll("img, [role=img]").length : null,
+          withoutAlt: article.querySelectorAll("img:not([alt]), img[alt='']").length,
+          sameLang: marked.filter((lang) => lang === "${locale}").length,
+        };
+      })()`,
+    );
+    const name = href.split("/").pop();
+    t.equal(found.h1.length, 1, `${name}: um único h1`);
+    t.ok(found.lead, `${name}: tem resumo`);
+    t.ok(found.prose >= 3, `${name}: tem descrição, função e entregas`, `${found.prose} blocos`);
+    t.equal(found.headings, 2, `${name}: tem os títulos de função e de entregas`);
+    t.equal(found.empty, 0, `${name}: nenhum campo vazio`);
+    t.equal(found.description, found.lead, `${name}: a metadata traz o resumo`);
+    t.ok(found.images === null || found.images > 0, `${name}: sem imagens, não há seção de galeria`);
+    t.equal(found.withoutAlt, 0, `${name}: toda imagem tem texto alternativo`);
+    t.equal(found.sameLang, 0, `${name}: só marca o idioma do que está em outro`);
+  }
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
+const CASES = ["en", "pt-BR"].flatMap((locale) => [
+  { name: `home:${locale}`, run: (page, t) => walkHome(page, t, locale) },
+  { name: `projects:${locale}`, run: (page, t) => walkProjects(page, t, locale) },
+]);
 
 /* ── asserções ───────────────────────────────────────────────────────────── */
 
