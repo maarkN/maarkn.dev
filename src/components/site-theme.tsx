@@ -63,7 +63,10 @@ export function setSiteTheme(theme: SiteTheme) {
     return;
   }
   // The new frame is captured when the callback returns, so React has to commit inside it.
-  document.startViewTransition(() => flushSync(() => apply(theme)));
+  const transition = document.startViewTransition(() => flushSync(() => apply(theme)));
+  // Skipped by the next change, or because nobody sees the page: the theme is
+  // applied all the same, so there is nothing to report.
+  transition.ready.catch(() => {});
 }
 
 function subscribe(notify: () => void) {

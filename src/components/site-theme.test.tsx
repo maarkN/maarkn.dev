@@ -79,7 +79,10 @@ describe("setSiteTheme", () => {
   });
 
   it("uses a View Transition where there is one, and skips it under reduced motion", () => {
-    const start = vi.fn((update: () => void) => update());
+    const start = vi.fn((update: () => void) => {
+      update();
+      return { ready: Promise.resolve() };
+    });
     Object.assign(document, { startViewTransition: start });
     mount();
     act(() => site.setSiteTheme("light"));
@@ -89,6 +92,24 @@ describe("setSiteTheme", () => {
     system({ reduce: true });
     act(() => site.setSiteTheme("dracula"));
     expect(start).toHaveBeenCalledTimes(1);
+    expect(shown).toBe("dracula");
+  });
+
+  it("has nothing to report when the next change skips the transition of this one", async () => {
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    Object.assign(document, {
+      startViewTransition: (update: () => void) => {
+        update();
+        return { ready: Promise.reject(new DOMException("Transition was skipped", "AbortError")) };
+      },
+    });
+    mount();
+    act(() => site.setSiteTheme("light"));
+    act(() => site.setSiteTheme("dracula"));
+    await new Promise((resolve) => setTimeout(resolve));
+    process.off("unhandledRejection", unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
     expect(shown).toBe("dracula");
   });
 
