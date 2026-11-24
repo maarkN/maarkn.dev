@@ -5,9 +5,13 @@
    Two systems share <html>: the CLI version reads `data-theme` and the tokens
    of globals.css, the site reads `data-site-theme` and the tokens below. Some
    names coincide, so every block here is scoped to `.site-root`. The mirror on
-   `:root:has(.site-root)` exists for what paints outside the subtree (canvas,
+   `:root:has(.site-root…)` exists for what paints outside the subtree (canvas,
    overscroll, scrollbars) and only while a site screen is mounted; `:is()` is
    forgiving, so an engine without `:has()` loses the mirror, not the theme.
+
+   `.site-island` is a piece of the site on its own (the top, the foot): it has
+   the theme, and leaves the page around it as it is. The pages that still wear
+   the CLI version's look depend on that.
 
    The attribute is written before the first paint by the boot script
    (src/lib/theme-boot.ts). Without JavaScript there is no attribute, and the
@@ -19,9 +23,9 @@
 
 /* dusk: the default */
 :is(
-  :root[data-site-theme="dusk"]:has(.site-root),
+  :root[data-site-theme="dusk"]:has(.site-root:not(.site-island)),
   :root[data-site-theme="dusk"] .site-root,
-  :root:not([data-site-theme]):has(.site-root),
+  :root:not([data-site-theme]):has(.site-root:not(.site-island)),
   :root:not([data-site-theme]) .site-root
 ) {
   color-scheme: dark;
@@ -46,7 +50,7 @@
 
 /* light */
 :is(
-  :root[data-site-theme="light"]:has(.site-root),
+  :root[data-site-theme="light"]:has(.site-root:not(.site-island)),
   :root[data-site-theme="light"] .site-root
 ) {
   color-scheme: light;
@@ -72,7 +76,7 @@
 /* light, no attribute: the system preference of whoever has no JavaScript */
 @media (prefers-color-scheme: light) {
   :is(
-    :root:not([data-site-theme]):has(.site-root),
+    :root:not([data-site-theme]):has(.site-root:not(.site-island)),
     :root:not([data-site-theme]) .site-root
   ) {
     color-scheme: light;
@@ -98,7 +102,7 @@
 
 /* dracula */
 :is(
-  :root[data-site-theme="dracula"]:has(.site-root),
+  :root[data-site-theme="dracula"]:has(.site-root:not(.site-island)),
   :root[data-site-theme="dracula"] .site-root
 ) {
   color-scheme: dark;
@@ -124,7 +128,7 @@
 /* ════════════════════════════════════════════════
    What does not change with the theme.
    ════════════════════════════════════════════════ */
-:is(:root:has(.site-root), .site-root) {
+:is(:root:has(.site-root:not(.site-island)), .site-root) {
   --type-title: var(--font-hubot), "Hubot Sans Fallback", system-ui, sans-serif;
   --type-text:  var(--font-mona), "Mona Sans Fallback", system-ui, sans-serif;
   --type-label: var(--font-caskaydia), "Cascadia Code Fallback", ui-monospace, Menlo, Consolas, monospace;
@@ -152,14 +156,14 @@
   --halo: .16;
 }
 :is(
-  :root[data-site-theme="light"]:has(.site-root),
+  :root[data-site-theme="light"]:has(.site-root:not(.site-island)),
   :root[data-site-theme="light"] .site-root
 ) {
   --halo: .1;
 }
 @media (prefers-color-scheme: light) {
   :is(
-    :root:not([data-site-theme]):has(.site-root),
+    :root:not([data-site-theme]):has(.site-root:not(.site-island)),
     :root:not([data-site-theme]) .site-root
   ) {
     --halo: .1;
@@ -168,12 +172,12 @@
 
 /* The CLI version animates its palette change on <body>; the site swaps at
    once (or through a View Transition). */
-:root:has(.site-root) {
+:root:has(.site-root:not(.site-island)) {
   scrollbar-color: var(--ink-3) var(--bg);
   /* A page that grows past the fold while it streams must not move sideways. */
   scrollbar-gutter: stable;
 }
-:root:has(.site-root) body {
+:root:has(.site-root:not(.site-island)) body {
   transition: none;
 }
 
@@ -187,6 +191,9 @@
   font-family: var(--type-text);
   font-weight: 400;
   line-height: 1.6;
+}
+.site-root.site-island {
+  min-height: 0;
 }
 .site-root :is(h1, h2, h3) {
   font-family: var(--type-title);
@@ -206,11 +213,64 @@
   color: var(--on-beam);
 }
 
+/* ── the chrome (src/components/site) ─────────────────────────────────────
+   How tall the top is. Read by what sticks under it, and by whatever scrolls to
+   an element, which must not stop behind it. A margin on the elements and not a
+   padding on the document: with a padding, reaching a control of the top itself
+   would scroll the page. */
+:root:has(.site-root) {
+  --site-top: 64px;
+  --site-base: 0px;
+  /* Smooth scrolling (globals.css) would also animate what the browser and the
+     router do between pages: the top of a new one, the position of an old one. */
+  scroll-behavior: auto;
+}
+:where(:root:has(.site-root)) :where(main, main *, footer, footer *) {
+  scroll-margin-top: calc(var(--site-top) + 16px);
+  scroll-margin-bottom: calc(var(--site-base) + 16px);
+}
+@media (max-width: 1179.98px) {
+  /* The menu at the base of the screen. */
+  :root:has(.site-root) {
+    --site-base: 74px;
+  }
+}
+@media (min-width: 1280px) {
+  /* With the notch. */
+  :root:has(.site-root) {
+    --site-top: 98px;
+  }
+}
+
 /* ── theme change ─────────────────────────────────────────────────────────
    `setSiteTheme` already skips the View Transition under reduced motion; this
    is the floor for any other transition that starts while it is on. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+/* ── page change ──────────────────────────────────────────────────────────
+   React starts it when a navigation commits (the `site-page` class comes from
+   src/components/site/page-transition.tsx). The top and the menu at the base
+   have a name of their own only to stay above the page while it fades; without
+   support for any of this the change is immediate. */
+::view-transition-group(.site-page) {
+  animation: none;
+}
+::view-transition-old(.site-page),
+::view-transition-new(.site-page) {
+  animation-duration: 180ms;
+}
+::view-transition-group(site-top),
+::view-transition-group(site-base) {
+  z-index: 1;
+  animation-duration: 180ms;
+}
+::view-transition-old(site-top),
+::view-transition-new(site-top),
+::view-transition-old(site-base),
+::view-transition-new(site-base) {
   animation-duration: 180ms;
 }
 @media (prefers-reduced-motion: reduce) {

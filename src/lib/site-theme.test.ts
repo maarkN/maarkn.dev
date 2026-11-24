@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { isSiteTheme, resolveSiteTheme, SITE_THEME_KEY, SITE_THEMES } from "./site-theme";
+import { isSiteTheme, resolveSiteTheme, SITE_THEME_KEY, SITE_THEME_SWATCH, SITE_THEMES } from "./site-theme";
 import { paletteBlocks, readBlocks, readPalettes, type Tokens } from "./site-tokens";
 import { themeBootScript } from "./theme-boot";
 
@@ -64,6 +64,21 @@ describe("tokens", () => {
       const inside = selector.startsWith(":is(") ? selector.slice(4, -1).split(", ") : [selector];
       for (const alternative of inside) expect(alternative).toMatch(/\.site-root/);
       expect(selector).not.toMatch(/data-theme\b|data-font/);
+    }
+  });
+
+  it("are what the control that offers a theme shows", () => {
+    const palettes = readPalettes();
+    for (const theme of SITE_THEMES) {
+      expect(SITE_THEME_SWATCH[theme]).toEqual([palettes[theme]["--beam"], palettes[theme]["--bg"]]);
+    }
+  });
+
+  it("stay inside an island: of the page around it, only the scroll is the site's", () => {
+    const around = readBlocks().filter(({ selector }) => selector.includes(":has(.site-root)"));
+    expect(around.length).toBeGreaterThan(0);
+    for (const { tokens } of around) {
+      for (const name of Object.keys(tokens)) expect(name).toMatch(/^(--site-|scroll-)/);
     }
   });
 

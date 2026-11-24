@@ -18,6 +18,17 @@ export function isSiteTheme(value: unknown): value is SiteTheme {
   return (SITE_THEMES as readonly unknown[]).includes(value);
 }
 
+/**
+ * The two colours a theme is shown by, in a control that offers it: its beam
+ * and its page. Copies of `--beam` and `--bg` (site-theme.test.ts compares
+ * them): the tokens only exist for the theme that is on.
+ */
+export const SITE_THEME_SWATCH: Record<SiteTheme, readonly [beam: string, page: string]> = {
+  dusk: ["#8ed6f0", "#27303b"],
+  light: ["#6238d6", "#dfe4ee"],
+  dracula: ["#bd93f9", "#282a36"],
+};
+
 /** An unknown or missing choice follows the system; it is never an error. */
 export function resolveSiteTheme(saved: unknown, prefersLight: boolean): SiteTheme {
   if (isSiteTheme(saved)) return saved;
