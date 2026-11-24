@@ -7,7 +7,7 @@ Define como se reconhece e como responde tudo o que é interativo, para que qual
 ## ADDED Requirements
 
 ### Requirement: Só o interativo é holograma
-Elementos interativos SHALL ter o tratamento de holograma, e elementos não interativos MUST NOT tê-lo. Links dentro de texto corrido usam o feixe.
+Elementos interativos SHALL ter o tratamento de holograma, e elementos não interativos MUST NOT tê-lo. A janela é a única superfície não clicável com a moldura. O aviso SHALL ser sólido, e só o botão dele é holograma. Links dentro de texto corrido usam o feixe.
 
 #### Scenario: Número em destaque
 - **WHEN** uma tela mostra uma métrica que não é clicável
@@ -16,6 +16,10 @@ Elementos interativos SHALL ter o tratamento de holograma, e elementos não inte
 #### Scenario: Card clicável
 - **WHEN** um card leva a outra tela
 - **THEN** tem moldura e responde ao ponteiro, ao toque e ao teclado
+
+#### Scenario: Aviso
+- **WHEN** um aviso aparece
+- **THEN** ele é sólido e só o botão dele tem moldura
 
 ### Requirement: Moldura assimétrica
 A moldura SHALL ser um retângulo com três cantos cortados de formas diferentes e o inferior esquerdo inteiro, com linhas internas paralelas às externas.
@@ -63,3 +67,7 @@ Uma janela SHALL prender o foco, fechar com `Esc`, com o botão e com clique for
 #### Scenario: Fechar com Esc
 - **WHEN** a janela está aberta e o visitante pressiona `Esc`
 - **THEN** ela fecha e o foco volta ao elemento de origem
+
+#### Scenario: Conteúdo mais alto que a tela
+- **WHEN** o corpo da janela transborda e não tem controles
+- **THEN** o teclado chega ao corpo e o rola até o fim

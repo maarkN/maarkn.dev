@@ -9,7 +9,7 @@
 - [x] 2.2 Aplicar o tema antes da primeira pintura, com a preferência do sistema como padrão e chave própria; testes de primeira visita, preferência salva, valor inválido e armazenamento bloqueado
 - [x] 2.3 Garantir que trocar o tema do site não altera a Versão CLI e vice-versa; teste
 - [x] 2.4 Medir o contraste de todos os pares e o par de séries de gráfico; script que falha abaixo do mínimo
-- [x] 2.5 Fontes locais com substituta de métrica próxima; verificar CLS 0 na troca
+- [x] 2.5 Fontes locais com substituta de métrica próxima e `font-display: optional`; verificar CLS 0 quando elas chegam tarde
 
 ## 3. Moldura
 

@@ -6,8 +6,8 @@ O site novo precisa de uma base antes de qualquer tela: três temas, tipografia,
 
 - Três temas (`dusk`, `light`, `dracula`) para o site, seguindo o sistema na primeira visita, aplicados antes da primeira pintura.
 - Preferência do site separada da preferência da Versão CLI, que continua com `soft`, `classic` e as duas fontes.
-- Fontes do site (Hubot Sans, Mona Sans, Cascadia Code) hospedadas aqui, só subconjunto latino.
-- Moldura calculada a partir de um polígono e os primitivos que a usam: botão, link, card, tag, tela projetada, janela, campo, chave, abas e aviso.
+- Fontes do site (Hubot Sans, Mona Sans, Cascadia Code) hospedadas aqui, só subconjunto latino, sem deslocar o texto quando chegam tarde.
+- Moldura calculada a partir de um polígono e os primitivos: botão, link, card, tag, tela projetada, janela, campo, chave, abas e aviso. A janela tem a moldura; o aviso é sólido, com a silhueta dela, e só o botão dele é holograma.
 - Página de referência interna com os primitivos nos três temas, fora de produção.
 
 **Fora do escopo:** qualquer tela pública ou do backoffice.

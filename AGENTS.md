@@ -28,7 +28,7 @@ These files describe what exists today. The task that invalidates a written rule
 
 ## Site UI
 
-Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every element that answers a click uses a primitive of `src/components/holo/`; what does not answer never gets a frame.
+Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every element that answers a click uses a primitive of `src/components/holo/`; what does not answer never gets a frame, except the window.
 
 | Primitive | Use |
 |---|---|
