@@ -136,7 +136,23 @@ export const securityHeaders: { key: string; value: string }[] = [
     : []),
 ];
 
+/**
+ * `*.dev.tsx` are internal pages (today only `/[lang]/holo`, the hologram
+ * reference). They are routes in `next dev` and in a build that asks for them
+ * with `HOLO_REFERENCE=1`; in every other build they are not routes at all, so
+ * production ships neither the page nor its code. Exported for
+ * `src/lib/dev-pages.test.ts`.
+ */
+export function pageExtensions(env: {
+  NODE_ENV?: string;
+  HOLO_REFERENCE?: string;
+}): string[] {
+  const internal = env.NODE_ENV === "development" || env.HOLO_REFERENCE === "1";
+  return [...(internal ? ["dev.tsx"] : []), "tsx", "ts", "jsx", "js"];
+}
+
 const nextConfig: NextConfig = {
+  pageExtensions: pageExtensions(process.env),
   // Self-host build: emit a standalone server bundle for the Docker image.
   output: "standalone",
   // Don't advertise the framework (and, via package.json, its exact version).
