@@ -107,13 +107,13 @@ Piada que termina em `contact`.
 ## Navegação
 
 ### cd
-`cd projects|career|blog|links` navega; `cd` e `cd ~` voltam ao início. Desconhecido: `cd: <nome>: no such directory`.
+`cd projects|career|blog|links` navega para a página do site; `cd` e `cd ~` voltam ao início da Versão CLI (`/[lang]/terminal`). Desconhecido: `cd: <nome>: no such directory`.
 
 ### pwd
 Imprime `/home/maarkn`.
 
 ### lang
-`lang [en|pt]` troca o idioma e guarda a preferência; sem argumento, alterna. Valor desconhecido: mensagem com dica.
+`lang [en|pt]` troca o idioma, mantém o `?cmd` da tela e guarda a preferência; sem argumento, alterna. Valor desconhecido: mensagem com dica.
 
 ## Aliases
 

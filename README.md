@@ -2,11 +2,11 @@
 
 > Personal portfolio of **Marco Filho** — senior AI/LLM & backend engineer working from Brazil with teams across Europe, the US and LatAm.
 
-`maarkn.dev` is the digital business card of [@maarkn](https://github.com/maarkn). The home page is an interactive terminal: it boots, prints a `whoami`, and then hands you a prompt where every command prints something about me — career, stack, projects, posts, contact — or talks to an AI assistant trained on my CV. Recruiters and clients get the whole story in a couple of commands; everyone else gets a toy that is fun to poke at.
+`maarkn.dev` is the digital business card of [@maarkn](https://github.com/maarkn). The home page says who I am, and `/terminal` says it again as an interactive terminal: it boots, prints a `whoami`, and then hands you a prompt where every command prints something about me — career, stack, projects, posts, contact — or talks to an AI assistant trained on my CV. Recruiters and clients get the whole story in a couple of commands; everyone else gets a toy that is fun to poke at.
 
 [Read this in Portuguese · Leia em português →](./README.pt-BR.md)
 
-![Terminal home: boot, help, projects, open 1](./docs/media/terminal-home.gif)
+![CLI version: boot, help, projects, open 1](./docs/media/terminal-home.gif)
 
 ---
 
@@ -14,7 +14,7 @@
 
 A [Next.js 16](https://nextjs.org) application in TypeScript, styled with CSS tokens + [Tailwind CSS v4](https://tailwindcss.com), fully internationalized (English and Brazilian Portuguese), self-hosted behind Traefik with Postgres.
 
-### The terminal (home)
+### The CLI version (`/[lang]/terminal`)
 
 - **Boot sequence** — six lines typed character by character on the first visit of a browser session (3–5 s), skippable with any key or tap, skipped entirely under `prefers-reduced-motion`. `reboot` runs it again.
 - **Shell** — tmux-style status bar (`maarkn@dev · title · theme · font · lang · clock`), a command menu with numeric shortcuts (`1`–`6`, `?`, `⌫`), a scrollable screen and a prompt `maarkn@dev:~$` with a synthetic cursor. On phones the menu becomes a horizontal strip at the bottom.
@@ -22,23 +22,27 @@ A [Next.js 16](https://nextjs.org) application in TypeScript, styled with CSS to
 - **Content commands** — `whoami`, `experience`, `skills`, `projects` + `open <n>`, `writing` + `read <n>`, `contact`, `cv`, `ls` / `cat <file>`, `neofetch`. They only *format* what the rest of the site already knows: projects from the repository (Postgres with a static fallback), timeline and toolkit from `lib/`, posts from Ghost (mocked when the CMS is missing). Nothing is duplicated inside the terminal.
 - **`ask <question>`** — the site's RAG assistant inside the terminal: streamed token by token, markdown rendered in the terminal's typography, conversation context kept for the session (`ask --new` forgets it), `Ctrl+C` aborts. Backed by `/api/chat` with a per-IP and daily rate limit, an admin log, and canned demo replies when no API key is configured. An optional flag forwards unknown three-word-plus input to the assistant.
 - **`mail`** — the contact form as a conversation: name → email → company → message → `send? [Y/n]`, validated inline with the same Zod schema as the server action, `Esc` / `Ctrl+C` cancel, answers never enter the history, one message per minute per tab.
-- **Navigation** — `cd projects|career|blog|links`, `cd ~` back home, `pwd`, `lang en|pt`, and deep-links such as `/en?cmd=projects` or `/pt-BR?cmd=whoami;skills`. The screen is rebuilt when you come back from an inner page; old anchors (`/#contact`, `/#projects`, `/#about`) still land on the right command.
+- **Navigation** — `cd projects|career|blog|links`, `cd ~` back to the start, `pwd`, `lang en|pt`, and deep-links such as `/en/terminal?cmd=projects` or `/pt-BR/terminal?cmd=whoami;skills` (the old ones, on the home, are redirected). The screen is rebuilt when you come back from a page of the site, and the bar has the way back to the page you came from.
 - **Palettes and fonts** — two Dracula palettes, `soft` (default) and `classic`, and two monospace faces, Cascadia Code (default) and DaddyTimeMono, switchable from the bar or with `theme` / `font`. Applied before the first paint, persisted in `localStorage`.
 - **Works without JavaScript** — the server renders the MOTD, the `whoami` output and a sitemap line, so crawlers and no-JS visitors still get the bio and every link. The shell adopts those lines when it hydrates.
 - **Accessible** — WCAG 2.1 AA: semantic landmarks, skip link to the prompt, one boot announcement for screen readers, each command's output grouped as `output of <command>`, `Esc` to leave the prompt, 4.5:1 contrast in both palettes, `rem` sizing, 44 px touch targets.
 
-### Inner pages
+### The site
 
-Every inner route survived the redesign with the same URLs, metadata and content; they just wear the terminal chrome now (status bar with the path, a `maarkn@dev:~$ cat projects/<slug>.md` breadcrumb, an 82ch column, a `cd ..` link back).
+Every page has the same top (brand, pages, search, language, theme, CLI version, contact), foot and, on narrow screens, a menu at the base. The search (`⌘K` / `Ctrl+K`) finds pages, projects, experiences and technologies without caring about accents, switches theme and language, and sends what it cannot find to the assistant.
+
+The inner routes still wear the terminal chrome inside it (status bar with the path, a `maarkn@dev:~$ cat projects/<slug>.md` breadcrumb, an 82ch column, a `cd ..` link back).
 
 | Route | What it is |
 |---|---|
+| `/[lang]` | The home: the opening, for now |
+| `/[lang]/terminal` | The CLI version |
 | `/[lang]/projects` | All public projects in the `projects` command format, filtered by `?cat=` |
 | `/[lang]/projects/[slug]` | Project detail: metadata table, description, role, features, gallery |
 | `/[lang]/career` · `/career/[slug]` | The `experience` output with anchors, and the full case per position |
 | `/[lang]/blog` · `/blog/[slug]` | Ghost CMS posts (ISR, 5 min) rendered in monospace prose |
 | `/[lang]/links` | `cat links.sh`: email, LinkedIn, GitHub, WhatsApp, CV, Instagram, availability |
-| `/[lang]/chat` | Permanent redirect to `/[lang]?cmd=ask` |
+| `/[lang]/chat` | Permanent redirect to `/[lang]?cmd=ask`, and from there to the CLI version |
 
 ### Admin
 
@@ -50,7 +54,7 @@ Accessibility is held to AA on the private surface too, and measured rather than
 
 ### SEO and performance
 
-Terminal-style OpenGraph images per route and per language, sitemap (no `/chat`), `hreflang` on every public route, JSON-LD for person and website, a single `h1` per page. The home ships about 24 kB of page-specific JavaScript (gzip, budget 60 kB), the markdown renderer loads on the first `ask`, `zod` on the first `mail`, and the alternative font is downloaded only when selected. Lighthouse mobile on the home after the migration (local, median of 3 runs): performance 96–97, accessibility 100, SEO 100, LCP 1.5 s with devtools throttling, CLS 0.
+Terminal-style OpenGraph images per route and per language, sitemap (no `/chat` nor `/terminal`), `hreflang` on every public route, JSON-LD for person and website, a single `h1` per page. The home ships about 13 kB of page-specific JavaScript (gzip, budget 60 kB), the search loads on its first opening, the markdown renderer on the first `ask`, `zod` on the first `mail`, and the CLI version's alternative font is downloaded only when selected. Lighthouse mobile on the CLI version, when it was the home (local, median of 3 runs): performance 96–97, accessibility 100, SEO 100, LCP 1.5 s with devtools throttling, CLS 0.
 
 ---
 
@@ -77,7 +81,7 @@ What `help` prints, plus the ones it only mentions under *also try* and the east
 | `theme [soft\|classic]` | | Switch or set the palette |
 | `font [caskaydia\|daddytime]` | | Switch or set the font |
 | `lang [en\|pt]` | | Switch the language (persisted in the locale cookie) |
-| `cd <dir>` · `pwd` | | Navigate to `projects`, `career`, `blog`, `links`; `cd` or `cd ~` returns home |
+| `cd <dir>` · `pwd` | | Navigate to `projects`, `career`, `blog`, `links`; `cd` or `cd ~` returns to the start |
 | `history` · `uptime` · `date` · `echo` · `whereami` | | The usual |
 | `ping` · `git` · `reboot` | | Latency check, remotes, run the boot again |
 | `sudo` · `rm` · `exit` · `logout` · `hack` | | Try them |
@@ -130,9 +134,9 @@ pnpm test:e2e
 
 ### End-to-end checks
 
-`scripts/e2e-site.mjs` drives headless Chrome over the public site as `pnpm start` serves it: it opens each page, scrolls with real wheel input and reports every assertion. Today it walks the home in both locales and checks that the theme is in place before the first paint; the full list it has to cover by the end of the rebranding is in [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), and each `rebrand-*` change adds its own cases to `CASES`.
+`scripts/e2e-site.mjs` drives headless Chrome over the public site as `pnpm start` serves it: it opens each page, scrolls with real wheel input and reports every assertion. Today it walks the CLI version in both locales, checks that the theme is in place before the first paint, and covers the site's top, search, languages and the way from one page to another; the full list it has to cover by the end of the rebranding is in [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), and each `rebrand-*` change adds its own cases to `CASES`.
 
-- `--width 390 --height 844` for the narrow viewport, `--only home:pt-BR` for some of the cases, `--verbose` to list what passed, `--json` for the raw result.
+- `--width 390 --height 844` for the narrow viewport, `--only busca` for some of the cases, `--verbose` to list what passed, `--json` for the raw result.
 - `--holo` runs the cases of the hologram reference (`/[lang]/holo`) instead, an internal page that production does not have: build with `HOLO_REFERENCE=1 pnpm build`, or use `pnpm dev`. `--shots <folder>` also saves its captures in the three themes, at 1x and 2x.
 - `E2E_BASE` points it at another address, `CHROME_PATH` at another Chrome (the default is the macOS path), `CDP_PORT` at another debugging port.
 - It exits 0 when everything passed, 1 when an assertion failed and 2 when nothing could be measured (server down, Chrome missing, no case matched).
@@ -194,11 +198,13 @@ src/
 │   ├── admin/                      # the backoffice (no [lang]): 18 routes + admin.css, the scoped shadcn token values
 │   └── [lang]/
 │       ├── layout.tsx              # html, fonts, ThemeProvider, metadata, JSON-LD
-│       ├── (terminal)/page.tsx     # the home: loads TerminalData, renders MOTD + whoami on the server
-│       ├── (pages)/                # inner routes with the terminal chrome
+│       ├── (terminal)/terminal/    # the CLI version: loads TerminalData, renders MOTD + whoami on the server
+│       ├── (site)/                 # top, foot and menu of every page; page.tsx is the home
+│       ├── (site)/(pages)/         # inner routes with the terminal chrome
 │       │   ├── projects/ · career/ · blog/ · links/
 │       │   └── */opengraph-image.tsx
 │       ├── (dev)/holo/             # internal hologram reference (*.dev.tsx, never in production)
+│       ├── search.json/route.ts    # index of the site's search
 │       └── chat/route.ts           # 308 → /[lang]?cmd=ask
 ├── components/
 │   ├── terminal/
@@ -211,6 +217,7 @@ src/
 │   │   └── terminal.module.css · page.module.css · prose.css
 │   ├── theme-provider.tsx          # CLI version: palette + font state
 │   ├── site-theme.tsx              # site: theme state (the boot script of both is lib/theme-boot.ts)
+│   ├── site/                       # the site's chrome (top, search, foot, language, page change), see AGENTS.md
 │   ├── holo/                       # the hologram primitives (frame, button, card, dialog, …), see AGENTS.md
 │   ├── admin/                      # the backoffice: terminal chrome, listings, forms, dialogs, kanban
 │   └── ui/                         # shadcn primitives — imported only from /admin (see check-admin-utilities)
