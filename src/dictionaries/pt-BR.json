@@ -769,8 +769,7 @@
     "a11y": {
       "skipToPrompt": "pular para a linha de comando",
       "skipToContent": "pular para o conteúdo",
-      "outputOf": "saída de {cmd}",
-      "breadcrumb": "caminho"
+      "outputOf": "saída de {cmd}"
     }
   }
 }
