@@ -233,6 +233,11 @@ describe("menu at the base", () => {
     menu();
     expect(details().open).toBe(false);
 
+    // Choosing the page one is already on goes nowhere, and closes all the same.
+    details().open = true;
+    click($('details a[href="/en/career"]'));
+    expect(details().open).toBe(false);
+
     details().open = true;
     act(() => {
       $("details a").dispatchEvent(new Event("pointerdown", { bubbles: true }));

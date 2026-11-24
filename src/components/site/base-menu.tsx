@@ -2,7 +2,7 @@
 
 import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, type FocusEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, type FocusEvent, type KeyboardEvent, type MouseEvent } from "react";
 import { clsx } from "clsx";
 import { controlClass } from "@/components/holo/button";
 import { HoloFrame } from "@/components/holo/frame";
@@ -44,6 +44,11 @@ export function BaseMenu({ locale, labels }: { locale: string; labels: SiteLabel
     details.current.querySelector("summary")?.focus();
   };
 
+  /** Any link, the one to the page the visitor is already on included. */
+  const onChoose = (event: MouseEvent) => {
+    if ((event.target as Element).closest("a")) close();
+  };
+
   const onBlur = (event: FocusEvent) => {
     if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) close();
   };
@@ -60,20 +65,14 @@ export function BaseMenu({ locale, labels }: { locale: string; labels: SiteLabel
             <span className={styles.baseHere}>{labels.pages[here]}</span>
           </span>
         </summary>
-        <div className={styles.basePanel}>
+        <div className={styles.basePanel} onClick={onChoose}>
           <ul>
             {PAGES.map((page) => (
               <li key={page}>
                 <HoloLink
                   href={pageHref(locale, page)}
                   aria-current={ariaCurrent(pathname, page)}
-                  {...(page === "home" && {
-                    ...home,
-                    onClick: (event) => {
-                      home.onClick(event);
-                      close();
-                    },
-                  })}
+                  {...(page === "home" && home)}
                 >
                   {labels.pages[page]}
                 </HoloLink>
@@ -83,9 +82,7 @@ export function BaseMenu({ locale, labels }: { locale: string; labels: SiteLabel
           <ul>
             {SECTIONS.map((section) => (
               <li key={section}>
-                <HoloLink href={sectionHref(locale, section)} onClick={close}>
-                  {labels.sections[section]}
-                </HoloLink>
+                <HoloLink href={sectionHref(locale, section)}>{labels.sections[section]}</HoloLink>
               </li>
             ))}
           </ul>

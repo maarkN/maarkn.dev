@@ -335,9 +335,14 @@ async function top(page, t, { theme, width, height }) {
     t.equal(await page.evaluate(`[...document.querySelectorAll("details a[aria-current]")].map((a) => a.textContent)`), ["Projects"], `${theme}: a página atual marcada`);
     await measureContrast(page, t, `${theme}, menu aberto`, "details", 7);
     await axe(page, t, `${theme}, menu aberto`);
+    await page.click('details a[href="/en/projects"]');
+    await arrive(page, "/en/projects");
+    t.ok(!(await page.evaluate(`${$("details")}.open`)), `${theme}: escolher a página atual fecha o menu`);
+    await page.click("nav summary");
+    await page.waitFor(`${$("details")}.open`, "o menu da base", 3000);
     await page.click('details a[href="/en/career"]');
     await arrive(page, "/en/career");
-    t.ok(!(await page.evaluate(`${$("details")}.open`)), `${theme}: escolher fecha o menu`);
+    t.ok(!(await page.evaluate(`${$("details")}.open`)), `${theme}: escolher outra também`);
   }
   t.equal(page.errors, [], "nenhum erro no console");
 }
@@ -747,6 +752,25 @@ async function focusTitle(page, t, width) {
   t.equal(page.errors, [], "nenhum erro no console");
 }
 
+/** "Falar comigo": a âncora, na própria home e a partir de outra página. */
+async function anchor(page, t) {
+  const talk = 'header a[href="/en#contact"]';
+  const lands = async (label) => {
+    t.equal(await page.evaluate(`document.activeElement.id`), "contact", `${label}: o foco vai ao contato`);
+    t.ok(await page.inView("#contact h2", null), `${label}: que está à vista`);
+  };
+  for (const [from, label] of [["/en", "na home"], ["/en/career", "de outra página"]]) {
+    await site(page, from);
+    await page.click(talk);
+    await arrive(page, "/en#contact");
+    await sleep(200);
+    await lands(label);
+  }
+  await page.press("Tab");
+  t.equal(await page.evaluate(`document.activeElement.getAttribute("href")`), "mailto:contact@maarkn.dev", "e dali o Tab segue para os canais");
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
 /** Uma carga não é uma passagem: nada esmaece, e tudo responde desde o começo. */
 async function plainLoad(page, t) {
   await page.beforeLoad(`window.__transitions = 0;
@@ -869,6 +893,7 @@ export function chromeCases({ width, height }) {
     { name: "idioma:página equivalente", run: language },
     { name: "idioma:home em inglês", run: onlyEnglish },
     { name: "passagem:foco no título", run: (page, t) => focusTitle(page, t, width) },
+    { name: "passagem:âncora", run: anchor },
     { name: "passagem:carga", run: plainLoad },
     { name: "passagem:sem transições", run: (page, t) => withoutTransitions(page, t, width) },
     { name: "passagem:rolagem da home", run: (page, t) => homeScroll(page, t, width) },
