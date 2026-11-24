@@ -44,6 +44,12 @@ function go(to: string) {
   query = url.search.slice(1);
   render(<Pages />);
 }
+/** The browser's back or forward: the address, the event, and only then the page. */
+function travel(to: string) {
+  window.history.replaceState(null, "", to);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  go(to);
+}
 const focused = () => document.activeElement?.textContent || document.activeElement?.id;
 function scrollTo(y: number) {
   window.scrollY = y;
@@ -111,6 +117,50 @@ describe("focus", () => {
   });
 });
 
+describe("scroll of a page", () => {
+  const TOP = { top: 0, behavior: "instant" };
+
+  it("starts at its top when a link opened it, however little the last one was scrolled", () => {
+    go("/en/projects");
+    expect(window.scrollTo).not.toHaveBeenCalled(); // a load is the browser's
+    scrollTo(140);
+    go("/en/projects/some-slug");
+    expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith(TOP);
+    go("/en/projects/some-slug?from=x");
+    expect(window.scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("is the router's when the link asked for a section, unless there is none", () => {
+    go("/en/projects");
+    go("/en/career#contact");
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    go("/en/projects#nowhere");
+    expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith(TOP);
+  });
+
+  it("is the browser's on the way back and forward", () => {
+    go("/en/projects");
+    go("/en/projects/some-slug");
+    vi.mocked(window.scrollTo).mockClear();
+    travel("/en/projects");
+    travel("/en/projects/some-slug");
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    expect(focused()).toBe("/en/projects/some-slug");
+    // And the next link is a link again.
+    go("/en/projects");
+    expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith(TOP);
+  });
+
+  it("does not take an anchor of the last page for a way back", () => {
+    go("/en/career");
+    travel("/en/career#some-slug");
+    go("/en/projects");
+    expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith(TOP);
+    go("/en/career");
+    expect(window.scrollTo).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe("scroll of the home", () => {
   it("comes back to where it was left", () => {
     go("/en");
@@ -145,6 +195,7 @@ describe("scroll of the home", () => {
     go("/en");
     scrollTo(640);
     go("/en/projects");
+    vi.mocked(window.scrollTo).mockClear();
     go("/en#contact");
     expect(window.scrollTo).not.toHaveBeenCalled();
   });

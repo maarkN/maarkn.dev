@@ -9,11 +9,25 @@
 
 let last: string | null = null;
 
+/** Where the browser's back or forward is going to: its scroll is the browser's. */
+let traversed: string | null = null;
+if (typeof window !== "undefined") {
+  window.addEventListener("popstate", () => {
+    traversed = window.location.pathname;
+  });
+}
+
 /** The document already showed a different route: this is a navigation. */
 export function arrivedByNavigation(pathname: string): boolean {
   return last !== null && last !== pathname;
 }
 
+/** It was the browser's back or forward, not a link. */
+export function arrivedThroughHistory(pathname: string): boolean {
+  return traversed === pathname;
+}
+
 export function rememberRoute(pathname: string): void {
   last = pathname;
+  traversed = null;
 }

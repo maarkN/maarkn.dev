@@ -1,31 +1,38 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
-import { arrivedByNavigation, rememberRoute } from "@/components/terminal/route-focus";
+import { Suspense, useEffect, useLayoutEffect } from "react";
+import { arrivedByNavigation, arrivedThroughHistory, rememberRoute } from "@/components/terminal/route-focus";
+import { currentPage } from "@/lib/site/pages";
 import { rememberPlace } from "@/lib/site/place";
+import { anchored, focusArrival } from "./arrival";
 
-/** The element the address points at; an anchor nobody can read points at nothing. */
-function anchored(): HTMLElement | null {
-  try {
-    return document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
-  } catch {
-    return null;
-  }
+/**
+ * A page opened by a link opens at its top. Not left to the router: it stays
+ * where it is while the start of the new page is on the screen, and behind the
+ * site's top counts as on the screen. In a layout effect, after the router's own
+ * and inside the transition. A section is the router's, the browser's back and
+ * forward restore what they remember, and the home puts itself back
+ * (home-scroll.tsx).
+ */
+function PageScroll() {
+  const pathname = usePathname();
+  useLayoutEffect(() => {
+    if (!arrivedByNavigation(pathname) || arrivedThroughHistory(pathname) || anchored()) return;
+    if (currentPage(pathname)?.page !== "home") window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
+  return null;
 }
 
 /**
  * After a client navigation the focus goes to the new page's title, or to the
  * section the link asked for. A fresh load is left alone: its first Tab has to
- * reach the skip link. The scroll is the router's (and home-scroll.tsx's) job.
+ * reach the skip link.
  */
 function PageFocus() {
   const pathname = usePathname();
   useEffect(() => {
-    if (arrivedByNavigation(pathname)) {
-      const target = anchored() ?? document.querySelector<HTMLElement>("#content h1");
-      target?.focus({ preventScroll: true });
-    }
+    if (arrivedByNavigation(pathname)) focusArrival();
     rememberRoute(pathname);
   }, [pathname]);
   return null;
@@ -43,6 +50,7 @@ function PlaceKeeper() {
 export function PagePassage() {
   return (
     <>
+      <PageScroll />
       <PageFocus />
       <Suspense fallback={null}>
         <PlaceKeeper />
