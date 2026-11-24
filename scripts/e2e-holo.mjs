@@ -504,6 +504,17 @@ async function fonts(page, t) {
     range.selectNodeContents(document.querySelector(selector));
     return Math.round(range.getClientRects()[0].width * 10) / 10;
   })`;
+  /* O mesmo texto numa linha só, no papel de título e no de texto. */
+  const widths = `[["--type-title", "112%", 560], ["--type-text", "100%", 400]].map(([role, stretch, weight]) => {
+    const root = document.querySelector(".site-root");
+    const span = Object.assign(document.createElement("span"), { textContent: "Entendo o problema, desenho a solução e construo backend, web, mobile e IA" });
+    span.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:40px;font-weight:" + weight + ";font-stretch:" + stretch + ";font-family:" + getComputedStyle(root).getPropertyValue(role);
+    root.append(span);
+    const { width } = span.getBoundingClientRect();
+    span.remove();
+    return width;
+  })`;
+  const substitute = await page.evaluate(widths);
   const fallback = await page.evaluate(words);
   t.ok(
     await page.evaluate(`document.fonts.status === "loading" && ${$("h1")}.getBoundingClientRect().width > 0`),
@@ -529,6 +540,8 @@ async function fonts(page, t) {
   t.ok(await settleFaces(page, PAGE), "nas cargas seguintes, as fontes do site");
   const real = await page.evaluate(words);
   t.ok(real.every((width, i) => width !== fallback[i]), "e o texto é desenhado com elas", `${fallback} e ${real}`);
+  const ratios = (await page.evaluate(widths)).map((width, i) => substitute[i] / width);
+  t.ok(ratios.every((ratio) => Math.abs(ratio - 1) < 0.02), "a substituta tem quase a mesma largura", ratios.map((r) => r.toFixed(3)).join(" e "));
   t.ok((await page.evaluate(cls)) === 0, "com CLS 0 também", JSON.stringify(await page.evaluate(`window.__shifts`)));
 }
 
