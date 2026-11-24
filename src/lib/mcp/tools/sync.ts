@@ -358,6 +358,7 @@ const REVERTERS: Record<string, ScalarDelegate> = {
   ScreeningQuestion: db.screeningQuestion as unknown as ScalarDelegate,
   RequirementCoverage: db.requirementCoverage as unknown as ScalarDelegate,
   HonestyNote: db.honestyNote as unknown as ScalarDelegate,
+  Interview: db.interview as unknown as ScalarDelegate,
   Experience: db.experience as unknown as ScalarDelegate,
   CareerProject: db.careerProject as unknown as ScalarDelegate,
   ResumeBullet: db.resumeBullet as unknown as ScalarDelegate,

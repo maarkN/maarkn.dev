@@ -19,6 +19,7 @@ import {
   updateApplicationStage,
   upsertApplication,
 } from "@/lib/mcp/tools/applications";
+import { upsertInterview } from "@/lib/mcp/tools/interviews";
 import { searchJobs, upsertJob } from "@/lib/mcp/tools/jobs";
 import { upsertExperience, upsertProject } from "@/lib/mcp/tools/content";
 import { getProfileFacts } from "@/lib/mcp/tools/profile";
@@ -100,6 +101,7 @@ export const MCP_TOOLS: AnyMcpTool[] = [
   upsertApplication,
   updateApplicationStage,
   logApplicationEvent,
+  upsertInterview,
   upsertExperience,
   upsertProject,
   // leitura

@@ -1,6 +1,12 @@
 import "server-only";
 import { z } from "zod";
-import { FunnelStage, Prisma } from "@prisma/client";
+import { FunnelStage, Prisma, type ClosureReason } from "@prisma/client";
+import {
+  acceptsClosureReason,
+  CLOSURE_REASON_STAGES,
+  closureReasonOnStageChange,
+  closureReasonRemovedNote,
+} from "@/lib/applications";
 import { db } from "@/lib/db";
 import { defineMcpTool, jsonResult, McpToolError, type McpToolContext } from "@/lib/mcp/tool";
 import { maskContactPii } from "@/lib/mcp/redact";
@@ -9,6 +15,7 @@ import {
   assertOpenSyncRun,
   bumpSyncRun,
   childStamp,
+  closureReasonSchema,
   coverageLevelSchema,
   createUntrustedFence,
   dateSchema,
@@ -26,6 +33,7 @@ import {
   pageInfo,
   paginationSchema,
   pathSchema,
+  proseSchema,
   requireDb,
   seenStamp,
   shortSchema,
@@ -43,6 +51,7 @@ import {
   companyInputSchema,
   findJobId,
   requireApplicationId,
+  requireContactId,
   upsertCompany,
 } from "@/lib/mcp/tools/_entities";
 
@@ -425,6 +434,8 @@ type StageChangeResult = {
   para: FunnelStage;
   eventoId: string | null;
   camposDerivados: string[];
+  /** Motivo de encerramento que a mudanca apagou, se apagou algum. */
+  motivoRemovido: ClosureReason | null;
 };
 
 /**
@@ -443,11 +454,20 @@ async function applyStageChange(args: {
   note?: string;
   channel?: string;
   sourceKey?: string;
+  /** Motivo que chega JUNTO da mudanca. Quem chama ja conferiu o estagio. */
+  closureReason?: ClosureReason;
   ctx: McpToolContext;
   sync: SyncContextInput;
 }): Promise<StageChangeResult> {
   if (args.from === args.to) {
-    return { alterado: false, de: args.from, para: args.to, eventoId: null, camposDerivados: [] };
+    return {
+      alterado: false,
+      de: args.from,
+      para: args.to,
+      eventoId: null,
+      camposDerivados: [],
+      motivoRemovido: null,
+    };
   }
   const occurredAt = args.occurredAt ?? new Date();
 
@@ -456,11 +476,16 @@ async function applyStageChange(args: {
   // resposta real vai nascer. Nunca sobrescreve um valor ja existente.
   const current = await db.application.findUnique({
     where: { id: args.applicationId },
-    select: { appliedAt: true, closedAt: true },
+    select: { appliedAt: true, closedAt: true, closureReason: true },
   });
   const derived: Record<string, Date> = {};
   if (args.to === FunnelStage.applied && !current?.appliedAt) derived.appliedAt = occurredAt;
   if (CLOSING_STAGES.has(args.to) && !current?.closedAt) derived.closedAt = occurredAt;
+
+  // O motivo muda no MESMO update do estagio: separados, um dos dois passaria
+  // por uma linha que o CHECK `Application_closureReason_stage` recusa.
+  const closure = closureReasonOnStageChange(args.to, current?.closureReason);
+  const reason = args.closureReason ? { closureReason: args.closureReason } : closure.patch;
 
   const before = { stage: args.from, ...(current ?? {}) };
   await db.application.update({
@@ -468,6 +493,7 @@ async function applyStageChange(args: {
     data: {
       stage: args.to,
       ...derived,
+      ...reason,
       lastMcpTool: args.ctx.tool,
       lastApiKeyId: args.ctx.apiKeyId,
       lastSyncRunId: args.sync.syncRunId ?? null,
@@ -486,7 +512,8 @@ async function applyStageChange(args: {
     toStage: args.to,
     channel: args.channel ?? null,
     subject: `${args.from} -> ${args.to}`,
-    bodyMd: args.note ?? null,
+    bodyMd:
+      [args.note, closureReasonRemovedNote(closure.removed)].filter(Boolean).join("\n\n") || null,
   };
   const event = await db.applicationEvent.upsert({
     where: { sourceKey },
@@ -500,7 +527,7 @@ async function applyStageChange(args: {
     entityId: args.applicationId,
     created: false,
     before,
-    after: { stage: args.to, ...derived },
+    after: { stage: args.to, ...derived, ...reason },
     sync: args.sync,
     ctx: args.ctx,
   });
@@ -511,6 +538,7 @@ async function applyStageChange(args: {
     para: args.to,
     eventoId: event.id,
     camposDerivados: Object.keys(derived),
+    motivoRemovido: closure.removed,
   };
 }
 
@@ -525,6 +553,8 @@ export const upsertApplication = defineMcpTool({
     "Upsert de uma candidatura pela CHAVE NATURAL 'folderName' (o nome da PASTA em '04 - Candidaturas', ex.: 'epilot' ou 'Huckleberry (Devlane)'). Sem folderName a chamada e recusada — nao existe create_application. " +
     "O nome e normalizado para Unicode NFC no servidor, entao a forma decomposta que o macOS entrega e a forma composta que voce digitou sao a MESMA candidatura. " +
     "Campos omitidos nao sao apagados. Se 'stage' vier diferente do atual, a mudanca tambem gera um evento 'stage_change' — igual a update_application_stage. " +
+    "'closureReason' so existe em candidatura 'rejected' ou 'withdrawn': em qualquer outro estagio a chamada e recusada sem gravar nada, e sair desses dois estagios apaga o motivo. " +
+    "Tres textos diferentes, que nao se misturam: company.aboutMd (a empresa, vale para todas as candidaturas dela), projectInfoMd (o produto ou time desta candidatura) e a descricao da vaga (upsert_job). " +
     "Aceita, na mesma chamada, a empresa (bloco 'company'), o vinculo com a vaga ('jobSourceUrl', que precisa existir), e as colecoes da pasta: documents (chave filePath), contacts, checklistItems (orderIndex), screeningQuestions (orderIndex), requirementCoverages (requirementKey) e honestyNotes (sourceKey obrigatorio). " +
     "Repetir a mesma chamada nao cria nenhuma linha nova. Tudo nasce privado; nao existe argumento de visibilidade. " +
     "Quando um dado nao estiver no arquivo, escreva '_(a preencher)_' — nunca invente metrica, data ou contato.",
@@ -545,7 +575,13 @@ export const upsertApplication = defineMcpTool({
     appliedAt: dateSchema.optional(),
     firstResponseAt: dateSchema.optional(),
     closedAt: dateSchema.optional(),
-    outcomeReason: textSchema.optional(),
+    closureReason: closureReasonSchema
+      .optional()
+      .describe("Motivo de encerramento, so em 'rejected' ou 'withdrawn'. Silencio do recrutador nao e motivo: e o estagio 'no_response' ou 'ghosted'. Se ninguem disse o motivo, use 'not_informed'; nunca adivinhe."),
+    outcomeReason: textSchema.optional().describe("Texto livre do desfecho. Acompanha o closureReason, nao o substitui."),
+    projectInfoMd: proseSchema
+      .optional()
+      .describe("Contexto do projeto: o produto ou o time em que se trabalharia. Independente do texto da empresa e da descricao da vaga."),
     targetSalary: shortSchema.optional().describe("Texto literal do vault. Nunca estime um valor."),
     summaryMd: markdownSchema.optional(),
     notesMd: markdownSchema.optional(),
@@ -564,6 +600,18 @@ export const upsertApplication = defineMcpTool({
     const folderName = normalizeKey(args.folderName, "folderName");
     const syncRunId = await assertOpenSyncRun(args.syncRunId, ctx);
     const sync: SyncContextInput = { syncRunId, source: args.sourceFile };
+
+    // Lida antes de qualquer escrita: o estagio final decide se o motivo cabe, e
+    // uma chamada recusada nao pode deixar a empresa gravada para tras.
+    const existing = await db.application.findUnique({ where: { folderName } });
+    const finalStage = args.stage ?? existing?.stage ?? FunnelStage.radar;
+    if (args.closureReason && !acceptsClosureReason(finalStage)) {
+      throw new McpToolError(
+        `closureReason so existe em candidatura ${CLOSURE_REASON_STAGES.join(" ou ")}; o estagio desta seria '${finalStage}'. Nada foi gravado. Silencio do recrutador ja e o estagio (no_response, ghosted); para uma explicacao em texto livre use outcomeReason.`,
+        "invalid_arguments"
+      );
+    }
+    const stageMoves = Boolean(existing && args.stage && args.stage !== existing.stage);
 
     let jobId: string | undefined;
     if (args.jobSourceUrl) {
@@ -597,14 +645,16 @@ export const upsertApplication = defineMcpTool({
       appliedAt: toDate(args.appliedAt, "appliedAt"),
       firstResponseAt: toDate(args.firstResponseAt, "firstResponseAt"),
       closedAt: toDate(args.closedAt, "closedAt"),
+      // Com mudanca de estagio, o motivo vai junto dela (`applyStageChange`).
+      closureReason: stageMoves ? undefined : args.closureReason,
       outcomeReason: args.outcomeReason,
+      projectInfoMd: args.projectInfoMd,
       targetSalary: args.targetSalary,
       summaryMd: args.summaryMd,
       notesMd: args.notesMd,
     });
 
     const stamp = fullStamp(ctx, sync);
-    const existing = await db.application.findUnique({ where: { folderName } });
 
     let applicationId: string;
     let created: boolean;
@@ -652,6 +702,7 @@ export const upsertApplication = defineMcpTool({
         folderName,
         from: existing.stage,
         to: args.stage,
+        closureReason: args.closureReason,
         ctx,
         sync,
       });
@@ -724,6 +775,7 @@ export const updateApplicationStage = defineMcpTool({
     "Move uma candidatura (identificada pelo folderName) para outro estagio do funil E grava o 'application_event' correspondente, com fromStage/toStage — as duas coisas sempre juntas, nunca uma sem a outra. " +
     "Se o estagio pedido ja for o atual, nada acontece e nenhum evento e criado (idempotente). " +
     "Preenche automaticamente 'appliedAt' ao entrar em 'applied' e 'closedAt' ao entrar num estagio terminal, e SO quando esses campos ainda estao vazios — nunca sobrescreve uma data ja registrada. " +
+    "Sair de 'rejected' ou 'withdrawn' apaga o motivo de encerramento, e o evento registra qual era. Para registrar um motivo use upsert_application. " +
     "A candidatura precisa existir: esta tool nunca cria uma.",
   scopes: ["applications:write"],
   inputSchema: {
@@ -778,7 +830,7 @@ export const logApplicationEvent = defineMcpTool({
   name: "log_application_event",
   title: "Registrar um evento na linha do tempo da candidatura",
   description:
-    "Grava (ou atualiza) um evento da candidatura: e-mail enviado, resposta recebida, entrevista marcada, pacote pronto, nota. " +
+    "Grava (ou atualiza) um evento da candidatura: e-mail enviado, resposta recebida, pacote pronto, nota. Um evento ja aconteceu; a entrevista em si, prevista ou marcada, e de 'upsert_interview'. " +
     "'sourceKey' e OBRIGATORIO e e a chave de idempotencia — use algo estavel e derivado do arquivo de origem (ex.: 'epilot#event#3'). Sem ela, reprocessar a mesma pasta duplicaria a linha do tempo a cada rodada. " +
     "Use 'direction' apenas quando o evento for comunicacao (inbound = veio do recrutador, outbound = saiu de voce); deixe vazio para eventos que nao sao troca de mensagem. " +
     "Para mudanca de estagio use 'update_application_stage', que ja grava o evento certo com fromStage/toStage.",
@@ -809,21 +861,9 @@ export const logApplicationEvent = defineMcpTool({
     };
     const app = await requireApplicationId(folderName);
 
-    let contactId: string | undefined;
-    if (args.contactName) {
-      const name = normalizeKey(args.contactName, "contactName");
-      const contact = await db.contact.findFirst({
-        where: { name, OR: [{ applicationId: app.id }, { company: { applications: { some: { id: app.id } } } }] },
-        select: { id: true },
-      });
-      if (!contact) {
-        throw new McpToolError(
-          `Nenhum contato '${name}' vinculado a esta candidatura. Grave-o antes com 'upsert_application' (bloco contacts).`,
-          "invalid_arguments"
-        );
-      }
-      contactId = contact.id;
-    }
+    const contactId = args.contactName
+      ? await requireContactId(args.contactName, app.id)
+      : undefined;
 
     let documentId: string | undefined;
     if (args.documentFilePath) {
@@ -889,13 +929,24 @@ export const logApplicationEvent = defineMcpTool({
 // list_applications
 // --------------------------------------------------------------------------
 
+/** Quanto de um texto longo cabe numa LISTA: cem dossies inteiros nao cabem. */
+const EXCERPT_CHARS = 500;
+
+/** Mascara antes de cortar: um telefone partido no meio nao seria reconhecido. */
+function excerpt(text: string | null): string | null {
+  const masked = maskContactPii(text);
+  if (masked === null || masked.length <= EXCERPT_CHARS) return masked;
+  const cut = masked.slice(0, EXCERPT_CHARS).replace(/[\uD800-\uDBFF]$/, "");
+  return `${cut}… [trecho de ${masked.length} caracteres; o texto inteiro vem em get_application]`;
+}
+
 export const listApplications = defineMcpTool({
   name: "list_applications",
   title: "Listar candidaturas",
   description:
     "Lista candidaturas com filtros server-side e paginacao: estagio (aceita varios), mercado, sinal de patrocinio, empresa, estado do pacote e texto livre. " +
     "Use antes de qualquer upsert para descobrir o folderName exato de uma candidatura e evitar criar uma duplicata com o nome ligeiramente diferente. " +
-    "Devolve so o cabecalho de cada candidatura; para o dossie completo use 'get_application'.",
+    "Devolve so o cabecalho de cada candidatura, com o motivo de encerramento e o comeco dos textos da empresa e do projeto; para o dossie completo use 'get_application'. Um trecho cortado nunca deve ser regravado.",
   scopes: ["applications:read"],
   inputSchema: {
     stage: z.array(funnelStageSchema).max(21).optional().describe("Lista de estagios aceitos (OR entre eles)."),
@@ -959,9 +1010,11 @@ export const listApplications = defineMcpTool({
           appliedAt: true,
           firstResponseAt: true,
           closedAt: true,
+          closureReason: true,
           outcomeReason: true,
+          projectInfoMd: true,
           updatedAt: true,
-          company: { select: { folderName: true, name: true } },
+          company: { select: { folderName: true, name: true, aboutMd: true } },
           job: { select: { sourceUrl: true, title: true, sponsorship: true } },
           _count: { select: { documents: true, events: true, checklistItems: true } },
         },
@@ -969,7 +1022,10 @@ export const listApplications = defineMcpTool({
       db.application.groupBy({ by: ["stage"], where, _count: { _all: true } }),
     ]);
 
+    const fence = createUntrustedFence();
+
     return jsonResult({
+      aviso: fence.aviso,
       pagina: pageInfo(total, args.limit, args.offset),
       funil: porEstagio
         .map((row) => ({ stage: row.stage, total: row._count._all }))
@@ -984,12 +1040,16 @@ export const listApplications = defineMcpTool({
         sponsorship: row.sponsorship ?? row.job?.sponsorship ?? null,
         priority: row.priority,
         source: row.source,
-        empresa: row.company,
+        empresa: row.company
+          ? { ...row.company, aboutMd: fence.wrap("sobre a empresa", excerpt(row.company.aboutMd)) }
+          : null,
         vaga: row.job,
         appliedAt: row.appliedAt ? row.appliedAt.toISOString() : null,
         firstResponseAt: row.firstResponseAt ? row.firstResponseAt.toISOString() : null,
         closedAt: row.closedAt ? row.closedAt.toISOString() : null,
+        closureReason: row.closureReason,
         outcomeReason: row.outcomeReason,
+        projectInfoMd: fence.wrap("contexto do projeto", excerpt(row.projectInfoMd)),
         atualizadaEm: row.updatedAt.toISOString(),
         contagens: row._count,
       })),
@@ -1005,7 +1065,7 @@ export const getApplication = defineMcpTool({
   name: "get_application",
   title: "Ler o dossie completo de uma candidatura",
   description:
-    "Devolve uma candidatura pelo folderName, com empresa, vaga, checklist, triagem, matriz de requisitos, avisos de honestidade, linha do tempo e a lista de documentos. " +
+    "Devolve uma candidatura pelo folderName, com empresa, vaga, contexto do projeto, motivo de encerramento, entrevistas na ordem do processo, checklist, triagem, matriz de requisitos, avisos de honestidade, linha do tempo e a lista de documentos. " +
     "O corpo dos documentos so vem com includeDocumentContent=true (pode ser grande). " +
     "Por decisao de minimizacao, e-mail e telefone de contatos NAO sao devolvidos por esta porta — apenas nome, cargo, canal e se ha contato registrado. O mesmo vale para a prosa livre (notas, resumo, corpo de eventos, documentos): e-mail e telefone de terceiros saem mascarados. Esses dados ficam na UI do admin.",
   scopes: ["applications:read"],
@@ -1054,7 +1114,10 @@ export const getApplication = defineMcpTool({
         screeningQuestions: { orderBy: { orderIndex: "asc" } },
         requirementCoverages: { orderBy: { orderIndex: "asc" } },
         honestyNotes: true,
-        interviews: { orderBy: { scheduledAt: "asc" } },
+        interviews: {
+          orderBy: [{ orderIndex: "asc" }, { scheduledAt: "asc" }, { createdAt: "asc" }],
+          include: { contact: { select: { name: true } } },
+        },
         events: args.includeEvents
           ? { orderBy: { occurredAt: "desc" }, take: args.maxEvents }
           : false,
@@ -1088,7 +1151,10 @@ export const getApplication = defineMcpTool({
       appliedAt: row.appliedAt ? row.appliedAt.toISOString() : null,
       firstResponseAt: row.firstResponseAt ? row.firstResponseAt.toISOString() : null,
       closedAt: row.closedAt ? row.closedAt.toISOString() : null,
+      closureReason: row.closureReason,
       outcomeReason: row.outcomeReason,
+      // Vem de anuncio e de conversa com o recrutador: delimitado.
+      projectInfoMd: fence.wrap("contexto do projeto", maskContactPii(row.projectInfoMd)),
       // Minimizacao (ver `contatos` abaixo): a promessa "e-mail e telefone de
       // contato nao saem por esta porta" so vale se valer tambem para a prosa,
       // que e onde a nota do vault costuma repetir o telefone do recrutador.
@@ -1104,6 +1170,7 @@ export const getApplication = defineMcpTool({
             country: row.company.country,
             city: row.company.city,
             careersUrl: row.company.careersUrl,
+            aboutMd: fence.wrap("sobre a empresa", maskContactPii(row.company.aboutMd)),
           }
         : null,
       vaga: row.job
@@ -1164,11 +1231,25 @@ export const getApplication = defineMcpTool({
         noteMd: note.noteMd,
       })),
       entrevistas: row.interviews.map((item) => ({
+        sourceKey: item.sourceKey,
+        orderIndex: item.orderIndex,
         round: item.round,
         kind: item.kind,
+        status: item.status,
         scheduledAt: item.scheduledAt ? item.scheduledAt.toISOString() : null,
+        durationMin: item.durationMin,
+        timezone: item.timezone,
         mode: item.mode,
         outcome: item.outcome,
+        contato: item.contact?.name ?? null,
+        // Nomes e anotacoes repetem o que outra pessoa escreveu ou disse, e numa
+        // anotacao cabe uma ordem forjada: mesma cerca.
+        interviewers: fence.wrap(
+          "participantes da entrevista",
+          item.interviewers.length > 0 ? maskContactPii(item.interviewers.join(", ")) : null
+        ),
+        prepMd: fence.wrap("preparacao da entrevista", maskContactPii(item.prepMd)),
+        notesMd: fence.wrap("anotacoes da entrevista", maskContactPii(item.notesMd)),
       })),
       linhaDoTempo: (row.events ?? []).map((event) => ({
         sourceKey: event.sourceKey,
