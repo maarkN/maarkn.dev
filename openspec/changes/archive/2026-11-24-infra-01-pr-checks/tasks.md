@@ -4,8 +4,8 @@
 
 ## 2. Workflow de PR
 
-- [ ] 2.1 Criar `pr.yml` disparado por `pull_request` para `main` e `feat/rebranding`, em `ubuntu-latest`, com `permissions: contents: read` e sem `secrets`; verificar abrindo um PR de teste
-- [ ] 2.2 Rodar lint, testes, build sem `DATABASE_URL` e `openspec validate --all --strict`; verificar que um PR com dicionário fora de paridade falha
+- [x] 2.1 Criar `pr.yml` disparado por `pull_request` para `main` e `feat/rebranding`, em `ubuntu-latest`, com `permissions: contents: read` e sem `secrets`; verificar abrindo um PR de teste
+- [x] 2.2 Rodar lint, testes, build sem `DATABASE_URL` e `openspec validate --all --strict`; verificar que um PR com dicionário fora de paridade falha
 - [x] 2.3 Comentar no arquivo por que ele é separado do deploy e por que nunca usa o runner próprio; verificar na revisão
 
 ## 3. Ponta a ponta
