@@ -20,7 +20,7 @@ const measures = SITE_THEMES.flatMap((theme) => auditTheme(theme, palettes[theme
 const failed = measures.filter(fails);
 
 const line = ({ theme, pair, value, min, max }: (typeof measures)[number]) =>
-  `${theme.padEnd(8)} ${pair.padEnd(52)} ${value.toFixed(2).padStart(6)}  (${
+  `${theme.padEnd(8)} ${pair.padEnd(58)} ${value.toFixed(2).padStart(6)}  (${
     max === undefined ? `min ${min}` : `${min} to ${max}`
   })`;
 

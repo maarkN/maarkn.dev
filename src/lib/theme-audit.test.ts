@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { blend, contrast, distance } from "./contrast";
 import { SITE_THEMES } from "./site-theme";
 import { readFills, readPalettes } from "./site-tokens";
-import { auditTheme, fails } from "./theme-audit";
+import { auditTheme, fails, WRITTEN } from "./theme-audit";
 
 const palettes = readPalettes();
 const fills = readFills();
@@ -51,6 +52,49 @@ describe("the three themes", () => {
     );
     expect(failing("dusk", { "--c1": "#3a4a58" })).toEqual(
       expect.arrayContaining(["--c1 series on --bg-2", "--c1 lightness", "--c1 chroma"]),
+    );
+  });
+
+  it("are measured in every colour the primitives write or mark with", () => {
+    const css = readFileSync("src/components/holo/holo.module.css", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const surfaces = ["var(--bg-2)", "var(--sunk)"];
+    const written = Object.fromEntries(
+      [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].flatMap(([, selector, declarations]) => {
+        const ink =
+          declarations.match(/(?:^|[;\s])color:\s*([^;]+)/)?.[1] ??
+          declarations.match(/(?:^|[;\s])(?:background|border):\s*(?:\S+ solid )?(var\([^;]+\));/)?.[1];
+        return ink && !["inherit", "ButtonText", ...surfaces].includes(ink)
+          ? [[selector.trim().replace(/\s+/g, " "), ink]]
+          : [];
+      }),
+    );
+    expect(written).toEqual(
+      Object.fromEntries(Object.entries(WRITTEN).map(([selector, { ink }]) => [selector, `var(${ink})`])),
+    );
+  });
+
+  it("are refused when a panel has text in anything but ink", () => {
+    const inPanel = (theme: (typeof SITE_THEMES)[number], ink: string) =>
+      auditTheme(theme, palettes[theme], fills, { ".text": { ink, on: ["panel"] } })
+        .filter(fails)
+        .map(({ pair }) => pair);
+    expect(inPanel("light", "--beam")).toEqual(["--beam on a lit panel over --bg"]);
+    expect(inPanel("light", "--beam-3")).toHaveLength(2);
+    expect(inPanel("dracula", "--bad")).toHaveLength(2);
+    for (const theme of SITE_THEMES) expect(inPanel(theme, "--ink")).toEqual([]);
+  });
+
+  it("are refused when a control inside a panel gets as much beam as one outside", () => {
+    const thick = { ...fills, panelScan: fills.scan, panelLight: fills.light };
+    expect(auditTheme("dusk", palettes.dusk, thick).filter(fails).map(({ pair }) => pair)).toContain(
+      "--ink on a dense hologram, lit, in a lit panel over --bg-2",
+    );
+  });
+
+  it("are refused when a primary's scan lines swallow its text", () => {
+    const scanned = { ...fills, primaryScan: 0.3 };
+    expect(auditTheme("dracula", palettes.dracula, scanned).filter(fails).map(({ pair }) => pair)).toContain(
+      "--on-beam on a primary (--beam)",
     );
   });
 
