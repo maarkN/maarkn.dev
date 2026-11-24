@@ -20,12 +20,61 @@ const $ = (selector) => `document.querySelector(${JSON.stringify(selector)})`;
 const DRAWN = `document.querySelectorAll("svg path[data-line]").length > 0 &&
   [...document.querySelectorAll("svg path[data-line]")].every((p) => p.closest("dialog:not([open])") || p.getAttribute("d"))`;
 
+/**
+ * Pré-carrega as fontes a partir da segunda carga, como o Next faz numa página
+ * de produção. Na de referência ele não faz: procura pelo nome do arquivo, e
+ * `page.dev` não é o que registrou.
+ */
+const PRELOAD_FACES = `
+  addEventListener("load", () => {
+    const faces = performance.getEntriesByType("resource").map((e) => e.name).filter((name) => /\\.woff2$/.test(name));
+    try { sessionStorage.setItem("__faces", JSON.stringify(faces)) } catch {}
+  });
+  new MutationObserver((_, observer) => {
+    if (!document.head) return;
+    observer.disconnect();
+    let faces = [];
+    try { faces = JSON.parse(sessionStorage.getItem("__faces") || "[]") } catch {}
+    for (const href of faces) {
+      document.head.append(Object.assign(document.createElement("link"), { rel: "preload", as: "font", type: "font/woff2", crossOrigin: "", href }));
+    }
+  }).observe(document, { childList: true, subtree: true });
+`;
+
 async function openPage(page, { theme = "dusk", motion, path = PAGE, extra = {} } = {}) {
   await page.prefer({ scheme: "dark", motion });
-  await page.beforeLoad(save({ "maarkn-site-theme": theme, ...extra }) + WATCH_FIRST_PAINT);
+  await page.beforeLoad(save({ "maarkn-site-theme": theme, ...extra }) + WATCH_FIRST_PAINT + PRELOAD_FACES);
   await page.open(path);
   await page.waitFor(DRAWN, "as molduras desenhadas");
-  await page.waitFor(`document.fonts.status === "loaded"`, "as fontes");
+  await useFaces(page, path);
+}
+
+/** As fontes do site estão em uso? A que não chegou a tempo não vale nem para texto novo. */
+const FACES_IN_USE = `(() => {
+  const root = document.querySelector(".site-root");
+  const width = (family) => {
+    const span = Object.assign(document.createElement("span"), { textContent: "ação, coração, avó" });
+    span.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font:560 100px " + family;
+    root.append(span);
+    const { width } = span.getBoundingClientRect();
+    span.remove();
+    return width;
+  };
+  return ["--font-hubot", "--font-mona"].every(
+    (name) => width(getComputedStyle(root).getPropertyValue(name) + ", monospace") !== width("monospace"),
+  );
+})()`;
+
+/** A fonte que não chega antes da primeira pintura espera a carga seguinte. */
+async function useFaces(page, path) {
+  for (let i = 0; i < 6; i++) {
+    await page.waitFor(`document.fonts.status === "loaded"`, "as fontes");
+    await sleep(150);
+    if (await page.evaluate(FACES_IN_USE)) return true;
+    await page.open(path);
+    await page.waitFor(DRAWN, "as molduras desenhadas");
+  }
+  return false;
 }
 
 /** O que se vê de um controle: pontes, traço, halo, recuo, preenchimento, texto. */
@@ -417,14 +466,16 @@ async function noScript(page, t) {
   }
 }
 
-/** Fontes seguradas na rede: o texto já está lá, e nada se move quando chegam. */
+/**
+ * Fontes seguradas na rede: o texto já está lá, com a substituta, e nada se
+ * move quando elas chegam. Na carga seguinte elas valem desde o início.
+ */
 async function fonts(page, t) {
   await page.prefer({ scheme: "dark" });
-  await page.call("Network.setCacheDisabled", { cacheDisabled: true });
   const held = [];
+  const requested = [];
   let release = false;
   await page.call("Fetch.enable", { patterns: [{ urlPattern: "*.woff2" }, { urlPattern: "*.otf" }] });
-  const requested = [];
   const off = page.on("Fetch.requestPaused", ({ requestId, request }) => {
     requested.push(request.url.split("/").pop());
     if (release) page.call("Fetch.continueRequest", { requestId });
@@ -432,9 +483,10 @@ async function fonts(page, t) {
   });
   await page.beforeLoad(
     save({ "maarkn-font": "daddytime" }) +
+      PRELOAD_FACES +
       `window.__shifts = [];
        new PerformanceObserver((list) => {
-         for (const e of list.getEntries()) window.__shifts.push({ value: e.value, at: e.startTime, nodes: e.sources.map((s) => s.node && (s.node.className || s.node.nodeName) + ":" + (s.node.textContent || "").slice(0, 24)) });
+         for (const e of list.getEntries()) window.__shifts.push({ value: e.value, nodes: e.sources.map((s) => s.node && (s.node.className || s.node.nodeName) + ":" + (s.node.textContent || "").slice(0, 24)) });
        }).observe({ type: "layout-shift", buffered: true });`,
   );
   await page.open(PAGE, { until: "dom" });
@@ -446,87 +498,107 @@ async function fonts(page, t) {
     !/daddy/i.test(await page.evaluate(`getComputedStyle(${$(".site-root")}).getPropertyValue("--font")`)),
     "nem está ao alcance de um elemento do site",
   );
-  const words = `(() => { const r = document.createRange(); r.selectNodeContents(${$("#tipografia p")}); return [...r.getClientRects()].map((b) => Math.round(b.width)).join() })()`;
+  /* Largura da primeira linha de um título e de um texto: muda com a fonte. */
+  const words = `["h1", "#tipografia p:nth-of-type(2)"].map((selector) => {
+    const range = document.createRange();
+    range.selectNodeContents(document.querySelector(selector));
+    return Math.round(range.getClientRects()[0].width * 10) / 10;
+  })`;
   const fallback = await page.evaluate(words);
   t.ok(
-    await page.evaluate(`document.fonts.check("16px Arial") && getComputedStyle(${$("h1")}).visibility === "visible" && document.fonts.status === "loading"`),
+    await page.evaluate(`document.fonts.status === "loading" && ${$("h1")}.getBoundingClientRect().width > 0`),
     "o texto está legível com a substituta enquanto as fontes não chegam",
   );
-  const atSwap = await page.evaluate(`performance.now()`);
+  /* O que cerca a troca: posição de tudo o que tem texto. */
+  const places = `[...document.querySelectorAll("main *")].filter((el) => !el.closest("svg")).map((el) => { const r = el.getBoundingClientRect(); return Math.round(r.top) + ":" + Math.round(r.height) }).join()`;
+  const before = await page.evaluate(places);
   release = true;
   for (const requestId of held) await page.call("Fetch.continueRequest", { requestId });
   await page.waitFor(`document.fonts.status === "loaded"`, "as fontes chegarem");
   await sleep(600);
-  t.ok((await page.evaluate(words)) !== fallback, "a troca aconteceu de verdade");
-  const shifts = await page.evaluate(`window.__shifts`);
-  /* Três casas, como o Lighthouse e o web-vitals relatam: um <strong> no meio
-     de um parágrafo anda uns poucos pixels dentro da própria linha. */
-  const cls = (list) => Number(list.reduce((sum, s) => sum + s.value, 0).toFixed(3));
-  t.equal(cls(shifts.filter((s) => s.at >= atSwap - 50)), 0, "CLS 0 na troca");
-  t.equal(cls(shifts), 0, "CLS 0 desde o início");
-  t.equal(
-    shifts.flatMap((s) => s.nodes).filter((node) => !node.startsWith("#text")),
-    [],
-    "nenhum bloco mudou de lugar",
-  );
-  t.equal(
-    await page.evaluate(`["á", "ã", "ç", "É", "õ"].every((c) => document.fonts.check("16px " + getComputedStyle(${$(".site-root")}).fontFamily.split(",")[0], c))`),
-    true,
-    "os acentos vêm da fonte",
-  );
+  t.ok((await page.evaluate(places)) === before, "quando elas chegam, nada muda de lugar");
+  t.equal(await page.evaluate(words), fallback, "a fonte que chegou tarde não troca a que está na tela");
+  const cls = `Number(window.__shifts.reduce((sum, s) => sum + s.value, 0).toFixed(4))`;
+  t.ok((await page.evaluate(cls)) === 0, "CLS 0", JSON.stringify(await page.evaluate(`window.__shifts`)));
+
+  /* Interceptar atrasa o pedido, e o prazo da fonte é o da primeira pintura. */
   off();
+  await page.call("Fetch.disable");
+  await page.open(PAGE);
+  await page.waitFor(DRAWN, "as molduras");
+  t.ok(await useFaces(page, PAGE), "nas cargas seguintes, as fontes do site");
+  const real = await page.evaluate(words);
+  t.ok(real.every((width, i) => width !== fallback[i]), "e o texto é desenhado com elas", `${fallback} e ${real}`);
+  t.ok((await page.evaluate(cls)) === 0, "com CLS 0 também", JSON.stringify(await page.evaluate(`window.__shifts`)));
 }
 
-/** Cem molduras: montar e redimensionar sem tarefa longa, e nada em repouso. */
+/**
+ * A tarefa mais longa da thread principal durante `action`, em ms de CPU. O
+ * relógio de parede conta também o que a máquina fez por fora; o de CPU, não.
+ */
+async function longestTask(page, action) {
+  const events = [];
+  const offData = page.on("Tracing.dataCollected", ({ value }) => events.push(...value));
+  await page.call("Tracing.start", {
+    transferMode: "ReportEvents",
+    traceConfig: { includedCategories: ["toplevel", "devtools.timeline"], recordMode: "recordAsMuchAsPossible" },
+  });
+  await action();
+  await sleep(500);
+  const complete = new Promise((resolve) => {
+    const off = page.on("Tracing.tracingComplete", () => {
+      off();
+      resolve();
+    });
+  });
+  await page.call("Tracing.end");
+  await complete;
+  offData();
+  const thread = (e) => `${e.pid}:${e.tid}`;
+  const main = new Set(
+    events.filter((e) => e.name === "thread_name" && e.args.name === "CrRendererMain").map(thread),
+  );
+  const tasks = events.filter((e) => e.name.endsWith("RunTask") && main.has(thread(e)) && e.tdur !== undefined);
+  return { count: tasks.length, ms: Math.max(0, ...tasks.map((e) => e.tdur / 1000)) };
+}
+
+/** Cem molduras: montar e redesenhar sem tarefa longa (50 ms), e nada em repouso. */
 async function hundred(page, t) {
   await page.beforeLoad(`
-    window.__long = [];
-    new PerformanceObserver((list) => { for (const e of list.getEntries()) window.__long.push({ at: e.startTime, ms: e.duration }) }).observe({ type: "longtask", buffered: true });
     window.__draws = 0;
     const set = Element.prototype.setAttribute;
     Element.prototype.setAttribute = function (name, value) { if (name === "d") window.__draws++; return set.call(this, name, value) };
   `);
   await openPage(page);
   await sleep(500);
-  const longSince = async (from) => (await page.evaluate(`window.__long`)).filter((l) => l.at + l.ms >= from);
+  const draws = () => page.evaluate(`window.__draws`);
 
-  /* O que mais roda na máquina só pode somar tempo: basta uma rodada limpa. */
-  const clean = async (label, round) => {
-    let long = [];
-    for (let i = 0; i < 4; i++) {
-      const from = await page.evaluate(`performance.now()`);
-      await round();
-      await sleep(400);
-      long = await longSince(from);
-      if (long.length === 0) break;
-    }
-    t.equal(long, [], label);
-  };
-
-  await clean("montar cem molduras não faz tarefa longa", async () => {
-    if (await page.evaluate(`document.querySelectorAll("#cem [data-drawn]").length > 2`)) await page.click("[data-stress]");
+  const mount = await longestTask(page, async () => {
     await page.click("[data-stress]");
     await page.waitFor(`document.querySelectorAll("#cem [data-drawn]").length >= 102`, "as cem molduras");
   });
+  const brief = ({ count, ms }, label) => t.ok(count > 10 && ms < 50, `${label} sem tarefa longa (${ms.toFixed(1)} ms)`);
+  brief(mount, "montar cem molduras");
 
-  const drawsBefore = await page.evaluate(`window.__draws`);
-  await clean("redesenhar cem molduras não faz tarefa longa", async () => {
-    for (let i = 0; i < 4; i++) {
+  const before = await draws();
+  const redraw = await longestTask(page, async () => {
+    for (let i = 0; i < 6; i++) {
       await page.click("[data-stress-resize]");
       await sleep(150);
     }
   });
-  const drawn = (await page.evaluate(`window.__draws`)) - drawsBefore;
-  t.ok(drawn >= 2000, "mudar a largura redesenha as cem", `${drawn} traçados`);
+  const drawn = (await draws()) - before;
+  t.ok(drawn >= 6 * 100 * 6, "mudar a largura redesenha as cem", `${drawn} traçados`);
+  brief(redraw, "redesenhar cem molduras");
 
   await page.hover({ x: 2, y: 2 });
   await sleep(300);
-  const still = await page.evaluate(`window.__draws`);
+  const still = await draws();
   await sleep(2000);
-  t.equal(await page.evaluate(`window.__draws`), still, "em repouso, nada é recalculado");
+  t.equal(await draws(), still, "em repouso, nada é recalculado");
   await page.hover("#cem [data-drawn]");
   await sleep(300);
-  t.equal(await page.evaluate(`window.__draws`), still, "nem com o ponteiro passando");
+  t.equal(await draws(), still, "nem com o ponteiro passando");
 }
 
 /** As retas em 1x e 2x: um traço só, com a borda dentro do pixel. */
