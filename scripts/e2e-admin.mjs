@@ -46,7 +46,7 @@ const overlay = `document.querySelector('[role="menu"], dialog[open]')`;
 /* ── sessão ──────────────────────────────────────────────────────────────── */
 
 /** Um IP por chamada: a trava do login conta por IP, e um caso a esgota. */
-const someone = () => `203.0.113.${randomInt(1, 250)}`;
+const someone = () => `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
 
 async function fillLogin(page, email, password) {
   await page.waitFor(`${$("form button[type=submit]")} !== null`, "o formulário");
