@@ -33,7 +33,7 @@ Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every elemen
 | Primitive | Use |
 |---|---|
 | `HoloButton`, `HoloIconButton` (`button.tsx`) | Actions. 34, 44 or 50 px; `variant="primary"`; `pressed` for a toggle |
-| `HoloLink` (`link.tsx`) | A link that looks like a button |
+| `HoloLink`, `HoloAnchor` (`link.tsx`) | A link that looks like a button; the anchor is for a file or another document |
 | `BeamLink` (`link.tsx`) | A link inside running text |
 | `HoloTag` (`tag.tsx`) | The label of a section, and the rail item it becomes |
 | `HoloCard`, `HoloScreen` (`card.tsx`) | A card with one target; the screen is a card with an image |
@@ -50,6 +50,16 @@ Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every elemen
 - Cards go on `--bg` or `--bg-2`, and the tag of a section on `--bg`. A new colour in `holo.module.css` enters `WRITTEN` (`src/lib/theme-audit.ts`) with the places it is read over.
 - Primitives carry no visible string: names such as `closeLabel` come from the dictionaries through props.
 - `/[lang]/holo` shows every primitive and state. It exists in `pnpm dev` and in `HOLO_REFERENCE=1 pnpm build` (`*.dev.tsx`), never in production. A new state or primitive goes there, and `node scripts/e2e-site.mjs --holo` covers it.
+
+### Chrome
+
+`src/app/[lang]/(site)/layout.tsx` gives every page of the site its top, foot and menu at the base (`src/components/site/`); the CLI version is in `(terminal)`, outside it.
+
+- A page of the site is a `<main id="content" tabIndex={-1} className="site-root">` with one `<h1 tabIndex={-1}>`, which takes the focus after a navigation (`page-passage.tsx`). The pages under `(site)/(pages)` still wear the CLI version's look: a change that redesigns one takes it out of that group.
+- The chrome is dressed by itself, as `site-root site-island`: only a `.site-root` that is not an island changes the colours of the document around it.
+- A page or a section enters `src/lib/site/pages.ts` with the screen that makes it exist. Top, menu, foot and search list what is there. What else finds it in the search is in the dictionaries, under `site.search.terms`.
+- Links: to a page of the site through `pageLink` and to a section through `SectionLink` (they answer when the visitor is already there, which the router does not; the home restores its own scroll), to the CLI version through `CliLink`, to the other language as a document load (`LanguageLink`). A client navigation between languages replaces `<html>` and loses the CLI version's palette and font.
+- What sticks under the top, or stops a scroll there, uses `--site-top`; what stays above the menu at the base, `--site-base`.
 
 ## Invariants
 

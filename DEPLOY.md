@@ -126,7 +126,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 Traefik obtains a Let's Encrypt certificate for `APP_DOMAIN` automatically, through
 the DNS-01 challenge on Cloudflare (`CF_DNS_API_TOKEN`), so it works with the Cloudflare
 proxy on; with real origin certificates the zones can use SSL mode "Full (strict)".
-- Site: `https://maarkn.dev` (the terminal; `?cmd=projects` deep-links work)
+- Site: `https://maarkn.dev`; CLI version: `https://maarkn.dev/en/terminal` (`?cmd=projects` deep-links work, old ones on the home included)
 - Admin: `https://maarkn.dev/admin` · Generator: `/admin/generator` · Chat log: `/admin/chat`
 
 ## Updating (new code)

@@ -5,10 +5,11 @@ import { PageFooter } from "@/components/terminal/page-footer";
 import "@/components/terminal/prose.css";
 
 /**
- * Inner pages (`/projects`, `/career`, `/blog`, `/links`): files opened in the
- * same terminal. The chrome (status bar with the path, `ps1 + command`
- * breadcrumb, `cd ..`, footer) is applied once here; pages only render their
- * content. The document scrolls normally — only the terminal route locks it.
+ * Inner pages (`/projects`, `/career`, `/blog`, `/links`): files opened in a
+ * terminal, inside the site's top and foot, until each is redesigned. The
+ * chrome (status bar with the path, `ps1 + command` breadcrumb, `cd ..`,
+ * footer) is applied once here; pages only render their content. The document
+ * scrolls normally — only the terminal route locks it.
  */
 export default async function PagesLayout({ children, params }: LayoutProps<"/[lang]">) {
   const { lang } = await params;

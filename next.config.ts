@@ -44,7 +44,7 @@ const CSP_ENFORCED = [
  *     the same nonce plumbing, or `'unsafe-inline'` scoped to styles.
  *
  * `img-src` keeps a broad `https:` on purpose: blog posts are raw Ghost HTML
- * (`src/app/[lang]/(pages)/blog/[slug]/page.tsx`) and the Ghost host comes from
+ * (`src/app/[lang]/(site)/(pages)/blog/[slug]/page.tsx`) and the Ghost host comes from
  * the runtime `GHOST_URL` env var, while `headers()` is baked into the build
  * manifest at build time — the host simply is not known here.
  *

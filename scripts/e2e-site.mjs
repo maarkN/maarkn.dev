@@ -11,7 +11,7 @@
  *   pnpm build && pnpm start              # 5050, sem DATABASE_URL serve
  *   node scripts/e2e-site.mjs             # ou: pnpm test:e2e
  *   … --width 390 --height 844            # viewport estreita
- *   … --only home:pt-BR                   # só os casos cujo nome contém isso
+ *   … --only cli:percurso                 # só os casos cujo nome contém isso
  *   … --holo                              # só a referência do holograma, que
  *                                         # não vai para produção: precisa de
  *                                         # HOLO_REFERENCE=1 pnpm build
@@ -34,6 +34,7 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { chromeCases } from "./e2e-chrome.mjs";
 import { holoCases } from "./e2e-holo.mjs";
 import { themeCases } from "./e2e-theme.mjs";
 
@@ -59,14 +60,14 @@ const SHOTS = flag("shots", null);
 /* ── os casos ────────────────────────────────────────────────────────────── */
 
 /**
- * A home de hoje (versão CLI): termina o boot, imprime cada bloco de conteúdo
- * pelo menu e percorre a tela do topo ao fim com a roda do mouse. Quem rola é
- * o `main`; o documento é travado (`html:has([data-terminal-route])`).
+ * A Versão CLI: termina o boot, imprime cada bloco de conteúdo pelo menu e
+ * percorre a tela do topo ao fim com a roda do mouse. Quem rola é o `main`; o
+ * documento é travado (`html:has([data-terminal-route])`).
  */
 const CONTENT_COMMANDS = ["whoami", "experience", "skills", "projects", "writing", "contact"];
 
-async function walkHome(page, t, locale) {
-  await page.open(`/${locale}`);
+async function walkTerminal(page, t, locale) {
+  await page.open(`/${locale}/terminal`);
   await page.waitFor(`!document.querySelector("[data-boot]")`, "o boot terminar");
 
   t.equal(await page.evaluate(`document.documentElement.lang`), locale, "idioma do documento");
@@ -137,10 +138,11 @@ const CASES = HOLO
   ? holoCases({ shots: SHOTS, width: WIDTH })
   : [
       ...["en", "pt-BR"].map((locale) => ({
-        name: `home:${locale}`,
-        run: (page, t) => walkHome(page, t, locale),
+        name: `cli:percurso:${locale}`,
+        run: (page, t) => walkTerminal(page, t, locale),
       })),
       ...themeCases,
+      ...chromeCases({ width: WIDTH, height: HEIGHT }),
     ];
 
 /* ── asserções ───────────────────────────────────────────────────────────── */
@@ -431,16 +433,16 @@ async function createPage(cdp) {
     call("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 });
 
   /** Uma tecla de verdade: `press("Tab", { shift: true })`. */
-  const press = async (key, { shift = false } = {}) => {
+  const press = async (key, { shift = false, ctrl = false, meta = false } = {}) => {
     const codes = {
       Tab: 9, Enter: 13, Escape: 27, " ": 32, PageDown: 34, End: 35, Home: 36,
-      ArrowLeft: 37, ArrowRight: 39, ArrowDown: 40,
+      ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, k: 75,
     };
     const base = {
       key,
-      code: key === " " ? "Space" : key,
+      code: key === " " ? "Space" : key.length === 1 ? `Key${key.toUpperCase()}` : key,
       windowsVirtualKeyCode: codes[key] ?? 0,
-      modifiers: shift ? 8 : 0,
+      modifiers: (ctrl ? 2 : 0) | (meta ? 4 : 0) | (shift ? 8 : 0),
     };
     const text = key === "Enter" ? "\r" : key === " " ? " " : undefined;
     await call("Input.dispatchKeyEvent", { type: text ? "keyDown" : "rawKeyDown", ...base, text });

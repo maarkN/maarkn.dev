@@ -1,7 +1,8 @@
 /**
- * The old one-page home had `#about`, `#projects` and `#contact` sections,
- * and those anchors still live in profiles and e-mails. The terminal turns
- * them into the matching command so the link keeps landing somewhere useful.
+ * The old one-page home had `#about`, `#projects` and `#contact` sections.
+ * The terminal turns them into the matching command, so a link that carries one
+ * lands somewhere useful here too. The site's own anchors are the home's
+ * sections, not these.
  */
 const ANCHORS: Readonly<Record<string, string>> = {
   about: "whoami",

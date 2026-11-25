@@ -1,7 +1,7 @@
 /**
  * Casos do tema do site em scripts/e2e-site.mjs: o script de tema roda antes
- * da primeira pintura e não conversa com a paleta da Versão CLI. Medidos na
- * home, que hoje é a Versão CLI: o atributo do site é escrito em toda rota.
+ * da primeira pintura e não conversa com a paleta da Versão CLI. O tema se
+ * mede na home; a paleta e as fontes da Versão CLI, no endereço dela.
  */
 
 /**
@@ -111,7 +111,7 @@ export const themeCases = [
             'if (value === "classic" &&',
           ),
       );
-      await page.open("/en");
+      await page.open("/en/terminal");
       await themeAtFirstPaint(page, t, "classic");
     },
   },
@@ -123,14 +123,17 @@ export const themeCases = [
       await page.evaluate(`localStorage.setItem("maarkn-site-theme", "light")`);
       await page.open("/en");
       t.equal(await page.evaluate(attr("data-site-theme")), "light", "o site em claro suave");
+      await page.open("/en/terminal");
 
       await command(page, "theme classic");
       await page.waitFor(`${attr("data-theme")} === "classic"`, "a paleta trocar", 5000);
       t.equal(await page.evaluate(attr("data-site-theme")), "light", "o site continua em claro suave");
 
-      await page.open("/en");
+      await page.open("/en/terminal");
       t.equal(await page.evaluate(attr("data-theme")), "classic", "a Versão CLI volta em classic");
+      await page.open("/en");
       t.equal(await page.evaluate(attr("data-site-theme")), "light", "e o site em claro suave");
+      await page.open("/en/terminal");
 
       await command(page, "font daddytime");
       await page.waitFor(`${attr("data-font")} === "daddytime"`, "a fonte trocar", 5000);
@@ -144,8 +147,11 @@ export const themeCases = [
       const off = page.on("Network.requestWillBeSent", ({ request }) => {
         if (/\.(woff2?|otf|ttf)(\?|$)/.test(request.url)) fonts.push(request.url.split("/").pop());
       });
-      await page.open("/en");
+      await page.open("/en/terminal");
       await page.waitFor(`document.fonts.status === "loaded"`, "as fontes", 5000);
+      /* O que os links à vista buscariam por antecipação também conta. */
+      await page.waitFor(`!document.querySelector("[data-boot]")`, "o boot terminar");
+      await new Promise((r) => setTimeout(r, 1500));
       off();
       t.ok(fonts.length > 0, "há fonte baixada");
       t.equal(
@@ -153,6 +159,21 @@ export const themeCases = [
         [],
         "só a fonte padrão da Versão CLI",
       );
+    },
+  },
+  {
+    name: "theme:o site não baixa a fonte alternativa da Versão CLI",
+    run: async (page, t) => {
+      await page.beforeLoad(save({ "maarkn-font": "daddytime" }));
+      const fonts = [];
+      const off = page.on("Network.requestWillBeSent", ({ request }) => {
+        if (/\.(woff2?|otf|ttf)(\?|$)/.test(request.url)) fonts.push(request.url.split("/").pop());
+      });
+      await page.open("/en");
+      await page.waitFor(`document.fonts.status === "loaded"`, "as fontes", 5000);
+      off();
+      t.equal(await page.evaluate(attr("data-font")), "daddytime", "a fonte escolhida na Versão CLI");
+      t.equal(fonts.filter((name) => /daddy/i.test(name)), [], "a home não a baixa");
     },
   },
 ];

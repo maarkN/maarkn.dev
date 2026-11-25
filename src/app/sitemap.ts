@@ -9,7 +9,7 @@ import { timeline } from "@/lib/timeline";
 /*
  * Every public route in both locales with hreflang alternates: home, the four
  * listings, each project case, each career entry and each post. `/chat` is a
- * redirect to the terminal and stays out. Projects come from the same
+ * redirect and the CLI version repeats what the pages say: both stay out. Projects come from the same
  * DB-first loader as the pages (`getAllProjects` replaces the static list
  * once the admin has rows, so listing and sitemap always agree); career is
  * the static timeline; posts come from Ghost through the same cached loader

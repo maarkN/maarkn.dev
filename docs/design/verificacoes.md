@@ -52,6 +52,30 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 35. Trocar a paleta ou a fonte da Versão CLI não altera o tema do site.
 36. A Versão CLI não baixa as fontes do site.
 
+**Estrutura do site**
+
+49. Marca, páginas, busca, idioma, tema, Versão CLI e contato no topo (páginas no menu da base abaixo de 1.180 px, entalhe a partir de 1.280 px), sem rolagem horizontal, nos três temas.
+50. A página atual aparece como atual, também na árvore de acessibilidade.
+51. Tab percorre o topo na ordem em que se vê, com o foco à vista e sem rolar a página; o skip link leva ao conteúdo; o menu da base abre, fecha com `Esc` e devolve o foco.
+52. Com movimento reduzido nada anima no topo, na busca nem na troca de página.
+53. Sem JavaScript, as páginas, o idioma e a Versão CLI são links que funcionam, e o que não responderia não aparece.
+54. No toque, todo alvo do topo, do menu e do rodapé tem 44 px, e nenhum invade outro.
+55. Todo texto do topo, do menu, da busca, do rodapé e da abertura atinge 4.5:1 contra os pixels atrás dele, e o axe não acha violação, nos três temas.
+56. A busca só é baixada ao abrir; acha por tecnologia, sem acento e em maiúsculas; funciona só com o teclado; sem resultado, leva a frase à assistente fora do endereço; escolher onde já se está leva ao topo da página, ou à seção.
+57. O idioma leva à página equivalente, com o filtro, vale na próxima visita e não altera a paleta nem a fonte da Versão CLI.
+58. Ao trocar de página o foco vai ao título, ou à seção pedida, com uma transição por troca; uma carga não anima; sem suporte a transições tudo funciona. Um link abre a página no topo, com o título à vista, por pouco que a anterior estivesse rolada; voltar e avançar pelo navegador trazem cada uma onde estava; um link para onde já se está leva ao topo dela, ou à seção, outra vez.
+59. Voltar à home restaura a rolagem pelo navegador, pela marca, pelo menu da base e pela Versão CLI.
+66. `/career#<slug>` para com a experiência à vista, abaixo do topo e da barra da página, na carga e ao trocar de âncora.
+
+**Versão CLI**
+
+60. Em `/[lang]/terminal`, com endereço canônico e hreflang próprios, indexável e fora do sitemap; a home não exibe o terminal; idioma desconhecido responde 404.
+61. `/[lang]?cmd=…` leva à Versão CLI com o mesmo comando; entrada inválida não executa nada.
+62. Executar, navegar e voltar reconstrói a tela e o histórico.
+63. Sem JavaScript, os links estão visíveis e nada os cobre.
+64. axe sem violação nas paletas `soft` e `classic`.
+65. Ida e volta pelo topo, pela busca e pelo rodapé chega à página em que o visitante estava; trocar de idioma lá muda o idioma da volta.
+
 **Referência do holograma** (`--holo`, com `HOLO_REFERENCE=1 pnpm build`)
 
 37. Cada estado responde em até 100 ms e se distingue dos outros sem a cor do traço.

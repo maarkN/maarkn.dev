@@ -6,24 +6,29 @@ import { HoloFrame } from "./frame";
 import { textOf } from "./text";
 import styles from "./holo.module.css";
 
+type Shape = {
+  size?: HoloSize;
+  variant?: HoloVariant;
+  seed?: string;
+  disabled?: boolean;
+  /** Square, with an icon and no visible text: `aria-label` is then mandatory. */
+  icon?: boolean;
+};
+
 /** A framed link: looks and answers like the button. `disabled` takes the target away. */
 export function HoloLink({
   size,
   variant,
   seed,
   disabled = false,
+  icon,
   className,
   children,
   href,
   ...props
-}: ComponentProps<typeof Link> & {
-  size?: HoloSize;
-  variant?: HoloVariant;
-  seed?: string;
-  disabled?: boolean;
-}) {
-  const shared = { "data-holo": "", className: controlClass({ size, variant, className }) };
-  const frame = <HoloFrame seed={seed ?? textOf(children)} />;
+}: ComponentProps<typeof Link> & Shape) {
+  const shared = { "data-holo": "", className: controlClass({ size, variant, icon, className }) };
+  const frame = <HoloFrame seed={seed ?? (textOf(children) || String(props["aria-label"] ?? ""))} />;
   if (disabled) {
     return (
       <a {...shared} role="link" aria-disabled="true">
@@ -37,6 +42,24 @@ export function HoloLink({
       {frame}
       <span className={styles.label}>{children}</span>
     </Link>
+  );
+}
+
+/** The same, for what is not a client navigation: a file, or another document of this site. */
+export function HoloAnchor({
+  size,
+  variant,
+  seed,
+  icon,
+  className,
+  children,
+  ...props
+}: ComponentProps<"a"> & Omit<Shape, "disabled">) {
+  return (
+    <a {...props} data-holo="" className={controlClass({ size, variant, icon, className })}>
+      <HoloFrame seed={seed ?? (textOf(children) || String(props["aria-label"] ?? ""))} />
+      <span className={styles.label}>{children}</span>
+    </a>
   );
 }
 

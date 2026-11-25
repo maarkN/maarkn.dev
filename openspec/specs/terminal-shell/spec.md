@@ -7,7 +7,7 @@ Descreve a estrutura visual e o comportamento básico de interação do terminal
 ## Requirements
 
 ### Requirement: Barra de status
-O terminal SHALL exibir uma barra superior contendo, nesta ordem: identificador `maarkn@dev`, título curto do perfil, controle de paleta mostrando o valor atual, controle de fonte mostrando o valor atual e um relógio `HH:mm` do fuso do visitante. O relógio MUST atualizar a cada minuto sem recarregar a página.
+O terminal SHALL exibir uma barra superior contendo, nesta ordem: identificador `maarkn@dev`, título curto do perfil, link de volta ao site, controle de paleta mostrando o valor atual, controle de fonte mostrando o valor atual e um relógio `HH:mm` do fuso do visitante. O relógio MUST atualizar a cada minuto sem recarregar a página.
 
 #### Scenario: Controles refletem o estado
 - **WHEN** o visitante ativa o controle de paleta

@@ -116,8 +116,10 @@ export function A({
   const label = children ?? href.replace(/^https?:\/\//i, "");
 
   if (href.startsWith("/") && !external) {
+    // Not prefetched: from the CLI version every one of these leads to the site,
+    // and a prefetch would download the site's fonts (site-fonts.ts).
     return (
-      <Link href={href} className={className}>
+      <Link href={href} prefetch={false} className={className}>
         {label}
       </Link>
     );

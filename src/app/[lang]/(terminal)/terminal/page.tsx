@@ -2,30 +2,37 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale, defaultLocale } from "@/i18n/config";
 import { routeAlternates } from "@/lib/seo";
+import { TERMINAL_SEGMENT } from "@/lib/terminal/address";
 import { loadTerminalData } from "@/lib/terminal/data";
 import { initialOutput } from "@/components/terminal/initial-output";
 import { Motd } from "@/components/terminal/motd";
 import { TerminalApp } from "@/components/terminal/terminal-app";
 
-// ISR: prerender the home and revalidate hourly instead of server-rendering on
+// ISR: prerender the page and revalidate hourly instead of server-rendering on
 // every request. The data loaders fall back to static content when the DB or
 // the CMS is unavailable (e.g. at build time), so prerendering is safe.
 export const revalidate = 3600;
 
-export async function generateMetadata({ params }: PageProps<"/[lang]">): Promise<Metadata> {
+/** Indexable, with an address of its own, and out of the sitemap (docs/design/site.md). */
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]/terminal">): Promise<Metadata> {
   const { lang } = await params;
   const l = hasLocale(lang) ? lang : defaultLocale;
+  const { title, description } = (await getDictionary(l)).terminal.meta;
   return {
-    alternates: routeAlternates(l),
+    title,
+    description,
+    alternates: routeAlternates(l, `/${TERMINAL_SEGMENT}`),
   };
 }
 
 /**
- * The home is the terminal. The HTML already carries the MOTD, the `whoami`
- * output and a sitemap line, so crawlers and visitors without JavaScript get
- * the bio and every link; the shell adopts those lines when it hydrates.
+ * The CLI version. The HTML already carries the MOTD, the `whoami` output and
+ * a sitemap line, so crawlers and visitors without JavaScript get the bio and
+ * every link; the shell adopts those lines when it hydrates.
  */
-export default async function HomePage({ params }: PageProps<"/[lang]">) {
+export default async function TerminalPage({ params }: PageProps<"/[lang]/terminal">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 

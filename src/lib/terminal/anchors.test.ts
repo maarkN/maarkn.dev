@@ -12,10 +12,10 @@ describe("old anchors", () => {
   });
 
   it("rewrites the URL to ?cmd= without the hash", () => {
-    expect(anchorRedirect("https://maarkn.dev/en#contact")).toBe("/en?cmd=contact");
-    expect(anchorRedirect("https://maarkn.dev/pt-BR#about")).toBe("/pt-BR?cmd=whoami");
-    expect(anchorRedirect("https://maarkn.dev/en?cmd=skills#contact")).toBe("/en?cmd=skills");
-    expect(anchorRedirect("https://maarkn.dev/en#other")).toBeNull();
-    expect(anchorRedirect("https://maarkn.dev/en")).toBeNull();
+    expect(anchorRedirect("https://maarkn.dev/en/terminal#contact")).toBe("/en/terminal?cmd=contact");
+    expect(anchorRedirect("https://maarkn.dev/pt-BR/terminal#about")).toBe("/pt-BR/terminal?cmd=whoami");
+    expect(anchorRedirect("https://maarkn.dev/en/terminal?cmd=skills#contact")).toBe("/en/terminal?cmd=skills");
+    expect(anchorRedirect("https://maarkn.dev/en/terminal#other")).toBeNull();
+    expect(anchorRedirect("https://maarkn.dev/en/terminal")).toBeNull();
   });
 });

@@ -110,7 +110,7 @@ export function TerminalShell({
     inputRef.current?.focus({ preventScroll: true });
   }, [boot.interactive, inputRef]);
 
-  // So an inner page opened from here knows it was navigated to (focus → h1).
+  // So a page of the site opened from here knows it was navigated to (focus → h1).
   const pathname = usePathname();
   useEffect(() => {
     rememberRoute(pathname);
@@ -137,6 +137,7 @@ export function TerminalShell({
         <StatusBar
           labels={labels.bar}
           locale={locale}
+          withSite
           onLang={() => run("lang")}
           onActivate={focusPrompt}
         />

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { terminalHref } from "@/lib/terminal/address";
 
 const SUPPORTED = ["en", "pt-BR"] as const;
 const DEFAULT = "en";
@@ -13,16 +14,25 @@ function pickLocale(request: NextRequest): string {
   return DEFAULT;
 }
 
+/**
+ * Two redirects, both temporary and both with the same query string:
+ * a path without a locale gets one, and a home that carries `?cmd=` (the
+ * CLI version used to live there) goes to the CLI version, whatever the
+ * value is: the terminal is the one that decides what may run.
+ */
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
 
-  const hasLocale = SUPPORTED.some(
+  const prefixed = SUPPORTED.find(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );
-  if (hasLocale) return;
+  const home = prefixed ? pathname === `/${prefixed}` : pathname === "/";
+  const command = home && searchParams.has("cmd");
+  if (prefixed && !command) return;
 
-  const locale = pickLocale(request);
-  request.nextUrl.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
+  const locale = prefixed ?? pickLocale(request);
+  if (command) request.nextUrl.pathname = terminalHref(locale);
+  else request.nextUrl.pathname = `/${locale}${home ? "" : pathname}`;
   return NextResponse.redirect(request.nextUrl);
 }
 

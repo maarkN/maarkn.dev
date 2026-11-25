@@ -1,5 +1,7 @@
 /**
- * `?cmd=` deep-links: `/{lang}?cmd=projects`, `/{lang}?cmd=whoami;skills`.
+ * `?cmd=` deep-links: `/{lang}/terminal?cmd=projects`,
+ * `/{lang}/terminal?cmd=whoami;skills`; the ones that still point at the home
+ * are redirected here by src/proxy.ts.
  * The value is untrusted URL input, so it is whittled down to what a visitor
  * could have typed anyway: registered names only, plain arguments, a short
  * length — anything else is dropped silently and the terminal opens as usual.

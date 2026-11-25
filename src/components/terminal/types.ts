@@ -40,6 +40,8 @@ export type TerminalLabels = {
     fontTitle: string;
     lang: string;
     langTitle: string;
+    /** The way back to the site, on the CLI version only. */
+    site: string;
   };
   menu: {
     title: string;
@@ -68,7 +70,6 @@ export type TerminalLabels = {
   /** Screen-reader-only labels (skip links, output regions, breadcrumb). */
   a11y: {
     skipToPrompt: string;
-    skipToContent: string;
     /** `output of {cmd}` — accessible name of each command's output block. */
     outputOf: string;
     breadcrumb: string;

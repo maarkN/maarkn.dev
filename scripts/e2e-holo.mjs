@@ -835,7 +835,7 @@ async function reflow(page, t) {
   t.equal(page.errors, [], "nenhum erro no console");
 }
 
-function axeSource() {
+export function axeSource() {
   const store = new URL("../node_modules/.pnpm/", import.meta.url);
   const dir = existsSync(store) && readdirSync(store).find((d) => d.startsWith("axe-core@"));
   if (!dir) throw new Error("axe-core não encontrado em node_modules/.pnpm");
@@ -874,9 +874,20 @@ async function axe(page, t) {
 const readInks = (scope) => `(() => {
   const root = ${$(scope)};
   const found = [];
+  /* O que uma lista que rola não está mostrando não está à vista. */
+  const clipped = (el, r) => {
+    let { left, top, right, bottom } = r;
+    for (let box = el.parentElement; box && box !== document.body; box = box.parentElement) {
+      if (getComputedStyle(box).overflowY === "visible") continue;
+      const b = box.getBoundingClientRect();
+      [left, top, right, bottom] = [Math.max(left, b.left), Math.max(top, b.top), Math.min(right, b.right), Math.min(bottom, b.bottom)];
+    }
+    return { left, top, width: right - left, height: bottom - top };
+  };
   const add = (el, label, color, rects, min) => {
     if (el.closest(':disabled, [aria-disabled="true"], [data-disabled], dialog:not([open])')) return;
-    for (const r of rects) {
+    for (const rect of rects) {
+      const r = clipped(el, rect);
       if (r.width < 2 || r.height < 2) continue;
       found.push({ label: label.trim().slice(0, 40), color, min, x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height });
     }
@@ -906,62 +917,66 @@ const readInks = (scope) => `(() => {
   return found;
 })()`;
 
+/* Também o que cerca um texto sem ficar atrás dele: sublinhado, anel e alça. */
+const HIDE = `
+  * { -webkit-text-fill-color: transparent !important; text-shadow: none !important; caret-color: transparent !important }
+  a:not([data-holo]) { background-image: none !important; outline-color: transparent !important }
+  textarea { resize: none !important }
+  svg.lucide, [role="switch"] [data-holo] > span:last-child { visibility: hidden !important }
+`;
+
 /**
  * Cada texto contra os pixels que estão atrás dele, um a um: a linha de
  * varredura e a luz do ponteiro entram na conta, o que o axe não faz. Os textos
- * são lidos, escondidos, e o que sobra na captura é o fundo.
+ * são lidos, escondidos, e o que sobra na captura é o fundo. `full` captura a
+ * página inteira; o que é fixo na tela só se mede sem ele, ou sairia do lugar.
  */
-async function contrast(page, t) {
-  /* Também o que cerca um texto sem ficar atrás dele: sublinhado, anel e alça. */
-  const HIDE = `
-    * { -webkit-text-fill-color: transparent !important; text-shadow: none !important; caret-color: transparent !important }
-    a:not([data-holo]) { background-image: none !important; outline-color: transparent !important }
-    textarea { resize: none !important }
-    svg.lucide, [role="switch"] [data-holo] > span:last-child { visibility: hidden !important }
-  `;
-  const measure = async (label, scope, atLeast) => {
-    const inks = await page.evaluate(readInks(scope));
-    await page.evaluate(`document.head.append(Object.assign(document.createElement("style"), { id: "hide", textContent: ${JSON.stringify(HIDE)} }))`);
-    const { width, height } = await page.evaluate(`({ width: document.documentElement.clientWidth, height: document.documentElement.scrollHeight })`);
-    /* A janela é fixa na tela: capturar além dela a moveria. */
-    const view = await page.evaluate(`({ x: scrollX, y: scrollY, width: innerWidth, height: innerHeight })`);
-    const full = scope === "main";
-    const clip = full ? { x: 0, y: 0, width, height } : view;
-    const png = await page.screenshot({ full, clip });
-    await page.evaluate(`document.getElementById("hide").remove()`);
-    const low = await page.evaluate(`(async () => {
-      const img = await createImageBitmap(await (await fetch("data:image/png;base64,${png.toString("base64")}")).blob());
-      const g = new OffscreenCanvas(img.width, img.height).getContext("2d", { willReadFrequently: true });
-      g.drawImage(img, 0, 0);
-      const linear = (c) => ((c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-      const light = ([r, g, b]) => 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
-      const measured = [];
-      for (const ink of ${JSON.stringify(inks)}) {
-        const x0 = Math.max(0, Math.ceil(ink.x - ${clip.x})), y0 = Math.max(0, Math.ceil(ink.y - ${clip.y}));
-        const x1 = Math.min(img.width, Math.floor(ink.x - ${clip.x} + ink.w)), y1 = Math.min(img.height, Math.floor(ink.y - ${clip.y} + ink.h));
-        if (x1 <= x0 || y1 <= y0) continue;
-        const { data } = g.getImageData(x0, y0, x1 - x0, y1 - y0);
-        const text = light(ink.color.match(/[\\d.]+/g).map(Number));
-        let worst = 21;
-        const seen = new Set();
-        for (let i = 0; i < data.length; i += 4) {
-          const key = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
-          if (seen.has(key)) continue;
-          seen.add(key);
-          const under = light([data[i], data[i + 1], data[i + 2]]);
-          worst = Math.min(worst, (Math.max(text, under) + 0.05) / (Math.min(text, under) + 0.05));
-        }
-        measured.push({ ...ink, worst });
+export async function measureContrast(page, t, label, scope, atLeast, { full = false } = {}) {
+  const inks = await page.evaluate(readInks(scope));
+  await page.evaluate(`document.head.append(Object.assign(document.createElement("style"), { id: "hide", textContent: ${JSON.stringify(HIDE)} }))`);
+  const { width, height } = await page.evaluate(`({ width: document.documentElement.clientWidth, height: document.documentElement.scrollHeight })`);
+  const view = await page.evaluate(`({ x: scrollX, y: scrollY, width: innerWidth, height: innerHeight })`);
+  const clip = full ? { x: 0, y: 0, width, height } : view;
+  const png = await page.screenshot({ full, clip });
+  await page.evaluate(`document.getElementById("hide").remove()`);
+  const low = await page.evaluate(`(async () => {
+    const img = await createImageBitmap(await (await fetch("data:image/png;base64,${png.toString("base64")}")).blob());
+    const g = new OffscreenCanvas(img.width, img.height).getContext("2d", { willReadFrequently: true });
+    g.drawImage(img, 0, 0);
+    const linear = (c) => ((c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    const light = ([r, g, b]) => 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+    const measured = [];
+    for (const ink of ${JSON.stringify(inks)}) {
+      const x0 = Math.max(0, Math.ceil(ink.x - ${clip.x})), y0 = Math.max(0, Math.ceil(ink.y - ${clip.y}));
+      const x1 = Math.min(img.width, Math.floor(ink.x - ${clip.x} + ink.w)), y1 = Math.min(img.height, Math.floor(ink.y - ${clip.y} + ink.h));
+      if (x1 <= x0 || y1 <= y0) continue;
+      const { data } = g.getImageData(x0, y0, x1 - x0, y1 - y0);
+      const text = light(ink.color.match(/[\\d.]+/g).map(Number));
+      let worst = 21;
+      const seen = new Set();
+      for (let i = 0; i < data.length; i += 4) {
+        const key = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const under = light([data[i], data[i + 1], data[i + 2]]);
+        worst = Math.min(worst, (Math.max(text, under) + 0.05) / (Math.min(text, under) + 0.05));
       }
-      return measured.map(({ label, color, worst, min }) => ({ label, color, worst, min }));
-    })()`);
-    t.ok(low.length >= atLeast, `${label}: há o que medir`, `${low.length}`);
-    t.equal(
-      low.filter(({ worst, min }) => worst < min).map(({ label, color, worst }) => `${label} (${color}) ${worst.toFixed(2)}`),
-      [],
-      `${label}: todo texto atinge 4.5:1, e todo ícone 3:1`,
-    );
-  };
+      measured.push({ ...ink, worst });
+    }
+    return measured.map(({ label, color, worst, min }) => ({ label, color, worst, min }));
+  })()`);
+  t.ok(low.length >= atLeast, `${label}: há o que medir`, `${low.length}`);
+  t.equal(
+    low.filter(({ worst, min }) => worst < min).map(({ label, color, worst }) => `${label} (${color}) ${worst.toFixed(2)}`),
+    [],
+    `${label}: todo texto atinge 4.5:1, e todo ícone 3:1`,
+  );
+}
+
+/** Os textos da página, do card com a luz e da janela, nos três temas. */
+async function contrast(page, t) {
+  const measure = (label, scope, atLeast) =>
+    measureContrast(page, t, label, scope, atLeast, { full: scope === "main" });
 
   for (const theme of THEMES) {
     await openPage(page, { theme });

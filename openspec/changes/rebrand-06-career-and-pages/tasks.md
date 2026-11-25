@@ -13,6 +13,7 @@
 
 - [ ] 3.1 Página com fatos, entregas, experiências e casos, a partir das fontes; copiar em texto puro com aviso de falha; testes
 - [ ] 3.2 Versão para impressão; verificar em PDF, uma página
+- [ ] 3.3 "Resumo em 1 min" no topo, no menu, na busca e na abertura da home (`src/lib/site/pages.ts`); teste
 
 ## 4. Notas e links
 

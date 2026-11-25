@@ -505,6 +505,10 @@
     }
   },
   "terminal": {
+    "meta": {
+      "title": "Versão CLI",
+      "description": "O portfólio de Marco Filho como um terminal: digite um comando para ler sobre a carreira, os projetos e a stack, ou pergunte à assistente."
+    },
     "bar": {
       "title": "engenheiro sênior de ia/llm & backend · 6a",
       "theme": "tema",
@@ -512,7 +516,8 @@
       "themeTitle": "trocar paleta",
       "fontTitle": "trocar fonte",
       "lang": "idioma",
-      "langTitle": "trocar idioma"
+      "langTitle": "trocar idioma",
+      "site": "voltar ao site"
     },
     "menu": {
       "title": "comandos",
@@ -768,9 +773,166 @@
     },
     "a11y": {
       "skipToPrompt": "pular para a linha de comando",
-      "skipToContent": "pular para o conteúdo",
       "outputOf": "saída de {cmd}",
       "breadcrumb": "caminho"
+    }
+  },
+  "site": {
+    "skip": "Pular para o conteúdo",
+    "brand": "maarkn.dev, início",
+    "pagesLabel": "Páginas",
+    "pages": {
+      "home": "Início",
+      "career": "Carreira",
+      "projects": "Projetos",
+      "blog": "Notas",
+      "links": "Links"
+    },
+    "sections": {
+      "contact": "Contato"
+    },
+    "contact": "Falar comigo",
+    "cli": "Versão CLI",
+    "language": {
+      "names": {
+        "en": "English",
+        "pt-BR": "Português"
+      },
+      "switch": {
+        "en": "EN: mudar para inglês",
+        "pt-BR": "PT: mudar para português"
+      }
+    },
+    "theme": {
+      "label": "Tema",
+      "names": {
+        "dusk": "Escuro suave",
+        "light": "Claro suave",
+        "dracula": "Dracula"
+      },
+      "next": "Tema: {current}. Trocar para {next}"
+    },
+    "status": {
+      "available": "aberto a vagas sênior",
+      "clock": "Goiânia {time} UTC−3"
+    },
+    "menu": "Menu",
+    "search": {
+      "open": "Buscar",
+      "title": "Buscar no site",
+      "label": "Uma página, um projeto, uma empresa ou uma tecnologia",
+      "close": "Fechar a busca",
+      "results": "Resultados",
+      "count": {
+        "one": "1 resultado",
+        "many": "{count} resultados"
+      },
+      "none": "Nada aqui corresponde a “{query}”.",
+      "ask": "Perguntar à assistente: “{query}”",
+      "loading": "Carregando o índice…",
+      "failed": "O índice da busca não carregou.",
+      "retry": "Tentar de novo",
+      "kinds": {
+        "section": "Seção",
+        "page": "Página",
+        "cli": "CLI",
+        "project": "Projeto",
+        "experience": "Experiência",
+        "theme": "Tema",
+        "language": "Idioma",
+        "cv": "PDF"
+      },
+      "terms": {
+        "pages": {
+          "home": [
+            "home",
+            "Marco Filho",
+            "maarkn"
+          ],
+          "career": [
+            "experiência",
+            "trabalhos",
+            "empresas"
+          ],
+          "projects": [
+            "portfólio",
+            "trabalhos",
+            "produtos"
+          ],
+          "blog": [
+            "blog",
+            "posts",
+            "artigos",
+            "textos"
+          ],
+          "links": [
+            "LinkedIn",
+            "GitHub",
+            "Instagram",
+            "WhatsApp",
+            "e-mail"
+          ]
+        },
+        "sections": {
+          "contact": [
+            "falar",
+            "contratar",
+            "e-mail",
+            "WhatsApp",
+            "mensagem"
+          ]
+        },
+        "cli": [
+          "terminal",
+          "linha de comando",
+          "prompt",
+          "console"
+        ],
+        "themes": {
+          "dusk": [
+            "tema",
+            "cor",
+            "noturno"
+          ],
+          "light": [
+            "tema",
+            "cor",
+            "branco"
+          ],
+          "dracula": [
+            "tema",
+            "cor",
+            "escuro"
+          ]
+        },
+        "languages": {
+          "en": [
+            "idioma",
+            "língua",
+            "inglês"
+          ],
+          "pt-BR": [
+            "idioma",
+            "língua",
+            "português"
+          ]
+        },
+        "cv": [
+          "CV",
+          "currículo",
+          "PDF",
+          "baixar"
+        ]
+      }
+    },
+    "footer": {
+      "label": "Site",
+      "contact": "Leio todas as mensagens e respondo em uns dois dias úteis."
+    },
+    "opening": {
+      "title": "Do briefing vago ao produto no ar.",
+      "available": "aberto a vagas sênior, remoto ou com mudança",
+      "numbers": "Em números"
     }
   }
 }

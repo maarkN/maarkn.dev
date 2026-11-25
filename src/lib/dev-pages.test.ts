@@ -12,7 +12,7 @@ function routes(extensions: string[]): string[] {
 describe("internal pages", () => {
   it("are not routes of a production build", () => {
     const production = routes(pageExtensions({ NODE_ENV: "production" }));
-    expect(production).toContain("[lang]/(terminal)/page.tsx");
+    expect(production).toContain("[lang]/(site)/page.tsx");
     expect(production.filter((file) => file.includes(".dev."))).toEqual([]);
     expect(production.filter((file) => file.includes("holo"))).toEqual([]);
   });

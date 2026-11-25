@@ -3,8 +3,8 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Wall clock for the status bars: `--:--` on the server, `HH:mm` in the
- * visitor's zone on the client. Lives apart from `status-bar.tsx` because the
+ * Wall clock for the status bars and the site's notch: `--:--` on the server,
+ * `HH:mm` on the client, in the visitor's zone unless another one is asked for. Lives apart from `status-bar.tsx` because the
  * admin bar (`@/components/admin/terminal/admin-status-bar`) needs the same
  * clock without the theme controls — and must not pull `theme-provider` into
  * an `/admin/**` chunk.
@@ -13,8 +13,8 @@ import { useSyncExternalStore } from "react";
 const SERVER_TIME = "--:--";
 const MINUTE = 60_000;
 
-const readTime = () =>
-  new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+const readTime = (timeZone?: string) =>
+  new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone });
 
 function subscribe(onChange: () => void) {
   let interval: number | undefined;
@@ -36,6 +36,6 @@ function subscribe(onChange: () => void) {
   };
 }
 
-export function useClock() {
-  return useSyncExternalStore(subscribe, readTime, () => SERVER_TIME);
+export function useClock(timeZone?: string) {
+  return useSyncExternalStore(subscribe, () => readTime(timeZone), () => SERVER_TIME);
 }

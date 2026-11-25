@@ -22,17 +22,18 @@ describe("locale helpers", () => {
   });
 
   it("swaps the locale prefix and keeps the query string", () => {
-    expect(localizedHref("/en", "?cmd=skills", "pt-BR")).toBe("/pt-BR?cmd=skills");
+    expect(localizedHref("/en/terminal", "?cmd=skills", "pt-BR")).toBe("/pt-BR/terminal?cmd=skills");
+    expect(localizedHref("/en", "", "pt-BR")).toBe("/pt-BR");
     expect(localizedHref("/pt-BR/blog/post", "", "en")).toBe("/en/blog/post");
     expect(localizedHref("/", "", "pt-BR")).toBe("/pt-BR");
     expect(localizedHref("/projects", "cat=ai", "en")).toBe("/en/projects?cat=ai");
   });
 
   it("switchLocale remembers the choice and moves to the same page under the other prefix", () => {
-    window.history.replaceState(null, "", "/en?cmd=skills");
+    window.history.replaceState(null, "", "/en/terminal?cmd=skills");
     const navigate = vi.fn();
     switchLocale("pt-BR", navigate);
-    expect(navigate).toHaveBeenCalledWith("/pt-BR?cmd=skills");
+    expect(navigate).toHaveBeenCalledWith("/pt-BR/terminal?cmd=skills");
     expect(document.cookie).toContain("locale=pt-BR");
   });
 });

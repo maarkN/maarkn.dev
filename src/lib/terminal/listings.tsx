@@ -90,7 +90,7 @@ export function experienceLines(
   { lang, readCase, anchors = true }: { lang: string; readCase: string; anchors?: boolean },
 ): ReactNode[] {
   return items.map((job) => (
-    <div key={job.slug} id={anchors ? job.slug : undefined} style={{ scrollMarginTop: 48 }}>
+    <div key={job.slug} id={anchors ? job.slug : undefined}>
       <Row width="w18" entry label={job.period}>
         <B>{job.role}</B> <D>· {job.company}</D>
         <br />

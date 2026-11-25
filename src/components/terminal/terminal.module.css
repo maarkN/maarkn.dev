@@ -83,6 +83,13 @@
   flex: none;
   font: inherit;
 }
+.barLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1ch;
+  text-decoration: none;
+}
 .barBtn b {
   font-weight: 400;
   color: var(--cyan);
@@ -570,8 +577,15 @@
   .barClockPath {
     display: none;
   }
+  /* The way back to the site needs room for a finger: the name gives way. */
   .barUser {
-    padding: 0 10px;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    padding: 0 8px;
+  }
+  .bar {
+    padding-right: 4px;
   }
 }
 
