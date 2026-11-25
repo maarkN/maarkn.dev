@@ -421,6 +421,9 @@ try {
   await call("Page.enable");
   await call("Runtime.enable");
   await call("Network.enable");
+  /* O Tab que passa do fim leva o foco à barra do navegador, e a página seguinte
+     abre sem ele: um `focus()` não dispararia evento nenhum. */
+  await call("Emulation.setFocusEmulationEnabled", { enabled: true });
   /* O tema e o idioma são os de quem já escolheu: a mesma chave do site e o
      cookie do backoffice. */
   await call("Page.addScriptToEvaluateOnNewDocument", {
@@ -645,15 +648,9 @@ try {
       }
       opened = await evaluate(`document.querySelector(${JSON.stringify(OVERLAY_SELECTOR)}) !== null`, false);
     } else if (route.focus) {
-      /* Antes de o React assumir a página o foco não abre nada: tenta de novo. */
-      for (let i = 0; i < 6 && !opened; i++) {
-        await evaluate(
-          `(() => { const el = document.querySelector(${JSON.stringify(route.focus)}); el.blur(); el.focus(); return true; })()`,
-          false,
-        );
-        await sleep(500);
-        opened = await evaluate(`document.querySelector(${JSON.stringify(route.expect)}) !== null`, false);
-      }
+      await evaluate(`document.querySelector(${JSON.stringify(route.focus)}).focus()`, false);
+      await sleep(400);
+      opened = await evaluate(`document.querySelector(${JSON.stringify(route.expect)}) !== null`, false);
     } else if (route.openSelector) {
       opened = await evaluate(
         `(() => { const el = document.querySelector(${JSON.stringify(route.openSelector)});

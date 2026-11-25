@@ -239,6 +239,7 @@ async function themes(page, t) {
 
   await page.click(await visibleSelector(page, "[data-account]"));
   await page.waitFor(`${overlay} !== null`, "o menu da conta");
+  await sleep(250); // ele ainda está indo para o lugar
   for (const theme of ["dracula", "dusk", "light"]) {
     await page.click(`[data-theme-option=${theme}]`);
     await page.waitFor(`document.documentElement.dataset.siteTheme === ${js(theme)}`, theme);
@@ -320,6 +321,7 @@ async function languages(page, t) {
     await page.evaluate(`${shown("[data-account]")}.focus()`);
     await page.press("Enter");
     await page.waitFor(`${overlay} !== null`, "o menu da conta");
+    await sleep(250); // ele ainda está indo para o lugar
     await page.click(`[data-language-option=${js(option)}]`);
     await page.waitFor(`${lang} === ${js(option)}`, option);
     /* A lista chega depois da estrutura. */
@@ -441,7 +443,9 @@ async function keyboard(page, t, { width, height }) {
         const el = document.activeElement;
         if (el === document.body) return null;
         const r = el.getBoundingClientRect();
-        const [x, y] = [r.left + Math.min(r.width / 2, 60), r.top + r.height / 2];
+        /* Uma lista que rola é uma parada, e pode ser mais alta que a tela. */
+        const tall = r.height > innerHeight;
+        const [x, y] = [r.left + Math.min(r.width / 2, 60), tall ? Math.max(r.top + 4, 120) : r.top + r.height / 2];
         const hit = document.elementFromPoint(x, y);
         const s = getComputedStyle(el);
         const ring = [...el.querySelectorAll("svg path")].some((p) => { const c = getComputedStyle(p); return parseFloat(c.strokeWidth) >= 6 && parseFloat(c.opacity) > 0 });
@@ -450,7 +454,9 @@ async function keyboard(page, t, { width, height }) {
           name: (el.getAttribute("aria-label") || el.textContent).trim().replace(/\\s+/g, " ").slice(0, 40),
           where: el.closest("aside") ? "menu" : el.closest("header") ? "topo" : el.closest("main") ? "tela" : el.closest("nav") ? "barra" : "salto",
           seen: ring || outline || /inset|rgb/.test(s.boxShadow),
-          inside: r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= -1 && r.right <= innerWidth + 1,
+          inside: tall
+            ? r.top < innerHeight && r.bottom > 0
+            : r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= -1 && r.right <= innerWidth + 1,
           covered: hit !== el && !el.contains(hit) && !hit?.contains(el),
         };
       })()`);
