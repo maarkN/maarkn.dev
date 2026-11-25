@@ -49,6 +49,10 @@ describe("the backoffice in the three themes", () => {
 });
 
 describe("admin.css", () => {
+  it("writes the destructive button in `--bg`, as the requirement of the forms says (admin-theme)", () => {
+    expect([admin["--destructive"], admin["--destructive-foreground"]]).toEqual(["var(--bad)", "var(--bg)"]);
+  });
+
   it("takes every colour from a token of the site", () => {
     const own = new Set(Object.keys(admin));
     for (const [name, value] of Object.entries(admin)) {

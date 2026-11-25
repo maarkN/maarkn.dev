@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
@@ -9,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import type { AdminLocale } from "@/lib/admin/locale";
 import { NAV, NAV_ITEMS } from "@/lib/admin/nav";
 import { SITE_THEME_KEY } from "@/lib/site-theme";
+import { readBlocks } from "@/lib/site-tokens";
 import { shellLabels } from "./labels";
 import { Shell } from "./shell";
 import { initials } from "./account-menu";
@@ -462,6 +464,13 @@ describe("the whole", () => {
     pathname = "/admin/audit";
     render({ locale: "en" });
     expect([...$("aside nav").querySelectorAll("[aria-current]")].map(spoken)).toEqual(["Audit"]);
+  });
+
+  it("opens the primitives of the screens in their face, which is monospaced (admin-theme)", () => {
+    const blocks = readBlocks(readFileSync("src/components/admin/shell/shell.module.css", "utf8"));
+    for (const selector of [".menuPanel.menuPanel", ".tip"]) {
+      expect(blocks.find((block) => block.selector === selector)?.tokens["font-family"], selector).toBe("var(--font)");
+    }
   });
 
   it("gives everything that can be focused a name", () => {

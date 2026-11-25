@@ -272,8 +272,10 @@ span.entry.soon {
   white-space: normal;
 }
 
+/* The primitives of src/components/ui are in the monospaced face of the screens
+   until the change that redesigns them, the ones the shell opens too. */
 .tip {
-  font-family: var(--type-text);
+  font-family: var(--font);
   font-size: .8125rem;
 }
 
@@ -411,7 +413,7 @@ span.entry.soon {
   min-width: 236px;
   padding: 8px;
   border: 1px solid var(--ink-3);
-  font-family: var(--type-text);
+  font-family: var(--font);
 }
 .menuPanel [data-slot="dropdown-menu-label"] {
   font-size: .8125rem;

@@ -45,9 +45,10 @@ body.admin-root {
   --muted-foreground:     var(--ink-2);
 
   /* 4.90:1 (light, on `--sunk`). Not over its own tint: at 10% it is 4.22:1
-     there, so a tinted box writes in `--foreground`. */
+     there, so a tinted box writes in `--foreground`. On it, `--bg` is 4.56:1
+     (light, under the pointer: 90% of it over the sheet). */
   --destructive:          var(--bad);
-  --destructive-foreground: var(--on-beam);
+  --destructive-foreground: var(--bg);
 
   /* Decorative separators. */
   --border:               color-mix(in srgb, var(--ink-3) 35%, transparent);
