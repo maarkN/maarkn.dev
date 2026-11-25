@@ -2,7 +2,7 @@
 
 import { ExternalLink, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { logoutAction } from "@/app/_actions/auth";
 import { setAdminLocale } from "@/app/_actions/preferences";
@@ -51,10 +51,13 @@ export function AccountMenu({
 }) {
   const theme = useSiteTheme();
   const [, startTransition] = useTransition();
+  const [host, setHost] = useState<HTMLElement | null>(null);
   const mark = initials(email);
 
   return (
-    <DropdownMenu>
+    // Not modal: a modal one hides the rest of the page from screen readers with
+    // the skip link and the menu still focusable in it.
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <HoloIconButton
           size="md"
@@ -67,7 +70,9 @@ export function AccountMenu({
           {mark}
         </HoloIconButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side={side} align="end" sideOffset={10} className={styles.menuPanel}>
+      {/* In the landmark of its button, and not at the end of the page. */}
+      <div ref={setHost} className={styles.host} />
+      <DropdownMenuContent container={host} side={side} align="end" sideOffset={10} collisionPadding={16} className={styles.menuPanel}>
         <DropdownMenuLabel className={styles.menuEmail}>{email}</DropdownMenuLabel>
         <DropdownMenuSeparator />
 

@@ -46,11 +46,11 @@ The inner routes still wear the terminal chrome inside it (status bar with the p
 
 ### Admin
 
-`/admin` (no locale prefix) is a NextAuth-protected backoffice of 18 routes, pinned to the `soft` palette and always dark: a funnel dashboard, the application tracker as a list and as a board, the full dossier of an application, jobs, contacts, project CRUD with cover upload, a CV / cover-letter generator that draws on the knowledge base, MCP API keys and their audit log, the assistant's chat log, and settings. Sign in at `/admin/login`, drawn as a tty.
+`/admin` (no locale prefix) is a NextAuth-protected backoffice of 18 routes, in the three themes of the site and in two languages: a funnel overview, the application tracker as a list and as a board, the full dossier of an application, jobs, contacts, project CRUD with cover upload, a CV / cover-letter generator that draws on the knowledge base, MCP API keys and their audit log, the assistant's chat log, and settings. Sign in at `/admin/login`.
 
-It speaks the same visual language as the public terminal, which is a decision, not decoration: a tmux-style status bar, a directory tree, a breadcrumb written as the command that opened the screen, `cd ..` in the footer, listings painted as `ls` output (bracket tags like `[applied]`, a decorative `001` index column, monospaced columns measured in `ch`), field errors printed as `stderr:` and toasts as a single output line. It is **not** a terminal: there is no prompt to type into and no command engine — the screens stay forms and tables. Every colour value is derived from the Dracula palette in `src/app/admin/admin.css`, where each deviation carries its measured contrast ratio.
+One shell surrounds every screen: a menu in four groups that collapses to icons, a search (`⌘K` / `Ctrl+K`) over screens, applications and actions, a "Create" button and an account menu with theme and language; on a phone, a bar at the foot of the screen. The theme is the one chosen on the site and applied before the first paint. The language starts as the site's and is a cookie of its own, with no prefix in the address; dates follow it and a time zone that can be configured (São Paulo by default). Inside the shell the screens are still the previous ones, in Portuguese: listings painted as `ls` output, bracket tags like `[applied]`, field errors printed as `stderr:`. Every colour comes from the tokens of the active theme (`src/app/admin/admin.css`), and every pair is measured in the three.
 
-Accessibility is held to AA on the private surface too, and measured rather than assumed. `scripts/a11y-admin-axe.mjs` drives headless Chrome over all 18 routes plus the five overlays that only exist after a click (the `Sheet` stays out while it is mounted on no route; `A11Y_SHEET_PATH=` brings it back): axe-core by default, `--keyboard` for the focus walk (focus always visible, no focus trap escape, Escape returns focus to the trigger), `--motion` for `prefers-reduced-motion: reduce` (with `--motion no-preference` as the negative control), and `--width 390` for the narrow sweep. Lighthouse accessibility is 100 on `/admin/login` and `/admin/applications`. Because the shadcn token vocabulary only resolves inside `.admin-root`, `scripts/check-admin-utilities.ts` runs as part of `pnpm lint` and fails the build if one of those utilities leaks into the public site.
+Accessibility is held to AA on the private surface too, and measured rather than assumed. `scripts/a11y-admin-axe.mjs` drives headless Chrome over all 18 routes plus the overlays that only exist after a click (the `Sheet` stays out while it is mounted on no route; `A11Y_SHEET_PATH=` brings it back): axe-core by default, `--keyboard` for the focus walk (focus always visible, no focus trap escape, Escape returns focus to the trigger), `--motion` for `prefers-reduced-motion: reduce` (with `--motion no-preference` as the negative control), `--width 390` for the narrow sweep, `--theme` and `--lang`. `node scripts/e2e-site.mjs --admin` checks what surrounds the screens: access, theme before the first paint, language, menu, search, keyboard and phone. Because the shadcn token vocabulary only resolves inside `.admin-root`, `scripts/check-admin-utilities.ts` runs as part of `pnpm lint` and fails the build if one of those utilities leaks into the public site; `scripts/check-admin-colors.ts` fails it when a colour that is not the theme's gets in.
 
 ### SEO and performance
 
@@ -219,7 +219,7 @@ src/
 │   ├── site-theme.tsx              # site: theme state (the boot script of both is lib/theme-boot.ts)
 │   ├── site/                       # the site's chrome (top, search, foot, language, page change), see AGENTS.md
 │   ├── holo/                       # the hologram primitives (frame, button, card, dialog, …), see AGENTS.md
-│   ├── admin/                      # the backoffice: terminal chrome, listings, forms, dialogs, kanban
+│   ├── admin/                      # the backoffice: shell (menu, search, account), listings, forms, dialogs, kanban
 │   └── ui/                         # shadcn primitives — imported only from /admin (see check-admin-utilities)
 ├── lib/
 │   ├── terminal/
@@ -237,7 +237,7 @@ src/
 ├── i18n/config.ts
 └── proxy.ts                        # locale routing (Next 16's middleware)
 prisma/                             # schema, migrations, seed
-scripts/                            # check-dictionaries, check-admin-utilities, check-contrast (lint), ingest-knowledge,
+scripts/                            # check-dictionaries, check-admin-utilities, check-admin-colors, check-contrast (lint), ingest-knowledge,
                                     # check-commands-doc, a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + project dossiers for the assistant (gitignored)
 ```
@@ -251,7 +251,7 @@ knowledge/                          # CV + project dossiers for the assistant (g
 - No `innerHTML`: every output line is a React node, and everything a visitor types is displayed literally.
 - Content lives in `lib/` and the dictionaries; `lib/terminal` only formats it.
 - Animations respect `prefers-reduced-motion` on both surfaces, and the admin's are checked against a negative control (`node scripts/a11y-admin-axe.mjs --motion` / `--motion no-preference`).
-- The shadcn token vocabulary is admin-only; `pnpm lint` fails when it leaks into the public site.
+- The shadcn token vocabulary is admin-only, and the backoffice only uses the colours of the theme; `pnpm lint` fails otherwise.
 
 ---
 

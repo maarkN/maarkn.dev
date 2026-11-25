@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { HoloButton } from "@/components/holo/button";
 import {
   DropdownMenu,
@@ -16,15 +17,19 @@ import styles from "./shell.module.css";
 
 /** What can be created, from any screen. What cannot yet says so, and takes no focus. */
 export function CreateMenu({ labels, soon }: { labels: ShellLabels["create"]; soon: string }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <HoloButton size="sm" variant="primary" className={styles.create} data-create="">
           <Plus aria-hidden="true" />
           <span className={styles.createName}>{labels.label}</span>
         </HoloButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={10} className={styles.menuPanel}>
+      {/* In the landmark of its button, and not at the end of the page. */}
+      <div ref={setHost} className={styles.host} />
+      <DropdownMenuContent container={host} align="end" sideOffset={10} collisionPadding={16} className={styles.menuPanel}>
         {CREATE.map(({ key, href }) => {
           const Icon = CREATE_ICONS[key];
           return href ? (

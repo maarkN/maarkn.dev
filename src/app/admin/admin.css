@@ -289,6 +289,9 @@ body.admin-root {
   gap: 1ch;
   width: 100%;
   min-width: 0;
+  /* A régua é um texto de sessenta e quatro traços sem quebra, e o `grid` do
+     diálogo dava a ela a largura que pedia: o conteúdo passava da borda. */
+  contain: inline-size;
   /* Os três são `<h2>`, e o site escreve `h2` em outra fonte. */
   font-family: var(--font);
   font-stretch: 100%;

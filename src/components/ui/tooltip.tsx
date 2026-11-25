@@ -33,11 +33,15 @@ function TooltipTrigger({
 function TooltipContent({
   className,
   sideOffset = 0,
+  container,
   children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: React.ComponentProps<typeof TooltipPrimitive.Content> & {
+  /** Where the tip goes in the document; the end of `<body>` by default. */
+  container?: HTMLElement | null
+}) {
   return (
-    <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Portal container={container}>
       <TooltipPrimitive.Content
         data-slot="tooltip-content"
         sideOffset={sideOffset}

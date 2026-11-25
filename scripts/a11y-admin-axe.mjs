@@ -27,6 +27,8 @@
  *   pnpm dev                                       # 5050, com o Postgres de pé
  *   ADMIN_EMAIL=… ADMIN_PASSWORD=… node scripts/a11y-admin-axe.mjs
  *   … --width 390 --height 844                     # varredura estreita
+ *   … --theme dusk|light|dracula                   # padrão: dusk
+ *   … --lang pt-BR|en                              # padrão: pt-BR
  *   … --motion | --motion no-preference | --keyboard [--verbose]
  *   … --only applications | --json
  *
@@ -69,6 +71,8 @@ const flag = (name, fallback) => {
 const WIDTH = Number(flag("width", 1440));
 const HEIGHT = Number(flag("height", 900));
 const ONLY = flag("only", null);
+const THEME = flag("theme", "dusk");
+const LANG = flag("lang", "pt-BR");
 const TAB_LIMIT = Number(flag("tabs", 80));
 const AS_JSON = argv.includes("--json");
 const VERBOSE = argv.includes("--verbose");
@@ -169,6 +173,19 @@ const ROUTES = [
     path: "/admin/contacts",
     openSelector: 'button[aria-label^="Excluir "]',
   },
+  /* A estrutura. O gatilho que não está à vista nesta largura não conta: a barra
+     do celular e o menu lateral nunca aparecem juntos. */
+  { name: "overlay:criar", path: "/admin/jobs", openPointer: "[data-create]" },
+  { name: "overlay:conta", path: "/admin/jobs", openPointer: "[data-account]" },
+  { name: "overlay:busca", path: "/admin/jobs", openPointer: "[data-search]" },
+  { name: "overlay:mais", path: "/admin/jobs", openPointer: "[data-more]", only: () => WIDTH < 768 },
+  {
+    name: "menu:dica",
+    path: "/admin/jobs",
+    focus: 'aside a[href="/admin/contacts"]',
+    expect: '[data-slot="tooltip-content"]',
+    only: () => WIDTH >= 768 && WIDTH < 1360,
+  },
   {
     name: "overlay:dialog registrar evento",
     needs: "application",
@@ -200,7 +217,8 @@ if (process.env.A11Y_SHEET_PATH) {
 /* ── sondas injetadas ────────────────────────────────────────────────────── */
 
 const OVERLAY_SELECTOR =
-  '[data-slot="dialog-content"],[data-slot="alert-dialog-content"],[data-slot="sheet-content"]';
+  '[data-slot="dialog-content"],[data-slot="alert-dialog-content"],[data-slot="sheet-content"],' +
+  '[data-slot="dropdown-menu-content"],dialog[open]';
 
 /* Sob `reduce`, nenhuma duração efetiva pode passar de 1ms e nenhuma animação
    pode repetir. A regra global de globals.css usa 0.01ms com `!important`. */
@@ -282,8 +300,16 @@ const FOCUS_SNAPSHOT = String.raw`JSON.stringify((() => {
   if (el.tagName.toLowerCase() === "nextjs-portal") return { none: true, devOverlay: true };
   const cs = getComputedStyle(el);
   const outline = parseFloat(cs.outlineWidth) || 0;
-  const hasOutline = outline > 0 && cs.outlineStyle !== "none";
-  const shadow = Boolean(cs.boxShadow) && cs.boxShadow !== "none";
+  /* O holograma tem um contorno transparente, que só o modo de alto contraste
+     pinta: um contorno que não se vê não é foco. O dele é o anel da moldura, que
+     só existe com o foco. */
+  const clear = /^rgba\([^)]*, 0\)$|^transparent$/.test(cs.outlineColor);
+  const ring = [...(el.closest("[data-holo]") || el).querySelectorAll("svg path")].some((path) => {
+    const p = getComputedStyle(path);
+    return parseFloat(p.strokeWidth) >= 6 && parseFloat(p.opacity) > 0 && path.getAttribute("d");
+  });
+  const hasOutline = (outline > 0 && cs.outlineStyle !== "none" && !clear) || ring;
+  const shadow = Boolean(cs.boxShadow) && cs.boxShadow !== "none" && !/^(rgba\([^)]*, 0\)[^,]*,? ?)+$/.test(cs.boxShadow);
   const name = (el.getAttribute("aria-label") || el.getAttribute("title") ||
     (el.labels && el.labels[0] && el.labels[0].textContent) ||
     (el.textContent || "")).trim().replace(/\s+/g, " ").slice(0, 46);
@@ -394,6 +420,13 @@ try {
 
   await call("Page.enable");
   await call("Runtime.enable");
+  await call("Network.enable");
+  /* O tema e o idioma são os de quem já escolheu: a mesma chave do site e o
+     cookie do backoffice. */
+  await call("Page.addScriptToEvaluateOnNewDocument", {
+    source: `try { localStorage.setItem("maarkn-site-theme", ${JSON.stringify(THEME)}) } catch {}`,
+  });
+  await call("Network.setCookie", { name: "admin-locale", value: LANG, url: `${BASE}/admin`, path: "/admin" });
   /* `mobile: true` NÃO pode ser usado aqui. Nessa emulação o Chrome aplica
      o viewport meta do documento e ALARGA a viewport layout até caber o
      conteúdo: numa rota que rolava, `documentElement.scrollWidth` e
@@ -427,6 +460,7 @@ try {
   const KEYS = {
     Tab: { key: "Tab", code: "Tab", windowsVirtualKeyCode: 9, text: "\t" },
     Escape: { key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 },
+    Enter: { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
   };
   const press = async (name) => {
     const k = KEYS[name];
@@ -550,7 +584,7 @@ try {
 
   /* Descoberta dos ids, agora que existe sessão. Só descobre o que o recorte
      pedido realmente usa: com `--only contacts` nada disso roda. */
-  const selected = ROUTES.slice(1).filter((r) => !ONLY || r.name.includes(ONLY));
+  const selected = ROUTES.slice(1).filter((r) => (!ONLY || r.name.includes(ONLY)) && (!r.only || r.only()));
   for (const kind of new Set(selected.map((r) => r.needs).filter(Boolean))) {
     const spec = ID_KINDS[kind];
     if (process.env[spec.env]) {
@@ -585,7 +619,36 @@ try {
     }
 
     let opened = false;
-    if (route.openSelector) {
+    if (route.openPointer) {
+      /* Clique de mouse de verdade, no que está à vista: o menu do Radix abre no
+         `pointerdown`, que `el.click()` não dispara. */
+      const point = JSON.parse(
+        await evaluate(
+          `JSON.stringify((() => {
+             const el = [...document.querySelectorAll(${JSON.stringify(route.openPointer)})].find((e) => e.checkVisibility());
+             if (!el) return null;
+             el.focus();
+             const r = el.getBoundingClientRect();
+             return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+           })())`,
+          false,
+        ),
+      );
+      if (point && KEYBOARD) {
+        await press("Enter");
+        await sleep(900);
+      } else if (point) {
+        for (const type of ["mousePressed", "mouseReleased"]) {
+          await call("Input.dispatchMouseEvent", { type, ...point, button: "left", clickCount: 1 });
+        }
+        await sleep(900);
+      }
+      opened = await evaluate(`document.querySelector(${JSON.stringify(OVERLAY_SELECTOR)}) !== null`, false);
+    } else if (route.focus) {
+      await evaluate(`document.querySelector(${JSON.stringify(route.focus)}).focus()`, false);
+      await sleep(400);
+      opened = await evaluate(`document.querySelector(${JSON.stringify(route.expect)}) !== null`, false);
+    } else if (route.openSelector) {
       opened = await evaluate(
         `(() => { const el = document.querySelector(${JSON.stringify(route.openSelector)});
            if (!el) return false; el.click(); return true; })()`,
@@ -620,7 +683,7 @@ try {
 
 /* ── relatório ───────────────────────────────────────────────────────────── */
 
-const needsTrigger = (r) => Boolean(r.openSelector || r.openText);
+const needsTrigger = (r) => Boolean(r.openSelector || r.openText || r.openPointer || r.focus);
 /* Gatilho que não abriu é FALHA, não nota de rodapé: antes o overlay não era
    medido, a rota de fundo era medida no lugar dele e o resultado entrava na
    conta como uma superfície limpa a mais. */
@@ -645,7 +708,7 @@ if (AS_JSON) {
 }
 
 if (KEYBOARD) {
-  header(`percurso só com teclado · ${BASE} · viewport ${WIDTH}×${HEIGHT}`);
+  header(`percurso só com teclado · ${BASE} · viewport ${WIDTH}×${HEIGHT} · ${THEME} · ${LANG}`);
   const problems = [];
   for (const r of results) {
     if (r.notFound) {
@@ -719,7 +782,7 @@ if (MOTION) {
    sendo coletado só para denunciar essa divergência. */
 const scrolls = (r) => Boolean(r.overflow) && r.overflow.doc > WIDTH + 1;
 
-header(`axe-core em ${BASE} · viewport ${WIDTH}×${HEIGHT}`);
+header(`axe-core em ${BASE} · viewport ${WIDTH}×${HEIGHT} · ${THEME} · ${LANG}`);
 for (const r of results) {
   const by = (impact) => r.violations.filter((v) => v.impact === impact);
   const counts = ["critical", "serious", "moderate", "minor"].map((i) => `${i[0]}${by(i).length}`).join(" ");

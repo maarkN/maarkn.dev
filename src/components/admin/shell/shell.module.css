@@ -83,6 +83,8 @@ a.skip:not(:focus) {
 .side {
   position: sticky;
   top: var(--edge);
+  /* The menu of the account opens from here, over the screen and its top. */
+  z-index: 35;
   display: flex;
   flex-direction: column;
   height: calc(100dvh - 2 * var(--edge));
@@ -387,6 +389,10 @@ span.entry.soon {
 
 /* ── the menus that open over the screen ─────────────────────────────────── */
 
+/* Where they are in the document; a box of its own would be one more in the row. */
+.host {
+  display: contents;
+}
 .menuPanel.menuPanel {
   width: auto;
   min-width: 236px;
@@ -538,17 +544,20 @@ span.entry.soon {
     background: var(--bg-2);
   }
   .bar ul {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    display: flex;
     gap: 4px;
     max-width: 560px;
     margin: 0 auto;
     padding: 0;
     list-style: none;
   }
+  /* As wide as its name: in equal parts, the longest would be over its frame. */
+  .bar li {
+    flex: 1 1 auto;
+  }
   .shortcut.shortcut {
     --control-height: 56px;
-    --control-pad: 2px;
+    --control-pad: 8px;
     --control-size: .6875rem;
     flex-direction: column;
     gap: 4px;
@@ -572,9 +581,23 @@ span.entry.soon {
 }
 
 /* A window: over its light, only the inks are 4.5:1 in the three themes. */
-.everything :is(.groupName, .soon) {
+.everything h2.groupName,
+.everything span.entry.soon {
   color: var(--ink-2);
 }
+@media (max-width: 379.98px) {
+  .bar {
+    padding-inline: 4px;
+  }
+  .bar ul {
+    gap: 1px;
+  }
+  .shortcut.shortcut {
+    --control-size: .625rem;
+    --inner-stroke: transparent;
+  }
+}
+
 .everything .group ul {
   gap: 8px;
 }

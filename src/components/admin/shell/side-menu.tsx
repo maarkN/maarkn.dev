@@ -2,7 +2,7 @@
 
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
-import { useState, type ReactElement } from "react";
+import { createContext, useContext, useState, type ReactElement } from "react";
 import { clsx } from "clsx";
 import { controlClass, HoloIconButton } from "@/components/holo/button";
 import { HoloFrame } from "@/components/holo/frame";
@@ -17,16 +17,20 @@ import { setCollapsed, useWide } from "./menu-width";
 import styles from "./shell.module.css";
 import type { AdminLocale } from "@/lib/admin/locale";
 
+/** Where the tips go: in the landmark of the menu, and not at the end of the page. */
+const TipHost = createContext<HTMLElement | null>(null);
+
 /** The name of an item of the menu, where only its icon fits. */
 function Tip({ text, off, children }: { text: string; off: boolean; children: ReactElement }) {
   const [open, setOpen] = useState(false);
+  const host = useContext(TipHost);
   return (
     <Tooltip open={open && !off} onOpenChange={setOpen}>
       {/* The tip repeats the name the item already has: not a description too. */}
       <TooltipTrigger asChild aria-describedby={undefined}>
         {children}
       </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10} className={styles.tip}>
+      <TooltipContent container={host} side="right" sideOffset={10} className={styles.tip}>
         {text}
       </TooltipContent>
     </Tooltip>
@@ -121,6 +125,7 @@ export function SideMenu({
   labels: ShellLabels;
 }) {
   const named = useWide() && !collapsed;
+  const [host, setHost] = useState<HTMLElement | null>(null);
   const toggle = collapsed ? labels.shell.expand : labels.shell.collapse;
 
   return (
@@ -132,8 +137,11 @@ export function SideMenu({
         </span>
       </HoloLink>
       <nav id="admin-menu" className={styles.menu} aria-label={labels.shell.menu}>
-        <NavGroups current={current} labels={labels} named={named} id="menu" />
+        <TipHost value={host}>
+          <NavGroups current={current} labels={labels} named={named} id="menu" />
+        </TipHost>
       </nav>
+      <div ref={setHost} className={styles.host} />
       <div className={styles.foot}>
         <HoloIconButton
           size="sm"

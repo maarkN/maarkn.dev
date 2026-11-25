@@ -24,7 +24,7 @@ These files describe what exists today. The task that invalidates a written rule
 - Behavior changes go through OpenSpec: `/openspec-propose`, `/openspec-apply-change`, `/openspec-archive-change`. Artifacts are in Brazilian Portuguese; structural headings and SHALL/MUST stay in English. `openspec validate --all --strict` passes before a commit.
 - A push to `main` deploys to production. Work on a branch. The rebranding (`rebrand-*` changes) lands on `feat/rebranding` and reaches `main` once, in `rebrand-12-cutover`; every other change goes to `main`.
 - `deploy.yml` runs on a self-hosted runner and stays free of `pull_request` triggers; `self-hosted` appears in no other workflow.
-- Gates: `pnpm lint` (ESLint, dictionary parity, admin utility guard, theme contrast), `pnpm test`, `pnpm build`. Run the build without `DATABASE_URL`, as CI does.
+- Gates: `pnpm lint` (ESLint, dictionary parity, admin utility and colour guards, theme contrast), `pnpm test`, `pnpm build`. Run the build without `DATABASE_URL`, as CI does.
 
 ## Site UI
 

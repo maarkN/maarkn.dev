@@ -76,6 +76,21 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 64. axe sem violação nas paletas `soft` e `classic`.
 65. Ida e volta pelo topo, pela busca e pelo rodapé chega à página em que o visitante estava; trocar de idioma lá muda o idioma da volta.
 
+**Estrutura do backoffice** (`--admin`, com Postgres e uma conta)
+
+67. Sem sessão, toda tela vai para o login e nada dela é entregue; a busca também.
+68. O login não tem navegação; a recusa é a mesma para e-mail que existe, que não existe e depois do limite por IP.
+69. O tema entra antes da primeira pintura e é o do site, nos mesmos casos da verificação 34; a paleta da Versão CLI não o altera.
+70. Trocar o tema muda toda cor de todas as telas, menos as exceções escritas, com o menu ainda aberto.
+71. O idioma começa pelo do site, e sem ele pelo do navegador; trocar muda textos e datas, não o endereço nem o que foi digitado, e vale nos próximos acessos. Tela não traduzida se diz em português.
+72. Com o navegador em outro fuso e outro idioma, servidor e navegador escrevem o mesmo, em todas as telas; o fuso configurado muda as horas e nunca as datas sem hora.
+73. Menu com nomes a partir de 1.360 px, com ícones e dica abaixo, e barra na base no celular; recolhido, continua recolhido na próxima tela. A tela atual é uma só, e o que não existe é "em breve", sem link nem foco. Sem rolagem horizontal em nenhuma tela.
+74. Tab percorre salto, menu, topo e tela na ordem em que se vê, com o foco à vista e sem nada por cima, nos três temas.
+75. A busca abre com `⌘K`, acha pela empresa e abre o dossiê, diz quando não acha, e `Esc` volta ao que estava. Nenhuma candidatura no HTML inicial; com um diálogo aberto, o atalho espera.
+76. "Criar" e a conta por teclado; `Esc` devolve o foco.
+77. Todo texto atinge 4.5:1 contra os pixels de trás, e o axe não acha violação, na estrutura e no que ela abre, nos três temas e nos dois idiomas.
+78. Sem JavaScript, o menu leva às telas e o que não responderia não aparece. Na impressão sobra o papel. Nenhuma página do site traz texto do backoffice.
+
 **Referência do holograma** (`--holo`, com `HOLO_REFERENCE=1 pnpm build`)
 
 37. Cada estado responde em até 100 ms e se distingue dos outros sem a cor do traço.

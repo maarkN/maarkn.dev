@@ -877,7 +877,7 @@ const readInks = (scope) => `(() => {
   /* O que uma lista que rola não está mostrando não está à vista. */
   const clipped = (el, r) => {
     let { left, top, right, bottom } = r;
-    for (let box = el.parentElement; box && box !== document.body; box = box.parentElement) {
+    for (let box = el; box && box !== document.body; box = box.parentElement) {
       if (getComputedStyle(box).overflowY === "visible") continue;
       const b = box.getBoundingClientRect();
       [left, top, right, bottom] = [Math.max(left, b.left), Math.max(top, b.top), Math.min(right, b.right), Math.min(bottom, b.bottom)];

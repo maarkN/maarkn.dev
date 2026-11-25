@@ -16,6 +16,8 @@
  *                                         # não vai para produção: precisa de
  *                                         # HOLO_REFERENCE=1 pnpm build
  *   … --holo --shots <pasta>              # também grava as capturas
+ *   … --admin                             # só o backoffice: precisa do Postgres,
+ *                                         # de ADMIN_EMAIL e de ADMIN_PASSWORD
  *   … --verbose                           # lista também o que passou
  *   … --json
  *
@@ -34,6 +36,7 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { adminCases } from "./e2e-admin.mjs";
 import { chromeCases } from "./e2e-chrome.mjs";
 import { holoCases } from "./e2e-holo.mjs";
 import { themeCases } from "./e2e-theme.mjs";
@@ -55,6 +58,7 @@ const ONLY = flag("only", null);
 const AS_JSON = argv.includes("--json");
 const VERBOSE = argv.includes("--verbose");
 const HOLO = argv.includes("--holo");
+const ADMIN = argv.includes("--admin");
 const SHOTS = flag("shots", null);
 
 /* ── os casos ────────────────────────────────────────────────────────────── */
@@ -136,6 +140,8 @@ async function walkTerminal(page, t, locale) {
 
 const CASES = HOLO
   ? holoCases({ shots: SHOTS, width: WIDTH })
+  : ADMIN
+  ? adminCases({ width: WIDTH, height: HEIGHT })
   : [
       ...["en", "pt-BR"].map((locale) => ({
         name: `cli:percurso:${locale}`,
