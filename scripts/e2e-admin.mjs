@@ -106,8 +106,16 @@ const hydrated = (page) =>
     "React assumir a página",
   );
 
-/** Com a lista no lugar: a que chega depois substitui o que tinha o foco. */
-const listed = (page) => page.waitFor(`document.querySelector('main [role="status"]') === null`, "a lista");
+/**
+ * Com a lista no lugar, e já do React: a que chega depois substitui o que tinha o
+ * foco, e a que rola só vira parada de Tab quando ele a assume.
+ */
+const listed = (page) =>
+  page.waitFor(
+    `document.querySelector('main [role="status"]') === null &&
+      [...document.querySelectorAll("[data-slot=table-container]")].every((el) => el.scrollWidth <= el.clientWidth || el.tabIndex === 0)`,
+    "a lista",
+  );
 
 /** As telas de um registro, pela lista de cada um. */
 async function records(page) {
