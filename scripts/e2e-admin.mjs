@@ -7,7 +7,9 @@
  *   … --width 390 --height 844 | --width 1024 --height 768
  *
  * O que depende de largura usa a do comando: nomes no menu a partir de 1360 px,
- * ícones de 768 a 1359, barra na base abaixo disso.
+ * ícones de 768 a 1359, barra na base abaixo disso. Nenhum caso conta com uma
+ * quantidade de registros; só `admin:acesso` quer um de cada, e é o que as
+ * fixtures criam.
  */
 import { randomInt } from "node:crypto";
 import { axeSource, measureContrast } from "./e2e-holo.mjs";
@@ -103,6 +105,9 @@ const hydrated = (page) =>
     `(() => { const el = ${$("[data-search]")}; return el && Object.keys(el).some((key) => key.startsWith("__reactProps")) })()`,
     "React assumir a página",
   );
+
+/** Com a lista no lugar: a que chega depois substitui o que tinha o foco. */
+const listed = (page) => page.waitFor(`document.querySelector('main [role="status"]') === null`, "a lista");
 
 /** As telas de um registro, pela lista de cada um. */
 async function records(page) {
@@ -326,7 +331,7 @@ async function languages(page, t) {
     await sleep(600);
     await page.waitFor(`${lang} === ${js(option)}`, option);
     await hydrated(page);
-    await page.waitFor(`document.querySelector('main [role="status"]') === null`, "a lista");
+    await listed(page);
   };
   await pick("pt-BR");
   const after = await page.evaluate(`({ path: location.pathname, date: ${date}, name: ${$("tbody td:nth-child(2)")}.textContent })`);
@@ -409,6 +414,8 @@ async function look(page, t, { width }) {
         await sleep(400);
         t.equal(await violations(page), [], `${label}, ${name}: axe sem violação`);
         await measureContrast(page, t, `${label}, ${name}`, '[role="menu"], dialog[open]', 4);
+        const face = await page.evaluate(`(() => { const el = ${$('[role="menu"]')}; return el && getComputedStyle(el).fontFamily === getComputedStyle(document.body).fontFamily })()`);
+        t.ok(face !== false, `${label}, ${name}: o primitivo está na fonte das telas`);
         await page.press("Escape");
         await page.waitFor(`${overlay} === null`, `${name} fechar`);
         await sleep(250); // o foco volta ao botão depois de o menu sair
@@ -430,18 +437,24 @@ async function visibleSelector(page, selector) {
   return "[data-e2e]";
 }
 
+/** A quantos elementos Tab tem de chegar, haja na tela o que houver. Uma lista de abas passa o foco à aba. */
+const STOPS = `[...document.querySelectorAll("a[href], button, input, select, textarea, summary, [tabindex]:not([role=tablist])")]
+  .filter((el) => el.tabIndex >= 0 && !el.disabled && el.type !== "hidden" && el.checkVisibility({ visibilityProperty: true })).length`;
+
 /** Tab por toda a tela: foco sempre visível, sem nada por cima, na ordem em que se vê. */
 async function keyboard(page, t, { width, height }) {
   for (const theme of THEMES) {
     await enter(page, "/admin/projects", { theme });
-    await page.evaluate(`document.activeElement.blur()`);
+    await listed(page);
+    await page.evaluate(`window.__passed = new Set(); document.activeElement.blur()`);
     const stops = [];
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 300; i++) {
       await page.press("Tab");
       await sleep(30);
       const stop = await page.evaluate(`(() => {
         const el = document.activeElement;
-        if (el === document.body) return null;
+        if (el === document.body || window.__passed.has(el)) return null;
+        window.__passed.add(el);
         const r = el.getBoundingClientRect();
         /* Uma lista que rola é uma parada, e pode ser mais alta que a tela. */
         const tall = r.height > innerHeight;
@@ -463,11 +476,13 @@ async function keyboard(page, t, { width, height }) {
       if (!stop) break;
       stops.push(stop);
     }
-    t.ok(stops.length > 20, `${theme}: há o que percorrer`, `${stops.length}`);
+    const expected = await page.evaluate(STOPS);
+    t.equal(stops.length, expected, `${theme}: Tab passa por tudo, uma vez`);
+    t.ok(expected > 10, `${theme}: há o que percorrer`, `${expected}`);
     t.equal(stops.filter((s) => !s.seen).map((s) => s.name), [], `${theme}: todo foco é visível`);
     t.equal(stops.filter((s) => !s.inside || s.covered).map((s) => `${s.where}: ${s.name}`), [], `${theme}: nada cobre o que tem foco`);
     const places = stops.map((s) => s.where).filter((where, i, all) => where !== all[i - 1]);
-    t.equal(places.slice(0, 4), width >= PHONE ? ["salto", "menu", "topo", "tela"] : ["salto", "topo", "tela", "barra"].slice(0, places.length), `${theme}: na ordem em que se vê`);
+    t.equal(places.slice(0, 4), width >= PHONE ? ["salto", "menu", "topo", "tela"] : ["salto", "topo", "tela", "barra"], `${theme}: na ordem em que se vê`);
   }
 
   await page.open("/admin/projects");
@@ -478,6 +493,108 @@ async function keyboard(page, t, { width, height }) {
   await page.press("Enter");
   t.equal(await page.evaluate(`document.activeElement.id`), "content", "que leva o foco ao conteúdo");
   t.ok(height > 0, "altura");
+}
+
+/* ── foco ────────────────────────────────────────────────────────────────── */
+
+/**
+ * Onde está o que tem foco, contra o topo e a barra da base, que ficam por cima
+ * da tela. O que cabe entre os dois tem de estar inteiro à vista; o que não cabe
+ * (uma lista que rola), em parte. `null` quando o foco saiu da página ou voltou
+ * a um elemento por onde já passou: o fim da volta.
+ */
+const FOCUS = `(() => {
+  const el = document.activeElement;
+  if (el === document.body) return null;
+  /* Os segmentos de um campo de data são várias paradas no mesmo elemento. */
+  if (el !== window.__last && window.__passed.has(el)) return null;
+  const again = el === window.__last;
+  window.__passed.add((window.__last = el));
+  const name = (el.getAttribute("aria-label") || el.name || el.id || el.textContent).trim().replace(/\\s+/g, " ").slice(0, 40);
+  const over = (bar) => bar?.checkVisibility() && !bar.contains(el) ? bar.getBoundingClientRect() : null;
+  if (el.closest("header, aside, nav[aria-label=Atalhos]") || !el.closest("main, nav")) return { name, again, hidden: null };
+  const top = Math.max(0, over(document.querySelector("header"))?.bottom ?? 0);
+  const base = over(document.querySelector("nav[aria-label=Atalhos]"))?.top ?? innerHeight;
+  /* O que sobra do elemento depois do que o recorta no caminho: célula, card, quadro. */
+  const r = el.getBoundingClientRect();
+  let left = Math.max(r.left, 0), right = Math.min(r.right, document.documentElement.clientWidth);
+  for (let box = el.parentElement; box && box !== document.body; box = box.parentElement) {
+    if (getComputedStyle(box).overflowX === "visible") continue;
+    const b = box.getBoundingClientRect();
+    left = Math.max(left, b.left);
+    right = Math.min(right, b.right);
+  }
+  const from = Math.max(r.top, top), to = Math.min(r.bottom, base);
+  const fits = r.height <= base - top - 32;
+  const seen = right - left >= Math.min(16, r.width) && (fits ? to - from >= r.height - 1 : to - from >= Math.min(24, r.height));
+  const hit = document.elementFromPoint((left + right) / 2, (from + to) / 2);
+  const found = hit !== null && (hit === el || el.contains(hit) || hit.contains(el) || hit.closest("label")?.control === el);
+  return { name, again, hidden: seen && found ? null : Math.round(r.top) + " a " + Math.round(r.bottom) + ", entre " + Math.round(top) + " e " + Math.round(base) + (found ? "" : ", sob " + (hit?.tagName ?? "nada")) };
+})()`;
+
+/** Percorre a tela inteira com a tecla, e devolve as paradas. */
+async function walk(page, shift) {
+  await page.evaluate(`(() => { window.__passed = new Set(); window.__last = null })()`);
+  const stops = [];
+  for (let i = 0; i < 600; i++) {
+    await page.press("Tab", { shift });
+    let stop = await page.evaluate(FOCUS);
+    if (stop?.hidden) {
+      /* Só conta o que fica assim: a rolagem pode ainda não ter chegado. */
+      await sleep(500);
+      stop = { ...(await page.evaluate(FOCUS)), again: stop.again };
+    }
+    if (!stop) return stops;
+    if (!stop.again || stop.hidden) stops.push(stop);
+  }
+  throw new Error("Tab não chegou ao fim em 600 paradas");
+}
+
+/**
+ * Toda tela, de ponta a ponta e de volta. A geometria não muda com o tema, então
+ * é um só; muda com a largura, e com a altura que sobra num zoom de 400%.
+ */
+async function focus(page, t, { width, height }) {
+  await enter(page, "/admin");
+  const screens = [...SCREENS, ...(await records(page))];
+  const sizes = width < PHONE ? [[width, height], [360, 640]] : [[width, height]];
+  if (width >= NAMES) sizes.push([Math.round(width / 4), Math.round(height / 4)]);
+  for (const [w, h] of sizes) {
+    await page.density(1, { width: w, height: h });
+    for (const path of screens) {
+      await page.open(path);
+      await hydrated(page);
+      await listed(page);
+      await page.evaluate(`document.activeElement.blur()`);
+      for (const shift of [false, true]) {
+        const stops = await walk(page, shift);
+        const label = `${w}×${h} ${path}${shift ? ", de volta" : ""}`;
+        t.equal(stops.length, await page.evaluate(STOPS), `${label}: Tab passa por tudo, uma vez`);
+        const hidden = stops.filter((stop) => stop.hidden);
+        t.ok(hidden.length === 0, `${label}: nada cobre o que tem foco`, `${hidden.length} de ${stops.length}: ${hidden.slice(0, 4).map((stop) => `${stop.name} (${stop.hidden})`).join("; ")}`);
+      }
+    }
+
+    /* Um controle das barras já está à vista: alcançá-lo não rola a tela. */
+    await page.open("/admin/contacts");
+    await hydrated(page);
+    await listed(page);
+    const moved = await page.evaluate(`(async () => {
+      const bars = [...document.querySelectorAll("header, aside, nav[aria-label=Atalhos]")].filter((bar) => !bar.closest("main"));
+      const controls = bars.flatMap((bar) => [...bar.querySelectorAll("a[href], button")]).filter((el) => el.checkVisibility());
+      const moved = [];
+      for (const el of controls) {
+        document.activeElement.blur();
+        scrollTo(0, 300);
+        el.focus();
+        await new Promise((r) => requestAnimationFrame(r));
+        if (scrollY !== 300) moved.push((el.getAttribute("aria-label") || el.textContent) + " " + scrollY);
+      }
+      return { controls: controls.length, moved };
+    })()`);
+    t.ok(moved.controls >= 9, `${w}×${h}: há controles nas barras`, `${moved.controls}`);
+    t.equal(moved.moved, [], `${w}×${h}: alcançar um controle das barras não rola a tela`);
+  }
 }
 
 async function menu(page, t, { width }) {
@@ -551,6 +668,8 @@ async function menu(page, t, { width }) {
     await page.open("/admin/contacts");
     const html = await page.evaluate(`document.documentElement.outerHTML.includes('data-menu="collapsed"')`);
     t.ok(html && !(await named()), "e continua recolhido na próxima tela");
+    const sent = await page.evaluate(`fetch(location.href).then((r) => r.text())`);
+    t.ok(sent.includes('data-menu="collapsed"'), "já recolhido no que o servidor manda");
     await hydrated(page);
     await page.hover('aside a[href="/admin/audit"]');
     await page.waitFor(`${$('[data-slot="tooltip-content"]')}?.firstChild.textContent === "Auditoria"`, "a dica", 3000);
@@ -708,7 +827,7 @@ async function print(page, t) {
   t.equal(await page.evaluate(`getComputedStyle(${$("article")}).backgroundColor`), "rgb(255, 255, 255)", "o papel é branco em qualquer tema");
 }
 
-/** Sem JavaScript: o menu leva às telas, e o que não responderia não aparece. */
+/** Sem JavaScript: o menu leva às telas, dá para sair, e o que não responderia não aparece. */
 async function noScript(page, t, { width }) {
   await signIn(page);
   await cookie(page, "admin-locale", "pt-BR");
@@ -722,6 +841,14 @@ async function noScript(page, t, { width }) {
     "o que não responderia não aparece",
   );
   t.ok(await page.evaluate(`${$("main table")} !== null`), "a tela está lá");
+  t.ok((await page.evaluate(`document.documentElement.scrollWidth`)) <= width, "sem rolagem horizontal");
+
+  t.equal(await page.evaluate(`${$("header form button")}.textContent`), "Sair", "dá para sair");
+  await page.click("header form button");
+  await page.waitFor(`location.pathname === "/admin/login"`, "sair", 8000);
+  cookies = null;
+  const { status } = await page.evaluate(`fetch("/admin/contacts", { redirect: "manual" }).then(({ type }) => ({ status: type }))`);
+  t.equal(status, "opaqueredirect", "e a sessão acabou");
 }
 
 /** Os textos do backoffice não saem em página nenhuma do site. */
@@ -751,6 +878,7 @@ export function adminCases({ width, height }) {
     ["admin:hidratacao", hydration],
     ["admin:menu", menu],
     ["admin:teclado", keyboard],
+    ["admin:foco", focus],
     ["admin:busca", search],
     ["admin:criar", create],
     ["admin:impressao", print],
