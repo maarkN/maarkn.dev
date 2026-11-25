@@ -22,7 +22,7 @@
 
 ## 5. Passagem entre páginas
 
-- [ ] 5.1 Transição com View Transitions e queda sem suporte; foco no título da nova página; verificar com leitor de tela
+- [x] 5.1 Transição com View Transitions e queda sem suporte; foco no título da nova página, conferido também na árvore de acessibilidade (o leitor de tela foi adiado em 2026-11-25 para a 3.6 de `rebrand-12-cutover`)
 - [x] 5.2 Restaurar a rolagem ao voltar para a home; teste de ponta a ponta
 
 ## 6. Fechamento

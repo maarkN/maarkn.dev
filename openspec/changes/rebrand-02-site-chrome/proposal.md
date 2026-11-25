@@ -21,6 +21,7 @@ Com a base pronta, o site precisa da estrutura em volta das telas: topo, busca, 
 - `terminal-home`: novo endereço.
 - `terminal-navigation`: links e comandos no novo endereço.
 - `terminal-accessibility`: estrutura e auditoria referidas à Versão CLI.
+- `terminal-shell`: a barra ganha a volta ao site.
 
 ## Impact
 

@@ -15,6 +15,7 @@
 - [ ] 3.3 Procurar texto fixo fora dos dicionários no site e no backoffice; zero ocorrências, ou lista justificada
 - [ ] 3.4 `scripts/e2e-site.mjs` completo, com todas as verificações de `docs/design/verificacoes.md`; registrar
 - [ ] 3.5 Conferir links antigos (`?cmd=`, âncoras, `/chat`, projetos, carreira, notas); registrar
+- [ ] 3.6 Leitor de tela no Safari e no Chrome (adiado de `rebrand-02-site-chrome`): troca de página anuncia o título, item atual, contagem e setas da busca, foco no contato, ida e volta da Versão CLI; registrar o que foi anunciado
 
 ## 4. Documentação
 
