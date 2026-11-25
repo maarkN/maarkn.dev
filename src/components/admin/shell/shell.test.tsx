@@ -406,6 +406,25 @@ describe("the whole", () => {
     expect(main.tabIndex).toBe(-1);
   });
 
+  it("brings all of what Tab reached from behind the bars, and only that", () => {
+    render({ children: <><textarea /><input /><p tabIndex={0}>alto</p></> });
+    const brought = vi.mocked(Element.prototype.scrollIntoView);
+    const release = (selector: string, key: string) => {
+      brought.mockClear();
+      act(() => {
+        $(selector).dispatchEvent(new KeyboardEvent("keyup", { key, bubbles: true }));
+      });
+      return [brought.mock.contexts[0] ?? null, brought.mock.calls[0]?.[0] ?? null];
+    };
+    const all = { block: "nearest", inline: "nearest" };
+    expect(release("main textarea", "Tab")).toEqual([$("main textarea"), all]);
+    expect(release("main input", "Tab")).toEqual([$("main input"), all]);
+    expect(release("main textarea", "a")).toEqual([null, null]);
+    expect(release("aside a", "Tab")).toEqual([null, null]);
+    Object.defineProperty($("main p"), "offsetHeight", { value: window.innerHeight });
+    expect(release("main p", "Tab")).toEqual([null, null]);
+  });
+
   it("is in the language of the backoffice, with the same addresses", () => {
     render({ locale: "pt-BR" });
     const addresses = () => $$("a[href]").map((link) => link.getAttribute("href"));

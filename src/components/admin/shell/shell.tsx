@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { memo, type ReactNode } from "react";
+import { memo, type KeyboardEvent, type ReactNode } from "react";
 import { HoloLink } from "@/components/holo/link";
 import { Mark } from "@/components/site/icons";
 import type { AdminLocale } from "@/lib/admin/locale";
@@ -33,6 +33,16 @@ const Search = memo(SearchButton, sameShell);
 const Create = memo(CreateMenu, sameShell);
 const Account = memo(AccountMenu, sameShell);
 const Phone = memo(PhoneBar, sameShell);
+
+/**
+ * What Tab reached, all of it. A browser is content with less: with the line of
+ * the caret of a multiline field, or a strip of what a scrolling box cuts. What
+ * is taller than the room between the bars stays where the browser put it.
+ */
+function wholeFocus({ key, target }: KeyboardEvent) {
+  if (key !== "Tab" || !(target instanceof HTMLElement)) return;
+  if (target.offsetHeight <= window.innerHeight / 2) target.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
 
 /**
  * What is around every screen of the backoffice: the menu, the search, "Criar",
@@ -83,7 +93,7 @@ export function Shell({
         <Trail pathname={pathname} name={name} labels={labels} />
         {/* `tabIndex={-1}` is what makes the skip link actually move the focus:
             in WebKit a plain `href="#content"` only scrolls. */}
-        <main id={CONTENT_ID} tabIndex={-1} className={styles.main}>
+        <main id={CONTENT_ID} tabIndex={-1} className={styles.main} onKeyUp={wholeFocus}>
           {children}
         </main>
       </div>

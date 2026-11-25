@@ -289,7 +289,7 @@ async function ContactRows({
 
 function ContactsTableFrame({ children }: { children: React.ReactNode }) {
   return (
-    <Table className="table-fixed">
+    <Table className="table-fixed min-w-[110ch]">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <ListingIndexHead />
@@ -438,7 +438,7 @@ async function ReferenceRows({
 
 function ReferencesTableFrame({ children }: { children: React.ReactNode }) {
   return (
-    <Table className="table-fixed">
+    <Table className="table-fixed min-w-[110ch]">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <ListingIndexHead />

@@ -74,10 +74,13 @@ body.admin-root {
 }
 
 /* The bars that stay over the page: what is scrolled to must not stop behind
-   them (the margins are in site.css). */
+   them. A padding of the document, and not the margins of site.css: a margin is
+   lost at the first box on the way that scrolls or clips (a cell, a card, a table
+   wider than the screen), and the way back, which is outside <main>, has none. */
 :root:has(body.admin-root.site-root) {
   --site-top: 76px;
   --site-base: 0px;
+  scroll-padding-block: calc(var(--site-top) + 16px) calc(var(--site-base) + 16px);
   /* The windows of the screens lock the scroll and make up for the bar
      themselves; a gutter that stays would be made up for twice. */
   scrollbar-gutter: auto;
@@ -87,6 +90,14 @@ body.admin-root {
     --site-top: 60px;
     --site-base: 72px;
   }
+}
+.admin-root :is(main, main *) {
+  scroll-margin-block: 0;
+}
+/* A control of the top or of the menu is never behind them, and with the padding
+   reaching it would scroll the page. */
+:root:has(body.admin-root.site-root :is(header, aside):not(main *) :focus) {
+  scroll-padding-block: 0;
 }
 
 /* Engines without `scrollbar-color` would paint the CLI version's bars. */

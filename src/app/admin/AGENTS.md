@@ -144,6 +144,8 @@ classe `.admin-listing`, aplicada uma vez dentro de `ui/table.tsx`. O que cada l
 
 - `<Table className="table-fixed">` e uma largura em `ch` (`w-[24ch]`) em todo `<TableHead>` que não seja
   a coluna de texto livre. Sem o par `table-fixed` + `ch`, o alinhamento monoespaçado não se sustenta.
+  Coluna livre com link ou botão pede também um `min-w-[…ch]` na tabela: no celular ela encolhe até zero,
+  e o foco vai para um elemento sem largura.
 - `<ListingIndexHead />` no cabeçalho e `<ListingIndexCell index={i} />` como primeira célula de cada
   linha — a coluna `001`, `002`… é decorativa (`aria-hidden`) e **conta no `colSpan`**: `COLS` inclui ela.
 - Cabeçalho em minúsculas e sem acento (`estagio`, `acoes`): é nome de coluna de saída, não título.
@@ -924,7 +926,10 @@ toast.info("Nada mudou desde a última sincronização.");
       `ADMIN_EMAIL=… ADMIN_PASSWORD=… node scripts/a11y-admin-axe.mjs --only <rota>`
       e a mesma coisa com `--keyboard`, nos três temas (`--theme`) e nos dois idiomas (`--lang`). Zero
       `critical`/`serious`, zero parada sem foco visível.
-- [ ] A estrutura continua de pé: `node scripts/e2e-site.mjs --admin` em 390, 1024 e 1440 px.
+- [ ] A estrutura continua de pé: `node scripts/e2e-site.mjs --admin` em 390, 1024 e 1440 px. Rota nova entra em
+      `SCREENS` de `scripts/e2e-admin.mjs`. O que fica por cima da tela já tem lugar em `--site-top` e
+      `--site-base`, e é por eles que o documento rola (`scroll-padding`, em `admin.css`): não escreva
+      `scroll-margin` numa tela.
 - [ ] `pnpm lint` e `env -u DATABASE_URL pnpm build` verdes.
 
 ---
