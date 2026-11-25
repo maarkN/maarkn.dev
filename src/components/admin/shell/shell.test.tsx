@@ -19,11 +19,9 @@ let pathname = "/admin";
 vi.mock("next/navigation", () => ({ usePathname: () => pathname, useRouter: () => ({ push: vi.fn() }) }));
 const logoutAction = vi.fn();
 vi.mock("@/app/_actions/auth", () => ({ logoutAction: () => logoutAction() }));
-const setAdminLocale = vi.fn();
-vi.mock("@/app/_actions/preferences", () => ({ setAdminLocale: (locale: string) => setAdminLocale(locale) }));
+const changeLanguage = vi.fn();
+vi.mock("./change-language", () => ({ changeLanguage: (locale: string) => changeLanguage(locale) }));
 vi.mock("@/app/_actions/search", () => ({ listSearchableApplications: vi.fn() }));
-const toastError = vi.fn();
-vi.mock("sonner", () => ({ toast: { error: (...args: unknown[]) => toastError(...args) } }));
 
 const LABELS = { en: shellLabels(en.admin), "pt-BR": shellLabels(ptBR.admin) };
 const EMAIL = "marco.filho@example.com";
@@ -88,8 +86,7 @@ beforeEach(() => {
   HTMLDialogElement.prototype.close = function () {
     this.open = false;
   };
-  for (const mock of [logoutAction, setAdminLocale, toastError]) mock.mockReset();
-  setAdminLocale.mockResolvedValue({ ok: true });
+  for (const mock of [logoutAction, changeLanguage]) mock.mockReset();
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -332,20 +329,17 @@ describe("account", () => {
     expect(checked()).toEqual(["Claro suave", "Português"]);
   });
 
-  it("changes the language through the server, and says so when it could not", async () => {
+  it("changes the language, and does nothing for the one it is already in", async () => {
     await open();
-    act(() => radio("English").focus());
     press(radio("English"), "Enter");
     await settle();
-    expect(setAdminLocale).toHaveBeenCalledWith("en");
+    expect(changeLanguage.mock.calls).toEqual([["en"]]);
     expect(radios()).toEqual([]);
-    expect(toastError).not.toHaveBeenCalled();
 
-    setAdminLocale.mockRejectedValue(new Error("offline"));
     await open();
-    press(radio("English"), "Enter");
+    press(radio("Português"), "Enter");
     await settle();
-    expect(toastError).toHaveBeenCalledTimes(1);
+    expect(changeLanguage).toHaveBeenCalledTimes(1);
   });
 
   it("signs out", async () => {

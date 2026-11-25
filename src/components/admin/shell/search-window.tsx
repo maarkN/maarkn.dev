@@ -12,7 +12,7 @@ import { HoloFrame } from "@/components/holo/frame";
 import { setSiteTheme } from "@/components/site-theme";
 import type { AdminLocale } from "@/lib/admin/locale";
 import { applicationResult, findResults, interfaceResults, type Result } from "@/lib/admin/search";
-import { changeLanguage } from "./account-menu";
+import { changeLanguage } from "./change-language";
 import type { ShellLabels } from "./labels";
 import styles from "./shell.module.css";
 
@@ -47,7 +47,7 @@ export function SearchWindow({ open, onClose, locale, labels }: SearchWindowProp
         setSiteTheme(target.theme);
         return;
       case "language":
-        void changeLanguage(target.locale, labels.account.languageFailed);
+        changeLanguage(target.locale);
         return;
       case "site":
         // Another document: the site has its own layout.

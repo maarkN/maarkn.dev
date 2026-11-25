@@ -323,9 +323,11 @@ async function languages(page, t) {
     await page.waitFor(`${overlay} !== null`, "o menu da conta");
     await sleep(250); // ele ainda está indo para o lugar
     await page.click(`[data-language-option=${js(option)}]`);
+    /* O documento é carregado de novo. */
+    await sleep(600);
     await page.waitFor(`${lang} === ${js(option)}`, option);
-    /* A lista chega depois da estrutura. */
-    await sleep(800);
+    await hydrated(page);
+    await page.waitFor(`document.querySelector('main [role="status"]') === null`, "a lista");
   };
   await pick("pt-BR");
   const after = await page.evaluate(`({ path: location.pathname, date: ${date}, name: ${$("tbody td:nth-child(2)")}.textContent })`);
@@ -342,7 +344,6 @@ async function languages(page, t) {
   await pick("en");
   t.equal(await page.evaluate(`${$("main [lang]")}.lang`), "pt-BR", "a tela ainda não traduzida diz que está em português");
   t.equal(await page.evaluate(`${$("main [lang] [lang]")}.lang`), "en", "e a parte traduzida, que está em inglês");
-  t.ok(await page.evaluate(`document.cookie.includes("admin-locale") === false`), "o cookie é só do servidor");
   const site = await fetch(`${BASE}/en`);
   t.equal(site.status, 200, "e o site continua no idioma do endereço");
 

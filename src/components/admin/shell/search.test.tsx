@@ -13,11 +13,10 @@ const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 const logoutAction = vi.fn();
 vi.mock("@/app/_actions/auth", () => ({ logoutAction: () => logoutAction() }));
-const setAdminLocale = vi.fn();
-vi.mock("@/app/_actions/preferences", () => ({ setAdminLocale: (locale: string) => setAdminLocale(locale) }));
+const changeLanguage = vi.fn();
+vi.mock("./change-language", () => ({ changeLanguage: (locale: string) => changeLanguage(locale) }));
 const list = vi.fn();
 vi.mock("@/app/_actions/search", () => ({ listSearchableApplications: () => list() }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 const APPLICATIONS = [
   { id: "a1", company: "Ipê Data", role: "Backend Engineer" },
@@ -82,9 +81,8 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
   document.documentElement.setAttribute("data-site-theme", "dusk");
   localStorage.clear();
-  for (const mock of [push, logoutAction, setAdminLocale, list]) mock.mockReset();
+  for (const mock of [push, logoutAction, changeLanguage, list]) mock.mockReset();
   list.mockResolvedValue({ ok: true, data: APPLICATIONS });
-  setAdminLocale.mockResolvedValue({ ok: true });
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -190,7 +188,7 @@ describe("with the keyboard", () => {
     await open();
     type("english");
     key("Enter");
-    expect(setAdminLocale).toHaveBeenCalledWith("en");
+    expect(changeLanguage).toHaveBeenCalledWith("en");
     await open();
     type("sair");
     key("Enter");

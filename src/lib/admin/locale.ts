@@ -23,6 +23,11 @@ export function isAdminLocale(value: unknown): value is AdminLocale {
   return (ADMIN_LOCALES as readonly unknown[]).includes(value);
 }
 
+/** Keeps the choice for a year, for the backoffice alone: the site has its own. In the browser. */
+export function rememberAdminLocale(next: AdminLocale): void {
+  document.cookie = `${ADMIN_LOCALE_COOKIE}=${next}; path=/admin; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+}
+
 /** The first language of the browser's list that the backoffice speaks. */
 function fromBrowser(acceptLanguage: string | null | undefined): AdminLocale | null {
   const accepted = (acceptLanguage ?? "")

@@ -939,7 +939,7 @@ toast.info("Nada mudou desde a última sincronização.");
 | `src/lib/admin/nav.ts` | `NAV` (menu; `href: null` = em breve) · `CREATE` · `SHORTCUTS` · `currentItem(pathname)` · `trail(pathname, name?)` |
 | `src/lib/admin/search.ts` | o que a busca acha: telas, ações e candidaturas · `_actions/search.ts` entrega as candidaturas, só quando a busca abre |
 | `src/lib/admin/request.ts` | **(`server-only`)** `getAdminSettings` (idioma e fuso da requisição) · `getAdminFormat` · `getAdminLabels` |
-| `src/lib/admin/locale.ts` · `time-zone.ts` | quais idiomas e fusos, os cookies e como se resolvem · `_actions/preferences.ts` grava |
+| `src/lib/admin/locale.ts` · `time-zone.ts` | quais idiomas e fusos, os cookies e como se resolvem · o idioma é gravado no navegador e recarrega o documento (`shell/change-language`), o fuso por `_actions/preferences.ts` |
 | `src/components/admin/page-header.tsx` | `PageHeader({ title, description?, actions?, className? })` — `title` é o `<h1>` da tela |
 | `src/components/admin/table-pager.tsx` | `TablePager` (linha de status + teclas `n`/`p`) · `TableLoadingRow` · `TableEmptyRow` · `ListingIndexHead`/`ListingIndexCell`/`LISTING_INDEX_WIDTH` · `isEditableTarget` |
 | `src/components/admin/form-submit.ts` | `submitKeepingValues(event, handler)` — submissão que não deixa o React 19 esvaziar o formulário (A15, §5.3) |

@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { isAdminLocale, resolveAdminLocale } from "./locale";
+import { ADMIN_LOCALE_COOKIE, isAdminLocale, rememberAdminLocale, resolveAdminLocale } from "./locale";
 
 describe("resolveAdminLocale", () => {
   it("is the backoffice's own choice, whatever the site and the browser say", () => {
@@ -30,5 +31,20 @@ describe("resolveAdminLocale", () => {
     expect(resolveAdminLocale({ own: "pt", site: "de", acceptLanguage: "pt-BR" })).toBe("pt-BR");
     expect(resolveAdminLocale({ own: "EN", site: "pt-BR" })).toBe("pt-BR");
     expect(isAdminLocale("toString")).toBe(false);
+  });
+});
+
+describe("rememberAdminLocale", () => {
+  const saved = () =>
+    document.cookie.split("; ").find((entry) => entry.startsWith(`${ADMIN_LOCALE_COOKIE}=`))?.split("=")[1];
+
+  it("is what the next request is resolved by, in the backoffice and nowhere else", () => {
+    window.history.replaceState(null, "", "/admin/projects");
+    for (const locale of ["en", "pt-BR"] as const) {
+      rememberAdminLocale(locale);
+      expect(resolveAdminLocale({ own: saved(), site: "de", acceptLanguage: "fr" })).toBe(locale);
+    }
+    window.history.replaceState(null, "", "/en/projects");
+    expect(saved()).toBeUndefined();
   });
 });
