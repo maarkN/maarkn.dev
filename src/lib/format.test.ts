@@ -45,8 +45,9 @@ describe("a calendar date and an instant", () => {
 
   it("does not depend on where the code runs", () => {
     const script = `
-      const { createFormat } = await import("./src/lib/format.ts");
-      const f = createFormat({ locale: "en", timeZone: "America/Sao_Paulo" });
+      const loaded = await import("./src/lib/format.ts");
+      // Node 22 sees the module as CommonJS, with everything under \`default\`.
+      const f = (loaded.createFormat ?? loaded.default.createFormat)({ locale: "en", timeZone: "America/Sao_Paulo" });
       console.log(f.formatDate(new Date("2026-08-04")), f.formatDateTime("2026-08-04T01:30:00Z"));`;
     const seen = ["Pacific/Auckland", "America/Los_Angeles"].map((TZ) =>
       execFileSync("node_modules/.bin/tsx", ["--input-type=module", "-e", script], {
