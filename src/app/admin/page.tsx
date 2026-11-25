@@ -53,7 +53,7 @@ export default async function AdminDashboard() {
     <AdminShell email={session.user.email ?? "admin"}>
       <div className="space-y-4">
         <PageHeader
-          title="Dashboard"
+          title="Visão geral"
           description="Funil de candidaturas: onde cada vaga está, o que trava o avanço e o que ainda não dá para medir."
           actions={
             <>

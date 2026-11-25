@@ -25,11 +25,11 @@ export type KeyStatus = (typeof KEY_STATUSES)[number];
 export const KEY_STATUS_STYLES: StatusStyles = {
   active: {
     label: "Ativa",
-    className: "text-green",
+    className: "text-ok",
   },
   expired: {
     label: "Expirada",
-    className: "text-orange",
+    className: "text-warn",
   },
   revoked: {
     label: "Revogada",

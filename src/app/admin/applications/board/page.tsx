@@ -9,7 +9,7 @@ import { KanbanBoardSkeleton } from "@/components/admin/kanban/kanban-skeleton";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
-import { formatNumber } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import {
   applicationsQueryKey,
   hasAnyApplicationFilter,
@@ -81,6 +81,7 @@ export default async function ApplicationsBoardPage({
 /* ── O board (suspenso: é o único trecho que espera o banco) ──────────────── */
 
 async function BoardColumns({ filters }: { filters: ApplicationFilters }) {
+  const { formatNumber } = await getAdminFormat();
   const data = await loadKanbanBoard(filters);
 
   return (

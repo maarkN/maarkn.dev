@@ -20,7 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { dbConfigured } from "@/lib/db";
-import { EMPTY, formatNumber, formatPercent } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
+import { EMPTY, type Format } from "@/lib/format";
 import {
   buildFunnelView,
   loadFunnelSnapshot,
@@ -106,6 +107,7 @@ export async function FunnelBoard() {
   }
 
   const view = buildFunnelView(snapshot);
+  const format = await getAdminFormat();
 
   return (
     <FunnelCard>
@@ -117,20 +119,21 @@ export async function FunnelBoard() {
           />
         ) : (
           view.rows.map((row) => (
-            <FunnelRows key={row.stage} row={row} />
+            <FunnelRows key={row.stage} row={row} format={format} />
           ))
         )}
       </FunnelTableFrame>
 
-      <ClosedOutcomes closed={view.closed} />
-      <FunnelHonestyNote view={view} />
+      <ClosedOutcomes closed={view.closed} format={format} />
+      <FunnelHonestyNote view={view} format={format} />
     </FunnelCard>
   );
 }
 
 /* ── uma linha do funil (+ o cabeçalho da fase, quando ela começa) ───────── */
 
-function FunnelRows({ row }: { row: FunnelView["rows"][number] }) {
+function FunnelRows({ row, format }: { row: FunnelView["rows"][number]; format: Format }) {
+  const { formatNumber, formatPercent } = format;
   return (
     <>
       {row.phaseStart && (
@@ -184,7 +187,7 @@ function FunnelRows({ row }: { row: FunnelView["rows"][number] }) {
  * `aria-hidden` inteira — ela não acrescenta nada ao que o leitor de tela já
  * recebe, que é o nome do estágio na célula anterior e o número na do lado.
  * Ler vinte caracteres de bloco por linha seria ruído puro. Os blocos cheios
- * ficam em `--purple`, o trilho no cinza de seleção; nenhum dos dois carrega
+ * ficam em `--c1`, o trilho na cor das linhas divisórias; nenhum dos dois carrega
  * informação que não esteja no número.
  */
 const BAR_BLOCKS = 10;
@@ -195,16 +198,17 @@ function BlockBar({ share }: { share: number }) {
     Math.max(0, Math.round((share / 100) * BAR_BLOCKS)),
   );
   return (
-    <span aria-hidden className="shrink-0 text-purple">
+    <span aria-hidden className="shrink-0 text-c1">
       {"\u2588".repeat(filled)}
-      <span className="text-sel">{"\u2588".repeat(BAR_BLOCKS - filled)}</span>
+      <span className="text-border">{"\u2588".repeat(BAR_BLOCKS - filled)}</span>
     </span>
   );
 }
 
 /* ── desfechos fora do trilho ────────────────────────────────────────────── */
 
-function ClosedOutcomes({ closed }: { closed: FunnelView["closed"] }) {
+function ClosedOutcomes({ closed, format }: { closed: FunnelView["closed"]; format: Format }) {
+  const { formatNumber } = format;
   const total = closed.reduce((sum, item) => sum + item.count, 0);
   return (
     <div className="space-y-1.5 border-t border-border pt-3">
@@ -235,11 +239,11 @@ function ClosedOutcomes({ closed }: { closed: FunnelView["closed"] }) {
 
 /* ── o aviso de honestidade ──────────────────────────────────────────────── */
 
-function FunnelHonestyNote({ view }: { view: FunnelView }) {
+function FunnelHonestyNote({ view, format }: { view: FunnelView; format: Format }) {
   if (view.sentReached === 0) {
     return (
-      <div className="flex items-start gap-2 border border-orange/30 bg-orange/10 p-3 text-xs text-orange">
-        <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+      <div className="flex items-start gap-2 border border-warn/30 bg-warn/10 p-3 text-xs text-foreground">
+        <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
         <p>
           <strong>Ainda não há dado de outcome.</strong> Nenhuma candidatura
           chegou a “Enviada”, então toda taxa a partir daí fica{" "}
@@ -253,10 +257,10 @@ function FunnelHonestyNote({ view }: { view: FunnelView }) {
 
   if (view.undefinedRates > 0) {
     return (
-      <div className="flex items-start gap-2 border border-orange/30 bg-orange/10 p-3 text-xs text-orange">
-        <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+      <div className="flex items-start gap-2 border border-warn/30 bg-warn/10 p-3 text-xs text-foreground">
+        <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
         <p>
-          {formatNumber(view.undefinedRates)} taxa(s) sem denominador: nenhuma
+          {format.formatNumber(view.undefinedRates)} taxa(s) sem denominador: nenhuma
           candidatura alcançou o estágio anterior, então a conversão aparece como
           “{EMPTY}” em vez de 0%. Ausência de dado não é resultado zero.
         </p>

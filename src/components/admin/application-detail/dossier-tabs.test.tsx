@@ -2,6 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createFormat } from "@/lib/format";
 import { ApplicationDossierTabs } from "./dossier-tabs";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
@@ -25,6 +26,7 @@ function renderTabs() {
   act(() =>
     root.render(
       <ApplicationDossierTabs
+        format={createFormat({ locale: "pt-BR", timeZone: "America/Sao_Paulo" })}
         documents={[]}
         artifacts={[]}
         events={[]}

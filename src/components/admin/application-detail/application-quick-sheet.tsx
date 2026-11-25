@@ -53,7 +53,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { SPONSORSHIP_HINTS } from "@/lib/applications";
-import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
+import { useAdminFormat } from "@/components/admin/admin-locale";
 import { DetailRow, ExternalLinkValue } from "./detail-row";
 
 /**
@@ -110,6 +110,7 @@ export function ApplicationQuickSheet({
   /** Gatilho. Sem ele, um botão de ícone "Inspecionar". */
   children?: React.ReactNode;
 }) {
+  const { formatDate, formatDateTime, formatNumber } = useAdminFormat();
   const row = application;
   const companyName = row.company?.name ?? row.folderName;
   // Herança candidatura > vaga, a mesma regra de `effectiveSponsorship`.

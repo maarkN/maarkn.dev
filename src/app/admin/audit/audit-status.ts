@@ -17,15 +17,15 @@ import type { StatusStyles } from "@/components/admin/status-badge";
 export const AUDIT_STATUS_STYLES: StatusStyles = {
   ok: {
     label: "OK",
-    className: "text-green",
+    className: "text-ok",
   },
   running: {
     label: "Em curso",
-    className: "text-comment",
+    className: "text-ink-3",
   },
   denied: {
     label: "Recusada",
-    className: "text-orange",
+    className: "text-warn",
   },
   error: {
     label: "Erro",

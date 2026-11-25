@@ -6,7 +6,7 @@ import { Activity, AlertTriangle, KeyRound, ShieldX, Sun } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -130,6 +130,7 @@ function StatsSkeleton() {
 }
 
 async function AuditStats() {
+  const { formatNumber } = await getAdminFormat();
   const dayAgo = since24h();
 
   // A3: sem DATABASE_URL cada tile lê zero em vez de lançar.
@@ -222,6 +223,7 @@ async function AuditTable({
   keyId: string;
   page: number;
 }) {
+  const { formatDateTime, formatNumber } = await getAdminFormat();
   const where: Prisma.McpAuditLogWhereInput = {
     ...(status ? { status } : {}),
     ...(q ? { tool: { contains: q, mode: "insensitive" as const } } : {}),

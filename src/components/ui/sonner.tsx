@@ -2,6 +2,8 @@
 
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
+import { useSiteTheme } from "@/components/site-theme"
+
 /**
  * O retorno de uma ação é uma LINHA DE SAÍDA, não um cartão de notificação
  * (bko-04). Quadrado, monoespaçado, sem ícone gráfico, sem barra de
@@ -16,23 +18,21 @@ import { Toaster as Sonner, type ToasterProps } from "sonner"
  * sozinha não daria a quem não distingue vermelho de verde.
  *
  * ── Cor no marcador, não no toast inteiro ──────────────────────────────────
- * `richColors` está fora: ele tinge o cartão todo e reintroduz a caixa
- * colorida que o painel não usa mais. A superfície continua `--popover` com
- * borda `--line` e texto `--fg`; quem carrega a cor é o marcador. Medido na
- * paleta `soft` sobre `--popover` (#21222C): `--green` 10.07:1,
- * `--destructive` 6.65:1, `--fg` 14.59:1.
+ * `richColors` está fora: ele tinge o cartão todo. A superfície é `--popover`
+ * com borda `--border` e texto `--popover-foreground`; quem carrega a cor é o
+ * marcador (`--ok`, `--destructive`).
  *
- * A paleta do admin é fixada no servidor (admin/layout.tsx) e não há
- * `ThemeProvider` sob /admin, então o tema do sonner também é fixado em vez
- * de ser lido do `next-themes` — o hook devolvia sempre "system" e o layout
- * sobrescrevia de qualquer jeito. `theme` e `position` vêm antes do spread,
- * então um call site ainda consegue passar os seus.
+ * O tema do sonner acompanha o do site. As cores não dependem dele, porque as
+ * variáveis `--normal-*` abaixo já são as do tema.
  */
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
-      theme="dark"
+      theme={useSiteTheme() === "light" ? "light" : "dark"}
       position="bottom-right"
+      // Above the bar at the foot of a phone.
+      offset={{ bottom: "calc(var(--site-base) + 24px)" }}
+      mobileOffset={{ bottom: "calc(var(--site-base) + 16px)" }}
       className="toaster group"
       icons={{
         success: <span aria-hidden="true">✓</span>,

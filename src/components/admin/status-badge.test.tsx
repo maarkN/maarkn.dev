@@ -33,7 +33,7 @@ describe("cor do estágio", () => {
   it("cobre os 21 estágios sem cair em cor padrão", () => {
     expect(FUNNEL_STAGES).toHaveLength(21);
     for (const stage of FUNNEL_STAGES) {
-      expect(FUNNEL_STAGE_TONES[stage], stage).toMatch(/^text-[a-z-]+$/);
+      expect(FUNNEL_STAGE_TONES[stage], stage).toMatch(/^text-[a-z0-9-]+$/);
       expect(FUNNEL_STAGE_STYLES[stage].className, stage).toBe(
         FUNNEL_STAGE_TONES[stage],
       );
@@ -74,7 +74,7 @@ describe("notação de colchete", () => {
     const tag = container.querySelector("[data-slot=status-tag]");
     expect(tag?.textContent).toBe("[applied]");
     expect(tag?.getAttribute("title")).toBe("Enviada");
-    expect(tag?.className).toContain("text-cyan");
+    expect(tag?.className).toContain("text-beam-2");
   });
 
   it("não pinta fundo nenhum: a etiqueta é texto", () => {
@@ -88,6 +88,6 @@ describe("notação de colchete", () => {
     act(() => root.render(<StatusBadge status="valor_novo" styles={{}} />));
     const tag = container.querySelector("[data-slot=status-tag]");
     expect(tag?.textContent).toBe("[valor_novo]");
-    expect(tag?.className).toContain("text-comment");
+    expect(tag?.className).toContain("text-ink-3");
   });
 });

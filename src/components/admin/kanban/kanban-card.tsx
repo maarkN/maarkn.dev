@@ -83,7 +83,7 @@ export function KanbanCard({ card, moveAction, showStage }: KanbanCardProps) {
     <article
       className={cn(
         // `admin-selection`, e não um utilitário de fundo no hover: o realce
-        // só é acessível junto com a ida do texto para --fg (ver admin.css).
+        // só é acessível junto com a ida do texto para --foreground (ver admin.css).
         "admin-selection space-y-0.5 px-2 py-1.5 transition-opacity",
         isPending && "pointer-events-none opacity-50",
       )}
@@ -156,7 +156,7 @@ export function KanbanCard({ card, moveAction, showStage }: KanbanCardProps) {
         </span>
         {card.priority != null && (
           <span
-            className="shrink-0 tabular-nums text-orange"
+            className="shrink-0 tabular-nums text-warn"
             title="Prioridade (1 = maior)"
           >
             [P{card.priority}]

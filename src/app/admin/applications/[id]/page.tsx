@@ -29,12 +29,8 @@ import { Separator } from "@/components/ui/separator";
 import { SPONSORSHIP_HINTS, sourceLabel } from "@/lib/applications";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
-import {
-  EMPTY,
-  formatDate,
-  formatDateTime,
-  toDateInputValue,
-} from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
+import { EMPTY, toDateInputValue } from "@/lib/format";
 import {
   logApplicationEvent,
   moveApplicationStage,
@@ -116,6 +112,8 @@ export default async function ApplicationDetailPage({
   if (result.status === "not_found") notFound();
 
   const app = result.application;
+  const format = await getAdminFormat();
+  const { formatDate, formatDateTime } = format;
   const company = app.company;
   const job = app.job;
   const companyName = company?.name ?? app.folderName;
@@ -126,7 +124,7 @@ export default async function ApplicationDetailPage({
   const lastVerification = app.verifications[0] ?? null;
 
   return (
-    <AdminShell email={session.user.email ?? "admin"} name={app.folderName}>
+    <AdminShell email={session.user.email ?? "admin"} name={companyName}>
       <div className="space-y-4">
         <PageHeader
           title={companyName}
@@ -395,6 +393,7 @@ export default async function ApplicationDetailPage({
 
         {/* ── o dossiê propriamente dito ────────────────────────────────────── */}
         <ApplicationDossierTabs
+          format={format}
           documents={app.documents}
           artifacts={app.artifacts}
           events={app.events}

@@ -38,7 +38,7 @@ export default async function EditProjectPage({
   if (!project) notFound();
 
   return (
-    <AdminShell email={session.user.email ?? "admin"}>
+    <AdminShell email={session.user.email ?? "admin"} name={project.name}>
       <div className="space-y-4">
         <PageHeader
           title={project.name}

@@ -47,7 +47,7 @@ export default async function EditApplicationPage({
   const companyName = application.company?.name ?? application.folderName;
 
   return (
-    <AdminShell email={session.user.email ?? "admin"} name={application.folderName}>
+    <AdminShell email={session.user.email ?? "admin"} name={companyName}>
       <div className="space-y-4">
         <PageHeader
           title={companyName}

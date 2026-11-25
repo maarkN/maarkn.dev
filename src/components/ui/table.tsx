@@ -66,8 +66,8 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       // The hover highlight lives in `.admin-listing` (admin.css), which also
-      // lifts the row's text to --fg so no cell colour has to be measured on
-      // --sel. `hover:bg-transparent` is the opt-out for non-data rows.
+      // lifts the row's text to --foreground so no cell colour has to be measured
+      // on --accent. `hover:bg-transparent` is the opt-out for non-data rows.
       className={cn(
         "border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
         className

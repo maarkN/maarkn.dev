@@ -225,7 +225,7 @@ async function ContactRows({
               </TableCell>
 
               <TableCell>
-                <span className="text-cyan" title={channelLabel(row.channel)}>
+                <span className="text-beam-2" title={channelLabel(row.channel)}>
                   [{row.channel}]
                 </span>
                 <div className="pt-0.5 text-[11px] text-muted-foreground">
@@ -376,12 +376,12 @@ async function ReferenceRows({
 
               <TableCell>
                 {row.canContact ? (
-                  <span className="text-green" title="Autorizada">
+                  <span className="text-ok" title="Autorizada">
                     [can_contact]
                   </span>
                 ) : (
                   <span
-                    className="text-orange"
+                    className="text-warn"
                     title="Sem autorização: não pode ser passada para um recrutador ainda."
                   >
                     [no_consent]

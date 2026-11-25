@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2, ExternalLink, Pencil, Plus } from "lucide-react";
+import { CheckCircle2, ExternalLink, Kanban, Pencil, Plus } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DeleteApplicationButton } from "@/components/admin/delete-application-button";
 import { PageHeader } from "@/components/admin/page-header";
@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/table";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
-import { EMPTY, formatDate } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
+import { EMPTY } from "@/lib/format";
 import { SPONSORSHIP_HINTS } from "@/lib/applications";
 import {
   applicationsQueryKey,
@@ -82,17 +83,25 @@ export default async function ApplicationsPage({
           title="Candidaturas"
           description="Funil completo — estágio, mercado e o gate de visto separado por rota."
           actions={
-            <Button asChild size="sm">
-              <Link href="/admin/applications/new">
-                <Plus className="size-4" />
-                [ nova candidatura ]
-              </Link>
-            </Button>
+            <>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/admin/applications/board">
+                  <Kanban className="size-4" />
+                  [ ver como quadro ]
+                </Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/admin/applications/new">
+                  <Plus className="size-4" />
+                  [ nova candidatura ]
+                </Link>
+              </Button>
+            </>
           }
         />
 
         {notice && (
-          <p className="flex items-center gap-2 text-xs text-green">
+          <p className="flex items-center gap-2 text-xs text-ok">
             <CheckCircle2 className="size-4" />
             {notice}
           </p>
@@ -132,6 +141,7 @@ async function ApplicationsRows({
   filters: ApplicationFilters;
   page: number;
 }) {
+  const { formatDate } = await getAdminFormat();
   const result = await listApplications({ filters, page });
   const filtered = hasAnyApplicationFilter(filters);
 
@@ -186,7 +196,7 @@ async function ApplicationsRows({
                     )}
                     {row.priority != null && (
                       <span
-                        className="shrink-0 tabular-nums text-orange"
+                        className="shrink-0 tabular-nums text-warn"
                         title="Prioridade (1 = maior)"
                       >
                         [P{row.priority}]

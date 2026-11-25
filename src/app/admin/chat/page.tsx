@@ -5,7 +5,7 @@ import { Coins, Gauge, MessageSquare, Sun, Users, Zap } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 import { CHAT_LIMITS } from "@/lib/chat-log";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -121,6 +121,7 @@ function StatsSkeleton() {
 }
 
 async function ChatStats() {
+  const { formatNumber } = await getAdminFormat();
   const dayStart = startOfUtcDay();
 
   // A3: without DATABASE_URL every tile reads zero instead of throwing.
@@ -232,6 +233,7 @@ async function ChatLogsTable({
   status: string;
   page: number;
 }) {
+  const { formatDateTime, formatNumber } = await getAdminFormat();
   const where = {
     ...(status ? { status } : {}),
     ...(q ? { question: { contains: q, mode: "insensitive" as const } } : {}),

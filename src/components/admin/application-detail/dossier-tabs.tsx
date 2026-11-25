@@ -42,7 +42,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EMPTY, formatDate, formatDateTime, formatNumber } from "@/lib/format";
+import { EMPTY, type Format } from "@/lib/format";
 import { ChecklistToggle, type ChecklistToggleAction } from "./checklist-toggle";
 import {
   CoverageBadge,
@@ -150,7 +150,7 @@ export interface DossierChecklistItem {
 
 /* ── util ─────────────────────────────────────────────────────────────────── */
 
-function formatBytes(value: number | null): string {
+function formatBytes(value: number | null, { formatNumber }: Format): string {
   if (value === null) return EMPTY;
   if (value < 1024) return `${formatNumber(value)} B`;
   if (value < 1024 * 1024) return `${formatNumber(Math.round(value / 1024))} kB`;
@@ -169,13 +169,9 @@ function TabCount({ value }: { value: number }) {
  * à mão para ganhar um par de colchetes custaria caro e quebraria — o colchete
  * é `aria-hidden`, é pintura.
  *
- * A aba ativa: fundo `--sel` e um marcador `--purple`. O design pedia o TEXTO
- * ativo em `--purple`, e `--purple` sobre `--sel` mede 4.07:1 — abaixo de AA.
- * O roxo migrou para o marcador (um componente de interface, piso de 3:1, que
- * ele passa) e o texto ativo ficou em `--fg`, 8.46:1 sobre `--sel`. O `!` nas
- * duas classes é necessário: a variante `line` do primitive já declara
- * `data-active:bg-transparent` e `after:bg-foreground` com a mesma
- * especificidade, e a ordem entre elas é a do Tailwind, não a da marcação.
+ * A aba ativa: fundo `--accent`, texto `--foreground` e um marcador na cor do
+ * feixe. O `!` decide a disputa com a variante `line` do primitive, que declara
+ * as mesmas propriedades.
  */
 function DossierTab({
   value,
@@ -189,7 +185,7 @@ function DossierTab({
   return (
     <TabsTrigger
       value={value}
-      className="h-8 flex-none gap-1 px-2 data-active:bg-sel! data-active:text-fg after:bg-purple!"
+      className="h-8 flex-none gap-1 px-2 data-active:bg-accent! data-active:text-foreground after:bg-primary!"
     >
       <span aria-hidden>[</span>
       {label}
@@ -219,6 +215,7 @@ function SourcePath({ value }: { value: string }) {
 /* ── componente principal ─────────────────────────────────────────────────── */
 
 export function ApplicationDossierTabs({
+  format,
   documents,
   artifacts,
   events,
@@ -229,6 +226,8 @@ export function ApplicationDossierTabs({
   checklistItems,
   checklistAction,
 }: {
+  /** Da página, que os monta no idioma e no fuso do backoffice. */
+  format: Format;
   documents: DossierDocument[];
   artifacts: DossierArtifact[];
   events: DossierEvent[];
@@ -276,10 +275,10 @@ export function ApplicationDossierTabs({
       </TabsList>
 
       <TabsContent value="documents">
-        <DocumentsTab documents={documents} artifacts={artifacts} />
+        <DocumentsTab format={format} documents={documents} artifacts={artifacts} />
       </TabsContent>
       <TabsContent value="timeline">
-        <TimelineTab events={events} />
+        <TimelineTab format={format} events={events} />
       </TabsContent>
       <TabsContent value="coverage">
         <CoverageTab coverages={coverages} />
@@ -291,10 +290,10 @@ export function ApplicationDossierTabs({
         <HonestyTab notes={honestyNotes} />
       </TabsContent>
       <TabsContent value="interviews">
-        <InterviewsTab interviews={interviews} />
+        <InterviewsTab format={format} interviews={interviews} />
       </TabsContent>
       <TabsContent value="checklist">
-        <ChecklistTab items={checklistItems} action={checklistAction} />
+        <ChecklistTab format={format} items={checklistItems} action={checklistAction} />
       </TabsContent>
     </Tabs>
   );
@@ -306,9 +305,11 @@ const DOC_COLS = 6;
 const ARTIFACT_COLS = 5;
 
 function DocumentsTab({
+  format,
   documents,
   artifacts,
 }: {
+  format: Format;
   documents: DossierDocument[];
   artifacts: DossierArtifact[];
 }) {
@@ -355,11 +356,11 @@ function DocumentsTab({
                     <TableCell className="text-right tabular-nums">
                       {doc.wordCount === null
                         ? EMPTY
-                        : formatNumber(doc.wordCount)}
+                        : format.formatNumber(doc.wordCount)}
                     </TableCell>
                     <TableCell className="tabular-nums">
                       {/* Data de calendário vinda do vault (§A5). */}
-                      {formatDate(doc.sentAt)}
+                      {format.formatDate(doc.sentAt)}
                     </TableCell>
                   </TableRow>
                 ))
@@ -398,7 +399,7 @@ function DocumentsTab({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatBytes(artifact.sizeBytes)}
+                      {formatBytes(artifact.sizeBytes, format)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {artifact.document?.title ??
@@ -406,7 +407,7 @@ function DocumentsTab({
                         EMPTY}
                     </TableCell>
                     <TableCell className="tabular-nums">
-                      {formatDateTime(artifact.generatedAt)}
+                      {format.formatDateTime(artifact.generatedAt)}
                     </TableCell>
                   </TableRow>
                 ))
@@ -423,7 +424,7 @@ function DocumentsTab({
 
 const EVENT_COLS = 4;
 
-function TimelineTab({ events }: { events: DossierEvent[] }) {
+function TimelineTab({ format, events }: { format: Format; events: DossierEvent[] }) {
   return (
     <Card>
       <CardContent>
@@ -447,7 +448,7 @@ function TimelineTab({ events }: { events: DossierEvent[] }) {
                 <TableRow key={event.id}>
                   <TableCell className="align-top tabular-nums">
                     {/* Instante do sistema, não data de calendário (§A5). */}
-                    {formatDateTime(event.occurredAt)}
+                    {format.formatDateTime(event.occurredAt)}
                   </TableCell>
                   <TableCell className="align-top">
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -622,7 +623,7 @@ function HonestyTab({ notes }: { notes: DossierHonestyNote[] }) {
     <Card>
       <CardContent className="space-y-3">
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <ShieldAlert className="size-4 shrink-0 text-amber-500" />
+          <ShieldAlert className="size-4 shrink-0 text-warn" />
           As linhas com ⚠️ do vault. São regras de enquadramento que o gerador de
           CV precisa obedecer — “bloqueante” significa que um texto que as viole
           é rejeitado, não corrigido.
@@ -671,7 +672,7 @@ function HonestyTab({ notes }: { notes: DossierHonestyNote[] }) {
 
 const INTERVIEW_COLS = 6;
 
-function InterviewsTab({ interviews }: { interviews: DossierInterview[] }) {
+function InterviewsTab({ format, interviews }: { format: Format; interviews: DossierInterview[] }) {
   return (
     <Card>
       <CardContent>
@@ -702,7 +703,7 @@ function InterviewsTab({ interviews }: { interviews: DossierInterview[] }) {
                     {interviewKindLabel(interview.kind)}
                   </TableCell>
                   <TableCell className="align-top tabular-nums">
-                    {formatDateTime(interview.scheduledAt)}
+                    {format.formatDateTime(interview.scheduledAt)}
                     {interview.timezone && (
                       <div className="text-xs text-muted-foreground">
                         {interview.timezone}
@@ -713,7 +714,7 @@ function InterviewsTab({ interviews }: { interviews: DossierInterview[] }) {
                     {interview.mode || EMPTY}
                     {interview.durationMin != null && (
                       <div className="text-xs tabular-nums">
-                        {formatNumber(interview.durationMin)} min
+                        {format.formatNumber(interview.durationMin)} min
                       </div>
                     )}
                   </TableCell>
@@ -741,9 +742,11 @@ function InterviewsTab({ interviews }: { interviews: DossierInterview[] }) {
 const CHECKLIST_COLS = 4;
 
 function ChecklistTab({
+  format,
   items,
   action,
 }: {
+  format: Format;
   items: DossierChecklistItem[];
   action: ChecklistToggleAction;
 }) {
@@ -754,7 +757,7 @@ function ChecklistTab({
         {items.length > 0 && (
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums">
-              {formatNumber(done)} de {formatNumber(items.length)}
+              {format.formatNumber(done)} de {format.formatNumber(items.length)}
             </span>{" "}
             concluído(s).
           </p>
@@ -796,7 +799,7 @@ function ChecklistTab({
                     {item.groupLabel || EMPTY}
                   </TableCell>
                   <TableCell className="tabular-nums">
-                    {formatDateTime(item.doneAt)}
+                    {format.formatDateTime(item.doneAt)}
                   </TableCell>
                 </TableRow>
               ))

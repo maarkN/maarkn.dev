@@ -11,7 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Translated } from "@/components/admin/admin-locale";
+import { getAdminLabels, getAdminSettings } from "@/lib/admin/request";
+import { timeZones } from "@/lib/admin/time-zone";
 import { PasswordForm } from "./password-form";
+import { TimeZoneForm } from "./time-zone-form";
 
 export const metadata: Metadata = {
   title: "Configurações · admin · maarkn.dev",
@@ -25,6 +29,7 @@ export default async function SettingsPage() {
   if (!session?.user) redirect("/admin/login"); // A1
 
   const email = session.user.email ?? "admin";
+  const [{ locale, timeZone }, { timeZone: zone }] = await Promise.all([getAdminSettings(), getAdminLabels()]);
   const role = (session.user as { role?: string }).role ?? "admin";
 
   return (
@@ -55,6 +60,18 @@ export default async function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Translated>
+          <Card>
+            <CardHeader>
+              <CardTitle>{zone.title}</CardTitle>
+              <CardDescription>{zone.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TimeZoneForm key={timeZone} current={timeZone} zones={timeZones()} locale={locale} labels={zone} />
+            </CardContent>
+          </Card>
+        </Translated>
 
         <Card>
           <CardHeader>

@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 // Tudo aqui é instante real (criação, último uso, expiração, revogação):
 // `formatDateTime` por A5 — `formatDate` é para data de calendário, em UTC.
-import { formatDateTime } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { isKeyGenerationConfigured } from "@/lib/mcp/auth";
 import { MCP_WRITE_SCOPES } from "@/lib/mcp/scopes";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -184,6 +184,7 @@ async function ApiKeysTable({
   status: string;
   page: number;
 }) {
+  const { formatDateTime } = await getAdminFormat();
   const at = new Date(nowMs());
 
   // `AND` explícito: o filtro de busca e o de situação usam `OR` cada um, e
@@ -303,7 +304,7 @@ async function ApiKeysTable({
                                 (MCP_WRITE_SCOPES as readonly string[]).includes(
                                   s,
                                 )
-                                  ? "text-[10px] text-orange"
+                                  ? "text-[10px] text-warn"
                                   : "text-[10px] text-muted-foreground"
                               }
                               title={

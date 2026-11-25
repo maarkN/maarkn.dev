@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { dbConfigured } from "@/lib/db";
-import { formatDateTime } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { EVENT_TYPE_LABELS, loadRecentEvents } from "./dashboard-data";
 
 /**
@@ -79,6 +79,7 @@ export function RecentEventsSkeleton() {
 }
 
 export async function RecentEventsCard() {
+  const { formatDateTime } = await getAdminFormat();
   const result = await loadRecentEvents(LIMIT);
 
   return (
@@ -108,9 +109,9 @@ export async function RecentEventsCard() {
               <TableCell>
                 <div className="flex items-center gap-2">
                   {event.direction === "inbound" ? (
-                    <Inbox className="size-4 shrink-0 text-emerald-500" />
+                    <Inbox className="size-4 shrink-0 text-ok" />
                   ) : event.direction === "outbound" ? (
-                    <Send className="size-4 shrink-0 text-blue-500" />
+                    <Send className="size-4 shrink-0 text-beam-2" />
                   ) : null}
                   <Badge variant="outline" className="font-normal">
                     {EVENT_TYPE_LABELS[event.type] ?? event.type}
