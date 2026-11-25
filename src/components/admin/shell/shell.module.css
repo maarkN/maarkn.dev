@@ -333,6 +333,10 @@ span.entry.soon {
 .create {
   flex: none;
 }
+/* Without JavaScript, where the search and "Criar" would be. */
+.top > noscript {
+  margin-left: auto;
+}
 
 /* ── way back, and the screen ────────────────────────────────────────────── */
 

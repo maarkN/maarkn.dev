@@ -425,6 +425,15 @@ describe("the whole", () => {
     expect(release("main p", "Tab")).toEqual([null, null]);
   });
 
+  it("has a way out without JavaScript, and only then", () => {
+    const html = renderToString(shell());
+    const [, inside] = /<noscript>(.*?)<\/noscript>/.exec(html)!;
+    expect(inside).toMatch(/^<form [^>]*>.*<button type="submit".*Sair.*<\/form>$/);
+    expect(renderToString(shell({ locale: "en" }))).toMatch(/<noscript><form .*Sign out.*<\/noscript>/);
+    render();
+    expect($$("form")).toEqual([]);
+  });
+
   it("is in the language of the backoffice, with the same addresses", () => {
     render({ locale: "pt-BR" });
     const addresses = () => $$("a[href]").map((link) => link.getAttribute("href"));

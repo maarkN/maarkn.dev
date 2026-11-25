@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { memo, type KeyboardEvent, type ReactNode } from "react";
+import { logoutAction } from "@/app/_actions/auth";
+import { HoloButton } from "@/components/holo/button";
 import { HoloLink } from "@/components/holo/link";
 import { Mark } from "@/components/site/icons";
 import type { AdminLocale } from "@/lib/admin/locale";
@@ -89,6 +91,14 @@ export function Shell({
           <div className={styles.topAccount}>
             <Account email={email} locale={locale} labels={labels} side="bottom" />
           </div>
+          {/* The account menu does not open without JavaScript, and it has the way out. */}
+          <noscript>
+            <form action={logoutAction}>
+              <HoloButton type="submit" size="md">
+                {labels.account.signOut}
+              </HoloButton>
+            </form>
+          </noscript>
         </header>
         <Trail pathname={pathname} name={name} labels={labels} />
         {/* `tabIndex={-1}` is what makes the skip link actually move the focus:
