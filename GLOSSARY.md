@@ -124,6 +124,14 @@ _Avoid_: Modo terminal, home antiga
 A área privada do site, em `/admin`.
 _Avoid_: Admin, painel, dashboard
 
+**Estrutura** (`AdminShell`):
+O que cerca toda tela do backoffice: menu, topo, caminho e a barra do celular.
+_Avoid_: Chrome, moldura, layout
+
+**Caminho** (`trail`):
+De onde se chega a uma tela que está dentro de outra, até ela.
+_Avoid_: Breadcrumb, migalhas
+
 **Skill de agente** (`maarkn-dev:*`):
 Um comando que um agente de IA executa para operar o backoffice em nome de Marco.
 _Avoid_: Skill (sozinho)
