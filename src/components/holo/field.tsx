@@ -16,16 +16,20 @@ type FieldProps = Own &
     | ({ multiline: true } & ComponentProps<"textarea">)
   );
 
-/** A labelled text field. `hint` and `error` describe it; an error is announced. */
+/**
+ * A labelled text field. `hint` and `error` describe it; an error is announced.
+ * An error of the whole form is not the field's: there, `aria-invalid` marks it.
+ */
 export function HoloField({ label, hint, error, multiline, id, ...props }: FieldProps) {
   const generated = useId();
   const fieldId = id ?? generated;
   const hintId = hint ? `${fieldId}-hint` : undefined;
   const errorId = error ? `${fieldId}-error` : undefined;
+  const invalid = error ? true : props["aria-invalid"];
   const shared = {
     id: fieldId,
     className: styles.input,
-    "aria-invalid": error ? true : undefined,
+    "aria-invalid": invalid,
     "aria-describedby": [hintId, errorId].filter(Boolean).join(" ") || undefined,
   };
 
@@ -42,7 +46,7 @@ export function HoloField({ label, hint, error, multiline, id, ...props }: Field
       <div
         className={`${styles.holo} ${styles.fieldBox}`}
         data-holo=""
-        data-invalid={error ? "" : undefined}
+        data-invalid={invalid ? "" : undefined}
         data-disabled={props.disabled ? "" : undefined}
       >
         <HoloFrame seed={label} />

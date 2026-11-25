@@ -1,0 +1,631 @@
+/* ════════════════════════════════════════════════
+   The shell of the backoffice (docs/design/backoffice.md): one sheet over
+   diagonal planes, with the menu at its side and the search above the screen.
+   What is clickable is a hologram (src/components/holo), in a lower voice than
+   on the site: an entry of the menu only shows its frame under the pointer, in
+   focus or when it is where one is. Everything else is solid.
+
+   Widths: names in the menu from 1360px; icons alone below that, or when the
+   menu was collapsed; a bar at the foot of the screen below 768px. menu-width.ts
+   has the first of them too.
+
+   Two families of selectors have a tag or a double class in front, which is what
+   puts them above `.control` and `.site-root` whatever the order of the sheets.
+   ════════════════════════════════════════════════ */
+
+/* ── sheet and planes ────────────────────────────────────────────────────── */
+
+.shell {
+  --side: 92px;
+  --edge: 0px;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: var(--side) minmax(0, 1fr);
+  min-height: 100dvh;
+  padding: var(--edge);
+  background: linear-gradient(
+    112deg,
+    transparent 22%,
+    color-mix(in srgb, var(--beam) 7%, transparent) 22% 41%,
+    transparent 41% 63%,
+    color-mix(in srgb, var(--beam-2) 7%, transparent) 63% 84%,
+    transparent 84%
+  );
+  font-family: var(--type-text);
+  font-size: 1rem;
+}
+/* Behind everything, and not the box itself: a clip would cut the focus ring of
+   whatever is near the edge. */
+.shell::before {
+  content: "";
+  position: absolute;
+  inset: var(--edge);
+  z-index: -1;
+  background: var(--bg-2);
+}
+@media (min-width: 1024px) {
+  .shell {
+    --edge: 20px;
+  }
+  .shell::before {
+    clip-path: polygon(30px 0, calc(100% - 38px) 0, 100% 34px, 100% calc(100% - 40px), calc(100% - 26px) 100%, 0 100%, 0 46px);
+  }
+}
+@media (min-width: 1360px) {
+  .shell:not([data-menu]) {
+    --side: 252px;
+  }
+}
+
+a.skip {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 60;
+  padding: 10px 16px;
+  background: var(--beam);
+  color: var(--on-beam);
+  font-weight: 600;
+  text-decoration: none;
+}
+a.skip:not(:focus) {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── side ────────────────────────────────────────────────────────────────── */
+
+.side {
+  position: sticky;
+  top: var(--edge);
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 2 * var(--edge));
+  padding: 18px 16px 18px 22px;
+}
+.side .brand {
+  --control-pad: 10px;
+  align-self: flex-start;
+  flex: none;
+}
+/* At rest, words and icon: the frame comes with the answer. */
+.side :is(.brand, .collapse, a.entry):not(:hover, :focus-visible, :active, [aria-current]),
+.everything a.entry:not(:hover, :focus-visible, :active, [aria-current]) {
+  --stroke: transparent;
+  --fill: 0%;
+  --scan: 0%;
+}
+.wordmark {
+  font-family: var(--type-title);
+  font-size: 1.0625rem;
+  font-weight: 560;
+  font-stretch: 104%;
+}
+.wordmark span {
+  font-weight: 400;
+}
+
+.menu {
+  flex: 1;
+  /* The entries' lines and focus ring reach beyond them, and this scrolls. */
+  margin: 14px -10px 12px;
+  padding: 0 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.group + .group {
+  margin-top: 14px;
+}
+h2.groupName {
+  margin: 0 0 4px;
+  padding-left: 12px;
+  color: var(--ink-3);
+  font-family: var(--type-text);
+  font-size: .75rem;
+  font-weight: 400;
+  font-stretch: 100%;
+  line-height: 1.5;
+}
+.group ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry.entry {
+  --control-height: 36px;
+  --control-pad: 12px;
+  --control-size: .9375rem;
+  display: flex;
+  justify-content: flex-start;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+.entry > svg {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.entryName {
+  position: relative;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+a.entry[aria-current] {
+  font-weight: 600;
+}
+span.entry.soon {
+  align-items: center;
+  min-height: 36px;
+  padding: 4px 12px;
+  color: var(--ink-3);
+  font-size: .9375rem;
+  line-height: 1.2;
+}
+.soon small {
+  display: block;
+  font-family: var(--type-label);
+  font-size: .6875rem;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+}
+.side .collapse {
+  display: none;
+}
+.account.account {
+  --control-height: 44px;
+  font-family: var(--type-text);
+  font-size: .875rem;
+  font-weight: 700;
+}
+
+/* Icons alone: the names stay for screen readers, and come as tips. */
+@media (max-width: 1359.98px) {
+  .side .entryName,
+  .side .groupName,
+  .side .wordmark {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .side .group + .group {
+    padding-top: 12px;
+    border-top: 1px solid color-mix(in srgb, var(--ink-3) 30%, transparent);
+  }
+  .side .entry.entry {
+    justify-content: center;
+    width: 44px;
+    margin-inline: auto;
+    padding-inline: 0;
+  }
+  .side .brand {
+    --control-pad: 0px;
+    align-self: center;
+    width: 44px;
+  }
+  .foot {
+    justify-content: center;
+  }
+}
+@media (min-width: 1360px) {
+  .side .collapse {
+    display: inline-flex;
+  }
+  [data-menu] .entryName,
+  [data-menu] .groupName,
+  [data-menu] .wordmark {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  [data-menu] .group + .group {
+    padding-top: 12px;
+    border-top: 1px solid color-mix(in srgb, var(--ink-3) 30%, transparent);
+  }
+  [data-menu] .side .entry.entry {
+    justify-content: center;
+    width: 44px;
+    margin-inline: auto;
+    padding-inline: 0;
+  }
+  [data-menu] .side .brand {
+    --control-pad: 0px;
+    align-self: center;
+    width: 44px;
+  }
+  [data-menu] .foot {
+    flex-direction: column;
+  }
+}
+/* The window of "Mais" has every name, whatever the menu is. */
+.everything .entryName.entryName,
+.everything .groupName.groupName {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+.tip {
+  font-family: var(--type-text);
+  font-size: .8125rem;
+}
+
+/* ── top ─────────────────────────────────────────────────────────────────── */
+
+.page {
+  min-width: 0;
+  padding: 0 32px 48px;
+}
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 76px;
+  /* Over what scrolls, out to the edges of the screen's own lines. */
+  margin: 0 -12px;
+  padding: 0 12px;
+  background: var(--bg-2);
+}
+.topBrand,
+.topAccount {
+  display: none;
+}
+
+.search.search {
+  --control-height: 44px;
+  --control-pad: 16px;
+  --control-size: .9375rem;
+  justify-content: flex-start;
+  gap: 12px;
+  flex: 0 1 380px;
+  margin-right: auto;
+  text-align: left;
+}
+.search > svg {
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.searchName {
+  position: relative;
+  min-width: 0;
+}
+.search kbd {
+  position: relative;
+  margin-left: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--ink-3);
+  font-family: var(--type-label);
+  font-size: .75rem;
+  line-height: 1.4;
+}
+.create {
+  flex: none;
+}
+
+/* ── way back, and the screen ────────────────────────────────────────────── */
+
+.trail {
+  padding-top: 8px;
+}
+.trail ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: .875rem;
+}
+.trail li {
+  position: relative;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.trail li + li::before {
+  content: "/" / "";
+  position: absolute;
+  top: 50%;
+  left: -13px;
+  color: var(--ink-3);
+  transform: translateY(-50%);
+}
+.step.step {
+  --control-height: 30px;
+  --control-pad: 12px;
+}
+.stepName {
+  position: relative;
+  overflow-wrap: anywhere;
+}
+
+.main {
+  /* Room for the edge of what is in the screen, which the clip below would cut. */
+  margin: 0 -6px;
+  padding: 20px 6px 0;
+  /* The screens keep the monospaced face until they are redesigned. */
+  font-family: var(--font);
+  font-size: .875rem;
+  /* A screen that forgets its own scroller. `clip`, not `hidden`: a scroll
+     container here would break what is sticky inside. */
+  overflow-x: clip;
+}
+.main:focus {
+  outline: none;
+}
+
+/* ── the menus that open over the screen ─────────────────────────────────── */
+
+.menuPanel.menuPanel {
+  width: auto;
+  min-width: 236px;
+  padding: 8px;
+  border: 1px solid var(--ink-3);
+  font-family: var(--type-text);
+}
+.menuPanel [data-slot="dropdown-menu-label"] {
+  font-size: .8125rem;
+}
+.menuEmail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menuItem.menuItem {
+  min-height: 38px;
+  padding-left: 12px;
+  gap: 12px;
+  font-size: .9375rem;
+  cursor: pointer;
+}
+/* Not by the surface alone: `--accent` and `--popover` are close. */
+.menuItem.menuItem[data-highlighted] {
+  box-shadow: inset 3px 0 0 var(--beam-3);
+}
+.menuItem.menuItem[data-disabled] {
+  /* Readable, and it says why. */
+  opacity: 1;
+  color: var(--ink-3);
+}
+.menuSoon {
+  margin-left: auto;
+  padding-left: 12px;
+  font-family: var(--type-label);
+  font-size: .75rem;
+}
+
+/* ── search ──────────────────────────────────────────────────────────────── */
+
+.searchBody {
+  display: grid;
+  gap: 14px;
+}
+.searchStatus {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: .875rem;
+}
+.results {
+  display: grid;
+  grid-auto-rows: max-content;
+  gap: 8px;
+  max-height: calc(100dvh - 320px);
+  margin: 0;
+  /* Room for the focus ring and the lines, which the scroll would cut. */
+  padding: 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+.results .result {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 10px;
+  text-align: left;
+  scroll-margin: 8px;
+}
+.resultText {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* Ink, all of it: over a lit hologram in a window nothing else is 4.5:1. */
+.resultText small {
+  font-size: .8125rem;
+  font-weight: 400;
+}
+.resultKind {
+  position: relative;
+  flex: none;
+  font-family: var(--type-label);
+  font-size: .75rem;
+  font-weight: 400;
+}
+
+/* ── phone ───────────────────────────────────────────────────────────────── */
+
+.bar {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .side {
+    display: none;
+  }
+  .page {
+    padding: 0 16px calc(96px + env(safe-area-inset-bottom));
+  }
+  .top {
+    height: 60px;
+    gap: 10px;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+  .topBrand.topBrand {
+    display: inline-flex;
+    margin-right: auto;
+  }
+  .topAccount {
+    display: block;
+  }
+  .search.search,
+  .create.create {
+    --control-height: 44px;
+    --control-pad: 0px;
+    flex: none;
+    justify-content: center;
+    width: 44px;
+    min-width: 44px;
+    margin: 0;
+  }
+  .searchName,
+  .createName {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .search kbd {
+    display: none;
+  }
+
+  .bar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    display: block;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid color-mix(in srgb, var(--ink-3) 45%, transparent);
+    background: var(--bg-2);
+  }
+  .bar ul {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+  }
+  .shortcut.shortcut {
+    --control-height: 56px;
+    --control-pad: 2px;
+    --control-size: .6875rem;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+  }
+  .shortcut:not(:hover, :focus-visible, :active, [aria-current]) {
+    --stroke: transparent;
+    --fill: 0%;
+    --scan: 0%;
+  }
+  .shortcut > svg {
+    position: relative;
+    width: 20px;
+    height: 20px;
+  }
+  /* Not the frame, which is a <span> too. */
+  .shortcut > span:not([aria-hidden]) {
+    position: relative;
+    letter-spacing: -.01em;
+  }
+}
+
+/* A window: over its light, only the inks are 4.5:1 in the three themes. */
+.everything :is(.groupName, .soon) {
+  color: var(--ink-2);
+}
+.everything .group ul {
+  gap: 8px;
+}
+.everything .entry.entry {
+  --control-height: 44px;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (pointer: coarse) {
+  .menuItem.menuItem {
+    min-height: 44px;
+  }
+  .side .entry.entry {
+    --control-height: 44px;
+  }
+}
+
+/* ── without JavaScript, what would not answer ───────────────────────────── */
+
+@media (scripting: none) {
+  .search,
+  .create,
+  .account,
+  .side .collapse,
+  .bar [data-more] {
+    display: none !important;
+  }
+}
+
+/* ── print: the shell is furniture (see /admin/generator/[id]) ───────────── */
+
+@media print {
+  .side,
+  .top,
+  .trail,
+  .bar {
+    display: none !important;
+  }
+  .shell {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    background: none;
+  }
+  .shell::before {
+    display: none;
+  }
+  .page,
+  .main {
+    padding: 0;
+  }
+}

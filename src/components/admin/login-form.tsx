@@ -1,82 +1,71 @@
 "use client";
 
 /**
- * Sign-in form, drawn as a tty console (`login:` / `password:`).
+ * Sign-in form.
  *
  * `useActionState` is still the right tool here (AGENTS.md §5): it is a
  * full-page form with no dialog and no toast, and the happy path never
  * returns — `loginAction` calls `signIn(..., { redirectTo })`, which throws
  * Next's redirect control-flow exception.
  *
- * SECURITY, unchanged by the repaint: the error copy below is deliberately
- * the SAME line for a wrong password and for an address that does not exist,
- * so the screen never confirms whether an account is there. The per-IP
- * throttle lives server-side in `src/lib/login-throttle.ts` and is untouched
- * by this component.
+ * SECURITY: the error below is deliberately the SAME for a wrong password, for an
+ * address that does not exist and for an address that was locked out, and it is
+ * the form's and not a field's, so the screen never confirms whether an account
+ * is there. The per-IP throttle lives server-side in `src/lib/login-throttle.ts`
+ * and is untouched by this component.
  */
 
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "@/app/_actions/auth";
-import s from "./terminal/admin-chrome.module.css";
+import { HoloButton } from "@/components/holo/button";
+import { HoloField } from "@/components/holo/field";
+import { HoloNotice } from "@/components/holo/notice";
+import type { AdminDictionary } from "@/i18n/config";
+import styles from "./login.module.css";
 
 const initial: LoginState = { status: "idle" };
 
-/** `loginAction` returns machine keys; the pt-BR copy lives here. */
-const ERROR_MESSAGES: Record<string, string> = {
-  invalid_credentials: "E-mail ou senha incorretos.",
-  auth_error: "Não foi possível entrar. Tente de novo.",
-};
-
-export function LoginForm() {
+export function LoginForm({ labels }: { labels: AdminDictionary["login"] }) {
   const [state, action, pending] = useActionState(loginAction, initial);
   const failed = state.status === "error";
 
   return (
-    <form action={action} className={s.ttyForm}>
-      <p className={s.ttyField}>
-        <label htmlFor="email" className={s.ttyLabel} lang="en">
-          login:
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          autoCapitalize="off"
-          spellCheck={false}
-          className={s.ttyInput}
-          aria-invalid={failed}
-          required
-        />
-      </p>
+    <form action={action} className={styles.form}>
+      <HoloField
+        id="email"
+        name="email"
+        type="email"
+        label={labels.email}
+        autoComplete="email"
+        autoCapitalize="off"
+        spellCheck={false}
+        aria-invalid={failed}
+        required
+      />
+      <HoloField
+        id="password"
+        name="password"
+        type="password"
+        label={labels.password}
+        autoComplete="current-password"
+        aria-invalid={failed}
+        required
+      />
 
-      <p className={s.ttyField}>
-        <label htmlFor="password" className={s.ttyLabel} lang="en">
-          password:
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className={s.ttyInput}
-          aria-invalid={failed}
-          required
-        />
-      </p>
-
-      {/* An output line, not a field error: the console answers and reprints
-          the prompt. `role="alert"` so it is announced on arrival. */}
+      {/* `loginAction` returns machine keys; the words are the dictionary's.
+          Announced on arrival: the notice is an alert. */}
       {failed && (
-        <p className={s.ttyOut} role="alert">
-          {ERROR_MESSAGES[state.message] ?? ERROR_MESSAGES.auth_error}
-        </p>
+        <HoloNotice
+          tone="bad"
+          title={state.message === "invalid_credentials" ? labels.invalid : labels.failed}
+        />
       )}
 
-      <button type="submit" className={s.ttySubmit} disabled={pending} lang="en">
-        {pending ? "authenticating…" : "login"}
-        {pending ? null : <span className={s.caret} aria-hidden="true">{" ▸"}</span>}
-      </button>
+      <div className={styles.actions}>
+        <HoloButton type="submit" size="lg" variant="primary" seed={labels.submit} disabled={pending}>
+          {pending ? labels.pending : labels.submit}
+        </HoloButton>
+      </div>
     </form>
   );
 }

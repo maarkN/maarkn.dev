@@ -1,36 +1,43 @@
+import { cookies } from "next/headers";
+import type { ReactNode } from "react";
+import { getAdminLabels, getAdminSettings } from "@/lib/admin/request";
+import { Untranslated } from "./admin-locale";
+import { shellLabels } from "./shell/labels";
+import { COLLAPSED, MENU_COOKIE } from "./shell/menu-cookie";
+import { Shell } from "./shell/shell";
+
 /**
- * Backoffice shell — the one place the terminal chrome is applied.
+ * The one place the shell is applied. Every authenticated `/admin/**` page wraps
+ * its body in it; `/admin/login` does not, and has no navigation by construction.
  *
- * Every authenticated `/admin/**` page wraps its body in `<AdminShell>`, which
- * is what gives it the status bar, the directory tree, the breadcrumb and
- * `cd ..`. `/admin/login` does not use it, and is chrome-free by construction.
- *
- * The parts live in `./terminal/`: `admin-chrome` (frame), `admin-status-bar`
- * (bar), `admin-tree-nav` (menu + the `NAV` table), `admin-route-chrome`
- * (pathname → path/command/back).
+ * The screens inside are in Portuguese until the change that translates each one
+ * (rebrand-09 to rebrand-11), and say so. A part that was already translated goes
+ * in `Translated`.
  */
-
-import { AdminChrome } from "./terminal/admin-chrome";
-
-export { NAV, isNavItemActive, activeNavHref } from "./terminal/admin-tree-nav";
-
-export function AdminShell({
+export async function AdminShell({
   email,
   name,
   children,
 }: {
   email: string;
   /**
-   * Natural key of the record on screen — an application's `folderName`.
-   * The chrome is client-side and only has the URL, so the detail and edit
-   * pages pass it down; without it the breadcrumb shows the id instead.
+   * Name of the record on screen. The shell is client-side and only has the URL,
+   * so the detail and edit pages pass it down; without it the way back says what
+   * kind of record it is.
    */
   name?: string | null;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
+  const [{ locale }, labels, jar] = await Promise.all([getAdminSettings(), getAdminLabels(), cookies()]);
   return (
-    <AdminChrome email={email} name={name}>
-      {children}
-    </AdminChrome>
+    <Shell
+      email={email}
+      name={name}
+      locale={locale}
+      labels={shellLabels(labels)}
+      collapsed={jar.get(MENU_COOKIE)?.value === COLLAPSED}
+    >
+      <Untranslated>{children}</Untranslated>
+    </Shell>
   );
 }
