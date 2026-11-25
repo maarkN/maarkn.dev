@@ -1017,6 +1017,39 @@ async function contrast(page, t) {
   }
 }
 
+/** A janela que é a página, e o campo cujo erro é do formulário inteiro. */
+async function pageWindow(page, t) {
+  for (const theme of THEMES) {
+    await openPage(page, { theme });
+    const win = '[data-shot="window"] section';
+    t.equal(
+      await page.evaluate(`(() => { const w = ${$(win)}; return [document.getElementById(w.getAttribute("aria-labelledby"))?.textContent, w.closest("dialog") !== null, w.querySelectorAll("button").length] })()`),
+      ["A página é a janela", false, 0],
+      `${theme}: a janela tem nome e não fecha`,
+    );
+    t.ok((await page.evaluate(`Number(getComputedStyle(${$(win)}.querySelector('svg path[data-line]')).strokeWidth.replace("px", ""))`)) > 0, `${theme}: e a moldura`);
+    const field = (selector) =>
+      page.evaluate(`(() => {
+        const input = ${$(selector)};
+        const box = input.closest("[data-holo]");
+        return {
+          invalid: input.getAttribute("aria-invalid"),
+          described: input.getAttribute("aria-describedby"),
+          alert: box.parentElement.querySelector('[role="alert"]').textContent,
+          stroke: getComputedStyle(box).getPropertyValue("--stroke"),
+        };
+      })()`);
+    const own = await field("#campos input[name=email]");
+    const rest = await field("#campos input[name=name]");
+    for (const selector of ["#campos input[name=user]", "[name=window-password]"]) {
+      const { stroke, ...said } = await field(selector);
+      t.equal(said, { invalid: "true", described: null, alert: "" }, `${theme}, ${selector}: diz que está errado, sem mensagem sua`);
+      t.ok(stroke === own.stroke && stroke !== rest.stroke, `${theme}, ${selector}: com o traço de erro`, stroke);
+    }
+  }
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
 /** Alvo de toque: o botão de 34 px responde numa área de 44. */
 async function touch(page, t) {
   await page.call("Emulation.setTouchEmulationEnabled", { enabled: true });
@@ -1104,6 +1137,7 @@ export function holoCases({ shots: folder, width }) {
     { name: "holo:movimento reduzido", run: reducedMotion },
     { name: "holo:cards e telas", run: cards },
     { name: "holo:teclado", run: keyboard },
+    { name: "holo:janela e campo", run: pageWindow },
     { name: "holo:temas", run: themes },
     { name: "holo:sem JavaScript", run: noScript },
     { name: "holo:fontes", run: fonts },

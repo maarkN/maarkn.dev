@@ -38,7 +38,8 @@ Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every elemen
 | `HoloTag` (`tag.tsx`) | The label of a section, and the rail item it becomes |
 | `HoloCard`, `HoloScreen` (`card.tsx`) | A card with one target; the screen is a card with an image |
 | `HoloDialog` (`dialog.tsx`) | Window: traps the focus, closes with `Esc`, button or click outside |
-| `HoloField` (`field.tsx`) | Labelled text field, with hint and error |
+| `HoloWindow` (`window.tsx`) | A window that is the page, as the sign-in: nothing behind it, so nothing closes it |
+| `HoloField` (`field.tsx`) | Labelled text field, with hint and error; `aria-invalid` alone when the error is the whole form's |
 | `HoloSwitch` (`switch.tsx`) | On or off, at once |
 | `HoloTabs` (`tabs.tsx`) | Tabs |
 | `HoloNotice` (`notice.tsx`) | Result of an action. Content, so solid |

@@ -16,6 +16,7 @@ import { HoloSwitch } from "./switch";
 import { HoloTabs } from "./tabs";
 import { HoloTag } from "./tag";
 import { textOf } from "./text";
+import { HoloWindow } from "./window";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -212,6 +213,16 @@ describe("HoloField", () => {
     expect(region.textContent).toBe("Diga seu nome.");
   });
 
+  it("is marked, and says nothing of its own, when the error is the whole form's", () => {
+    render(<HoloField label="Senha" type="password" aria-invalid />);
+    expect($("input").getAttribute("aria-invalid")).toBe("true");
+    expect($("[data-holo]").hasAttribute("data-invalid")).toBe(true);
+    expect($("input").hasAttribute("aria-describedby")).toBe(false);
+    expect($('[role="alert"]').textContent).toBe("");
+    render(<HoloField label="Senha" type="password" aria-invalid={false} />);
+    expect($("[data-holo]").hasAttribute("data-invalid")).toBe(false);
+  });
+
   it("keeps what was typed when the error appears", () => {
     render(<HoloField label="Nome" multiline />);
     const area = $<HTMLTextAreaElement>("textarea");
@@ -219,6 +230,28 @@ describe("HoloField", () => {
     render(<HoloField label="Nome" multiline error="Curto demais." />);
     expect($<HTMLTextAreaElement>("textarea")).toBe(area);
     expect(area.value).toBe("Olá");
+  });
+});
+
+describe("HoloWindow", () => {
+  it("is a framed region named by its heading, with nothing to close it", () => {
+    render(
+      <HoloWindow title="Entrar">
+        <p>Use sua conta.</p>
+      </HoloWindow>,
+    );
+    const region = $("section");
+    expect(nameOf(region)).toBe("Entrar");
+    expect($("h1").textContent).toBe("Entrar");
+    expect(framed(region)).toBe(true);
+    expect(container.querySelector("button, dialog")).toBeNull();
+    render(
+      <HoloWindow title="Entrar" heading="h3">
+        <p>Use sua conta.</p>
+      </HoloWindow>,
+    );
+    expect(container.querySelector("h1")).toBeNull();
+    expect($("h3").textContent).toBe("Entrar");
   });
 });
 
