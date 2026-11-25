@@ -297,7 +297,6 @@ async function change(page, t) {
 
 async function languages(page, t) {
   const lang = `document.documentElement.lang`;
-  const title = `${$("aside nav a, nav[aria-label] a")}.textContent.trim()`;
   await signIn(page);
 
   /* Primeira visita: o idioma do site, e sem ele o do navegador. */
@@ -633,8 +632,6 @@ async function search(page, t) {
   /* Sem sessão, a ação não entrega nada. */
   await page.press("Escape");
   await page.call("Network.clearBrowserCookies");
-  const sent = [];
-  page.on("Network.responseReceived", ({ response }) => sent.push(response));
   await page.press("k", { meta: true });
   await page.waitFor(`location.pathname === "/admin/login"`, "ir para o login", 8000);
   t.ok(true, "sem sessão, a busca vai para o login");

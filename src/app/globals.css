@@ -44,6 +44,8 @@
    ATENÇÃO: este arquivo CONTINUA sendo varrido como texto. Nenhum nome de
    utility é escrito por extenso neste comentário de propósito. */
 @source not "../**/*.md";
+/* As medições do backoffice citam classes, certas e erradas, e não pintam nada. */
+@source not "../lib/admin/*-audit*";
 
 /* ════════════════════════════════════════════════
    CLI VERSION TOKENS — Dracula. `soft` is the default palette,
