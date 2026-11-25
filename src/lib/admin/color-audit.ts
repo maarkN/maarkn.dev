@@ -9,7 +9,7 @@
  * the theme does.
  */
 
-export type Finding = { line: number; text: string };
+type Finding = { line: number; text: string };
 
 const PREFIX =
   "bg|text|border|ring|outline|fill|stroke|shadow|caret|accent|decoration|divide|placeholder|from|via|to|after:bg|before:bg";

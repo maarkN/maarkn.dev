@@ -22,7 +22,7 @@ describe("resolveAdminLocale", () => {
   });
 
   it("with nothing to go by, is English, as the site is", () => {
-    for (const acceptLanguage of [undefined, null, "", "fr-FR,de;q=0.8", "*", ";;q=x,"]) {
+    for (const acceptLanguage of [undefined, null, "", "fr-FR,de;q=0.8", "*", ";;q=x,", "pt;q=0"]) {
       expect(resolveAdminLocale({ acceptLanguage })).toBe("en");
     }
   });

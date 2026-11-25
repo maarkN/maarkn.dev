@@ -37,7 +37,7 @@ function Tip({ text, off, children }: { text: string; off: boolean; children: Re
   );
 }
 
-export function NavEntry({
+function NavEntry({
   item,
   current,
   labels,

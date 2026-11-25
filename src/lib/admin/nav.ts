@@ -12,7 +12,7 @@ export type NavKey =
   | "applications" | "jobs" | "contacts" | "generator"
   | "projects" | "experiences" | "notes" | "assistant"
   | "apiKeys" | "audit" | "settings";
-export type NavGroupKey = "panel" | "career" | "site" | "system";
+type NavGroupKey = "panel" | "career" | "site" | "system";
 export type NavItem = Destination<NavKey>;
 
 export const NAV: readonly { key: NavGroupKey; items: readonly NavItem[] }[] = [
