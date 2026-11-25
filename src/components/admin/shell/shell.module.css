@@ -123,7 +123,7 @@ a.skip:not(:focus) {
 .group + .group {
   margin-top: 14px;
 }
-h2.groupName {
+p.groupName {
   margin: 0 0 4px;
   padding-left: 12px;
   color: var(--ink-3);
@@ -590,7 +590,7 @@ span.entry.soon {
 }
 
 /* A window: over its light, only the inks are 4.5:1 in the three themes. */
-.everything h2.groupName,
+.everything p.groupName,
 .everything span.entry.soon {
   color: var(--ink-2);
 }

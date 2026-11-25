@@ -92,22 +92,23 @@ export function NavGroups({
   current: NavItem | null;
   labels: ShellLabels;
   named?: boolean;
-  /** Prefix of the ids of the headings. */
+  /** Prefix of the ids of the names of the groups. */
   id: string;
 }) {
   return NAV.map((group) => (
-    <section key={group.key} className={styles.group} aria-labelledby={`${id}-${group.key}`}>
-      <h2 id={`${id}-${group.key}`} className={styles.groupName}>
+    <div key={group.key} className={styles.group}>
+      {/* The name of the list, and not a heading: it would come before the screen's own. */}
+      <p id={`${id}-${group.key}`} className={styles.groupName}>
         {labels.nav.groups[group.key]}
-      </h2>
-      <ul>
+      </p>
+      <ul aria-labelledby={`${id}-${group.key}`}>
         {group.items.map((item) => (
           <li key={item.key}>
             <NavEntry item={item} current={item.key === current?.key} labels={labels} named={named} />
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   ));
 }
 

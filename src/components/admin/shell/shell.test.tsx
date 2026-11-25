@@ -106,7 +106,7 @@ describe("menu", () => {
   it("is in four groups, each under its name", () => {
     render();
     expect(menu().getAttribute("aria-label")).toBe("Menu do backoffice");
-    const groups = [...menu().querySelectorAll("section")];
+    const groups = [...menu().querySelectorAll("ul")];
     expect(groups.map((group) => document.getElementById(group.getAttribute("aria-labelledby")!)!.textContent)).toEqual([
       "Painel",
       "Carreira",
