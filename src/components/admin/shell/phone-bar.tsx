@@ -2,7 +2,7 @@
 
 import { Menu } from "lucide-react";
 import Link from "next/link";
-import { useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { controlClass } from "@/components/holo/button";
 import { HoloDialog } from "@/components/holo/dialog";
 import { HoloFrame } from "@/components/holo/frame";
@@ -16,8 +16,14 @@ import styles from "./shell.module.css";
 /** On a phone, at the foot of the screen: four screens, and "Mais" for the rest. */
 export function PhoneBar({ current, labels }: { current: NavItem | null; locale: AdminLocale; labels: ShellLabels }) {
   const [open, setOpen] = useState(false);
+  const everything = useRef<HTMLDivElement>(null);
   const shown = SHORTCUTS.flatMap((key) => NAV_ITEMS.filter((item) => item.key === key));
   const elsewhere = current !== null && !SHORTCUTS.includes(current.key);
+
+  // The list is taller than a phone: it opens where one is.
+  useEffect(() => {
+    if (open) everything.current?.querySelector("[aria-current]")?.scrollIntoView({ block: "nearest" });
+  }, [open]);
 
   return (
     <>
@@ -66,6 +72,7 @@ export function PhoneBar({ current, labels }: { current: NavItem | null; locale:
         width={420}
       >
         <div
+          ref={everything}
           className={styles.everything}
           // Any link, the one to the screen already open included.
           onClick={(event: MouseEvent) => {

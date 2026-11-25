@@ -610,6 +610,9 @@ span.entry.soon {
 .everything .group ul {
   gap: 8px;
 }
+.everything a.entry {
+  scroll-margin: 16px;
+}
 .everything .entry.entry {
   --control-height: 44px;
   justify-content: flex-start;

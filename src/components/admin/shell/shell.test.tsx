@@ -227,6 +227,14 @@ describe("phone", () => {
     expect([...bar().querySelectorAll("[aria-current]")].map(spoken)).toEqual(["Mais"]);
   });
 
+  it("opens 'Mais' where one is", () => {
+    pathname = "/admin/settings";
+    render();
+    act(() => $("[data-more]").click());
+    const [shown] = vi.mocked(Element.prototype.scrollIntoView).mock.contexts as Element[];
+    expect(spoken(shown)).toBe("Configurações");
+  });
+
   it("opens every screen under 'Mais', and closes when one is chosen or with Esc", () => {
     render();
     const more = $("[data-more]");

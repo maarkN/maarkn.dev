@@ -502,6 +502,15 @@ async function menu(page, t, { width }) {
     await page.click('dialog[open] a[href="/admin/audit"]');
     await page.waitFor(`location.pathname === "/admin/audit" && !${$("dialog[open]")}`, "ir à auditoria");
 
+    await enter(page, "/admin/settings");
+    await page.click("[data-more]");
+    await page.waitFor(`${$("dialog[open]")} !== null`, "Mais");
+    await sleep(300);
+    t.ok(
+      await page.evaluate(`(() => { const r = ${$("dialog[open] [aria-current]")}.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + 30, r.top + r.height / 2); return hit !== null && ${$("dialog[open] [aria-current]")}.contains(hit) })()`),
+      "a tela atual à vista ao abrir",
+    );
+
     /* O fim da tela não fica atrás da barra. */
     await enter(page, "/admin/projects");
     await page.scroll({ to: "bottom" });
