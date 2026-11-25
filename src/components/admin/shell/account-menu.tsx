@@ -33,12 +33,12 @@ export function initials(email: string): string {
 export function AccountMenu({
   email,
   locale,
-  labels,
+  labels: { account: labels },
   side,
 }: {
   email: string;
   locale: AdminLocale;
-  labels: ShellLabels["account"];
+  labels: ShellLabels;
   side: "top" | "bottom";
 }) {
   const theme = useSiteTheme();

@@ -6,6 +6,7 @@ import { useState, type MouseEvent } from "react";
 import { controlClass } from "@/components/holo/button";
 import { HoloDialog } from "@/components/holo/dialog";
 import { HoloFrame } from "@/components/holo/frame";
+import type { AdminLocale } from "@/lib/admin/locale";
 import { NAV_ITEMS, SHORTCUTS, type NavItem } from "@/lib/admin/nav";
 import { NAV_ICONS } from "./icons";
 import type { ShellLabels } from "./labels";
@@ -13,7 +14,7 @@ import { NavGroups } from "./side-menu";
 import styles from "./shell.module.css";
 
 /** On a phone, at the foot of the screen: four screens, and "Mais" for the rest. */
-export function PhoneBar({ current, labels }: { current: NavItem | null; labels: ShellLabels }) {
+export function PhoneBar({ current, labels }: { current: NavItem | null; locale: AdminLocale; labels: ShellLabels }) {
   const [open, setOpen] = useState(false);
   const shown = SHORTCUTS.flatMap((key) => NAV_ITEMS.filter((item) => item.key === key));
   const elsewhere = current !== null && !SHORTCUTS.includes(current.key);

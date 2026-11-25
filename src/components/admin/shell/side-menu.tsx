@@ -155,7 +155,7 @@ export function SideMenu({
         >
           {collapsed ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}
         </HoloIconButton>
-        <AccountMenu email={email} locale={locale} labels={labels.account} side="top" />
+        <AccountMenu email={email} locale={locale} labels={labels} side="top" />
       </div>
     </aside>
   );

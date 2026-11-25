@@ -198,6 +198,8 @@ describe("menu", () => {
       jobs.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse" }));
     });
 
+    act(() => root.unmount());
+    root = createRoot(container);
     wide = true;
     render();
     act(() => $<HTMLAnchorElement>('aside a[href="/admin/contacts"]').focus());
@@ -409,6 +411,21 @@ describe("the whole", () => {
       (name) => !(Object.values(en.admin.nav.items) as string[]).includes(name),
     );
     for (const name of portuguese) expect(container.textContent).not.toContain(name);
+  });
+
+  it("is not drawn again when the server sends the same screen: the texts only change with the language", () => {
+    const sent = { ...LABELS };
+    render();
+    const before = $("aside nav").innerHTML;
+    LABELS["pt-BR"] = { ...LABELS["pt-BR"], nav: { ...LABELS["pt-BR"].nav, groups: LABELS.en.nav.groups } };
+    render();
+    expect($("aside nav").innerHTML).toBe(before);
+    Object.assign(LABELS, sent);
+    render({ locale: "en" });
+    expect($("aside nav").innerHTML).not.toBe(before);
+    pathname = "/admin/audit";
+    render({ locale: "en" });
+    expect([...$("aside nav").querySelectorAll("[aria-current]")].map(spoken)).toEqual(["Audit"]);
   });
 
   it("gives everything that can be focused a name", () => {

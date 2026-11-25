@@ -10,13 +10,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { AdminLocale } from "@/lib/admin/locale";
 import { CREATE } from "@/lib/admin/nav";
 import { CREATE_ICONS } from "./icons";
 import type { ShellLabels } from "./labels";
 import styles from "./shell.module.css";
 
 /** What can be created, from any screen. What cannot yet says so, and takes no focus. */
-export function CreateMenu({ labels, soon }: { labels: ShellLabels["create"]; soon: string }) {
+export function CreateMenu({ labels: { create: labels, shell } }: { locale: AdminLocale; labels: ShellLabels }) {
   const [host, setHost] = useState<HTMLElement | null>(null);
 
   return (
@@ -42,7 +43,7 @@ export function CreateMenu({ labels, soon }: { labels: ShellLabels["create"]; so
           ) : (
             <DropdownMenuItem key={key} disabled className={styles.menuItem}>
               <Icon aria-hidden="true" />
-              {labels.items[key]} <small className={styles.menuSoon}>{soon}</small>
+              {labels.items[key]} <small className={styles.menuSoon}>{shell.soon}</small>
             </DropdownMenuItem>
           );
         })}

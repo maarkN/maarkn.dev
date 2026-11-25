@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { HoloLink } from "@/components/holo/link";
 import { Mark } from "@/components/site/icons";
 import type { AdminLocale } from "@/lib/admin/locale";
@@ -19,6 +19,20 @@ import styles from "./shell.module.css";
 
 /** `id` of the screen — the skip link's target. */
 const CONTENT_ID = "content";
+
+/**
+ * The texts change with the language and with nothing else, but they are new
+ * objects each time the server sends the screen again: compared by it, a refresh
+ * of a list does not draw the whole shell.
+ */
+function sameShell<Props extends { locale: AdminLocale; labels: ShellLabels }>(before: Props, after: Props) {
+  return (Object.keys(after) as (keyof Props)[]).every((key) => key === "labels" || before[key] === after[key]);
+}
+const Side = memo(SideMenu, sameShell);
+const Search = memo(SearchButton, sameShell);
+const Create = memo(CreateMenu, sameShell);
+const Account = memo(AccountMenu, sameShell);
+const Phone = memo(PhoneBar, sameShell);
 
 /**
  * What is around every screen of the backoffice: the menu, the search, "Criar",
@@ -54,16 +68,16 @@ export function Shell({
       <a href={`#${CONTENT_ID}`} className={styles.skip}>
         {labels.shell.skip}
       </a>
-      <SideMenu current={current} collapsed={collapsed} email={email} locale={locale} labels={labels} />
+      <Side current={current} collapsed={collapsed} email={email} locale={locale} labels={labels} />
       <div className={styles.page}>
         <header className={styles.top}>
           <HoloLink href="/admin" size="sm" icon className={styles.topBrand} aria-label={labels.shell.brand}>
             <Mark />
           </HoloLink>
-          <SearchButton locale={locale} labels={labels} />
-          <CreateMenu labels={labels.create} soon={labels.shell.soon} />
+          <Search locale={locale} labels={labels} />
+          <Create locale={locale} labels={labels} />
           <div className={styles.topAccount}>
-            <AccountMenu email={email} locale={locale} labels={labels.account} side="bottom" />
+            <Account email={email} locale={locale} labels={labels} side="bottom" />
           </div>
         </header>
         <Trail pathname={pathname} name={name} labels={labels} />
@@ -73,7 +87,7 @@ export function Shell({
           {children}
         </main>
       </div>
-      <PhoneBar current={current} labels={labels} />
+      <Phone current={current} locale={locale} labels={labels} />
     </div>
   );
 }
