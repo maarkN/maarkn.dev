@@ -645,9 +645,15 @@ try {
       }
       opened = await evaluate(`document.querySelector(${JSON.stringify(OVERLAY_SELECTOR)}) !== null`, false);
     } else if (route.focus) {
-      await evaluate(`document.querySelector(${JSON.stringify(route.focus)}).focus()`, false);
-      await sleep(400);
-      opened = await evaluate(`document.querySelector(${JSON.stringify(route.expect)}) !== null`, false);
+      /* Antes de o React assumir a página o foco não abre nada: tenta de novo. */
+      for (let i = 0; i < 6 && !opened; i++) {
+        await evaluate(
+          `(() => { const el = document.querySelector(${JSON.stringify(route.focus)}); el.blur(); el.focus(); return true; })()`,
+          false,
+        );
+        await sleep(500);
+        opened = await evaluate(`document.querySelector(${JSON.stringify(route.expect)}) !== null`, false);
+      }
     } else if (route.openSelector) {
       opened = await evaluate(
         `(() => { const el = document.querySelector(${JSON.stringify(route.openSelector)});

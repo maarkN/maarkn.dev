@@ -2,6 +2,7 @@
 
 import * as React from "react"
 
+import { observeSize } from "@/components/holo/size-observer"
 import { cn } from "@/lib/utils"
 
 /**
@@ -11,12 +12,29 @@ import { cn } from "@/lib/utils"
  * applied here, once, instead of at eight call sites — the DOM is untouched,
  * which is the whole point of the decision recorded in the bko-03 design.md.
  *
- * The container, not the document, is what scrolls horizontally.
+ * The container, not the document, is what scrolls horizontally. While there is
+ * something to scroll it is a tab stop: a table without controls gives the
+ * keyboard nothing else to hold on to, and not every browser makes a scrolling
+ * box focusable by itself.
  */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  const ref = React.useRef<HTMLDivElement>(null)
+  const [scrolls, setScrolls] = React.useState(false)
+
+  React.useEffect(() => {
+    const container = ref.current
+    const table = container?.firstElementChild
+    if (!container || !table) return
+    const measure = () => setScrolls(container.scrollWidth > container.clientWidth)
+    const stops = [observeSize(container, measure), observeSize(table, measure)]
+    return () => stops.forEach((stop) => stop())
+  }, [])
+
   return (
     <div
+      ref={ref}
       data-slot="table-container"
+      tabIndex={scrolls ? 0 : undefined}
       className="relative w-full overflow-x-auto"
     >
       <table

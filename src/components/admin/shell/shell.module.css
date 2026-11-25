@@ -386,6 +386,15 @@ span.entry.soon {
 .main:focus {
   outline: none;
 }
+/* The headings of the screens too, the paper of the generator among them: the
+   site's rule is outside of every layer, and would win over their utilities. */
+.main :is(h1, h2, h3) {
+  font-family: revert-layer;
+  font-stretch: revert-layer;
+  font-weight: revert-layer;
+  line-height: revert-layer;
+  text-wrap: revert-layer;
+}
 
 /* ── the menus that open over the screen ─────────────────────────────────── */
 

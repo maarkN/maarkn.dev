@@ -37,7 +37,9 @@ export function PageHeader({
       className={cn("flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pb-2", className)}
     >
       <div className="min-w-0 max-w-[68ch]">
-        <h1 className="text-[2rem] wrap-anywhere">{title}</h1>
+        <h1 className="font-title text-[2rem] leading-[1.1] font-[560] text-balance wrap-anywhere [font-stretch:112%]">
+          {title}
+        </h1>
         {description && (
           <p className="pt-1 font-text text-base text-muted-foreground">{description}</p>
         )}
