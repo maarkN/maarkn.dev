@@ -84,12 +84,12 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 70. Trocar o tema muda toda cor de todas as telas, menos as exceções escritas, com o menu ainda aberto.
 71. O idioma começa pelo do site, e sem ele pelo do navegador; trocar muda textos e datas, não o endereço nem o que foi digitado, e vale nos próximos acessos. Tela não traduzida se diz em português.
 72. Com o navegador em outro fuso e outro idioma, servidor e navegador escrevem o mesmo, em todas as telas; o fuso configurado muda as horas e nunca as datas sem hora.
-73. Menu com nomes a partir de 1.360 px, com ícones e dica abaixo, e barra na base no celular; recolhido, continua recolhido na próxima tela. A tela atual é uma só, e o que não existe é "em breve", sem link nem foco. Sem rolagem horizontal em nenhuma tela.
-74. Tab percorre salto, menu, topo e tela na ordem em que se vê, com o foco à vista e sem nada por cima, nos três temas.
+73. Menu com nomes a partir de 1.360 px, com ícones e dica abaixo, e barra na base no celular; recolhido, continua recolhido na próxima tela, desde o que o servidor manda. A tela atual é uma só, e o que não existe é "em breve", sem link nem foco. Sem rolagem horizontal em nenhuma tela.
+74. Tab percorre salto, menu, topo e tela na ordem em que se vê e passa por tudo uma vez, com o foco à vista, nos três temas. Em todas as telas, na ida e na volta, o topo e a barra do celular não cobrem o que tem foco: o que cabe entre os dois aparece inteiro. Vale em 390×844, 360×640 e no zoom de 400% de 1440×900.
 75. A busca abre com `⌘K`, acha pela empresa e abre o dossiê, diz quando não acha, e `Esc` volta ao que estava. Nenhuma candidatura no HTML inicial; com um diálogo aberto, o atalho espera.
 76. "Criar" e a conta por teclado; `Esc` devolve o foco.
 77. Todo texto atinge 4.5:1 contra os pixels de trás, e o axe não acha violação, na estrutura e no que ela abre, nos três temas e nos dois idiomas.
-78. Sem JavaScript, o menu leva às telas e o que não responderia não aparece. Na impressão sobra o papel. Nenhuma página do site traz texto do backoffice.
+78. Sem JavaScript, o menu leva às telas, dá para sair e o que não responderia não aparece. Na impressão sobra o papel. Nenhuma página do site traz texto do backoffice.
 
 **Referência do holograma** (`--holo`, com `HOLO_REFERENCE=1 pnpm build`)
 
@@ -105,3 +105,4 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 46. Sem rolagem horizontal em 390 e 1.440 px, alvos de 44 px no toque e axe sem violação, nos três temas.
 47. Todo holograma responde ao ponteiro, inclusive o campo com erro, e o primário selecionado se distingue do repouso.
 48. Todo texto atinge 4.5:1 e todo ícone 3:1 contra os pixels que estão atrás, na página, no card com a luz e na janela, nos três temas.
+79. A janela que é a página tem nome, moldura e nada que a feche; o campo que o formulário inteiro recusou tem o traço de erro e nenhuma mensagem sua.
