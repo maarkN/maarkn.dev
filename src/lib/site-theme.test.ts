@@ -46,7 +46,7 @@ beforeEach(() => {
 describe("tokens", () => {
   it("match the table of docs/design/fundamentos.md, theme by theme", () => {
     const table = designTable();
-    expect(Object.keys(table.dusk).length).toBe(17);
+    expect(Object.keys(table.dusk).length).toBe(18);
     expect(readPalettes()).toEqual(table);
   });
 

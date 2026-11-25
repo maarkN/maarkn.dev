@@ -44,6 +44,7 @@
   --warn:    #f2d08d;
   --bad:     #f5a3a0;
   --plate:   #1f2731;
+  --on-plate: #e8eef4;
   --c1:      #3f9fc8;
   --c2:      #c97a3f;
 }
@@ -69,6 +70,7 @@
   --warn:    #7f5200;
   --bad:     #a92b37;
   --plate:   #2d3350;
+  --on-plate: #f3f5fa;
   --c1:      #6238d6;
   --c2:      #b83a72;
 }
@@ -95,6 +97,7 @@
     --warn:    #7f5200;
     --bad:     #a92b37;
     --plate:   #2d3350;
+    --on-plate: #f3f5fa;
     --c1:      #6238d6;
     --c2:      #b83a72;
   }
@@ -121,6 +124,7 @@
   --warn:    #f1fa8c;
   --bad:     #ff7b7b;
   --plate:   #1e1f29;
+  --on-plate: #f8f8f2;
   --c1:      #9d6ff0;
   --c2:      #e0589f;
 }

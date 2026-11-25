@@ -101,6 +101,8 @@ export function auditTheme(theme: SiteTheme, tokens: Tokens, fills: Fills, writt
     for (const surface of SURFACES) text(ink, surface);
     text(ink, "--bg-3", LARGE_ON_BG_3.includes(ink) ? LARGE : TEXT);
   }
+  // A tip, and the icon of an app.
+  text("--on-plate", "--plate");
   // `--on-beam` is written on the gradient of a primary button and on ::selection.
   for (const beam of ["--beam", "--beam-2", "--beam-3"]) text("--on-beam", beam);
 

@@ -29,11 +29,12 @@ Primeira visita: segue a preferência do sistema (claro ou escuro). O tema é ap
 | `--warn` | `#f2d08d` | `#7f5200` | `#f1fa8c` | Atenção |
 | `--bad` | `#f5a3a0` | `#a92b37` | `#ff7b7b` | Erro |
 | `--plate` | `#1f2731` | `#2d3350` | `#1e1f29` | Placa do ícone e dica |
+| `--on-plate` | `#e8eef4` | `#f3f5fa` | `#f8f8f2` | Texto da dica |
 | `--c1` / `--c2` | `#3f9fc8` / `#c97a3f` | `#6238d6` / `#b83a72` | `#9d6ff0` / `#e0589f` | Séries de gráfico |
 
 `--c1` e `--c2` são validadas para daltonismo, luminosidade e contraste contra `--bg-2`. Trocar uma exige validar o par de novo.
 
-Contraste mínimo: 4.5:1 para texto sobre a superfície em que ele aparece, 3:1 para borda de controle e para texto a partir de 18 px em negrito. Sobre `--bg-3`, `--ink-3`, `--beam`, `--beam-2` e `--bad` ficam abaixo de 4.5:1 em ao menos um tema: ali servem só para texto a partir de 18 px em negrito, ícone e borda. Dentro de card e janela, texto é `--ink` ou `--ink-2`: sobre o preenchimento com luz, nenhuma outra cor atinge 4.5:1 nos três temas. Ali o link é `--ink` com o sublinhado em `--beam`, e a mensagem de erro é `--ink` com o ícone em `--bad`. Um card fica sobre `--bg` ou `--bg-2`. Nenhum token de texto é legível sobre `--plate` no claro (`--ink` dá 1,09:1): a cor do texto da dica se decide antes de existir a primeira. `scripts/check-contrast.ts` mede os pares.
+Contraste mínimo: 4.5:1 para texto sobre a superfície em que ele aparece, 3:1 para borda de controle e para texto a partir de 18 px em negrito. Sobre `--bg-3`, `--ink-3`, `--beam`, `--beam-2` e `--bad` ficam abaixo de 4.5:1 em ao menos um tema: ali servem só para texto a partir de 18 px em negrito, ícone e borda. Dentro de card e janela, texto é `--ink` ou `--ink-2`: sobre o preenchimento com luz, nenhuma outra cor atinge 4.5:1 nos três temas. Ali o link é `--ink` com o sublinhado em `--beam`, e a mensagem de erro é `--ink` com o ícone em `--bad`. Um card fica sobre `--bg` ou `--bg-2`. Sobre `--plate` só se escreve em `--on-plate`: no claro a placa é escura, e `--ink` dá 1,09:1. `scripts/check-contrast.ts` mede os pares.
 
 ## Tipografia
 

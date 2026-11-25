@@ -170,6 +170,7 @@
   --color-warn:     var(--warn);
   --color-bad:      var(--bad);
   --color-plate:    var(--plate);
+  --color-on-plate: var(--on-plate);
   --color-c1:       var(--c1);
   --color-c2:       var(--c2);
 
