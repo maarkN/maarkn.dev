@@ -1,17 +1,11 @@
 // @vitest-environment jsdom
 /**
- * `[esc]` só pode ser escrito na tela enquanto for verdade. Estes testes
- * amarram o rótulo ao comportamento: a tecla fecha, o botão fecha, e nos dois
- * caminhos o foco volta ao gatilho.
- *
- * A régua do título é pseudo-elemento em CSS — o jsdom não computa `content`
- * de `::before`/`::after`, então o que dá para travar aqui é que a regra
- * existe, cobre os três primitives e declara alt-text vazio. A medição do
- * nome acessível como o navegador o calcula está em
- * `scripts/a11y-dialog-accname.mjs` (Chrome headless por CDP).
+ * A window of the backoffice (hologram-ui, "Janela"): `Esc` and the close
+ * button both close it and give the focus back to whoever opened it; the close
+ * button is named in the language of the screen; the title is the window's
+ * name, with nothing drawn into it.
  */
-import { readFileSync } from "node:fs";
-import { act } from "react";
+import { act, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -22,6 +16,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./dialog";
+import { Untranslated } from "@/components/admin/admin-locale";
+import { WithAdminWords } from "@/components/admin/test-labels";
 import {
   Sheet,
   SheetContent,
@@ -54,9 +50,9 @@ async function flushFocusRestore() {
   });
 }
 
-const escButton = () =>
+const closeButton = (name: string) =>
   Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
-    (b) => b.textContent === "[esc]",
+    (b) => b.getAttribute("aria-label") === name,
   );
 
 function openFrom(triggerSelector: string) {
@@ -100,9 +96,11 @@ const SheetCase = (
   </Sheet>
 );
 
+const inEnglish = (element: ReactElement) => <WithAdminWords locale="en">{element}</WithAdminWords>;
+
 describe.each([
-  ["Dialog", DialogCase, '[data-slot="dialog-trigger"]', '[data-slot="dialog-content"]'],
-  ["Sheet", SheetCase, '[data-slot="sheet-trigger"]', '[data-slot="sheet-content"]'],
+  ["Dialog", inEnglish(DialogCase), '[data-slot="dialog-trigger"]', '[data-slot="dialog-content"]'],
+  ["Sheet", inEnglish(SheetCase), '[data-slot="sheet-trigger"]', '[data-slot="sheet-content"]'],
 ])("%s", (_name, element, triggerSelector, contentSelector) => {
   const content = () => document.querySelector(contentSelector);
 
@@ -118,56 +116,39 @@ describe.each([
     expect(document.activeElement).toBe(trigger);
   });
 
-  it("o botão de fechar é `[esc]`, e fecha de verdade", async () => {
+  it("has a close button named in the language of the screen, which closes", async () => {
     act(() => root.render(element));
     const trigger = openFrom(triggerSelector);
 
-    const esc = escButton();
-    expect(esc).toBeDefined();
-    expect(esc!.getAttribute("aria-label")).toBe("fechar [esc]");
+    const close = closeButton("Close");
+    expect(close).toBeDefined();
+    // An icon, and its name: nothing written in brackets.
+    expect(close!.textContent).toBe("");
 
-    act(() => esc!.click());
+    act(() => close!.click());
 
     expect(content()).toBeNull();
     await flushFocusRestore();
     expect(document.activeElement).toBe(trigger);
   });
-});
 
-describe("régua do título", () => {
-  const css = readFileSync("src/app/admin/admin.css", "utf8");
-
-  it.each([
-    "dialog-title",
-    "alert-dialog-title",
-    "sheet-title",
-  ])("cobre %s", (slot) => {
-    expect(css).toContain(`[data-slot="${slot}"]`);
+  it("names it in Portuguese on a screen not translated yet", () => {
+    act(() =>
+      root.render(
+        <WithAdminWords locale="en">
+          <Untranslated>{DialogCase}</Untranslated>
+        </WithAdminWords>,
+      ),
+    );
+    openFrom('[data-slot="dialog-trigger"]');
+    expect(closeButton("Fechar")).toBeDefined();
   });
 
-  it("desenha a régua com U+2500 em ::before e ::after", () => {
-    expect(css).toContain('content: "──"');
-    expect(css).toMatch(/content: "─{16,}"/);
-    expect(css).toContain("::before");
-    expect(css).toContain("::after");
-  });
-
-  /**
-   * O título do diálogo É o nome acessível dele (o Radix aponta o
-   * `aria-labelledby` do conteúdo para cá). Conteúdo gerado entra nesse nome —
-   * então toda régua PRECISA declarar alt-text vazio, `content: "…" / ""`, ou
-   * o nome do diálogo vira `── excluir candidatura ──────…`.
-   *
-   * Isto é uma checagem de fonte: o jsdom não computa `content`. A prova em
-   * navegador está em `scripts/a11y-dialog-accname.mjs`.
-   */
-  it("nenhuma régua vaza para o nome acessível: todo content tem alt-text vazio", () => {
-    const declarations = css.match(/content:[^;]+;/g) ?? [];
-    expect(declarations.length).toBeGreaterThan(0);
-    for (const declaration of declarations) {
-      expect(declaration, `content sem alt-text: ${declaration}`).toMatch(
-        /\/\s*""\s*;$/,
-      );
-    }
+  it("takes its name from the title alone", () => {
+    act(() => root.render(element));
+    openFrom(triggerSelector);
+    const labelledBy = content()!.getAttribute("aria-labelledby")!;
+    const title = document.getElementById(labelledBy)!;
+    expect(title.textContent).toBe(_name === "Dialog" ? "editar candidatura" : "acme");
   });
 });

@@ -33,6 +33,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import { getAdminLabels } from "@/lib/admin/request";
+import { fill } from "@/lib/admin/text";
+import { safeDbError } from "@/lib/safe-error";
 import { db, dbConfigured } from "@/lib/db";
 import { buildFolderName, slugPart } from "@/lib/applications";
 import { sourceFromBoard } from "@/app/admin/jobs/radar";
@@ -97,8 +100,10 @@ export async function createApplicationFromJob(
   jobId: string,
 ): Promise<ActionResult<PromotedApplication>> {
   await requireAdmin(); // A2
+  // The messages go to a notice of a translated screen: its language (A4).
+  const { jobs: words, common } = await getAdminLabels();
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." }; // A3
+    return { ok: false, message: common.noDatabase }; // A3
   }
 
   try {
@@ -131,7 +136,7 @@ export async function createApplicationFromJob(
       },
     });
 
-    if (!job) return { ok: false, message: "Vaga não encontrada." };
+    if (!job) return { ok: false, message: words.missing };
 
     // Idempotência: promover duas vezes não cria duas candidaturas. Isso não é
     // luxo — o botão pode ser clicado duas vezes, e o radar pode ter sido
@@ -141,7 +146,7 @@ export async function createApplicationFromJob(
       return {
         ok: true,
         data: { id: existing.id, folderName: existing.folderName, created: false },
-        message: "Esta vaga já tinha candidatura — abrindo a existente.",
+        message: words.existing,
       };
     }
 
@@ -230,7 +235,7 @@ export async function createApplicationFromJob(
     return {
       ok: true,
       data: { id: created.id, folderName: created.folderName, created: true },
-      message: `Candidatura “${created.folderName}” criada.`,
+      message: fill(words.promoted, { name: label }),
     };
   } catch (err) {
     if (
@@ -238,13 +243,9 @@ export async function createApplicationFromJob(
       err.code === "P2002"
     ) {
       // Corrida entre dois cliques/abas: a outra chamada ganhou a chave.
-      return {
-        ok: false,
-        message:
-          "Já existe uma candidatura com essa chave. Recarregue a lista e tente de novo.",
-      };
+      return { ok: false, message: words.promoteFailed };
     }
-    console.error("[admin] create application from job failed", err);
-    return { ok: false, message: "Não foi possível criar a candidatura." };
+    console.error("[admin] create application from job failed", safeDbError(err));
+    return { ok: false, message: words.promoteFailed };
   }
 }

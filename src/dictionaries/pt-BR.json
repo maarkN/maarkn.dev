@@ -1143,11 +1143,973 @@
       "description": "Vale para as horas mostradas no backoffice. Datas sem hora, como a de envio de uma candidatura, não mudam com o fuso.",
       "label": "Fuso horário",
       "help": "Um nome da base IANA, como America/Sao_Paulo.",
-      "save": "salvar fuso",
-      "saving": "salvando…",
+      "save": "Salvar fuso",
+      "saving": "Salvando…",
       "saved": "Fuso salvo.",
       "unknown": "Fuso desconhecido. Use um nome da lista.",
       "failed": "Não foi possível salvar o fuso."
+    },
+    "common": {
+      "close": "Fechar",
+      "cancel": "Cancelar",
+      "required": "obrigatório",
+      "retry": "Tentar de novo",
+      "undo": "Desfazer",
+      "dismiss": "Dispensar o aviso",
+      "saving": "Salvando…",
+      "failed": "Algo deu errado do nosso lado. Nada foi perdido do que você digitou.",
+      "checkFields": "Confira os campos destacados: cada um diz o que falta.",
+      "noDatabase": "O banco não está configurado. Defina DATABASE_URL e tente de novo.",
+      "pager": {
+        "label": "Paginação",
+        "position": "Página {page} de {pages}",
+        "total": {
+          "one": "1 registro",
+          "many": "{count} registros"
+        },
+        "previous": "Anterior",
+        "next": "Próxima"
+      },
+      "states": {
+        "loading": "Carregando…",
+        "clear": "Limpar filtros",
+        "noDatabase": "O banco não está configurado, então não há o que listar. Defina DATABASE_URL e recarregue."
+      },
+      "sort": {
+        "by": "Ordenar por {column}"
+      },
+      "confirm": {
+        "type": "Para confirmar, digite o nome: {name}",
+        "pending": "Excluindo…",
+        "lost": "Não dá para desfazer."
+      },
+      "filters": {
+        "label": "Filtros",
+        "applied": {
+          "one": "1 aplicado",
+          "many": "{count} aplicados"
+        }
+      }
+    },
+    "vocab": {
+      "stage": {
+        "radar": "Radar",
+        "shortlisted": "Selecionada",
+        "package_drafting": "Pacote em redação",
+        "package_ready": "Pacote pronto",
+        "awaiting_my_send": "Aguardando meu envio",
+        "ready": "Pronta para enviar",
+        "applied": "Enviada",
+        "recruiter_contact": "Contato do recrutador",
+        "screening": "Triagem",
+        "assessment": "Avaliação",
+        "technical_challenge": "Desafio técnico",
+        "interview": "Entrevista",
+        "final_interview": "Entrevista final",
+        "reference_check": "Checagem de referências",
+        "offer": "Oferta",
+        "accepted": "Aceita",
+        "rejected": "Recusada",
+        "withdrawn": "Retirada",
+        "no_response": "Sem resposta",
+        "ghosted": "Ghosting",
+        "skipped": "Descartada"
+      },
+      "closureReason": {
+        "salary": "Salário",
+        "visa": "Visto",
+        "technical_fit": "Aderência técnica",
+        "seniority": "Senioridade",
+        "language": "Idioma",
+        "location": "Local",
+        "job_closed": "Vaga fechada",
+        "internal_candidate": "Candidato interno",
+        "withdrawal": "Desistência",
+        "not_informed": "Não informado",
+        "other": "Outro"
+      },
+      "interviewStatus": {
+        "planned": "Prevista",
+        "scheduled": "Marcada",
+        "completed": "Realizada",
+        "cancelled": "Cancelada"
+      },
+      "phase": {
+        "pre_send": "Antes do envio",
+        "sent": "Enviada",
+        "evaluation": "Em avaliação",
+        "outcome": "Desfecho"
+      },
+      "column": {
+        "selected": "Selecionadas",
+        "ready": "Prontas",
+        "sent": "Enviadas",
+        "talking": "Em conversa",
+        "evaluation": "Avaliação e entrevistas",
+        "offer": "Ofertas"
+      },
+      "visa": {
+        "not_applicable_b2b": "Não se aplica (B2B/contractor)",
+        "explicit_support": "Patrocina explicitamente",
+        "newcomer_friendly": "Amigável a recém-chegados",
+        "silent": "Não informa",
+        "requires_authorization": "Exige autorização prévia",
+        "country_residency_required": "Exige residência no país",
+        "explicit_no_sponsorship": "Não patrocina (explícito)",
+        "requires_citizenship": "Exige cidadania"
+      },
+      "visaHint": {
+        "not_applicable_b2b": "Vaga remota contratada como contractor ou B2B: o visto não entra na conta.",
+        "explicit_support": "A vaga diz que patrocina visto de trabalho.",
+        "newcomer_friendly": "A empresa costuma contratar recém-chegados, sem promessa explícita de patrocínio.",
+        "silent": "A vaga não diz nada sobre patrocínio: precisa ser verificado.",
+        "requires_authorization": "Exige autorização de trabalho no país. Elimina a vaga na rota de relocação.",
+        "country_residency_required": "Exige residência no país. Elimina a vaga na rota de relocação.",
+        "explicit_no_sponsorship": "A vaga diz que não patrocina. Elimina a vaga na rota de relocação.",
+        "requires_citizenship": "Exige cidadania. Elimina a vaga na rota de relocação."
+      },
+      "route": {
+        "remote_b2b": "Remota (B2B/contractor)",
+        "relocation": "Relocação"
+      },
+      "routeHint": {
+        "remote_b2b": "Foco atual: trabalho remoto pago em moeda forte, sem visto.",
+        "relocation": "Plano de fundo: mudar de país, e aí o patrocínio decide."
+      },
+      "source": {
+        "vanhack": "VanHack",
+        "linkedin": "LinkedIn",
+        "company_site": "Site da empresa",
+        "indeed": "Indeed",
+        "glassdoor": "Glassdoor",
+        "recruiter": "Recrutador",
+        "referral": "Indicação",
+        "radar": "Radar de vagas",
+        "other": "Outra"
+      },
+      "verdict": {
+        "top_find": "Achado top",
+        "shortlisted": "Selecionada",
+        "approved": "Aprovada",
+        "kept": "Mantida",
+        "stretch": "Acima do perfil",
+        "eliminated": "Eliminada",
+        "not_verified": "Não verificada",
+        "none": "Sem veredito"
+      },
+      "verification": {
+        "confirmado": "Descrição confirmada",
+        "divergente": "Descrição divergente",
+        "inacessível": "Descrição inacessível",
+        "expirada": "Anúncio expirado"
+      },
+      "link": {
+        "unlinked": "Fora do funil",
+        "linked": "No funil"
+      },
+      "workMode": {
+        "remote": "Remoto",
+        "hybrid": "Híbrido",
+        "onsite": "Presencial"
+      },
+      "employmentType": {
+        "full_time": "CLT/full-time",
+        "contract": "Contrato",
+        "b2b": "B2B",
+        "freelance": "Freelance"
+      },
+      "channel": {
+        "linkedin": "LinkedIn",
+        "email": "E-mail",
+        "vanhack": "VanHack",
+        "referral": "Indicação",
+        "portal": "Portal da vaga",
+        "phone": "Telefone",
+        "event": "Evento",
+        "other": "Outro"
+      },
+      "referenceLanguage": {
+        "pt-BR": "Português",
+        "en-US": "Inglês",
+        "es-ES": "Espanhol",
+        "de-DE": "Alemão"
+      },
+      "projectStatus": {
+        "live": "No ar",
+        "internal": "Interno",
+        "nda": "Sob NDA",
+        "archived": "Arquivado"
+      },
+      "projectCategory": {
+        "web": "Web",
+        "mobile": "Mobile",
+        "ai": "IA",
+        "backend": "Backend",
+        "client": "Cliente"
+      },
+      "visibility": {
+        "public": "Público",
+        "private": "Privado"
+      },
+      "generatorLanguage": {
+        "en": "Inglês",
+        "pt-BR": "Português"
+      },
+      "chatStatus": {
+        "ok": "Respondida",
+        "mock": "Simulada",
+        "pending": "Interrompida",
+        "error": "Erro"
+      },
+      "auditStatus": {
+        "ok": "Concluída",
+        "running": "Em curso",
+        "denied": "Recusada",
+        "error": "Erro"
+      },
+      "auditReason": {
+        "missing_header": "sem o cabeçalho Authorization",
+        "malformed_header": "Authorization malformado",
+        "malformed_key": "chave fora do formato",
+        "unknown_key": "chave inexistente",
+        "revoked": "chave revogada",
+        "expired": "chave expirada",
+        "no_scopes": "chave sem escopos válidos",
+        "server_misconfigured": "servidor mal configurado (sem o pepper)",
+        "unavailable": "servidor indisponível",
+        "missing_scope": "escopo insuficiente",
+        "unknown_tool": "tool inexistente",
+        "invalid_arguments": "argumentos inválidos",
+        "forbidden_argument": "argumento proibido (visibility)",
+        "payload_too_large": "pedido grande demais",
+        "invalid_json": "JSON inválido",
+        "bad_origin": "origem de navegador recusada",
+        "method_not_allowed": "método HTTP não permitido",
+        "rate_limited": "limite de chamadas atingido",
+        "audit_unavailable": "auditoria indisponível",
+        "tool_error": "erro da própria tool",
+        "internal_error": "erro interno"
+      },
+      "keyStatus": {
+        "active": "Ativa",
+        "expired": "Expirada",
+        "revoked": "Revogada"
+      },
+      "scope": {
+        "sync:read": "Consultar o estado da sincronização (quais arquivos mudaram)",
+        "sync:write": "Abrir e fechar rodadas de sincronização e gravar o estado",
+        "applications:read": "Ler candidaturas, eventos e checklists",
+        "applications:write": "Criar e atualizar candidaturas",
+        "jobs:read": "Ler vagas e o radar",
+        "jobs:write": "Criar e atualizar vagas",
+        "content:read": "Ler experiências, projetos de carreira, competências e posts",
+        "content:write": "Criar e atualizar experiências e projetos",
+        "profile:read": "Ler fatos de perfil (pretensão, referências, regras R1 a R8)",
+        "resume:generate": "Gerar currículo e carta a partir de uma vaga"
+      },
+      "expiry": {
+        "7": "7 dias",
+        "30": "30 dias",
+        "90": "90 dias",
+        "180": "180 dias",
+        "365": "1 ano",
+        "never": "Sem expiração"
+      }
+    },
+    "applications": {
+      "title": "Candidaturas",
+      "description": "O funil inteiro. Abra uma linha para ver o dossiê, ou arraste no quadro para mudar o estágio.",
+      "views": {
+        "label": "Ver como",
+        "list": "Lista",
+        "board": "Quadro"
+      },
+      "create": "Nova candidatura",
+      "created": "Candidatura “{name}” criada.",
+      "saved": "Candidatura “{name}” salva.",
+      "columns": {
+        "company": "Empresa",
+        "role": "Vaga",
+        "stage": "Estágio",
+        "visa": "Visto",
+        "sent": "Enviada",
+        "updated": "Atualizada",
+        "actions": "Ações"
+      },
+      "inherited": "da vaga",
+      "priority": "Prioridade {n} (1 é a maior)",
+      "openJob": "Abrir o anúncio da vaga em {name}",
+      "edit": "Editar a candidatura {name}",
+      "delete": {
+        "trigger": "Excluir a candidatura {name}",
+        "title": "Excluir a candidatura {name}?",
+        "lost": "Ela sai do funil com o histórico, as entrevistas, os documentos e o checklist. A empresa e a vaga continuam.",
+        "folder": "Pasta no vault: {key}.",
+        "confirm": "Excluir candidatura",
+        "done": "Candidatura “{name}” excluída.",
+        "failed": "Não foi possível excluir a candidatura. Ela continua no funil."
+      },
+      "states": {
+        "loading": "Carregando as candidaturas…",
+        "empty": "Nenhuma candidatura ainda. A primeira pode ser uma vaga que você só está mirando.",
+        "filtered": "Nenhuma candidatura com estes filtros.",
+        "failed": "As candidaturas não carregaram: o banco não respondeu. Nada foi perdido."
+      },
+      "filters": {
+        "label": "Filtrar candidaturas",
+        "search": "Busca",
+        "searchPlaceholder": "Empresa, vaga ou pasta",
+        "phase": "Fase ou estágio",
+        "allPhases": "Todas as fases",
+        "wholePhase": "Toda a fase “{phase}”",
+        "phaseOnly": "Fase",
+        "route": "Rota",
+        "allRoutes": "Todas as rotas",
+        "visa": "Visto",
+        "anyVisa": "Qualquer sinal",
+        "market": "Mercado",
+        "allMarkets": "Todos os mercados",
+        "source": "Origem",
+        "allSources": "Todas as origens",
+        "apply": "Filtrar"
+      }
+    },
+    "board": {
+      "title": "Quadro de candidaturas",
+      "description": "As candidaturas abertas, por coluna. Arraste um cartão para outra coluna, ou use as setas com ele em foco.",
+      "keys": "Com um cartão em foco, ← e → o levam para a coluna ao lado.",
+      "total": {
+        "one": "1 candidatura aberta neste recorte.",
+        "many": "{count} candidaturas abertas neste recorte."
+      },
+      "cap": "Até {cap} cartões por coluna; o resto está na lista.",
+      "column": "{name}: {count}",
+      "hidden": {
+        "one": "Mais 1 não aparece aqui.",
+        "many": "Mais {count} não aparecem aqui."
+      },
+      "none": "Nenhuma",
+      "moved": "“{name}” foi para {column}.",
+      "unmoved": "“{name}” voltou para {column}.",
+      "reopened": "Ela estava em {stage}, e o motivo de encerramento ({reason}) foi removido.",
+      "restored": "“{name}” voltou para {stage}, com o motivo de encerramento ({reason}).",
+      "already": "“{name}” já está em {column}.",
+      "failed": "Não foi possível mover “{name}”. Ela continua em {column}.",
+      "states": {
+        "loading": "Carregando o quadro…",
+        "empty": "Nenhuma candidatura aberta ainda.",
+        "filtered": "Nenhuma candidatura aberta com estes filtros.",
+        "failed": "O quadro não carregou: o banco não respondeu."
+      }
+    },
+    "applicationForm": {
+      "newTitle": "Nova candidatura",
+      "newDescription": "Registre uma vaga que você mira, mesmo antes de enviar.",
+      "editDescription": "Editar a candidatura",
+      "sections": {
+        "job": "Vaga e empresa",
+        "jobHelp": "Quem contrata e para qual posição.",
+        "funnel": "Funil",
+        "funnelHelp": "Em que ponto ela está e por qual rota passa.",
+        "dates": "Datas e alvo",
+        "datesHelp": "O que alimenta a taxa de resposta.",
+        "links": "Links",
+        "linksHelp": "A URL da vaga identifica a vaga: sem ela, nenhuma vaga é criada.",
+        "notes": "Notas",
+        "notesHelp": "Markdown. O que você precisa lembrar antes de falar com eles."
+      },
+      "fields": {
+        "company": "Empresa",
+        "companyHelp": "Cria a empresa, ou usa a que já existe com o mesmo nome.",
+        "roleTitle": "Vaga",
+        "market": "Mercado",
+        "marketHelp": "Por exemplo: CA, IE, DE, EU-remoto, BR-B2B.",
+        "locationText": "Local",
+        "locationHelp": "Por exemplo: Toronto, ON · Remoto (EU).",
+        "folderName": "Pasta no vault",
+        "folderHelp": "É o que impede o agente de duplicar esta candidatura. Use o nome exato da pasta em “04 - Candidaturas”.",
+        "stage": "Estágio",
+        "sponsorship": "Visto",
+        "sponsorshipHelp": "“Não se aplica (B2B/contractor)” é a rota remota: o visto não conta nela.",
+        "inherit": "O da vaga",
+        "source": "Origem",
+        "fit": "Aderência",
+        "fitHelp": "Por exemplo: ⭐, ⭐ Go, Bom.",
+        "priority": "Prioridade",
+        "priorityHelp": "De 1 a 99; 1 é a maior.",
+        "appliedAt": "Enviada em",
+        "followUp": "Cobrar",
+        "followUpHelp": "Uma data ou uma nota curta.",
+        "targetSalary": "Salário alvo",
+        "jobUrl": "URL da vaga",
+        "careersUrl": "URL da página de carreiras",
+        "careersHelp": "Fica na empresa, não na vaga.",
+        "notesMd": "Notas"
+      },
+      "errors": {
+        "company": "Escreva o nome da empresa, com até 160 caracteres.",
+        "roleTitle": "O nome da vaga passa de 160 caracteres: encurte.",
+        "folderName": "Use só minúsculas, números e hífen, com “--” entre empresa e vaga.",
+        "market": "O mercado passa de 60 caracteres: encurte.",
+        "locationText": "O local passa de 120 caracteres: encurte.",
+        "stage": "Escolha um estágio da lista.",
+        "sponsorship": "Escolha um sinal de visto da lista.",
+        "source": "Escolha uma origem da lista.",
+        "fit": "A aderência passa de 60 caracteres: encurte.",
+        "priority": "A prioridade é um número inteiro de 1 a 99.",
+        "careersUrl": "Escreva o endereço completo, começando com https://.",
+        "jobUrl": "Escreva o endereço completo, começando com https://.",
+        "targetSalary": "O salário alvo passa de 200 caracteres: encurte.",
+        "appliedAt": "Escolha uma data válida.",
+        "followUp": "O texto de cobrança passa de 200 caracteres: encurte.",
+        "notesMd": "As notas passam de 20.000 caracteres: encurte.",
+        "invalid": "Este valor não foi aceito: confira.",
+        "duplicateFolder": "Já existe uma candidatura com esta pasta. Mude a pasta, ou abra a candidatura que já existe.",
+        "duplicateJob": "Esta URL já é de outra vaga. Confira o endereço.",
+        "duplicate": "Este valor já está em uso."
+      },
+      "failed": "Não foi possível salvar a candidatura. O que você digitou continua aqui.",
+      "noDatabase": "O banco não está configurado: nada foi salvo. Defina DATABASE_URL.",
+      "create": "Criar candidatura",
+      "save": "Salvar candidatura",
+      "cancel": "Voltar à lista"
+    },
+    "moves": {
+      "missing": "Esta candidatura não existe mais. Recarregue a página.",
+      "badStage": "Esse estágio não existe. Recarregue a página.",
+      "already": "“{name}” já está em {stage}.",
+      "failed": "O banco não gravou a mudança. Tente de novo.",
+      "moved": "“{name}” foi para {stage}.",
+      "changed": "“{name}” mudou de estágio depois disso e está em {stage}. Recarregue a página."
+    },
+    "jobs": {
+      "title": "Vagas",
+      "description": "O que existe lá fora, antes de virar candidatura: nota, veredito do radar e visto.",
+      "applications": "Ver candidaturas",
+      "columns": {
+        "job": "Vaga",
+        "score": "Nota",
+        "verdict": "Veredito",
+        "visa": "Visto",
+        "posted": "Publicada",
+        "funnel": "Funil",
+        "actions": "Ações"
+      },
+      "unknownCompany": "Empresa não identificada",
+      "closed": "Encerrada",
+      "radarScore": "radar {score}",
+      "rank": "#{rank} no radar",
+      "scoreHint": "Nota da vaga; a do radar aparece embaixo quando as duas existem.",
+      "reason": "Motivo: {reason}",
+      "verifiedOn": "em {date}",
+      "scannedOn": "radar de {date}",
+      "outside": "Fora do funil",
+      "openPosting": "Abrir o anúncio de {job}",
+      "promote": "Criar candidatura a partir de {job}",
+      "promoted": "Candidatura “{name}” criada a partir da vaga.",
+      "existing": "Esta vaga já tinha candidatura: abrindo a que existe.",
+      "promoteFailed": "Não foi possível criar a candidatura. A vaga continua aqui.",
+      "missing": "Esta vaga não existe mais. Recarregue a página.",
+      "unmapped": {
+        "one": "1 linha de varredura do radar ainda não virou vaga, e por isso não aparece aqui.",
+        "many": "{count} linhas de varredura do radar ainda não viraram vaga, e por isso não aparecem aqui."
+      },
+      "unmappedHelp": "Uma linha entra na lista quando a sincronização grava a vaga, com o endereço do anúncio.",
+      "states": {
+        "loading": "Carregando as vagas…",
+        "empty": "Nenhuma vaga no radar ainda. Elas chegam pela sincronização do agente.",
+        "filtered": "Nenhuma vaga com estes filtros.",
+        "failed": "As vagas não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar vagas",
+        "search": "Busca",
+        "searchPlaceholder": "Vaga, empresa ou endereço",
+        "verdict": "Veredito",
+        "allVerdicts": "Todos os vereditos",
+        "market": "Mercado",
+        "allMarkets": "Todos os mercados",
+        "route": "Rota",
+        "allRoutes": "Todas as rotas",
+        "visa": "Visto",
+        "anyVisa": "Qualquer sinal",
+        "link": "Funil",
+        "anyLink": "Dentro e fora",
+        "scoreMin": "Nota mínima",
+        "scoreMax": "Nota máxima",
+        "scoreHelp": "De 0 a 100.",
+        "apply": "Filtrar"
+      }
+    },
+    "contacts": {
+      "title": "Contatos",
+      "description": "Recrutadores e referências profissionais. São dados pessoais de outras pessoas: ficam privados, e nenhuma página pública os lê.",
+      "tabs": {
+        "label": "Tipo de contato",
+        "contacts": "Recrutadores e contatos",
+        "references": "Referências profissionais"
+      },
+      "privacy": "Esta tela é a única que lê estas tabelas. Os contatos de uma candidatura chegam também pelo agente.",
+      "columns": {
+        "name": "Nome",
+        "company": "Empresa",
+        "contact": "Contato",
+        "channel": "Canal",
+        "relationship": "Relação",
+        "consent": "Autorização",
+        "actions": "Ações"
+      },
+      "events": {
+        "one": "1 evento",
+        "many": "{count} eventos"
+      },
+      "interviews": {
+        "one": "1 entrevista",
+        "many": "{count} entrevistas"
+      },
+      "canContact": "Pode ser contatada",
+      "noConsent": "Sem autorização",
+      "noConsentHint": "Ainda não pode ser passada a um recrutador.",
+      "linkedin": "LinkedIn",
+      "states": {
+        "loadingContacts": "Carregando os contatos…",
+        "loadingReferences": "Carregando as referências…",
+        "emptyContacts": "Nenhum contato ainda.",
+        "emptyReferences": "Nenhuma referência ainda.",
+        "filteredContacts": "Nenhum contato com estes filtros.",
+        "filteredReferences": "Nenhuma referência com esta busca.",
+        "failedContacts": "Os contatos não carregaram: o banco não respondeu.",
+        "failedReferences": "As referências não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar contatos",
+        "search": "Busca",
+        "searchContacts": "Nome, cargo, e-mail ou empresa",
+        "searchReferences": "Nome, empresa ou chave",
+        "channel": "Canal",
+        "allChannels": "Todos os canais",
+        "company": "Empresa",
+        "allCompanies": "Todas as empresas",
+        "apply": "Filtrar"
+      },
+      "contact": {
+        "create": "Novo contato",
+        "edit": "Editar o contato {name}",
+        "newTitle": "Novo contato",
+        "editTitle": "Editar o contato",
+        "description": "Dados pessoais de outra pessoa. Ficam privados: nenhuma página pública lê esta tabela.",
+        "fields": {
+          "name": "Nome",
+          "roleTitle": "Cargo",
+          "rolePlaceholder": "Technical Recruiter",
+          "company": "Empresa",
+          "noCompany": "Sem empresa",
+          "companyHelp": "Só empresas que já existem: a lista é a mesma das vagas e candidaturas.",
+          "channel": "Canal",
+          "noChannel": "Não informado",
+          "email": "E-mail",
+          "emailPlaceholder": "nome@empresa.com",
+          "phone": "Telefone",
+          "linkedinUrl": "LinkedIn",
+          "timezone": "Fuso horário",
+          "notesMd": "Notas",
+          "notesPlaceholder": "Contexto da conversa, preferências, o que ficou combinado…"
+        },
+        "errors": {
+          "name": "Escreva o nome, com até 160 caracteres.",
+          "roleTitle": "O cargo passa de 160 caracteres: encurte.",
+          "companyId": "Essa empresa não existe mais: escolha outra.",
+          "email": "Escreva um e-mail completo, como nome@empresa.com.",
+          "phone": "O telefone passa de 60 caracteres: encurte.",
+          "linkedinUrl": "Escreva o endereço completo, começando com https://.",
+          "timezone": "O fuso passa de 60 caracteres: encurte.",
+          "channel": "Escolha um canal da lista.",
+          "notesMd": "As notas passam de 20.000 caracteres: encurte.",
+          "invalid": "Este valor não foi aceito: confira.",
+          "duplicate": "Já existe um contato com esse nome nesta empresa."
+        },
+        "save": "Salvar contato",
+        "saved": "Contato salvo.",
+        "failed": "Não foi possível salvar o contato. O que você digitou continua aqui.",
+        "delete": {
+          "trigger": "Excluir o contato {name}",
+          "title": "Excluir o contato {name}?",
+          "lost": "Os eventos e entrevistas em que ele aparece continuam, sem o contato.",
+          "confirm": "Excluir contato",
+          "done": "Contato “{name}” excluído.",
+          "failed": "Não foi possível excluir o contato. Ele continua na lista."
+        }
+      },
+      "reference": {
+        "create": "Nova referência",
+        "edit": "Editar a referência {name}",
+        "newTitle": "Nova referência",
+        "editTitle": "Editar a referência",
+        "description": "Quem pode falar do seu trabalho. Dados pessoais de outra pessoa: ficam privados.",
+        "fields": {
+          "name": "Nome",
+          "slug": "Chave",
+          "slugPlaceholder": "Vem do nome",
+          "slugHelp": "Identifica a referência na sincronização. Em branco, vem do nome.",
+          "relationship": "Relação",
+          "relationshipPlaceholder": "Gestor direto, par, cliente…",
+          "companyName": "Empresa",
+          "roleTitle": "Cargo",
+          "language": "Idioma",
+          "noLanguage": "Não informado",
+          "email": "E-mail",
+          "phone": "Telefone",
+          "linkedinUrl": "LinkedIn",
+          "canContact": "Pode ser contatada",
+          "canContactHelp": "Marque só quando a pessoa autorizou que o contato dela seja passado a um recrutador.",
+          "noteMd": "Notas",
+          "notePlaceholder": "Quando trabalharam juntos, o que essa pessoa pode atestar…"
+        },
+        "errors": {
+          "slug": "Use só minúsculas, números e hífen.",
+          "name": "Escreva o nome, com até 160 caracteres.",
+          "relationship": "A relação passa de 160 caracteres: encurte.",
+          "companyName": "A empresa passa de 160 caracteres: encurte.",
+          "roleTitle": "O cargo passa de 160 caracteres: encurte.",
+          "email": "Escreva um e-mail completo, como nome@empresa.com.",
+          "phone": "O telefone passa de 60 caracteres: encurte.",
+          "linkedinUrl": "Escreva o endereço completo, começando com https://.",
+          "language": "Escolha um idioma da lista.",
+          "noteMd": "As notas passam de 20.000 caracteres: encurte.",
+          "invalid": "Este valor não foi aceito: confira.",
+          "duplicate": "A chave “{slug}” já é de outra referência. Escolha outra."
+        },
+        "save": "Salvar referência",
+        "saved": "Referência salva.",
+        "failed": "Não foi possível salvar a referência. O que você digitou continua aqui.",
+        "delete": {
+          "trigger": "Excluir a referência {name}",
+          "title": "Excluir a referência {name}?",
+          "lost": "Ela sai do painel; nenhuma candidatura muda.",
+          "confirm": "Excluir referência",
+          "done": "Referência “{name}” excluída.",
+          "failed": "Não foi possível excluir a referência. Ela continua na lista."
+        }
+      }
+    },
+    "projects": {
+      "title": "Projetos",
+      "description": "A vitrine do site público. O endereço de cada um vem do slug, em /projects.",
+      "create": "Novo projeto",
+      "columns": {
+        "project": "Projeto",
+        "category": "Categoria",
+        "status": "Situação",
+        "source": "Código",
+        "featured": "Destaque",
+        "updated": "Atualizado",
+        "actions": "Ações"
+      },
+      "featured": "Em destaque",
+      "edit": "Editar o projeto {name}",
+      "delete": {
+        "trigger": "Excluir o projeto {name}",
+        "title": "Excluir o projeto {name}?",
+        "lost": "Ele sai do site e do backoffice: a página /projects/{slug} deixa de existir.",
+        "confirm": "Excluir projeto",
+        "done": "Projeto “{name}” excluído.",
+        "failed": "Não foi possível excluir o projeto. Ele continua no site."
+      },
+      "states": {
+        "loading": "Carregando os projetos…",
+        "empty": "Nenhum projeto ainda.",
+        "filtered": "Nenhum projeto com estes filtros.",
+        "failed": "Os projetos não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar projetos",
+        "search": "Busca",
+        "searchPlaceholder": "Nome ou slug",
+        "category": "Categoria",
+        "allCategories": "Todas as categorias",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "apply": "Filtrar"
+      }
+    },
+    "generator": {
+      "title": "Gerador de CV",
+      "description": "Cole a descrição de uma vaga: a busca traz os trechos mais próximos do seu CV e dos dossiês, e o gerador redige currículo, carta e respostas de triagem.",
+      "form": {
+        "label": "Gerar materiais para uma vaga",
+        "roleTitle": "Vaga",
+        "company": "Empresa",
+        "language": "Idioma do texto",
+        "jobDescription": "Descrição da vaga",
+        "jobPlaceholder": "Cole aqui a descrição completa da vaga…",
+        "jobHelp": "A vaga inteira, não só o título: pelo menos 40 caracteres.",
+        "grounded": "O texto se apoia no seu CV e nos dossiês: não inventa fatos nem diploma.",
+        "submit": "Gerar materiais",
+        "pending": "Gerando…",
+        "done": "Materiais gerados."
+      },
+      "errors": {
+        "unauthorized": "A sessão expirou. Entre de novo.",
+        "short": "Cole uma descrição mais completa: pelo menos 40 caracteres.",
+        "noKey": "O servidor não tem OPENAI_API_KEY. Configure e tente de novo.",
+        "noContext": "A base de conhecimento está vazia. Rode pnpm db:ingest e tente de novo.",
+        "failed": "A geração falhou. O texto colado continua aqui.",
+        "framingDown": "O validador de enquadramento não rodou: nada foi gerado nem salvo.",
+        "blocked": "O validador de enquadramento bloqueou o texto ({codes}). Nada foi salvo."
+      },
+      "result": {
+        "sources": "Fontes: {sources}",
+        "open": "Abrir a versão de impressão",
+        "resume": "Currículo",
+        "coverLetter": "Carta de apresentação",
+        "screening": "Respostas de triagem",
+        "copy": "Copiar {what}",
+        "copied": "{what}: copiado.",
+        "copyFailed": "O navegador não deixou copiar. Selecione o texto e copie à mão.",
+        "download": "Baixar {what} em Markdown",
+        "empty": "(vazio)"
+      },
+      "recent": {
+        "title": "Gerações recentes",
+        "help": "Cada uma abre na versão de impressão, de onde sai o PDF.",
+        "columns": {
+          "role": "Vaga",
+          "company": "Empresa",
+          "language": "Idioma",
+          "created": "Criada",
+          "actions": "Ações"
+        },
+        "untitled": "Vaga sem título",
+        "open": "Abrir a geração {name}",
+        "states": {
+          "loading": "Carregando as gerações…",
+          "empty": "Nada gerado ainda.",
+          "filtered": "Nenhuma geração com esta busca.",
+          "failed": "As gerações não carregaram: o banco não respondeu."
+        },
+        "filters": {
+          "label": "Buscar gerações",
+          "search": "Busca",
+          "searchPlaceholder": "Vaga ou empresa",
+          "apply": "Buscar"
+        }
+      },
+      "detail": {
+        "print": "Imprimir ou salvar em PDF",
+        "empty": "Esta geração está vazia."
+      }
+    },
+    "figures": {
+      "label": "Números"
+    },
+    "chat": {
+      "title": "Assistente",
+      "description": "Cada pergunta de visitante que chegou ao modelo, com a resposta e uma estimativa de tokens. Limites: {perIp} mensagens por visitante a cada {minutes} min, e {daily} por dia no total.",
+      "figures": {
+        "messages": "Mensagens",
+        "today": "Hoje",
+        "visitors": "Visitantes",
+        "tokens": "Tokens (estimados)",
+        "tokensToday": "Tokens hoje",
+        "budget": "Orçamento do dia",
+        "budgetHint": "{used} de {max}"
+      },
+      "columns": {
+        "when": "Quando",
+        "question": "Pergunta",
+        "visitor": "Visitante",
+        "status": "Situação",
+        "tokens": "Tokens",
+        "latency": "Latência"
+      },
+      "showAnswer": "Ver a resposta",
+      "noAnswer": "(nenhuma resposta registrada)",
+      "model": "Modelo: {model}",
+      "split": "{prompt} na pergunta, {answer} na resposta",
+      "states": {
+        "loading": "Carregando as perguntas…",
+        "empty": "Nenhuma pergunta ainda.",
+        "filtered": "Nenhuma pergunta com estes filtros.",
+        "failed": "As perguntas não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar perguntas",
+        "search": "Busca",
+        "searchPlaceholder": "Palavras da pergunta",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "apply": "Filtrar"
+      }
+    },
+    "audit": {
+      "title": "Auditoria",
+      "description": "Uma linha por chamada ao servidor MCP, inclusive as recusadas. Argumentos e resultados já chegam aqui resumidos e sem segredos; nenhuma chave em claro é gravada.",
+      "keys": "Ver as chaves",
+      "figures": {
+        "calls": "Chamadas",
+        "day": "Últimas 24 h",
+        "denied": "Recusadas (24 h)",
+        "deniedHint": "varredura, escopo ou limite",
+        "errors": "Erros (24 h)",
+        "running": "Em curso",
+        "runningHint": "não fechadas: travaram ou derrubaram o processo"
+      },
+      "columns": {
+        "when": "Quando",
+        "tool": "Tool",
+        "key": "Chave",
+        "status": "Situação",
+        "latency": "Latência",
+        "origin": "Origem"
+      },
+      "details": "Ver os detalhes",
+      "arguments": "Argumentos",
+      "result": "Resultado",
+      "unknownKey": "Chave não identificada",
+      "callsOf": "Só as chamadas da chave {name}",
+      "ms": "{ms} ms",
+      "states": {
+        "loading": "Carregando as chamadas…",
+        "empty": "Nenhuma chamada registrada ainda.",
+        "filtered": "Nenhuma chamada com estes filtros.",
+        "failed": "As chamadas não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar chamadas",
+        "search": "Busca",
+        "searchPlaceholder": "Nome da tool",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "key": "Chave",
+        "allKeys": "Todas as chaves",
+        "noKey": "Sem chave identificada",
+        "apply": "Filtrar"
+      }
+    },
+    "apiKeys": {
+      "title": "MCP e chaves",
+      "description": "As credenciais do servidor MCP. A chave em claro aparece uma única vez, ao ser criada; o banco guarda só um HMAC dela.",
+      "audit": "Ver a auditoria",
+      "noPepper": "MCP_KEY_PEPPER não está configurada. Sem ela o servidor recusa toda chamada ao MCP e nenhuma chave pode ser criada. Gere uma com openssl rand -base64 48 e reinicie o processo.",
+      "columns": {
+        "name": "Nome",
+        "prefix": "Prefixo",
+        "scopes": "Escopos",
+        "lastUsed": "Último uso",
+        "expires": "Expira",
+        "status": "Situação",
+        "actions": "Ações"
+      },
+      "createdOn": "criada em {date}",
+      "never": "Nunca",
+      "noExpiry": "Não expira",
+      "write": "escrita",
+      "writeHint": "Escopo de escrita",
+      "readHint": "Escopo de leitura",
+      "calls": "Ver as chamadas da chave {name}",
+      "states": {
+        "loading": "Carregando as chaves…",
+        "empty": "Nenhuma chave ainda. Crie a primeira para conectar o agente.",
+        "filtered": "Nenhuma chave com estes filtros.",
+        "failed": "As chaves não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar chaves",
+        "search": "Busca",
+        "searchPlaceholder": "Nome ou prefixo",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "apply": "Filtrar"
+      },
+      "create": {
+        "trigger": "Nova chave",
+        "title": "Nova chave de API",
+        "description": "Uma credencial do servidor MCP. Os escopos valem por tool, no servidor: dê só o que a chave precisa.",
+        "name": "Nome",
+        "namePlaceholder": "agente do Obsidian, macbook",
+        "nameHelp": "É este nome que você vai digitar para revogar a chave depois.",
+        "scopes": "Escopos",
+        "scopesHelp": "Não há herança: applications:write não dá applications:read. Marque os dois quando precisar dos dois.",
+        "readOnly": "Só leitura",
+        "clearScopes": "Desmarcar todos",
+        "writeWarning": {
+          "one": "1 escopo de escrita: esta chave poderá mudar dados do funil pelo MCP.",
+          "many": "{count} escopos de escrita: esta chave poderá mudar dados do funil pelo MCP."
+        },
+        "expires": "Expiração",
+        "submit": "Criar chave",
+        "pending": "Criando…",
+        "created": "Chave criada. Copie agora: ela não aparece de novo.",
+        "shownTitle": "Chave criada: copie agora",
+        "shownDescription": "Esta é a única vez que a chave aparece. O servidor guarda só um HMAC dela: nem o painel, nem a API, nem o banco conseguem mostrá-la de novo. Se perder, revogue e crie outra.",
+        "secretWarning": "Guarde num gerenciador de segredos. Não a coloque num repositório (este é público), nem em chat, issue ou log.",
+        "token": "Chave",
+        "copy": "Copiar a chave",
+        "copied": "Chave copiada.",
+        "copyFailed": "O navegador não deixou copiar. Selecione o texto e copie à mão.",
+        "summary": {
+          "name": "Nome",
+          "prefix": "Prefixo",
+          "expires": "Expira em",
+          "scopes": "Escopos"
+        },
+        "acknowledge": "Guardei a chave num lugar seguro e sei que ela não aparece de novo.",
+        "done": "Concluir",
+        "errors": {
+          "name": "Dê um nome à chave, com até 80 caracteres.",
+          "scopes": "Marque ao menos um escopo.",
+          "expiresIn": "Escolha um prazo da lista.",
+          "invalid": "Este valor não foi aceito: confira."
+        },
+        "noPepper": "MCP_KEY_PEPPER não está configurada no servidor: nenhuma chave pode ser criada.",
+        "failed": "Não foi possível criar a chave. Nada foi gravado."
+      },
+      "revoke": {
+        "trigger": "Revogar a chave {name}",
+        "title": "Revogar a chave {name}?",
+        "lost": "A chave {prefix}… passa a ser recusada na próxima chamada ao MCP. Não há como reativá-la: só criar outra.",
+        "confirm": "Revogar chave",
+        "pending": "Revogando…",
+        "done": "Chave “{name}” revogada.",
+        "missing": "Esta chave não existe mais. Recarregue a página.",
+        "already": "Esta chave já estava revogada.",
+        "mismatch": "O nome digitado não é o da chave.",
+        "failed": "Não foi possível revogar a chave. Ela continua ativa."
+      }
+    },
+    "settings": {
+      "title": "Configurações",
+      "description": "A conta do backoffice. O acesso é de uma pessoa só: a conta criada pelo seed.",
+      "account": {
+        "title": "Conta",
+        "description": "Com que identidade você entra no backoffice.",
+        "email": "E-mail",
+        "role": "Papel"
+      },
+      "password": {
+        "title": "Trocar a senha",
+        "description": "A senha atual é conferida no servidor antes da troca: uma sessão aberta sozinha não basta. A nova é gravada com bcrypt de custo 12, como no seed.",
+        "noDatabase": "O banco não está configurado: a troca de senha fica indisponível.",
+        "current": "Senha atual",
+        "new": "Nova senha",
+        "newHelp": "Pelo menos 12 caracteres, diferente da atual.",
+        "confirm": "Repita a nova senha",
+        "submit": "Trocar senha",
+        "pending": "Trocando…",
+        "done": "Senha trocada.",
+        "errors": {
+          "currentPassword": "Escreva a senha atual.",
+          "newPassword": "A nova senha precisa ter de 12 a 128 caracteres.",
+          "confirmPassword": "Repita a nova senha, exatamente igual.",
+          "mismatch": "A repetição não é igual à nova senha.",
+          "same": "A nova senha precisa ser diferente da atual.",
+          "wrong": "A senha atual não confere.",
+          "invalid": "Este valor não foi aceito: confira."
+        },
+        "noEmail": "A sessão não tem e-mail: entre de novo para trocar a senha.",
+        "noUser": "A conta do backoffice não foi encontrada.",
+        "failed": "Não foi possível trocar a senha. A atual continua valendo."
+      }
     }
   }
 }

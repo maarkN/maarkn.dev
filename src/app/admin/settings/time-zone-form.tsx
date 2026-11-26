@@ -1,45 +1,56 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useRef, useState, useTransition } from "react";
+import { Save } from "lucide-react";
+import type { ActionResult } from "@/app/_actions/action-result";
 import { setAdminTimeZone } from "@/app/_actions/preferences";
+import { useCommonLabels } from "@/components/admin/admin-locale";
 import { FieldError, FieldHelp, describedBy } from "@/components/admin/field-output";
-import { submitKeepingValues } from "@/components/admin/form-submit";
+import { submitKeepingValues, useFocusFirstInvalid } from "@/components/admin/form-submit";
+import { useNotify } from "@/components/admin/notify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AdminDictionary } from "@/i18n/config";
-import type { AdminLocale } from "@/lib/admin/locale";
 
-/** The time zone of the backoffice. Any name of the runtime; the list only suggests. */
+/**
+ * The time zone of the backoffice. Any name of the runtime; the list only
+ * suggests. A zone it does not know is the field's error; a failure of the
+ * server is a notice with "Tentar de novo", and the field stays as it was (A9).
+ */
 export function TimeZoneForm({
   current,
   zones,
-  locale,
   labels,
 }: {
   current: string;
   zones: string[];
-  locale: AdminLocale;
   labels: AdminDictionary["timeZone"];
 }) {
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const notify = useNotify();
+  const common = useCommonLabels();
+  const form = useRef<HTMLFormElement>(null);
+  useFocusFirstInvalid(form, error);
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await setAdminTimeZone(formData).catch(() => ({ ok: false as const, message: labels.failed }));
-      setError(result.ok ? undefined : result.message);
-      // The notices are marked as the language of the screens (layout.tsx).
-      const message = <span lang={locale}>{result.message}</span>;
-      if (result.ok) toast.success(message);
-      else toast.error(message);
+      const result = await setAdminTimeZone(formData).catch((): ActionResult => ({ ok: false, message: labels.failed }));
+      if (result.ok) {
+        setError({});
+        notify.success(result.message ?? labels.saved);
+        return;
+      }
+      setError(result.fieldErrors ?? {});
+      if (result.fieldErrors) notify.error(result.message);
+      else notify.error(result.message, { action: { label: common.retry, onClick: () => form.current?.requestSubmit() } });
     });
   }
 
   return (
-    <form onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-4">
-      <div className="space-y-1.5 sm:max-w-sm">
+    <form ref={form} noValidate onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-4">
+      <div className="space-y-2 sm:max-w-sm">
         <Label htmlFor="timeZone">{labels.label}</Label>
         <Input
           id="timeZone"
@@ -50,8 +61,9 @@ export function TimeZoneForm({
           autoCapitalize="none"
           spellCheck={false}
           required
-          aria-invalid={Boolean(error)}
-          aria-describedby={describedBy("timeZone-help", error && "timeZone-error")}
+          className="w-full"
+          aria-invalid={Boolean(error.timeZone)}
+          aria-describedby={describedBy("timeZone-help", error.timeZone && "timeZone-error")}
         />
         <datalist id="time-zones">
           {zones.map((zone) => (
@@ -59,10 +71,11 @@ export function TimeZoneForm({
           ))}
         </datalist>
         <FieldHelp id="timeZone-help">{labels.help}</FieldHelp>
-        <FieldError id="timeZone-error">{error}</FieldError>
+        <FieldError id="timeZone-error">{error.timeZone}</FieldError>
       </div>
-      <Button type="submit" size="sm" disabled={isPending}>
-        [ {isPending ? labels.saving : labels.save} ]
+      <Button type="submit" disabled={isPending}>
+        <Save aria-hidden="true" />
+        {isPending ? labels.saving : labels.save}
       </Button>
     </form>
   );

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 import { getAdminLabels, getAdminSettings } from "@/lib/admin/request";
-import { Untranslated } from "./admin-locale";
+import { Translated, Untranslated } from "./admin-locale";
 import { shellLabels } from "./shell/labels";
 import { COLLAPSED, MENU_COOKIE } from "./shell/menu-cookie";
 import { Shell } from "./shell/shell";
@@ -11,12 +11,13 @@ import { Shell } from "./shell/shell";
  * its body in it; `/admin/login` does not, and has no navigation by construction.
  *
  * The screens inside are in Portuguese until the change that translates each one
- * (rebrand-09 to rebrand-11), and say so. A part that was already translated goes
- * in `Translated`.
+ * (rebrand-09 to rebrand-11), and say so. A screen that was translated passes
+ * `translated`; a part of one that was not goes in `Translated`.
  */
 export async function AdminShell({
   email,
   name,
+  translated = false,
   children,
 }: {
   email: string;
@@ -26,6 +27,8 @@ export async function AdminShell({
    * kind of record it is.
    */
   name?: string | null;
+  /** The screen speaks the language of the interface: its change translated it. */
+  translated?: boolean;
   children: ReactNode;
 }) {
   const [{ locale }, labels, jar] = await Promise.all([getAdminSettings(), getAdminLabels(), cookies()]);
@@ -37,7 +40,7 @@ export async function AdminShell({
       labels={shellLabels(labels)}
       collapsed={jar.get(MENU_COOKIE)?.value === COLLAPSED}
     >
-      <Untranslated>{children}</Untranslated>
+      {translated ? <Translated>{children}</Translated> : <Untranslated>{children}</Untranslated>}
     </Shell>
   );
 }

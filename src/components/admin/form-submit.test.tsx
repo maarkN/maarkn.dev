@@ -30,11 +30,13 @@ vi.mock("@/app/_actions/contacts", () => ({
   saveContact: (id: string | null, data: FormData) => saveContact(id, data),
 }));
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { custom: vi.fn(), dismiss: vi.fn() },
 }));
 
 const { submitKeepingValues } = await import("./form-submit");
 const { ContactDialog } = await import("@/app/admin/contacts/contact-dialog");
+const { CompanyOptionsProvider } = await import("@/app/admin/contacts/company-options");
+const { ADMIN_WORDS, WithAdminWords } = await import("./test-labels");
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -122,7 +124,19 @@ describe("ContactDialog — o erro do servidor não apaga o que foi digitado", (
       fieldErrors: { email: "E-mail inválido." },
     });
 
-    act(() => root.render(<ContactDialog />));
+    const words = ADMIN_WORDS["pt-BR"];
+    act(() =>
+      root.render(
+        <WithAdminWords>
+          <CompanyOptionsProvider
+            companies={[]}
+            words={{ contact: words.contacts.contact, reference: words.contacts.reference, vocab: words.vocab }}
+          >
+            <ContactDialog />
+          </CompanyOptionsProvider>
+        </WithAdminWords>,
+      ),
+    );
     act(() => {
       container.querySelector<HTMLButtonElement>('[data-slot="dialog-trigger"]')!.click();
     });
@@ -145,5 +159,7 @@ describe("ContactDialog — o erro do servidor não apaga o que foi digitado", (
       "E-mail inválido.",
     );
     expect(document.querySelector('[data-slot="dialog-content"]')).not.toBeNull();
+    // …and the focus is on the field that has the problem (spec admin-forms).
+    expect(document.activeElement).toBe(email);
   });
 });

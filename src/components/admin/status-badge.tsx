@@ -1,4 +1,8 @@
 /**
+ * LEGACY: the dossier and the overview still use these until rebrand-10 and
+ * rebrand-11 redo them. A translated screen shows a value by its word, from
+ * `admin.vocab` (`StageLabel` in `./stage`, `StatusWord` in `./status-word`).
+ *
  * Enum → etiqueta de colchete. Um `Record<string, StatusStyle>` por enum,
  * todos montados por `makeStatusBadge`, então um enum novo só precisa de um
  * mapa de estilo.
@@ -94,11 +98,6 @@ export function makeStatusBadge(styles: StatusStyles, displayName?: string) {
   return BoundStatusBadge;
 }
 
-/** `styles[key].label` with the raw key as fallback — for selects and filters. */
-export function statusLabelFrom(styles: StatusStyles, key: string): string {
-  return styles[key]?.label ?? key;
-}
-
 /* ── Application.stage (`funnel_stage`) — src/lib/applications.ts ────────── */
 
 /**
@@ -176,7 +175,7 @@ const SPONSORSHIP_GATE_CLASSNAMES: Record<SponsorshipGate, string> = {
   blocked: "text-destructive",
 };
 
-export const SPONSORSHIP_STYLES: StatusStyles = Object.fromEntries(
+const SPONSORSHIP_STYLES: StatusStyles = Object.fromEntries(
   SPONSORSHIP_SIGNALS.map((signal) => [
     signal,
     {
@@ -205,7 +204,7 @@ const APPLICATION_SOURCE_CLASSNAMES: Record<ApplicationSource, string> = {
   other: "text-ink-3",
 };
 
-export const APPLICATION_SOURCE_STYLES: StatusStyles = Object.fromEntries(
+const APPLICATION_SOURCE_STYLES: StatusStyles = Object.fromEntries(
   APPLICATION_SOURCES.map((s) => [
     s,
     { label: SOURCE_LABELS[s], className: APPLICATION_SOURCE_CLASSNAMES[s] },
@@ -238,10 +237,6 @@ export const PROJECT_STATUS_STYLES: Record<ProjectStatus, StatusStyle> = {
   },
 };
 
-export const ProjectStatusBadge = makeStatusBadge(
-  PROJECT_STATUS_STYLES,
-  "ProjectStatus",
-);
 
 /* ── Project.category — src/lib/projects.ts ──────────────────────────────── */
 
@@ -268,14 +263,10 @@ export const PROJECT_CATEGORY_STYLES: Record<ProjectCategory, StatusStyle> = {
   },
 };
 
-export const ProjectCategoryBadge = makeStatusBadge(
-  PROJECT_CATEGORY_STYLES,
-  "ProjectCategory",
-);
 
 /* ── Project.sourceVisibility — public/private, the F1 partition ─────────── */
 
-export const VISIBILITY_STYLES: StatusStyles = {
+const VISIBILITY_STYLES: StatusStyles = {
   public: {
     label: "Público",
     className: "text-ok",

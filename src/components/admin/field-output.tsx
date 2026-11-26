@@ -1,85 +1,54 @@
 /**
- * As três linhas que cercam um campo do backoffice: ajuda, obrigatoriedade e
- * erro. Um módulo só porque a acessibilidade delas é a parte fácil de errar,
- * e errar uma vez por formulário é errar dezessete vezes.
+ * What surrounds a field of the backoffice: its help, the word that says it is
+ * required, and its error. One module, because their accessibility is the easy
+ * part to get wrong, and getting it wrong once per form is getting it wrong a
+ * dozen times.
  *
- * ── O sotaque é decorativo; a semântica não ────────────────────────────────
- * O `#` da ajuda e o `stderr:` do erro são `aria-hidden`. Quem usa leitor de
- * tela ouve "e-mail inválido", não "stderr dois pontos e-mail inválido" — o
- * prefixo é a voz do terminal, não informação. O container do erro carrega
- * `role="alert"` (é inserido no DOM quando a validação falha, então é aí que
- * o anúncio acontece) e um `id` para o campo apontar por `aria-describedby`.
+ * - The label is plain text and is the accessible name (`<Label htmlFor>`).
+ *   `(obrigatório)` goes INSIDE it, so the name is exactly what is seen; a lone
+ *   `*` would be read as "asterisk" or swallowed.
+ * - Help and error have ids, which the field points to with `aria-describedby`
+ *   (`describedBy`). The error says what happened and how to fix it, and is an
+ *   alert: it is announced when it appears. Its colour is the icon's; the words
+ *   are ink, legible on every surface of the three themes.
  *
- * ── Rótulo continua texto simples ──────────────────────────────────────────
- * A tentação era escrever os campos como flags (`--company-name`). Em
- * formulário denso isso rouba a varredura do olho e descola o nome acessível
- * do texto visível. Ver `design.md` da change bko-04.
- *
- * ── Obrigatoriedade por extenso, não asterisco ────────────────────────────
- * `(obrigatório)` entra DENTRO do `<label>`: o nome acessível do campo passa a
- * ser "Empresa (obrigatório)", que é exatamente o texto visível. Um `*` solto
- * seria anunciado como "asterisco" ou engolido, dependendo do leitor.
+ * Server-safe: `RequiredHint` is the one piece that reads the language of the
+ * screen, and is a client component of its own.
  */
 
+import { CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export { RequiredHint } from "./required-hint";
+
 /**
- * Monta o `aria-describedby` de um campo a partir dos ids que de fato estão
- * na tela. Devolve `undefined` (e não string vazia) quando não há nenhum, para
- * o atributo não ser emitido.
+ * The `aria-describedby` of a field, from the ids that are on screen. `undefined`
+ * (not an empty string) when there is none, so the attribute is left out.
  */
-export function describedBy(
-  ...ids: (string | false | null | undefined)[]
-): string | undefined {
+export function describedBy(...ids: (string | false | null | undefined)[]): string | undefined {
   const present = ids.filter((id): id is string => Boolean(id));
   return present.length > 0 ? present.join(" ") : undefined;
 }
 
-/** `# ajuda do campo` — comentário de shell, prefixo decorativo. */
-export function FieldHelp({
-  id,
-  className,
-  children,
-}: {
-  id?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
+/** What the field is for, or what it takes. */
+export function FieldHelp({ id, className, children }: { id?: string; className?: string; children: React.ReactNode }) {
   return (
-    <p id={id} className={cn("text-xs text-muted-foreground", className)}>
-      <span aria-hidden="true">{"# "}</span>
+    <p id={id} className={cn("font-text text-sm text-muted-foreground", className)}>
       {children}
     </p>
   );
 }
 
 /**
- * `stderr: mensagem` — a linha de erro, de campo ou de formulário inteiro.
- * Renderiza `null` sem mensagem, para o call site poder passar o valor cru.
+ * The error of a field, or of the whole form. Nothing without a message, so a
+ * call site can pass the value as it is.
  */
-export function FieldError({
-  id,
-  className,
-  children,
-}: {
-  id?: string;
-  className?: string;
-  children?: React.ReactNode;
-}) {
+export function FieldError({ id, className, children }: { id?: string; className?: string; children?: React.ReactNode }) {
   if (!children) return null;
   return (
-    <p
-      id={id}
-      role="alert"
-      className={cn("text-xs text-destructive", className)}
-    >
-      <span aria-hidden="true">{"stderr: "}</span>
-      {children}
+    <p id={id} role="alert" className={cn("flex items-start gap-1.5 font-text text-sm text-foreground", className)}>
+      <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-destructive" />
+      <span>{children}</span>
     </p>
   );
-}
-
-/** `(obrigatório)`, para usar dentro do `<Label>` — nunca um `*` solto. */
-export function RequiredHint() {
-  return <span className="font-normal text-muted-foreground">(obrigatório)</span>;
 }

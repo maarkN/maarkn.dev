@@ -268,6 +268,23 @@ export function closureReasonRemovedNote(
     : null;
 }
 
+/**
+ * O motivo que uma mudanca de estagio apagou, lido de volta do corpo do seu
+ * evento: o inverso de `closureReasonRemovedNote`. So reconhece a nota inteira,
+ * como o quadro a grava; `null` para qualquer outro texto.
+ */
+export function closureReasonRemovedBy(
+  bodyMd: string | null | undefined,
+): ClosureReason | null {
+  if (!bodyMd) return null;
+  return CLOSURE_REASONS.find((reason) => closureReasonRemovedNote(reason) === bodyMd) ?? null;
+}
+
+/** Corpo do evento que devolveu um motivo apagado (o "Desfazer" do quadro). */
+export function closureReasonRestoredNote(restored: ClosureReason): string {
+  return `Motivo de encerramento restaurado: ${closureReasonLabel(restored)}.`;
+}
+
 /* ── situacao da entrevista ────────────────────────────────────────────────
  * As regras que ligam a situacao a data estao em `@/lib/interviews`.
  */

@@ -1,30 +1,23 @@
 "use client";
 
 /**
- * Criar/editar uma referência profissional — mesma receita do
- * `contact-dialog.tsx` (§5 do `src/app/admin/AGENTS.md`).
+ * Create and edit a professional reference in a window. The same recipe as the
+ * contact's (`./contact-dialog`): what was typed stays on a refusal, the focus
+ * goes to the first field with a problem, a failure of the server offers to
+ * try again.
  *
- * Duas diferenças que valem comentário:
- *
- * - **`slug` é chave natural**, não enfeite. Em branco, a action deriva do nome
- *   com a mesma regra de slug do resto do sistema — o campo existe para o dia
- *   em que uma tool de MCP escrever aqui e precisar reencontrar a linha.
- * - **`canContact` é um gate, não uma preferência.** Uma referência que ainda
- *   não autorizou contato não pode ser passada para um recrutador; por isso o
- *   checkbox tem texto explicando, e a lista ordena por ele.
+ * `canContact` is a gate and not a preference: unticked, the reference cannot
+ * be handed to a recruiter.
  */
 
-import { useState, useTransition } from "react";
-import { Pencil, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { useRef, useState, useTransition } from "react";
+import { Pencil, Plus, Save } from "lucide-react";
+import type { ActionResult } from "@/app/_actions/action-result";
 import { saveProfessionalReference } from "@/app/_actions/contacts";
-import {
-  FieldError,
-  FieldHelp,
-  RequiredHint,
-  describedBy,
-} from "@/components/admin/field-output";
-import { submitKeepingValues } from "@/components/admin/form-submit";
+import { useCommonLabels } from "@/components/admin/admin-locale";
+import { FieldError, FieldHelp, RequiredHint, describedBy } from "@/components/admin/field-output";
+import { submitKeepingValues, useFocusFirstInvalid } from "@/components/admin/form-submit";
+import { useNotify } from "@/components/admin/notify";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -38,17 +31,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { REFERENCE_LANGUAGES, REFERENCE_LANGUAGE_LABELS } from "./vocabulary";
+import { fill } from "@/lib/admin/text";
+import { useContactsWords } from "./company-options";
+import { REFERENCE_LANGUAGES } from "./vocabulary";
 
-/** Espelho do sentinela de `@/app/_actions/contacts`. */
+/** Mirror of the sentinel of `@/app/_actions/contacts`. */
 const NONE = "none";
 
 export type ReferenceInitial = {
@@ -67,24 +56,30 @@ export type ReferenceInitial = {
 };
 
 export function ReferenceDialog({ initial }: { initial?: ReferenceInitial }) {
+  const { reference: words, vocab } = useContactsWords();
+  const common = useCommonLabels();
+  const notify = useNotify();
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const form = useRef<HTMLFormElement>(null);
+  useFocusFirstInvalid(form, errors);
+  const f = words.fields;
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await saveProfessionalReference(
-        initial?.id ?? null,
-        formData,
+      const result = await saveProfessionalReference(initial?.id ?? null, formData).catch(
+        (): ActionResult<{ id: string }> => ({ ok: false, message: common.failed }),
       );
       if (!result.ok) {
         setErrors(result.fieldErrors ?? {});
-        toast.error(result.message);
+        if (result.fieldErrors) notify.error(result.message);
+        else notify.error(result.message, { action: { label: common.retry, onClick: () => form.current?.requestSubmit() } });
         return;
       }
       setErrors({});
-      setOpen(false); // fecha só no sucesso
-      toast.success(result.message ?? "Referência salva.");
+      setOpen(false); // closes on success only
+      notify.success(result.message ?? words.saved);
     });
   }
 
@@ -101,158 +96,126 @@ export function ReferenceDialog({ initial }: { initial?: ReferenceInitial }) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Editar a referência ${initial.name}`}
-            title="Editar"
+            data-row-open=""
+            aria-label={fill(words.edit, { name: initial.name })}
+            title={fill(words.edit, { name: initial.name })}
           >
-            <Pencil className="size-4" />
+            <Pencil aria-hidden="true" />
           </Button>
         ) : (
-          <Button size="sm">
-            <Plus className="size-4" />
-            [ nova referência ]
+          <Button>
+            <Plus aria-hidden="true" />
+            {words.create}
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
-        <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
+      <DialogContent className="sm:max-w-2xl">
+        <form ref={form} noValidate onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="grid gap-6">
           <DialogHeader>
-            <DialogTitle>
-              {initial ? "Editar referência" : "Nova referência"}
-            </DialogTitle>
-            <DialogDescription>
-              Dados pessoais de terceiros. Ficam privados: nenhuma rota pública
-              lê esta tabela.
-            </DialogDescription>
+            <DialogTitle>{initial ? words.editTitle : words.newTitle}</DialogTitle>
+            <DialogDescription>{words.description}</DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-3 py-4 sm:grid-cols-2">
-            <Field
-              id="reference-name"
-              name="name"
-              label="Nome"
-              defaultValue={initial?.name ?? ""}
-              error={errors.name}
-              required
-            />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field id="reference-name" name="name" label={f.name} defaultValue={initial?.name ?? ""} error={errors.name} required />
             <Field
               id="reference-slug"
               name="slug"
-              label="Chave natural"
+              label={f.slug}
               defaultValue={initial?.slug ?? ""}
               error={errors.slug}
-              placeholder="derivada do nome"
-              mono
+              placeholder={f.slugPlaceholder}
+              help={f.slugHelp}
             />
             <Field
               id="reference-relationship"
               name="relationship"
-              label="Relação"
+              label={f.relationship}
               defaultValue={initial?.relationship ?? ""}
               error={errors.relationship}
-              placeholder="Gestor direto, par, cliente…"
+              placeholder={f.relationshipPlaceholder}
             />
             <Field
               id="reference-company"
               name="companyName"
-              label="Empresa"
+              label={f.companyName}
               defaultValue={initial?.companyName ?? ""}
               error={errors.companyName}
             />
-            <Field
-              id="reference-role"
-              name="roleTitle"
-              label="Cargo"
-              defaultValue={initial?.roleTitle ?? ""}
-              error={errors.roleTitle}
-            />
+            <Field id="reference-role" name="roleTitle" label={f.roleTitle} defaultValue={initial?.roleTitle ?? ""} error={errors.roleTitle} />
 
-            <div className="space-y-1.5">
-              <Label htmlFor="reference-language">Idioma</Label>
+            <div className="space-y-2">
+              <Label htmlFor="reference-language">{f.language}</Label>
               <Select name="language" defaultValue={initial?.language ?? NONE}>
-                <SelectTrigger id="reference-language" className="w-full">
-                  <SelectValue placeholder="Idioma" />
+                <SelectTrigger
+                  id="reference-language"
+                  className="w-full"
+                  aria-invalid={Boolean(errors.language)}
+                  aria-describedby={describedBy(errors.language && "reference-language-error")}
+                >
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>Não informado</SelectItem>
+                  <SelectItem value={NONE}>{f.noLanguage}</SelectItem>
                   {REFERENCE_LANGUAGES.map((language) => (
                     <SelectItem key={language} value={language}>
-                      {REFERENCE_LANGUAGE_LABELS[language]}
+                      {vocab.referenceLanguage[language]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <FieldError id="reference-language-error">{errors.language}</FieldError>
             </div>
 
-            <Field
-              id="reference-email"
-              name="email"
-              label="E-mail"
-              defaultValue={initial?.email ?? ""}
-              error={errors.email}
-            />
-            <Field
-              id="reference-phone"
-              name="phone"
-              label="Telefone"
-              defaultValue={initial?.phone ?? ""}
-              error={errors.phone}
-            />
+            <Field id="reference-email" name="email" type="email" label={f.email} defaultValue={initial?.email ?? ""} error={errors.email} />
+            <Field id="reference-phone" name="phone" type="tel" label={f.phone} defaultValue={initial?.phone ?? ""} error={errors.phone} />
             <Field
               id="reference-linkedin"
               name="linkedinUrl"
-              label="LinkedIn"
+              type="url"
+              label={f.linkedinUrl}
               defaultValue={initial?.linkedinUrl ?? ""}
               error={errors.linkedinUrl}
               placeholder="https://www.linkedin.com/in/…"
               className="sm:col-span-2"
             />
 
-            <div className="space-y-1.5 sm:col-span-2">
-              <div className="flex items-start gap-2">
+            <div className="space-y-2 sm:col-span-2">
+              <div className="flex items-center gap-3">
                 <Checkbox
                   id="reference-can-contact"
                   name="canContact"
                   defaultChecked={initial?.canContact ?? false}
-                  className="mt-0.5"
                   aria-describedby="reference-can-contact-help"
                 />
-                <Label
-                  htmlFor="reference-can-contact"
-                  className="text-sm font-normal leading-snug"
-                >
-                  Autorizou ser contatada
-                </Label>
+                <Label htmlFor="reference-can-contact">{f.canContact}</Label>
               </div>
-              <FieldHelp id="reference-can-contact-help">
-                Sem isso marcado, o nome não pode ser passado para um
-                recrutador.
-              </FieldHelp>
+              <FieldHelp id="reference-can-contact-help">{f.canContactHelp}</FieldHelp>
             </div>
 
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="reference-note">Notas</Label>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="reference-note">{f.noteMd}</Label>
               <Textarea
                 id="reference-note"
                 name="noteMd"
                 rows={4}
                 defaultValue={initial?.noteMd ?? ""}
-                placeholder="Período em que trabalharam juntos, o que essa pessoa consegue atestar…"
+                placeholder={f.notePlaceholder}
+                aria-invalid={Boolean(errors.noteMd)}
+                aria-describedby={describedBy(errors.noteMd && "reference-note-error")}
               />
+              <FieldError id="reference-note-error">{errors.noteMd}</FieldError>
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={isPending}
-            >
-              [ cancelar ]
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+              {common.cancel}
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "[ salvando… ]" : "[ salvar ]"}
+              <Save aria-hidden="true" />
+              {isPending ? common.saving : words.save}
             </Button>
           </DialogFooter>
         </form>
@@ -265,25 +228,27 @@ function Field({
   id,
   name,
   label,
+  type = "text",
   defaultValue,
   error,
   placeholder,
+  help,
   required,
   className,
-  mono,
 }: {
   id: string;
   name: string;
   label: string;
+  type?: string;
   defaultValue: string;
   error?: string;
   placeholder?: string;
+  help?: string;
   required?: boolean;
   className?: string;
-  mono?: boolean;
 }) {
   return (
-    <div className={`space-y-1.5 ${className ?? ""}`}>
+    <div className={`space-y-2 ${className ?? ""}`}>
       <Label htmlFor={id}>
         {label}
         {required && <RequiredHint />}
@@ -291,15 +256,16 @@ function Field({
       <Input
         id={id}
         name={name}
+        type={type}
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
-        className={mono ? "font-mono text-xs" : undefined}
-        // PII de terceiro: fora do autopreenchimento do navegador.
         autoComplete="off"
+        className="w-full"
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(error && `${id}-error`)}
+        aria-describedby={describedBy(help && `${id}-help`, error && `${id}-error`)}
       />
+      {help && <FieldHelp id={`${id}-help`}>{help}</FieldHelp>}
       <FieldError id={`${id}-error`}>{error}</FieldError>
     </div>
   );

@@ -1,81 +1,74 @@
 "use client";
 
 /**
- * Password rotation form. `useTransition` + `toast` (AGENTS.md §5): the action
- * returns an `ActionResult`, so the result is in hand inside the same function
- * — no `useActionState` + `useEffect` pair (which is what trips
- * `react-hooks/set-state-in-effect`).
+ * Changing the password. The current one is checked on the server
+ * (`changePassword`). On success the form is emptied on purpose: a password does
+ * not stay on screen. That reset is the only one: `submitKeepingValues` (A15)
+ * keeps what was typed when the change is refused.
  */
 
 import { useRef, useState, useTransition } from "react";
 import { KeyRound } from "lucide-react";
-import { toast } from "sonner";
+import type { ActionResult } from "@/app/_actions/action-result";
 import { changePassword } from "@/app/_actions/account";
-import {
-  FieldError,
-  FieldHelp,
-  RequiredHint,
-  describedBy,
-} from "@/components/admin/field-output";
-import { submitKeepingValues } from "@/components/admin/form-submit";
+import { useCommonLabels } from "@/components/admin/admin-locale";
+import { FieldError, FieldHelp, RequiredHint, describedBy } from "@/components/admin/field-output";
+import { submitKeepingValues, useFocusFirstInvalid } from "@/components/admin/form-submit";
+import { useNotify } from "@/components/admin/notify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { AdminDictionary } from "@/i18n/config";
 
 /** Keep in sync with `MIN_PASSWORD_LENGTH` in `src/app/_actions/account.ts`. */
 const MIN_LENGTH = 12;
 
-export function PasswordForm() {
+export function PasswordForm({ words }: { words: AdminDictionary["settings"]["password"] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const notify = useNotify();
+  const common = useCommonLabels();
+  useFocusFirstInvalid(formRef, errors);
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const res = await changePassword(formData);
+      const res = await changePassword(formData).catch((): ActionResult => ({ ok: false, message: common.failed }));
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {});
-        toast.error(res.message);
+        if (res.fieldErrors) notify.error(res.message);
+        else notify.error(res.message, { action: { label: common.retry, onClick: () => formRef.current?.requestSubmit() } });
         return;
       }
       setErrors({});
-      // Aqui o reset é DESEJADO (senha não fica na tela) e agora é o único:
-      // `submitKeepingValues` tirou o reset automático do React, que antes
-      // acontecia também quando a troca falhava.
       formRef.current?.reset();
-      toast.success(res.message ?? "Senha alterada.");
+      notify.success(res.message ?? words.done);
     });
   }
 
   return (
-    <form ref={formRef} onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-4">
-      <div className="grid gap-4 sm:max-w-sm">
-        <Field
-          id="currentPassword"
-          label="Senha atual"
-          autoComplete="current-password"
-          error={errors.currentPassword}
-        />
+    <form ref={formRef} noValidate onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-5">
+      <div className="grid gap-5 sm:max-w-sm">
+        <Field id="currentPassword" label={words.current} autoComplete="current-password" error={errors.currentPassword} />
         <Field
           id="newPassword"
-          label="Nova senha"
+          label={words.new}
           autoComplete="new-password"
           minLength={MIN_LENGTH}
           error={errors.newPassword}
-          hint={`Mínimo de ${MIN_LENGTH} caracteres.`}
+          hint={words.newHelp}
         />
         <Field
           id="confirmPassword"
-          label="Confirme a nova senha"
+          label={words.confirm}
           autoComplete="new-password"
           minLength={MIN_LENGTH}
           error={errors.confirmPassword}
         />
       </div>
-
       <Button type="submit" disabled={isPending}>
-        <KeyRound className="size-4" />
-        {isPending ? "[ alterando… ]" : "[ alterar senha ]"}
+        <KeyRound aria-hidden="true" />
+        {isPending ? words.pending : words.submit}
       </Button>
     </form>
   );
@@ -97,7 +90,7 @@ function Field({
   hint?: string;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <Label htmlFor={id}>
         {label}
         <RequiredHint />
@@ -108,17 +101,13 @@ function Field({
         type="password"
         autoComplete={autoComplete}
         minLength={minLength}
+        className="w-full"
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(
-          error ? `${id}-error` : hint ? `${id}-help` : undefined,
-        )}
+        aria-describedby={describedBy(hint && `${id}-help`, error && `${id}-error`)}
         required
       />
-      {error ? (
-        <FieldError id={`${id}-error`}>{error}</FieldError>
-      ) : hint ? (
-        <FieldHelp id={`${id}-help`}>{hint}</FieldHelp>
-      ) : null}
+      {hint && <FieldHelp id={`${id}-help`}>{hint}</FieldHelp>}
+      <FieldError id={`${id}-error`}>{error}</FieldError>
     </div>
   );
 }

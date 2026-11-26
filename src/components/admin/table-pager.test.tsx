@@ -1,15 +1,22 @@
 // @vitest-environment jsdom
-import { act } from "react";
+/**
+ * The pager and the states of a list (spec admin-listing): the keys written
+ * where their action is, inactive in a field of text; the four states told
+ * apart, each with its next step.
+ */
+import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  ListingIndexCell,
-  ListingIndexHead,
-  TableEmptyRow,
-  TableLoadingRow,
-  TablePager,
-  isEditableTarget,
-} from "./table-pager";
+import { StateMessage, TablePager, TableStateRow, isEditableTarget } from "./table-pager";
+import { ADMIN_WORDS, WithAdminWords } from "./test-labels";
+
+vi.mock("next/link", () => ({
+  default: ({ href, children, ...rest }: { href: string; children: ReactNode } & Record<string, unknown>) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -40,42 +47,30 @@ function press(key: string) {
   return event;
 }
 
-describe("linha de status", () => {
-  it("escreve total, página e as duas ações", () => {
-    act(() =>
-      root.render(
-        <TablePager
-          page={2}
-          totalPages={4}
-          total={74}
-          onPageChange={() => {}}
-        />,
-      ),
-    );
-    expect(container.textContent).toContain("74 registros · página 2/4");
-    const labels = [...container.querySelectorAll("button")].map(
-      (b) => b.textContent,
-    );
-    expect(labels).toEqual(["[n]ext", "[p]rev"]);
+const render = (node: ReactNode, locale: "pt-BR" | "en" = "pt-BR") =>
+  act(() => root.render(<WithAdminWords locale={locale}>{node}</WithAdminWords>));
+
+describe("the pager", () => {
+  it("writes the total and the page in words, in the language of the screen", () => {
+    render(<TablePager page={2} totalPages={4} total={74} onPageChange={() => {}} />);
+    expect(container.textContent).toContain("74 registros · Página 2 de 4");
+    render(<TablePager page={2} totalPages={4} total={1} onPageChange={() => {}} />, "en");
+    expect(container.textContent).toContain("1 record · Page 2 of 4");
   });
 
-  it("as etiquetas são <button> de verdade, com nome acessível", () => {
-    act(() =>
-      root.render(
-        <TablePager page={1} totalPages={3} onPageChange={() => {}} />,
-      ),
-    );
-    const [next, prev] = [...container.querySelectorAll("button")];
-    // SC 2.5.3 (Label in Name): o nome acessível começa pelo rótulo visível.
-    expect(next.getAttribute("aria-label")).toBe(
-      "[n]ext — Próxima página (tecla n)",
-    );
-    expect(prev.getAttribute("aria-label")).toBe(
-      "[p]rev — Página anterior (tecla p)",
-    );
-    expect(next.getAttribute("aria-label")).toContain(next.textContent);
-    expect(prev.getAttribute("aria-label")).toContain(prev.textContent);
-    // Primeira página: só `prev` está travado.
+  it("names its buttons by their visible word and writes their key on them", () => {
+    render(<TablePager page={1} totalPages={3} onPageChange={() => {}} />);
+    const nav = container.querySelector("nav")!;
+    expect(nav.getAttribute("aria-label")).toBe(ADMIN_WORDS["pt-BR"].common.pager.label);
+    const [prev, next] = [...nav.querySelectorAll("button")];
+    // The key is on screen, beside the word, and told to whoever cannot see it.
+    expect(prev.textContent).toBe("AnteriorP");
+    expect(next.textContent).toBe("PróximaN");
+    expect(prev.getAttribute("aria-keyshortcuts")).toBe("p");
+    expect(next.getAttribute("aria-keyshortcuts")).toBe("n");
+    // SC 2.5.3: the name is the visible word; no aria-label replaces it.
+    expect(next.getAttribute("aria-label")).toBeNull();
+    // First page: only "Anterior" is off.
     expect(next.disabled).toBe(false);
     expect(prev.disabled).toBe(true);
   });
@@ -86,7 +81,9 @@ describe("atalhos n/p", () => {
     const onPageChange = vi.fn();
     act(() =>
       root.render(
-        <TablePager page={2} totalPages={4} onPageChange={onPageChange} />,
+        <WithAdminWords>
+          <TablePager page={2} totalPages={4} onPageChange={onPageChange} />
+        </WithAdminWords>,
       ),
     );
     press("n");
@@ -99,7 +96,9 @@ describe("atalhos n/p", () => {
     const onPageChange = vi.fn();
     act(() =>
       root.render(
-        <TablePager page={4} totalPages={4} onPageChange={onPageChange} />,
+        <WithAdminWords>
+          <TablePager page={4} totalPages={4} onPageChange={onPageChange} />
+        </WithAdminWords>,
       ),
     );
     press("n");
@@ -111,7 +110,9 @@ describe("atalhos n/p", () => {
     const onPageChange = vi.fn();
     act(() =>
       root.render(
-        <TablePager page={2} totalPages={4} onPageChange={onPageChange} />,
+        <WithAdminWords>
+          <TablePager page={2} totalPages={4} onPageChange={onPageChange} />
+        </WithAdminWords>,
       ),
     );
     const input = document.createElement("input");
@@ -130,7 +131,9 @@ describe("atalhos n/p", () => {
     const onPageChange = vi.fn();
     act(() =>
       root.render(
-        <TablePager page={1} totalPages={4} onPageChange={onPageChange} />,
+        <WithAdminWords>
+          <TablePager page={1} totalPages={4} onPageChange={onPageChange} />
+        </WithAdminWords>,
       ),
     );
     act(() => {
@@ -168,64 +171,41 @@ describe("isEditableTarget", () => {
   });
 });
 
-describe("estados e coluna de índice", () => {
-  function renderInTable(children: React.ReactNode) {
-    act(() =>
-      root.render(
-        <table>
-          <tbody>{children}</tbody>
-        </table>,
-      ),
-    );
-  }
+describe("the states of a list", () => {
+  const table = (node: ReactNode) => (
+    <table>
+      <tbody>{node}</tbody>
+    </table>
+  );
 
-  it("o vazio é uma linha de comentário", () => {
-    renderInTable(<TableEmptyRow cols={7} />);
-    const cell = container.querySelector("td");
-    expect(cell?.textContent).toBe("# nenhum registro");
-    expect(cell?.getAttribute("colspan")).toBe("7");
+  it("spans the whole table", () => {
+    render(table(<TableStateRow cols={7} state="empty" message="Nenhuma candidatura ainda." />));
+    expect(container.querySelector("td")?.getAttribute("colspan")).toBe("7");
   });
 
-  it("o carregando é uma linha de progresso anunciada como status", () => {
-    renderInTable(<TableLoadingRow cols={5} />);
-    expect(container.querySelector("[role=status]")?.textContent).toContain(
-      "carregando",
-    );
-    // Os blocos são pintura: não entram na árvore acessível.
-    const bar = container.querySelector(".admin-progress");
-    expect(bar?.getAttribute("aria-hidden")).toBe("true");
+  it("says loading as a status, with a bar that is decoration", () => {
+    render(table(<TableStateRow cols={3} state="loading" message="Carregando as candidaturas…" />));
+    expect(container.querySelector("[role=status]")?.textContent).toBe("Carregando as candidaturas…");
+    expect(container.querySelector(".admin-progress")?.getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("a coluna de índice é decorativa e não é anunciada", () => {
-    renderInTable(
-      <tr>
-        <ListingIndexCell index={0} />
-        <ListingIndexCell index={11} />
-      </tr>,
-    );
-    const cells = [...container.querySelectorAll("[data-listing-index]")];
-    expect(cells.map((c) => c.textContent)).toEqual(["001", "012"]);
-    for (const cell of cells) {
-      expect(cell.getAttribute("aria-hidden")).toBe("true");
+  it("gives every state but loading its next step, as a link", () => {
+    for (const [state, href, label] of [
+      ["empty", "/admin/applications/new", "Nova candidatura"],
+      ["filtered", "/admin/applications", "Limpar filtros"],
+      ["failed", "/admin/applications?q=acme", "Tentar de novo"],
+    ] as const) {
+      render(<StateMessage state={state} message="…" action={{ href, label }} />);
+      const link = container.querySelector("a")!;
+      expect(link.getAttribute("href"), state).toBe(href);
+      expect(link.textContent, state).toBe(label);
     }
   });
 
-  it("o cabeçalho do índice também é decorativo e tem largura em ch", () => {
-    act(() =>
-      root.render(
-        <table>
-          <thead>
-            <tr>
-              <ListingIndexHead />
-            </tr>
-          </thead>
-        </table>,
-      ),
-    );
-    const th = container.querySelector("th");
-    expect(th?.getAttribute("aria-hidden")).toBe("true");
-    expect(th?.className).toContain("w-[7ch]");
-    // A semântica de tabela não pode sair junto com a pintura.
-    expect(th?.getAttribute("scope")).toBe("col");
+  it("marks a failure, so it is never read as an empty list", () => {
+    render(<StateMessage state="failed" message="As candidaturas não carregaram." />);
+    expect(container.querySelector("[data-list-state=failed]")).not.toBeNull();
+    render(<StateMessage state="empty" message="Nenhuma candidatura ainda." />);
+    expect(container.querySelector("[data-list-state=empty]")).not.toBeNull();
   });
 });

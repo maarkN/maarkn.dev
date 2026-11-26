@@ -26,6 +26,11 @@ vi.mock("next/navigation", () => ({
     throw new Error(`redirect:${url}`);
   },
 }));
+// The board and the form write their messages in the language of the request (A4).
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: (name: string) => (name === "admin-locale" ? { name, value: "pt-BR" } : undefined) }),
+  headers: async () => new Headers(),
+}));
 vi.mock("@/lib/auth", () => ({ auth: async () => state.session }));
 vi.mock("@/lib/db", () => {
   // Prisma only sends a query when it is awaited: the write is recorded there,
@@ -84,7 +89,7 @@ const PATHS: [string, (stage: FunnelStage) => Promise<unknown>][] = [
       // The form redirects when it saves.
       await expect(
         form.updateApplication("app_1", { status: "idle" }, formData(stage)),
-      ).rejects.toThrow(/^redirect:\/admin\/applications\?updated=/);
+      ).rejects.toThrow(/^redirect:\/admin\/applications\?saved=/);
     },
   ],
 ];

@@ -6,11 +6,10 @@ import { observeSize } from "@/components/holo/size-observer"
 import { cn } from "@/lib/utils"
 
 /**
- * `admin-listing` (src/app/admin/admin.css) is what turns this into `ls`
- * output: `table-layout: fixed`, widths in `ch`, tabular numerals, the
- * comment-coloured header and the terminal-selection row highlight. It is
- * applied here, once, instead of at eight call sites — the DOM is untouched,
- * which is the whole point of the decision recorded in the bko-03 design.md.
+ * A list of the backoffice is a table, and stays one: headers tied to their
+ * cells, navigable as a table by a screen reader. Content, so solid: the row
+ * that opens a record answers to the pointer (`admin-table` in
+ * src/app/admin/admin.css), and what it opens is a link inside it.
  *
  * The container, not the document, is what scrolls horizontally. While there is
  * something to scroll it is a tab stop: a table without controls gives the
@@ -39,7 +38,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("admin-listing w-full caption-bottom text-xs", className)}
+        className={cn("admin-table w-full caption-bottom font-text text-sm", className)}
         {...props}
       />
     </div>
@@ -83,27 +82,22 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       data-slot="table-row"
-      // The hover highlight lives in `.admin-listing` (admin.css), which also
-      // lifts the row's text to --foreground so no cell colour has to be measured
-      // on --accent. `hover:bg-transparent` is the opt-out for non-data rows.
-      className={cn(
-        "border-b transition-colors has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
-        className
-      )}
+      // The hover lives in `.admin-table` (admin.css), only on the rows that
+      // open something (`data-opens`).
+      className={cn("border-b", className)}
       {...props}
     />
   )
 }
 
-/** `scope="col"` by default: it is what makes the cell↔header association
- * survive the `ls` paint. Pass `scope` explicitly to override. */
+/** `scope="col"` by default: the cell↔header association. Pass `scope` to override. */
 function TableHead({ className, scope = "col", ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
       scope={scope}
       className={cn(
-        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
+        "h-10 px-3 text-left align-bottom font-label text-xs font-normal whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -116,7 +110,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "px-3 py-2.5 align-middle [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -131,7 +125,7 @@ function TableCaption({
   return (
     <caption
       data-slot="table-caption"
-      className={cn("mt-4 text-xs text-muted-foreground", className)}
+      className={cn("mt-4 text-sm text-muted-foreground", className)}
       {...props}
     />
   )

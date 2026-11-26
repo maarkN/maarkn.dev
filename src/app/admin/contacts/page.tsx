@@ -2,29 +2,21 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExternalLink, Lock, Mail, Phone } from "lucide-react";
-import {
-  deleteContact,
-  deleteProfessionalReference,
-} from "@/app/_actions/contacts";
+import { deleteContact, deleteProfessionalReference } from "@/app/_actions/contacts";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { ConfirmDelete } from "@/components/admin/confirm-delete";
+import { OpensRow } from "@/components/admin/listing";
 import { PageHeader } from "@/components/admin/page-header";
-import { FunnelStageBadge } from "@/components/admin/status-badge";
-import {
-  ListingIndexCell,
-  ListingIndexHead,
-  TableEmptyRow,
-  TableLoadingRow,
-} from "@/components/admin/table-pager";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { StageLabel } from "@/components/admin/stage";
+import { TableStateRow } from "@/components/admin/table-pager";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { AdminDictionary } from "@/i18n/config";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
+import { getAdminFormat, getAdminLabels } from "@/lib/admin/request";
+import { clearedHref, currentHref } from "@/lib/admin/sort";
+import { counted, fill } from "@/lib/admin/text";
 import { EMPTY } from "@/lib/format";
 import { CompanyOptionsProvider } from "./company-options";
 import { ContactDialog } from "./contact-dialog";
@@ -33,107 +25,122 @@ import {
   contactsQueryKey,
   countContactTabs,
   hasAnyContactFilter,
-  listContactChannels,
   listCompanyOptions,
+  listContactChannels,
   listContacts,
   listReferences,
   parseContactFilters,
   parseContactsPage,
   type ContactFilters,
 } from "./contacts-query";
-import { DeletePersonButton } from "./delete-person-button";
 import { ReferenceDialog } from "./reference-dialog";
-import { channelLabel, referenceLanguageLabel } from "./vocabulary";
+import { CONTACT_TABS, wordFor } from "./vocabulary";
 
 /**
- * RECRUTADORES E REFERÊNCIAS.
+ * RECRUITERS AND REFERENCES.
  *
- * ── Aviso que vale mais que o layout ──────────────────────────────────────
- * Tudo nesta tela é PII de terceiros: nome, e-mail, telefone e LinkedIn de
- * gente que não é o usuário. `Contact` e `ProfessionalReference` têm CHECK no
- * banco forçando `visibility = 'private'` — nenhuma superfície pública lê
- * daqui, e as actions nunca aceitam `visibility` como entrada. O módulo de
- * leitura (`./contacts-query`) também não loga payload de erro, pelo mesmo
- * motivo. Se um dia esta tela virar fonte de algum índice, é aqui que a
- * revisão começa.
+ * Everything on this screen is someone else's personal data: name, email, phone
+ * and LinkedIn of people who are not Marco. `Contact` and
+ * `ProfessionalReference` have a CHECK in the database forcing `visibility =
+ * 'private'`; no public surface reads from here, and the actions never take
+ * `visibility` as input. The reading module (`./contacts-query`) does not log
+ * error payloads, for the same reason.
  *
- * Duas abas, ambas server-side (`?tab=`): contatos são operacionais (quem
- * respondeu, por onde), referências são um ativo de checagem final — e o
- * `canContact` delas é um gate, não uma preferência.
+ * Two tabs, both read by the server (`?tab=`). A record opens in a window: a
+ * click on the row presses its edit button, which is also the keyboard's way.
  */
 
-// Guard de sessão + searchParams: esta rota nunca é pré-renderizada.
+// Session guard + searchParams: this route is never prerendered.
 export const dynamic = "force-dynamic";
 
-// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
-const CONTACT_COLS = 6;
-const REFERENCE_COLS = 6;
+const PATH = "/admin/contacts";
+const COLS = 5;
+const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a laptop (1024 px) and from a desktop (1280 px) up. */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
-export default async function ContactsPage({
-  searchParams,
-}: PageProps<"/admin/contacts">) {
+type Params = Record<string, string | string[] | undefined>;
+
+export default async function ContactsPage({ searchParams }: PageProps<"/admin/contacts">) {
   const session = await auth();
   if (!session?.user) redirect("/admin/login"); // A1
 
-  const params = await searchParams;
+  const params: Params = await searchParams;
   const filters = parseContactFilters(params);
   const page = parseContactsPage(params.page);
-  const [counts, channels, companies] = await Promise.all([
+  const [counts, channels, companies, labels, { formatNumber }] = await Promise.all([
     countContactTabs(),
     listContactChannels(),
     listCompanyOptions(),
+    getAdminLabels(),
+    getAdminFormat(),
   ]);
+  const { contacts: words, vocab, common } = labels;
   const isContacts = filters.tab === "contacts";
 
   return (
-    <AdminShell email={session.user.email ?? "admin"}>
-      {/* A lista de empresas viaja UMA vez para todos os dialogs da página. */}
-      <CompanyOptionsProvider companies={companies}>
-        <div className="space-y-4">
+    <AdminShell email={session.user.email ?? "admin"} translated>
+      {/* The companies and the words of the dialogs travel ONCE for the page. */}
+      <CompanyOptionsProvider
+        companies={companies}
+        words={{
+          contact: words.contact,
+          reference: words.reference,
+          vocab: { channel: vocab.channel, referenceLanguage: vocab.referenceLanguage },
+        }}
+      >
+        <div className="space-y-6 font-text">
           <PageHeader
-            title="Contatos"
-            description="Recrutadores e referências profissionais. Dados pessoais de terceiros — privados por schema, nunca expostos em rota pública."
+            title={words.title}
+            description={words.description}
             actions={isContacts ? <ContactDialog /> : <ReferenceDialog />}
           />
 
-          <div className="space-y-3">
-            <ContactsToolbar
-                {...filters}
-                counts={counts}
-                channels={channels}
-                companies={companies}
-                page={page}
-                position="top"
-              />
+          <nav aria-label={words.tabs.label} className="flex flex-wrap items-center gap-2">
+            {CONTACT_TABS.map((tab) => (
+              <Button key={tab} asChild variant="ghost">
+                <Link href={tab === "contacts" ? PATH : `${PATH}?tab=${tab}`} aria-current={filters.tab === tab ? "page" : undefined}>
+                  {words.tabs[tab]}
+                  <span className="font-label text-sm text-muted-foreground">{formatNumber(counts[tab])}</span>
+                </Link>
+              </Button>
+            ))}
+          </nav>
 
-              <Suspense
-                key={contactsQueryKey(filters, page)}
-                fallback={
-                  isContacts ? (
-                    <ContactsTableFrame>
-                      <TableLoadingRow cols={CONTACT_COLS} />
-                    </ContactsTableFrame>
-                  ) : (
-                    <ReferencesTableFrame>
-                      <TableLoadingRow cols={REFERENCE_COLS} />
-                    </ReferencesTableFrame>
-                  )
-                }
-              >
-                {isContacts ? (
-                  <ContactRows filters={filters} page={page} />
-                ) : (
-                  <ReferenceRows filters={filters} page={page} />
-                )}
-              </Suspense>
+          <div className="space-y-4">
+            <ContactsToolbar
+              {...filters}
+              words={{ filters: words.filters, channel: vocab.channel, clear: common.states.clear }}
+              channels={channels}
+              companies={companies}
+              page={page}
+              position="top"
+            />
+
+            <Suspense
+              key={contactsQueryKey(filters, page)}
+              fallback={
+                <PeopleTable labels={labels} contacts={isContacts}>
+                  <TableStateRow
+                    cols={COLS}
+                    state="loading"
+                    message={isContacts ? words.states.loadingContacts : words.states.loadingReferences}
+                  />
+                </PeopleTable>
+              }
+            >
+              {isContacts ? (
+                <ContactRows params={params} filters={filters} page={page} labels={labels} />
+              ) : (
+                <ReferenceRows params={params} filters={filters} page={page} labels={labels} />
+              )}
+            </Suspense>
           </div>
 
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Lock className="size-3.5" />
-            Esta tela é a única superfície que lê estas tabelas. O canônico dos
-            contatos de candidatura continua sendo o MCP (
-            <code className="font-mono">upsert_application</code>, bloco{" "}
-            <code className="font-mono">contacts</code>).
+          <p className="flex max-w-[72ch] items-start gap-2 text-sm text-muted-foreground">
+            <Lock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            {words.privacy}
           </p>
         </div>
       </CompanyOptionsProvider>
@@ -141,312 +148,274 @@ export default async function ContactsPage({
   );
 }
 
-/* ── aba: contatos ────────────────────────────────────────────────────────── */
+/** The state of a list that has no row, for either tab. */
+function emptyState(
+  result: { failed: boolean },
+  filters: ContactFilters,
+  params: Params,
+  labels: AdminDictionary,
+  which: "Contacts" | "References",
+) {
+  const { contacts: words, common } = labels;
+  if (result.failed) {
+    return dbConfigured ? (
+      <TableStateRow
+        cols={COLS}
+        state="failed"
+        message={words.states[`failed${which}`]}
+        action={{ href: currentHref(PATH, params), label: common.retry }}
+      />
+    ) : (
+      <TableStateRow cols={COLS} state="failed" message={common.states.noDatabase} />
+    );
+  }
+  return hasAnyContactFilter(filters) ? (
+    <TableStateRow
+      cols={COLS}
+      state="filtered"
+      message={words.states[`filtered${which}`]}
+      action={{ href: clearedHref(PATH, filters.tab === "contacts" ? {} : { tab: filters.tab }), label: common.states.clear }}
+    />
+  ) : (
+    <TableStateRow cols={COLS} state="empty" message={words.states[`empty${which}`]} />
+  );
+}
+
+/* ── tab: contacts ────────────────────────────────────────────────────────── */
 
 async function ContactRows({
+  params,
   filters,
   page,
+  labels,
 }: {
+  params: Params;
   filters: ContactFilters;
   page: number;
+  labels: AdminDictionary;
 }) {
-  const result = await listContacts({ filters, page });
-  const filtered = hasAnyContactFilter(filters);
+  const { contacts: words, vocab } = labels;
+  const [result, { formatNumber }] = await Promise.all([listContacts({ filters, page }), getAdminFormat()]);
 
   return (
     <>
-      <ContactsTableFrame>
-        {result.failed ? (
-          <TableEmptyRow
-            cols={CONTACT_COLS}
-            destructive
-            message={
-              dbConfigured
-                ? "Não foi possível carregar os contatos."
-                : "DATABASE_URL não configurada — a lista fica vazia até o Postgres subir."
-            }
-          />
-        ) : result.rows.length === 0 ? (
-          <TableEmptyRow
-            cols={CONTACT_COLS}
-            message={
-              filtered
-                ? "Nenhum contato corresponde aos filtros."
-                : "Nenhum contato registrado ainda."
-            }
-          />
-        ) : (
-          result.rows.map((row, index) => (
-            <TableRow key={row.id}>
-              <ListingIndexCell index={index} />
-              <TableCell>
-                <div title={row.name}>{row.name}</div>
-                <div
-                  className="text-xs text-muted-foreground"
-                  title={row.roleTitle || undefined}
-                >
-                  {row.roleTitle || EMPTY}
-                </div>
-              </TableCell>
+      <PeopleTable labels={labels} contacts>
+        {result.failed || result.rows.length === 0
+          ? emptyState(result, filters, params, labels, "Contacts")
+          : result.rows.map((row) => (
+              <OpensRow key={row.id}>
+                <TableCell className="max-w-0">
+                  <div className="truncate font-semibold" title={row.name}>
+                    {row.name}
+                  </div>
+                  <div className="truncate text-sm text-muted-foreground">{row.roleTitle || EMPTY}</div>
+                </TableCell>
 
-              <TableCell>
-                <div className="text-sm" title={row.company?.name ?? undefined}>
-                  {row.company?.name ?? EMPTY}
-                </div>
-                {row.application && (
-                  <Link
-                    href={`/admin/applications/${row.application.id}`}
-                    /* `min-h-6` = 24px, WCAG 2.2 SC 2.5.8 (Target Size, AA):
-                       o link media 18px de altura e ficava a menos de 24px do
-                       link de e-mail da célula vizinha.
-                       `max-w-full` + `min-w-0` no texto: sem os dois o
-                       `truncate` não truncava (item de flex não encolhe
-                       abaixo do conteúdo) e o link VAZAVA até 200px para
-                       dentro da coluna de contato, cobrindo os links de
-                       e-mail/LinkedIn — o axe media o alvo vizinho como
-                       parcialmente obstruído. */
-                    className="inline-flex min-h-6 max-w-full items-center gap-1 pt-0.5"
-                    title={row.application.folderName}
-                  >
-                    <FunnelStageBadge status={row.application.stage} />
-                    <span className="min-w-0 truncate text-[11px] text-muted-foreground underline-offset-2 hover:underline">
-                      {row.application.folderName}
-                    </span>
-                  </Link>
-                )}
-              </TableCell>
-
-              <TableCell>
-                <ContactLinks
-                  email={row.email}
-                  phone={row.phone}
-                  linkedinUrl={row.linkedinUrl}
-                />
-              </TableCell>
-
-              <TableCell>
-                <span className="text-beam-2" title={channelLabel(row.channel)}>
-                  [{row.channel}]
-                </span>
-                <div className="pt-0.5 text-[11px] text-muted-foreground">
-                  {row.timezone ?? EMPTY}
-                  {row._count.events > 0 && (
-                    <span className="tabular-nums">
-                      {" "}
-                      · {row._count.events} evento(s)
-                    </span>
+                <TableCell className={`${WIDE} max-w-0`}>
+                  <div className="truncate" title={row.company?.name ?? undefined}>
+                    {row.company?.name ?? EMPTY}
+                  </div>
+                  {row.application && (
+                    <Link
+                      href={`/admin/applications/${row.application.id}`}
+                      className="inline-flex min-h-6 max-w-full items-center text-sm hover:underline"
+                      title={row.application.folderName}
+                    >
+                      <StageLabel stage={row.application.stage} words={vocab} />
+                    </Link>
                   )}
-                  {row._count.interviews > 0 && (
-                    <span className="tabular-nums">
-                      {" "}
-                      · {row._count.interviews} entrevista(s)
-                    </span>
-                  )}
-                </div>
-              </TableCell>
+                </TableCell>
 
-              <TableCell className="text-right">
-                <div className="inline-flex items-center gap-1">
-                  <ContactDialog
-                    initial={{
-                      id: row.id,
-                      name: row.name,
-                      roleTitle: row.roleTitle,
-                      companyId: row.company?.id ?? null,
-                      email: row.email,
-                      phone: row.phone,
-                      linkedinUrl: row.linkedinUrl,
-                      timezone: row.timezone,
-                      channel: row.channel,
-                      notesMd: row.notesMd,
-                    }}
+                <TableCell className={`${LG} max-w-0`}>
+                  <ContactLinks
+                    email={row.email}
+                    phone={row.phone}
+                    linkedinUrl={row.linkedinUrl}
+                    linkedin={words.linkedin}
                   />
-                  <DeletePersonButton
-                    id={row.id}
-                    name={row.name}
-                    entityLabel="contato"
-                    commandDir="contacts"
-                    description="Eventos e entrevistas permanecem, apenas sem o contato vinculado."
-                    action={deleteContact}
-                  />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </ContactsTableFrame>
+                </TableCell>
+
+                <TableCell className={XL}>
+                  <div>{wordFor(vocab.channel, row.channel)}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {[
+                      row.timezone,
+                      row._count.events > 0 && counted(words.events, row._count.events, formatNumber(row._count.events)),
+                      row._count.interviews > 0 &&
+                        counted(words.interviews, row._count.interviews, formatNumber(row._count.interviews)),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || EMPTY}
+                  </div>
+                </TableCell>
+
+                <TableCell className="text-right">
+                  <div className="inline-flex items-center gap-1.5">
+                    <ContactDialog
+                      initial={{
+                        id: row.id,
+                        name: row.name,
+                        roleTitle: row.roleTitle,
+                        companyId: row.company?.id ?? null,
+                        email: row.email,
+                        phone: row.phone,
+                        linkedinUrl: row.linkedinUrl,
+                        timezone: row.timezone,
+                        channel: row.channel,
+                        notesMd: row.notesMd,
+                      }}
+                    />
+                    <ConfirmDelete
+                      id={row.id}
+                      name={row.name}
+                      title={fill(words.contact.delete.title, { name: row.name })}
+                      lost={words.contact.delete.lost}
+                      confirmLabel={words.contact.delete.confirm}
+                      triggerLabel={fill(words.contact.delete.trigger, { name: row.name })}
+                      action={deleteContact}
+                    />
+                  </div>
+                </TableCell>
+              </OpensRow>
+            ))}
+      </PeopleTable>
 
       <ContactsToolbar
         {...filters}
         page={result.page}
         totalPages={result.totalPages}
-        total={result.total}
+        total={result.failed ? undefined : result.total}
         position="bottom"
       />
     </>
   );
 }
 
-function ContactsTableFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <Table className="table-fixed min-w-[110ch]">
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <ListingIndexHead />
-          <TableHead>nome</TableHead>
-          <TableHead>empresa</TableHead>
-          <TableHead className="w-[26ch]">contato</TableHead>
-          <TableHead className="w-[22ch]">canal</TableHead>
-          <TableHead className="w-[12ch] text-right">acoes</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>{children}</TableBody>
-    </Table>
-  );
-}
-
-/* ── aba: referências ─────────────────────────────────────────────────────── */
+/* ── tab: references ──────────────────────────────────────────────────────── */
 
 async function ReferenceRows({
+  params,
   filters,
   page,
+  labels,
 }: {
+  params: Params;
   filters: ContactFilters;
   page: number;
+  labels: AdminDictionary;
 }) {
+  const { contacts: words, vocab } = labels;
   const result = await listReferences({ filters, page });
-  const filtered = hasAnyContactFilter(filters);
 
   return (
     <>
-      <ReferencesTableFrame>
-        {result.failed ? (
-          <TableEmptyRow
-            cols={REFERENCE_COLS}
-            destructive
-            message={
-              dbConfigured
-                ? "Não foi possível carregar as referências."
-                : "DATABASE_URL não configurada — a lista fica vazia até o Postgres subir."
-            }
-          />
-        ) : result.rows.length === 0 ? (
-          <TableEmptyRow
-            cols={REFERENCE_COLS}
-            message={
-              filtered
-                ? "Nenhuma referência corresponde aos filtros."
-                : "Nenhuma referência registrada ainda."
-            }
-          />
-        ) : (
-          result.rows.map((row, index) => (
-            <TableRow key={row.id}>
-              <ListingIndexCell index={index} />
-              <TableCell>
-                <div title={row.name}>{row.name}</div>
-                <div className="text-xs text-muted-foreground" title={row.slug}>
-                  {row.slug}
-                </div>
-              </TableCell>
+      <PeopleTable labels={labels} contacts={false}>
+        {result.failed || result.rows.length === 0
+          ? emptyState(result, filters, params, labels, "References")
+          : result.rows.map((row) => {
+              const where = [row.roleTitle, row.companyName].filter(Boolean).join(" · ");
+              return (
+                <OpensRow key={row.id}>
+                  <TableCell className="max-w-0">
+                    <div className="truncate font-semibold" title={row.name}>
+                      {row.name}
+                    </div>
+                    <div className="truncate font-label text-xs text-muted-foreground">{row.slug}</div>
+                  </TableCell>
 
-              <TableCell>
-                <div className="text-sm" title={row.relationship || undefined}>
-                  {row.relationship || EMPTY}
-                </div>
-                <div
-                  className="text-xs text-muted-foreground"
-                  title={
-                    [row.roleTitle, row.companyName].filter(Boolean).join(" · ") ||
-                    undefined
-                  }
-                >
-                  {[row.roleTitle, row.companyName].filter(Boolean).join(" · ") ||
-                    EMPTY}
-                </div>
-              </TableCell>
+                  <TableCell className={`${WIDE} max-w-0`}>
+                    <div className="truncate">{row.relationship || EMPTY}</div>
+                    <div className="truncate text-sm text-muted-foreground" title={where || undefined}>
+                      {where || EMPTY}
+                    </div>
+                  </TableCell>
 
-              <TableCell>
-                <ContactLinks
-                  email={row.email}
-                  phone={row.phone}
-                  linkedinUrl={row.linkedinUrl}
-                />
-              </TableCell>
+                  <TableCell className={`${LG} max-w-0`}>
+                    <ContactLinks
+                      email={row.email}
+                      phone={row.phone}
+                      linkedinUrl={row.linkedinUrl}
+                      linkedin={words.linkedin}
+                    />
+                  </TableCell>
 
-              <TableCell>
-                {row.canContact ? (
-                  <span className="text-ok" title="Autorizada">
-                    [can_contact]
-                  </span>
-                ) : (
-                  <span
-                    className="text-warn"
-                    title="Sem autorização: não pode ser passada para um recrutador ainda."
-                  >
-                    [no_consent]
-                  </span>
-                )}
-                <div className="pt-0.5 text-[11px] text-muted-foreground">
-                  {referenceLanguageLabel(row.language)}
-                </div>
-              </TableCell>
+                  <TableCell className={XL}>
+                    {row.canContact ? (
+                      <div>{words.canContact}</div>
+                    ) : (
+                      <div title={words.noConsentHint}>
+                        {words.noConsent}
+                        <span className="block text-sm text-muted-foreground">{words.noConsentHint}</span>
+                      </div>
+                    )}
+                    <div className="text-sm text-muted-foreground">{wordFor(vocab.referenceLanguage, row.language)}</div>
+                  </TableCell>
 
-              <TableCell className="text-right">
-                <div className="inline-flex items-center gap-1">
-                  <ReferenceDialog
-                    initial={{
-                      id: row.id,
-                      slug: row.slug,
-                      name: row.name,
-                      relationship: row.relationship,
-                      companyName: row.companyName,
-                      roleTitle: row.roleTitle,
-                      email: row.email,
-                      phone: row.phone,
-                      linkedinUrl: row.linkedinUrl,
-                      language: row.language,
-                      canContact: row.canContact,
-                      noteMd: row.noteMd,
-                    }}
-                  />
-                  <DeletePersonButton
-                    id={row.id}
-                    name={row.name}
-                    entityLabel="referência"
-                    commandDir="references"
-                    description="A referência some do painel; nenhuma candidatura é afetada."
-                    action={deleteProfessionalReference}
-                  />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </ReferencesTableFrame>
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center gap-1.5">
+                      <ReferenceDialog
+                        initial={{
+                          id: row.id,
+                          slug: row.slug,
+                          name: row.name,
+                          relationship: row.relationship,
+                          companyName: row.companyName,
+                          roleTitle: row.roleTitle,
+                          email: row.email,
+                          phone: row.phone,
+                          linkedinUrl: row.linkedinUrl,
+                          language: row.language,
+                          canContact: row.canContact,
+                          noteMd: row.noteMd,
+                        }}
+                      />
+                      <ConfirmDelete
+                        id={row.id}
+                        name={row.name}
+                        title={fill(words.reference.delete.title, { name: row.name })}
+                        lost={words.reference.delete.lost}
+                        confirmLabel={words.reference.delete.confirm}
+                        triggerLabel={fill(words.reference.delete.trigger, { name: row.name })}
+                        action={deleteProfessionalReference}
+                      />
+                    </div>
+                  </TableCell>
+                </OpensRow>
+              );
+            })}
+      </PeopleTable>
 
       <ContactsToolbar
         {...filters}
         page={result.page}
         totalPages={result.totalPages}
-        total={result.total}
+        total={result.failed ? undefined : result.total}
         position="bottom"
       />
     </>
   );
 }
 
-function ReferencesTableFrame({ children }: { children: React.ReactNode }) {
+/** The header of either table, shared by the loading state and the data. */
+function PeopleTable({
+  labels,
+  contacts,
+  children,
+}: {
+  labels: AdminDictionary;
+  contacts: boolean;
+  children: React.ReactNode;
+}) {
+  const { columns } = labels.contacts;
   return (
-    <Table className="table-fixed min-w-[110ch]">
+    <Table className="table-fixed">
       <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <ListingIndexHead />
-          <TableHead>nome</TableHead>
-          <TableHead>relacao</TableHead>
-          <TableHead className="w-[26ch]">contato</TableHead>
-          <TableHead className="w-[20ch]">autorizacao</TableHead>
-          <TableHead className="w-[12ch] text-right">acoes</TableHead>
+        <TableRow>
+          <TableHead>{columns.name}</TableHead>
+          <TableHead className={WIDE}>{contacts ? columns.company : columns.relationship}</TableHead>
+          <TableHead className={`${LG} w-64`}>{columns.contact}</TableHead>
+          <TableHead className={`${XL} w-52`}>{contacts ? columns.channel : columns.consent}</TableHead>
+          <TableHead className="w-28 text-right">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
@@ -454,70 +423,53 @@ function ReferencesTableFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ── célula de contato, compartilhada pelas duas abas ─────────────────────── */
-
 /**
- * Links de contato empilhados. `min-h-6` = 24px: WCAG 2.2 SC 2.5.8 (Target
- * Size, AA). Os três mediam 16px de altura com 2px entre eles — abaixo do
- * mínimo E abaixo do espaçamento que serve de alternativa, e o axe (regra
- * `target-size`, serious) marcava os três. São links autônomos empilhados,
- * não texto corrido, então a exceção "Inline" do critério não se aplica.
+ * The ways to reach someone, stacked. Each link is a target of at least 24px
+ * (WCAG 2.2, 2.5.8): they are stacked links, not running text.
  */
-const CONTACT_LINK =
-  "flex min-h-6 min-w-0 items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline";
+const CONTACT_LINK = "flex min-h-6 min-w-0 items-center gap-1.5 text-sm text-foreground underline-offset-4 hover:underline";
 
 function ContactLinks({
   email,
   phone,
   linkedinUrl,
+  linkedin,
 }: {
   email: string | null;
   phone: string | null;
   linkedinUrl: string | null;
+  linkedin: string;
 }) {
-  if (!email && !phone && !linkedinUrl) {
-    return <span className="text-muted-foreground">{EMPTY}</span>;
-  }
+  if (!email && !phone && !linkedinUrl) return <span className="text-muted-foreground">{EMPTY}</span>;
   return (
-    <div className="text-xs">
+    <div>
       {email && (
-        <a
-          href={`mailto:${email}`}
-          className={CONTACT_LINK}
-          title={email}
-        >
-          <Mail className="size-3.5 shrink-0" />
-          {/* A célula é `whitespace-nowrap`, então `break-all` não quebra nada:
-              quem corta é o truncamento, e o endereço inteiro fica no title. */}
+        <a href={`mailto:${email}`} className={CONTACT_LINK} title={email}>
+          <Mail aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           <span className="truncate">{email}</span>
         </a>
       )}
       {phone && (
-        <a
-          href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-          className={CONTACT_LINK}
-          title={phone}
-        >
-          <Phone className="size-3.5 shrink-0" />
-          <span className="truncate tabular-nums">{phone}</span>
+        <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className={CONTACT_LINK} title={phone}>
+          <Phone aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">{phone}</span>
         </a>
       )}
-      {/* Esquema em allowlist, como em `ExternalLinkValue`: `linkedinUrl` vem do
-          banco (form do admin OU sincronização MCP) e um `href` de esquema
-          arbitrário é superfície de `javascript:`/`data:`. Fora da allowlist o
-          link simplesmente não é renderizado. */}
+      {/* Schemes in an allowlist: `linkedinUrl` comes from the database (the
+          form OR the agent's sync), and an arbitrary scheme in `href` is a
+          surface for `javascript:`. Outside the list, no link. */}
       {linkedinUrl && /^https?:\/\//i.test(linkedinUrl) && (
         <a
           href={linkedinUrl}
           target="_blank"
-          // `noreferrer` também: o Referer levaria a URL do backoffice
-          // (inclusive os filtros) para fora.
+          // `noreferrer` too: the Referer would take the backoffice's URL, with
+          // its filters, outside.
           rel="noreferrer"
           className={CONTACT_LINK}
           title={linkedinUrl}
         >
-          <ExternalLink className="size-3.5 shrink-0" />
-          <span className="truncate">LinkedIn</span>
+          <ExternalLink aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">{linkedin}</span>
         </a>
       )}
     </div>

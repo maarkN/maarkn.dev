@@ -23,17 +23,16 @@
  *   seguro, permissão negada).
  */
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { AlertTriangle, Check, Copy, Plus, ShieldAlert } from "lucide-react";
-import { toast } from "sonner";
+import type { ActionResult } from "@/app/_actions/action-result";
 import { createApiKey, type CreatedApiKey } from "@/app/_actions/api-keys";
-import {
-  FieldError,
-  FieldHelp,
-  RequiredHint,
-  describedBy,
-} from "@/components/admin/field-output";
-import { submitKeepingValues } from "@/components/admin/form-submit";
+// `expiresAt` is a real instant (now + N days), not a calendar date: by A5 that
+// is `formatDateTime`, in the configured time zone.
+import { useAdminFormat, useCommonLabels } from "@/components/admin/admin-locale";
+import { FieldError, FieldHelp, RequiredHint, describedBy } from "@/components/admin/field-output";
+import { submitKeepingValues, useFocusFirstInvalid } from "@/components/admin/form-submit";
+import { useNotify } from "@/components/admin/notify";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -47,38 +46,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  MCP_SCOPES,
-  MCP_SCOPE_LABELS,
-  MCP_WRITE_SCOPES,
-  type McpScope,
-} from "@/lib/mcp/scopes";
-// `expiresAt` é um instante real (agora + N dias), não uma data de calendário:
-// por A5 do AGENTS.md isso é `formatDateTime`, em America/Sao_Paulo.
-import { useAdminFormat } from "@/components/admin/admin-locale";
+import type { AdminDictionary } from "@/i18n/config";
+import { counted } from "@/lib/admin/text";
+import { MCP_SCOPES, MCP_WRITE_SCOPES, type McpScope } from "@/lib/mcp/scopes";
 
 /**
- * Rótulos dos presets de expiração. Os valores precisam bater com as chaves de
- * `EXPIRY_PRESET_DAYS` em `src/app/_actions/api-keys.ts` — que não pode
- * exportá-los, porque um módulo `"use server"` só exporta funções async.
+ * The presets of expiry. The values have to match the keys of
+ * `EXPIRY_PRESET_DAYS` in `src/app/_actions/api-keys.ts`, which cannot export
+ * them: a `"use server"` module exports async functions only.
  */
-const EXPIRY_OPTIONS: { value: string; label: string }[] = [
-  { value: "7", label: "7 dias" },
-  { value: "30", label: "30 dias" },
-  { value: "90", label: "90 dias" },
-  { value: "180", label: "180 dias" },
-  { value: "365", label: "1 ano" },
-  { value: "never", label: "Sem expiração" },
-];
-
+const EXPIRY_OPTIONS = ["7", "30", "90", "180", "365", "never"] as const;
 const DEFAULT_EXPIRY = "90";
 
 const READ_SCOPES = MCP_SCOPES.filter((s) => !MCP_WRITE_SCOPES.includes(s));
@@ -87,23 +66,35 @@ function isWrite(scope: McpScope): boolean {
   return MCP_WRITE_SCOPES.includes(scope);
 }
 
-/** `sync:read` → `scope-sync-read`: o `:` é legal num id, mas atrapalha
- *  qualquer seletor CSS/`querySelector` que venha a mirar esses campos. */
+/** `sync:read` → `scope-sync-read`: a `:` is legal in an id, but trips any CSS selector. */
 function scopeFieldId(scope: McpScope): string {
   return `scope-${scope.replace(":", "-")}`;
 }
 
-export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
+export type CreateKeyWords = {
+  create: AdminDictionary["apiKeys"]["create"];
+  vocab: Pick<AdminDictionary["vocab"], "scope" | "expiry">;
+  never: string;
+  /** "escrita": next to a scope that writes. */
+  write: string;
+};
+
+export function CreateKeyDialog({ disabled, words }: { disabled?: boolean; words: CreateKeyWords }) {
+  const { create: text, vocab } = words;
   const { formatDateTime } = useAdminFormat();
+  const common = useCommonLabels();
+  const notify = useNotify();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const form = useRef<HTMLFormElement>(null);
 
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState<McpScope[]>([]);
-  const [expiresIn, setExpiresIn] = useState(DEFAULT_EXPIRY);
+  const [expiresIn, setExpiresIn] = useState<string>(DEFAULT_EXPIRY);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  useFocusFirstInvalid(form, errors);
 
-  /** Passo 2. Enquanto não for `null`, a chave em claro está na tela. */
+  /** Step 2. While not `null`, the key in the clear is on screen. */
   const [created, setCreated] = useState<CreatedApiKey | null>(null);
   const [copied, setCopied] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -113,29 +104,30 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
     setScopes([]);
     setExpiresIn(DEFAULT_EXPIRY);
     setErrors({});
-    setCreated(null); // ← o token é descartado aqui e não volta mais.
+    setCreated(null); // ← the token is dropped here and does not come back.
     setCopied(false);
     setAcknowledged(false);
   }
 
   function toggleScope(scope: McpScope, checked: boolean) {
-    setScopes((prev) =>
-      checked ? [...prev, scope] : prev.filter((s) => s !== scope),
-    );
+    setScopes((prev) => (checked ? [...prev, scope] : prev.filter((s) => s !== scope)));
   }
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const res = await createApiKey(formData);
+      const res = await createApiKey(formData).catch(
+        (): ActionResult<CreatedApiKey> => ({ ok: false, message: common.failed }),
+      );
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {});
-        toast.error(res.message);
+        if (res.fieldErrors) notify.error(res.message);
+        else notify.error(res.message, { action: { label: common.retry, onClick: () => form.current?.requestSubmit() } });
         return;
       }
       setErrors({});
-      // Não fecha: o passo 2 é a única chance de copiar a chave.
+      // It does not close: step 2 is the only chance to copy the key.
       setCreated(res.data ?? null);
-      toast.success(res.message ?? "Chave criada.");
+      notify.success(res.message ?? text.created);
     });
   }
 
@@ -144,11 +136,9 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
     try {
       await navigator.clipboard.writeText(created.token);
       setCopied(true);
-      toast.success("Chave copiada para a área de transferência.");
+      notify.success(text.copied);
     } catch {
-      toast.error(
-        "O navegador bloqueou a cópia automática. Selecione o texto e copie manualmente.",
-      );
+      notify.error(text.copyFailed);
     }
   }
 
@@ -158,23 +148,23 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        // Com a chave na tela, só o botão "Concluir" fecha (e ele exige o
-        // aceite). Esc e clique fora já são barrados no DialogContent; este
-        // guard cobre o X e qualquer outro caminho.
+        // With the key on screen, only "Concluir" closes (and it asks for the
+        // acknowledgement). Esc and a click outside are refused below; this
+        // guard covers any other way.
         if (!next && created && !acknowledged) return;
         setOpen(next);
         if (!next) reset();
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" disabled={disabled}>
-          <Plus className="size-4" />
-          [ nova chave ]
+        <Button disabled={disabled}>
+          <Plus aria-hidden="true" />
+          {text.trigger}
         </Button>
       </DialogTrigger>
 
       <DialogContent
-        className="sm:max-w-lg"
+        className="sm:max-w-xl"
         showCloseButton={!created}
         onEscapeKeyDown={(e) => {
           if (created) e.preventDefault();
@@ -186,88 +176,59 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
         {created ? (
           <>
             <DialogHeader>
-              <DialogTitle>Chave criada — copie agora</DialogTitle>
-              <DialogDescription>
-                Esta é a única vez que a chave aparece. O servidor guarda apenas
-                um HMAC dela; nem o painel, nem a API, nem o banco conseguem
-                exibi-la de novo. Se perder, revogue e crie outra.
-              </DialogDescription>
+              <DialogTitle>{text.shownTitle}</DialogTitle>
+              <DialogDescription>{text.shownDescription}</DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-3">
-              <div className="flex items-start gap-2 bg-warn/10 p-3 text-foreground">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warn" />
-                <p>
-                  Guarde em um gerenciador de segredos. Não commite em
-                  repositório — este é público — e não cole em chat, issue ou
-                  log.
-                </p>
-              </div>
+            <div className="space-y-4">
+              <p className="flex items-start gap-2 text-foreground">
+                <AlertTriangle aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warn" />
+                {text.secretWarning}
+              </p>
 
-              <div className="space-y-1.5">
-                {/* `<code>` não é elemento rotulável, então aqui é
-                    `aria-labelledby` e não `<Label htmlFor>`. */}
-                <p id="new-api-key-label" className="text-xs leading-none">
-                  Chave
+              <div className="space-y-2">
+                {/* `<code>` is not labelable, so here it is `aria-labelledby`. */}
+                <p id="new-api-key-label" className="text-sm font-medium">
+                  {text.token}
                 </p>
-                <div className="flex items-start gap-2">
+                <div className="flex flex-wrap items-start gap-2">
                   <code
                     aria-labelledby="new-api-key-label"
-                    className="min-w-0 flex-1 bg-muted p-2 font-mono text-xs break-all select-all"
+                    className="min-w-0 flex-1 bg-muted p-2 font-label text-sm break-all select-all"
                   >
                     {created.token}
                   </code>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={copyToken}
-                  >
-                    {copied ? (
-                      <Check className="size-4" />
-                    ) : (
-                      <Copy className="size-4" />
-                    )}
-                    {copied ? "[ copiado ]" : "[ copiar ]"}
+                  <Button type="button" variant="outline" onClick={copyToken}>
+                    {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                    {text.copy}
                   </Button>
                 </div>
               </div>
 
               <Separator />
 
-              <dl className="grid grid-cols-[6rem_1fr] gap-y-1.5 text-xs">
-                <dt className="text-muted-foreground">Nome</dt>
+              <dl className="grid grid-cols-[7rem_1fr] gap-y-2 text-sm">
+                <dt className="text-muted-foreground">{text.summary.name}</dt>
                 <dd className="font-medium">{created.name}</dd>
-                <dt className="text-muted-foreground">Prefixo</dt>
-                <dd className="font-mono">{created.keyPrefix}</dd>
-                <dt className="text-muted-foreground">Expira em</dt>
-                <dd className="tabular-nums">
-                  {created.expiresAt
-                    ? formatDateTime(created.expiresAt)
-                    : "nunca"}
-                </dd>
-                <dt className="text-muted-foreground">Escopos</dt>
-                <dd className="font-mono">{created.scopes.join(" · ")}</dd>
+                <dt className="text-muted-foreground">{text.summary.prefix}</dt>
+                <dd className="font-label">{created.keyPrefix}</dd>
+                <dt className="text-muted-foreground">{text.summary.expires}</dt>
+                <dd className="font-label">{created.expiresAt ? formatDateTime(created.expiresAt) : words.never}</dd>
+                <dt className="text-muted-foreground">{text.summary.scopes}</dt>
+                <dd className="font-label">{created.scopes.join(" · ")}</dd>
               </dl>
 
               <Separator />
 
-              {/* `id` + `htmlFor` (e não <Label> envolvendo o controle): o
-                  Checkbox do Radix é um <button>, e a associação explícita é o
-                  padrão documentado. */}
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-3">
                 <Checkbox
                   id="ack-copied"
                   checked={acknowledged}
                   onCheckedChange={(v) => setAcknowledged(v === true)}
                   className="mt-0.5"
                 />
-                <Label
-                  htmlFor="ack-copied"
-                  className="items-start font-normal leading-relaxed"
-                >
-                  Guardei a chave em local seguro. Entendo que ela não será
-                  exibida novamente.
+                <Label htmlFor="ack-copied" className="font-normal">
+                  {text.acknowledge}
                 </Label>
               </div>
             </div>
@@ -281,25 +242,21 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                   reset();
                 }}
               >
-                [ concluir ]
+                {text.done}
               </Button>
             </DialogFooter>
           </>
         ) : (
-          <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
+          <form ref={form} noValidate onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="grid gap-6">
             <DialogHeader>
-              <DialogTitle>Nova chave de API</DialogTitle>
-              <DialogDescription>
-                Credencial do servidor MCP (<code>POST /api/mcp</code>). Os
-                escopos são aplicados no servidor, por tool — dê apenas o que a
-                chave precisa.
-              </DialogDescription>
+              <DialogTitle>{text.title}</DialogTitle>
+              <DialogDescription>{text.description}</DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              <div className="space-y-1.5">
+            <div className="space-y-5">
+              <div className="space-y-2">
                 <Label htmlFor="key-name">
-                  Nome
+                  {text.name}
                   <RequiredHint />
                 </Label>
                 <Input
@@ -307,92 +264,60 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                   name="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="skill do Obsidian — macbook"
+                  placeholder={text.namePlaceholder}
                   autoComplete="off"
+                  className="w-full"
                   aria-invalid={Boolean(errors.name)}
-                  aria-describedby={describedBy(
-                    "key-name-help",
-                    errors.name && "key-name-error",
-                  )}
+                  aria-describedby={describedBy("key-name-help", errors.name && "key-name-error")}
                   required
                 />
-                <FieldHelp id="key-name-help">
-                  É este nome que você vai digitar para revogar a chave depois.
-                </FieldHelp>
+                <FieldHelp id="key-name-help">{text.nameHelp}</FieldHelp>
                 <FieldError id="key-name-error">{errors.name}</FieldError>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  {/* Grupo, não campo: o `Label` não tem controle para
-                      apontar, então quem amarra o nome à lista é o
-                      `aria-labelledby` do `role="group"` logo abaixo. */}
-                  <Label id="key-scopes-label">Escopos</Label>
-                  <div className="flex gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => setScopes([...READ_SCOPES])}
-                    >
-                      [ só leitura ]
+              <fieldset
+                className="space-y-3"
+                aria-describedby={describedBy("key-scopes-help", errors.scopes && "key-scopes-error")}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <legend className="text-sm font-medium">
+                    {text.scopes} <RequiredHint />
+                  </legend>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="ghost" onClick={() => setScopes([...READ_SCOPES])}>
+                      {text.readOnly}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => setScopes([])}
-                    >
-                      [ limpar ]
+                    <Button type="button" variant="ghost" onClick={() => setScopes([])}>
+                      {text.clearScopes}
                     </Button>
                   </div>
                 </div>
-                <FieldHelp id="key-scopes-help">
-                  Não há herança: <code>applications:write</code> não concede{" "}
-                  <code>applications:read</code>. Marque os dois quando precisar
-                  dos dois.
-                </FieldHelp>
+                <FieldHelp id="key-scopes-help">{text.scopesHelp}</FieldHelp>
 
-                <div
-                  role="group"
-                  aria-labelledby="key-scopes-label"
-                  aria-describedby={describedBy(
-                    "key-scopes-help",
-                    errors.scopes && "key-scopes-error",
-                  )}
-                  className="max-h-56 space-y-1.5 overflow-y-auto border border-border p-2"
-                >
-                  {MCP_SCOPES.map((scope) => (
-                    <div key={scope} className="flex items-start gap-2 py-1">
+                <div className="max-h-64 space-y-1 overflow-y-auto border border-input p-3" tabIndex={-1}>
+                  {MCP_SCOPES.map((scope, index) => (
+                    <div key={scope} className="flex items-start gap-3 py-1.5">
                       <Checkbox
                         id={scopeFieldId(scope)}
                         checked={scopes.includes(scope)}
                         onCheckedChange={(v) => toggleScope(scope, v === true)}
-                        className="mt-0.5"
+                        className="mt-1"
+                        // The first box carries the error, so the focus lands on the group.
+                        aria-invalid={index === 0 && Boolean(errors.scopes) ? true : undefined}
                       />
-                      <Label
-                        htmlFor={scopeFieldId(scope)}
-                        className="min-w-0 flex-col items-start gap-0 font-normal"
-                      >
-                        <span
-                          className={
-                            isWrite(scope)
-                              ? "font-mono text-xs text-warn"
-                              : "font-mono text-xs"
-                          }
-                        >
+                      <Label htmlFor={scopeFieldId(scope)} className="min-w-0 flex-col items-start gap-0.5 font-normal">
+                        <span className="font-label text-sm">
                           {scope}
+                          {isWrite(scope) && <span className="font-text text-muted-foreground"> · {words.write}</span>}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {MCP_SCOPE_LABELS[scope]}
-                        </span>
+                        <span className="text-sm text-muted-foreground">{vocab.scope[scope]}</span>
                       </Label>
                     </div>
                   ))}
                 </div>
 
-                {/* Radix Checkbox não participa do FormData sem `name`; os
-                    hidden inputs abaixo tornam a serialização explícita. */}
+                {/* A Radix checkbox is not in the FormData without a `name`: the
+                    hidden inputs make the serialisation explicit. */}
                 {scopes.map((scope) => (
                   <input key={scope} type="hidden" name="scopes" value={scope} />
                 ))}
@@ -400,54 +325,43 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                 <FieldError id="key-scopes-error">{errors.scopes}</FieldError>
 
                 {writeSelected.length > 0 && (
-                  <p className="flex items-start gap-2 text-xs text-warn">
-                    <ShieldAlert className="mt-0.5 size-3.5 shrink-0" />
-                    <span>
-                      {writeSelected.length} escopo(s) de escrita. Esta chave
-                      poderá alterar dados do funil pelo MCP.
-                    </span>
+                  <p className="flex items-start gap-2 text-sm text-foreground">
+                    <ShieldAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warn" />
+                    {counted(text.writeWarning, writeSelected.length)}
                   </p>
                 )}
-              </div>
+              </fieldset>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="key-expires">Expiração</Label>
+              <div className="space-y-2">
+                <Label htmlFor="key-expires">{text.expires}</Label>
                 <Select value={expiresIn} onValueChange={setExpiresIn}>
                   <SelectTrigger
                     id="key-expires"
                     className="w-full"
-                    aria-describedby={describedBy(
-                      errors.expiresIn && "key-expires-error",
-                    )}
+                    aria-invalid={Boolean(errors.expiresIn)}
+                    aria-describedby={describedBy(errors.expiresIn && "key-expires-error")}
                   >
-                    <SelectValue placeholder="Expiração" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {EXPIRY_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
+                    {EXPIRY_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {vocab.expiry[option]}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <input type="hidden" name="expiresIn" value={expiresIn} />
-                <FieldError id="key-expires-error">
-                  {errors.expiresIn}
-                </FieldError>
+                <FieldError id="key-expires-error">{errors.expiresIn}</FieldError>
               </div>
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-                disabled={isPending}
-              >
-                [ cancelar ]
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+                {common.cancel}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "[ criando… ]" : "[ criar chave ]"}
+                {isPending ? text.pending : text.submit}
               </Button>
             </DialogFooter>
           </form>

@@ -156,6 +156,7 @@ describe("aba de entrevistas", () => {
   it("sem nenhuma, diz que não há, em vez de inventar", async () => {
     const [head, ...rows] = await openTab([]);
     expect(head).toHaveLength(7);
-    expect(rows).toEqual([["# Nenhuma entrevista registrada."]]);
+    // The empty row is the shared one of rebrand-09, with no `#` in front.
+    expect(rows).toEqual([["Nenhuma entrevista registrada."]]);
   });
 });

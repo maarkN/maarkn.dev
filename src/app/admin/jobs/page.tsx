@@ -1,37 +1,26 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ExternalLink, Info, ShieldAlert } from "lucide-react";
+import { ExternalLink, Info } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { SortableHead } from "@/components/admin/listing";
 import { PageHeader } from "@/components/admin/page-header";
-import {
-  FunnelStageBadge,
-  SponsorshipBadge,
-  StatusBadge,
-} from "@/components/admin/status-badge";
-import {
-  ListingIndexCell,
-  ListingIndexHead,
-  TableEmptyRow,
-  TableLoadingRow,
-} from "@/components/admin/table-pager";
+import { StageLabel } from "@/components/admin/stage";
+import { TableStateRow } from "@/components/admin/table-pager";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SPONSORSHIP_HINTS } from "@/lib/applications";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { AdminDictionary } from "@/i18n/config";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
-import { getAdminFormat } from "@/lib/admin/request";
+import { getAdminFormat, getAdminLabels } from "@/lib/admin/request";
+import { clearedHref, currentHref, parseSort, sortHref, type Sort } from "@/lib/admin/sort";
+import { counted, fill } from "@/lib/admin/text";
 import { EMPTY, type Format } from "@/lib/format";
 import { JobsToolbar } from "./jobs-toolbar";
 import { PromoteJobButton } from "./promote-job-button";
 import {
+  DEFAULT_JOB_SORT,
+  JOB_SORT_KEYS,
   countUnmappedRadarHits,
   effectiveScore,
   hasAnyJobFilter,
@@ -46,355 +35,326 @@ import {
   parseJobsPage,
   type JobFilters,
   type JobListRow,
+  type JobSortKey,
 } from "./jobs-query";
-import {
-  RADAR_VERDICT_STYLES,
-  VERIFICATION_VERDICT_STYLES,
-  employmentTypeLabel,
-  jobBoard,
-  workModeLabel,
-} from "./radar";
+import { jobBoard } from "./radar";
 
 /**
- * RADAR DE VAGAS.
+ * The radar of jobs: where a job is judged BEFORE it becomes an application:
+ * score, verdict of the scan and its reason, visa, board and date of posting,
+ * and one button that matters, promoting it to an application.
  *
- * A tela onde uma vaga é julgada ANTES de virar compromisso: pontuação,
- * veredito da varredura, motivo de eliminação, gate de visto, board de origem e
- * data de publicação — e um botão só, o que importa: promover para candidatura.
+ * A job has no page of its own, so its row opens nothing: the posting is a link
+ * of its own, and the application, when there is one, another.
  *
- * Volume real: ~190 vagas. Filtro e paginação são server-side (`./jobs-query`),
- * nunca `.filter()` no cliente.
+ * ~190 jobs: filter and pages are applied by the server (`./jobs-query`).
  */
 
-// Guard de sessão + searchParams: esta rota nunca é pré-renderizada.
+// Session guard + searchParams: this route is never prerendered.
 export const dynamic = "force-dynamic";
 
-// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
-const COLS = 8;
+const PATH = "/admin/jobs";
+const COLS = 7;
+/** Columns that only fit from a laptop (1024 px) and from a desktop (1280 px) up. */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
-export default async function JobsPage({
-  searchParams,
-}: PageProps<"/admin/jobs">) {
+type Params = Record<string, string | string[] | undefined>;
+
+export default async function JobsPage({ searchParams }: PageProps<"/admin/jobs">) {
   const session = await auth();
   if (!session?.user) redirect("/admin/login"); // A1
 
-  const params = await searchParams;
+  const params: Params = await searchParams;
   const filters = parseJobFilters(params);
   const page = parseJobsPage(params.page);
-  const [markets, verdicts, unmappedHits, { formatNumber }] = await Promise.all([
+  const sort = parseSort(params, JOB_SORT_KEYS, DEFAULT_JOB_SORT);
+  const [markets, verdicts, unmappedHits, { formatNumber }, labels] = await Promise.all([
     listJobMarkets(),
     listRadarVerdicts(),
     countUnmappedRadarHits(),
     getAdminFormat(),
+    getAdminLabels(),
   ]);
+  const { jobs: words, vocab, common } = labels;
 
   return (
-    <AdminShell email={session.user.email ?? "admin"}>
-      <div className="space-y-4">
+    <AdminShell email={session.user.email ?? "admin"} translated>
+      <div className="space-y-6 font-text">
         <PageHeader
-          title="Vagas"
-          description="Radar: o que existe lá fora, com pontuação, veredito e o gate de visto — antes de virar candidatura."
+          title={words.title}
+          description={words.description}
           actions={
-            <Button asChild variant="outline" size="sm">
-              <Link href="/admin/applications">[ ver candidaturas ]</Link>
+            <Button asChild variant="outline">
+              <Link href="/admin/applications">{words.applications}</Link>
             </Button>
           }
         />
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <JobsToolbar
             {...filters}
+            words={{ filters: words.filters, vocab, clear: common.states.clear }}
             markets={markets}
             verdicts={verdicts}
             page={page}
+            sort={sort}
             position="top"
           />
 
           <Suspense
-            key={jobsQueryKey(filters, page)}
+            key={jobsQueryKey(filters, page, sort)}
             fallback={
-              <JobsTableFrame>
-                <TableLoadingRow cols={COLS} />
-              </JobsTableFrame>
+              <JobsTable params={params} sort={sort} labels={labels}>
+                <TableStateRow cols={COLS} state="loading" message={words.states.loading} />
+              </JobsTable>
             }
           >
-            <JobsRows filters={filters} page={page} />
+            <JobsRows params={params} filters={filters} page={page} sort={sort} labels={labels} />
           </Suspense>
         </div>
 
         {unmappedHits > 0 && (
-          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-            <Info className="mt-px size-3.5 shrink-0" />
-            <span>
-              <span className="tabular-nums">{formatNumber(unmappedHits)}</span>{" "}
-              linha(s) de varredura ainda não viraram vaga e por isso não
-              aparecem aqui. A lista é de <code className="font-mono">Job</code>,
-              a entidade com <code className="font-mono">sourceUrl</code>{" "}
-              canônico — é ela que a candidatura referencia. Um hit entra na
-              tela quando a sincronização gravar a vaga (
-              <code className="font-mono">upsert_job</code>).
-            </span>
-          </p>
+          <div className="flex max-w-[72ch] items-start gap-2 text-sm text-muted-foreground">
+            <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <p>
+              {counted(words.unmapped, unmappedHits, formatNumber(unmappedHits))} {words.unmappedHelp}
+            </p>
+          </div>
         )}
       </div>
     </AdminShell>
   );
 }
 
-/* ── Corpo da tabela (suspenso: é o único trecho que espera o banco) ──────── */
+/* ── The rows (suspended: the only part that waits for the database) ──────── */
 
 async function JobsRows({
+  params,
   filters,
   page,
+  sort,
+  labels,
 }: {
+  params: Params;
   filters: JobFilters;
   page: number;
+  sort: Sort<JobSortKey>;
+  labels: AdminDictionary;
 }) {
-  const [result, format] = await Promise.all([listJobs({ filters, page }), getAdminFormat()]);
-  const filtered = hasAnyJobFilter(filters);
+  const { jobs: words, common } = labels;
+  const [result, format] = await Promise.all([listJobs({ filters, page, sort }), getAdminFormat()]);
 
   return (
     <>
-      <JobsTableFrame>
+      <JobsTable params={params} sort={sort} labels={labels}>
         {result.failed ? (
-          <TableEmptyRow
-            cols={COLS}
-            destructive
-            message={
-              dbConfigured
-                ? "Não foi possível carregar o radar de vagas."
-                : "DATABASE_URL não configurada — a lista fica vazia até o Postgres subir."
-            }
-          />
+          dbConfigured ? (
+            <TableStateRow
+              cols={COLS}
+              state="failed"
+              message={words.states.failed}
+              action={{ href: currentHref(PATH, params), label: common.retry }}
+            />
+          ) : (
+            <TableStateRow cols={COLS} state="failed" message={common.states.noDatabase} />
+          )
         ) : result.rows.length === 0 ? (
-          <TableEmptyRow
-            cols={COLS}
-            message={
-              filtered
-                ? "Nenhuma vaga corresponde aos filtros."
-                : "Nenhuma vaga no radar ainda."
-            }
-          />
+          hasAnyJobFilter(filters) ? (
+            <TableStateRow
+              cols={COLS}
+              state="filtered"
+              message={words.states.filtered}
+              action={{ href: clearedHref(PATH), label: common.states.clear }}
+            />
+          ) : (
+            <TableStateRow cols={COLS} state="empty" message={words.states.empty} />
+          )
         ) : (
-          result.rows.map((row, index) => (
-            <JobRow key={row.id} row={row} index={index} format={format} />
-          ))
+          result.rows.map((row) => <JobRow key={row.id} row={row} format={format} labels={labels} />)
         )}
-      </JobsTableFrame>
+      </JobsTable>
 
       <JobsToolbar
         {...filters}
         page={result.page}
         totalPages={result.totalPages}
-        total={result.total}
+        total={result.failed ? undefined : result.total}
+        sort={sort}
         position="bottom"
       />
     </>
   );
 }
 
-function JobRow({ row, index, format }: { row: JobListRow; index: number; format: Format }) {
+function JobRow({ row, format, labels }: { row: JobListRow; format: Format; labels: AdminDictionary }) {
+  const { jobs: words, vocab, applications } = labels;
   const { formatDate, formatNumber } = format;
   const hit = latestHit(row);
   const verification = latestVerification(row);
   const application = linkedApplication(row);
   const score = effectiveScore(row);
+  // A synthetic URI (`demo://`, what the cutover created for a line without a
+  // link) is not clickable: `jobBoard` returns `null` for those.
   const board = jobBoard(row.sourceUrl);
-  // URI sintético (`demo://…`, e o que o cutover criou para linha de tracker
-  // sem link): não é clicável — `jobBoard` devolve `null` justamente nesses.
-  const linkable = Boolean(board);
   const companyName = row.company?.name ?? hit?.companyName ?? null;
-  const jobLabel = `${row.title}${companyName ? ` — ${companyName}` : ""}`;
-
+  const jobLabel = `${row.title}${companyName ? `, ${companyName}` : ""}`;
   const place = [
     row.market,
     row.locationText,
-    workModeLabel(row.workMode),
-    employmentTypeLabel(row.employmentType),
+    row.workMode ? (vocab.workMode[row.workMode as keyof typeof vocab.workMode] ?? row.workMode) : null,
+    row.employmentType
+      ? (vocab.employmentType[row.employmentType as keyof typeof vocab.employmentType] ?? row.employmentType)
+      : null,
   ]
     .filter(Boolean)
     .join(" · ");
+  const verdict = hit?.verdict ? (vocab.verdict[hit.verdict as keyof typeof vocab.verdict] ?? hit.verdict) : null;
 
   return (
     <TableRow>
-      <ListingIndexCell index={index} />
-      <TableCell>
-        <div className="flex items-center gap-2" title={row.title}>
-          <span className="truncate">{row.title}</span>
-          {row.priority != null && (
-            <span
-              className="shrink-0 tabular-nums text-warn"
-              title="Prioridade (1 = maior)"
+      <TableCell className="max-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          {board ? (
+            <a
+              href={row.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="admin-row-link truncate"
+              title={fill(words.openPosting, { job: jobLabel })}
             >
-              [P{row.priority}]
+              {row.title}
+            </a>
+          ) : (
+            <span className="truncate font-semibold">{row.title}</span>
+          )}
+          {row.priority != null && (
+            <span className="shrink-0 font-label text-xs text-warn" title={fill(applications.priority, { n: row.priority })}>
+              P{row.priority}
             </span>
           )}
-          {!row.active && (
-            <span className="shrink-0 text-ink-3" title="Vaga encerrada">
-              [closed]
-            </span>
-          )}
+          {!row.active && <span className="shrink-0 text-sm text-muted-foreground">{words.closed}</span>}
         </div>
-        <div
-          className="text-xs text-muted-foreground"
-          title={`${companyName ?? "empresa não identificada"}${board ? ` · ${board}` : ""}`}
-        >
-          {companyName ?? "empresa não identificada"}
+        <div className="truncate text-sm text-muted-foreground">
+          {companyName ?? words.unknownCompany}
           {board && ` · ${board}`}
         </div>
         {place && (
-          <div className="text-xs text-muted-foreground" title={place}>
+          <div className="truncate text-sm text-muted-foreground" title={place}>
             {place}
           </div>
         )}
         {row.salaryText && (
-          <div className="text-xs text-muted-foreground" title={row.salaryText}>
+          <div className="truncate text-sm text-muted-foreground" title={row.salaryText}>
             {row.salaryText}
           </div>
         )}
       </TableCell>
 
-      <TableCell className="tabular-nums">
-        {score === null ? (
-          <span className="text-muted-foreground">{EMPTY}</span>
-        ) : (
-          <span
-            className="font-medium"
-            title={
-              row.fitScore === null
-                ? "Pontuação da varredura de radar"
-                : "Fit da vaga (Job.fitScore)"
-            }
-          >
-            {formatNumber(score)}
+      <TableCell className="font-label" title={words.scoreHint}>
+        {score === null ? EMPTY : <span className="text-base text-foreground">{formatNumber(score)}</span>}
+        {/* Fit and radar are DIFFERENT scales and may disagree: when both exist, both show. */}
+        {hit && (hit.score !== null || hit.rank !== null) && (
+          <div className="text-xs text-muted-foreground">
+            {hit.score !== null && row.fitScore !== null && fill(words.radarScore, { score: hit.score })}
+            {hit.rank !== null && ` ${fill(words.rank, { rank: hit.rank })}`}
+          </div>
+        )}
+      </TableCell>
+
+      <TableCell className={`${LG} max-w-0`}>
+        <span className="block truncate">{verdict ?? vocab.verdict.none}</span>
+        {hit?.eliminationReason && (
+          <span className="block text-sm text-muted-foreground" title={hit.eliminationReason}>
+            {fill(words.reason, { reason: hit.eliminationReason })}
           </span>
         )}
-        {/* Fit e radar são escalas DIFERENTES e podem discordar (fit alto com
-            veredito eliminado acontece: a régua do radar inclui critério
-            eliminatório). Quando as duas existem, as duas aparecem — esconder a
-            segunda faria a coluna contradizer a do lado sem explicação. */}
-        {hit && (hit.score !== null || hit.rank !== null) && (
-          <div
-            className="text-[11px] text-muted-foreground"
-            title={[
-              hit.score !== null && row.fitScore !== null
-                ? `radar ${hit.score}`
-                : null,
-              hit.rank !== null ? `#${hit.rank}` : null,
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            {hit.score !== null && row.fitScore !== null && `radar ${hit.score}`}
-            {hit.rank !== null && ` #${hit.rank}`}
-          </div>
-        )}
-      </TableCell>
-
-      <TableCell>
-        {hit?.verdict ? (
-          <StatusBadge status={hit.verdict} styles={RADAR_VERDICT_STYLES} />
-        ) : (
-          <span className="text-xs text-muted-foreground">sem veredito</span>
-        )}
-        {hit?.eliminationReason && (
-          <div className="flex items-start gap-1 pt-0.5 text-[11px] text-muted-foreground">
-            <ShieldAlert className="mt-px size-3 shrink-0 text-destructive" />
-            <span>{hit.eliminationReason}</span>
-          </div>
-        )}
         {verification && (
-          <div className="pt-1">
-            <StatusBadge
-              status={verification.verdict}
-              styles={VERIFICATION_VERDICT_STYLES}
-              className="text-[11px]"
-            />
-            <span
-              className="pl-1 text-[11px] text-muted-foreground"
-              title="Verificação da descrição contra a fonte"
-            >
-              descrição · {formatDate(verification.verifiedAt)}
-            </span>
-          </div>
+          <span className="block text-sm text-muted-foreground">
+            {vocab.verification[verification.verdict as keyof typeof vocab.verification] ?? verification.verdict}{" "}
+            {verification.verifiedAt && fill(words.verifiedOn, { date: formatDate(verification.verifiedAt) })}
+          </span>
         )}
       </TableCell>
 
-      <TableCell>
-        <span title={SPONSORSHIP_HINTS[row.sponsorship]}>
-          <SponsorshipBadge status={row.sponsorship} />
+      <TableCell className={`${XL} max-w-0`}>
+        <span className="block truncate" title={vocab.visaHint[row.sponsorship]}>
+          {vocab.visa[row.sponsorship]}
         </span>
       </TableCell>
 
-      <TableCell className="tabular-nums text-muted-foreground">
+      <TableCell className={`${XL} font-label text-xs whitespace-nowrap`}>
         {formatDate(row.postedAt)}
         {hit?.radarScan?.scannedAt && (
-          <div
-            className="text-[11px]"
-            title={`radar ${formatDate(hit.radarScan.scannedAt)}`}
-          >
-            radar {formatDate(hit.radarScan.scannedAt)}
-          </div>
+          <div className="text-muted-foreground">{fill(words.scannedOn, { date: formatDate(hit.radarScan.scannedAt) })}</div>
         )}
       </TableCell>
 
-      <TableCell>
+      <TableCell className={`${XL} max-w-0`}>
         {application ? (
-          <Link
-            href={`/admin/applications/${application.id}`}
-            className="inline-flex flex-col gap-0.5"
-            title={application.folderName}
-          >
-            <FunnelStageBadge status={application.stage} />
-            <span className="truncate text-[11px] text-muted-foreground underline-offset-2 hover:underline">
-              {application.folderName}
-            </span>
+          <Link href={`/admin/applications/${application.id}`} className="block min-w-0 hover:underline" title={application.folderName}>
+            <StageLabel stage={application.stage} words={vocab} />
           </Link>
         ) : (
-          <span className="text-xs text-muted-foreground">
-            fora do funil
-          </span>
+          <span className="text-sm text-muted-foreground">{words.outside}</span>
         )}
       </TableCell>
 
       <TableCell className="text-right">
-        <div className="inline-flex items-center gap-1">
-          {linkable && (
+        <div className="inline-flex items-center gap-1.5">
+          {board && (
             <Button asChild variant="ghost" size="icon-sm">
               <a
                 href={row.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
-                aria-label={`Abrir o anúncio de ${jobLabel}`}
-                title="Abrir o anúncio"
+                aria-label={fill(words.openPosting, { job: jobLabel })}
+                title={fill(words.openPosting, { job: jobLabel })}
               >
-                <ExternalLink className="size-4" />
+                <ExternalLink aria-hidden="true" />
               </a>
             </Button>
           )}
-          {!application && (
-            <PromoteJobButton jobId={row.id} jobLabel={jobLabel} />
-          )}
+          {!application && <PromoteJobButton jobId={row.id} label={fill(words.promote, { job: jobLabel })} />}
         </div>
       </TableCell>
     </TableRow>
   );
 }
 
-/** Cabeçalho fixo da tabela — compartilhado pelo skeleton e pelos dados. */
-function JobsTableFrame({ children }: { children: React.ReactNode }) {
+/** The header of the table, shared by the loading state and the data. */
+function JobsTable({
+  params,
+  sort,
+  labels,
+  children,
+}: {
+  params: Params;
+  sort: Sort<JobSortKey>;
+  labels: AdminDictionary;
+  children: React.ReactNode;
+}) {
+  const { columns } = labels.jobs;
+  const head = (key: JobSortKey, label: string, className: string, first: "asc" | "desc") => (
+    <SortableHead
+      label={label}
+      title={fill(labels.common.sort.by, { column: label.toLowerCase() })}
+      href={sortHref(PATH, params, sort, key, first)}
+      dir={sort.key === key ? sort.dir : undefined}
+      className={className}
+    />
+  );
   return (
     <Table className="table-fixed">
       <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <ListingIndexHead />
-          <TableHead>vaga</TableHead>
-          <TableHead className="w-[12ch]">score</TableHead>
-          <TableHead className="w-[22ch]">veredito</TableHead>
-          <TableHead className="w-[30ch]">patrocinio</TableHead>
-          <TableHead className="w-[16ch]">publicada</TableHead>
-          <TableHead className="w-[26ch]">funil</TableHead>
-          <TableHead className="w-[12ch] text-right">acoes</TableHead>
+        <TableRow>
+          {head("title", columns.job, "w-auto", "asc")}
+          {head("score", columns.score, "w-20 md:w-24", "desc")}
+          <TableHead className={`${LG} w-48`}>{columns.verdict}</TableHead>
+          <TableHead className={`${XL} w-48`}>{columns.visa}</TableHead>
+          {head("posted", columns.posted, `${XL} w-36`, "desc")}
+          <TableHead className={`${XL} w-44`}>{columns.funnel}</TableHead>
+          <TableHead className="w-24 text-right md:w-28">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>

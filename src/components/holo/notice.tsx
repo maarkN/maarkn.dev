@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CircleCheck, CircleX, Info, TriangleAlert, X } from "lucide-react";
-import { HoloIconButton } from "./button";
+import { HoloButton, HoloIconButton } from "./button";
 import styles from "./holo.module.css";
 
 export type NoticeTone = "info" | "ok" | "warn" | "bad";
@@ -10,14 +10,20 @@ export type NoticeTone = "info" | "ok" | "warn" | "bad";
 const ICONS = { info: Info, ok: CircleCheck, warn: TriangleAlert, bad: CircleX };
 
 /**
- * A notice: content, so it is solid; only its button is a hologram. Announced
+ * A notice: content, so it is solid; only its buttons are holograms. Announced
  * politely, or at once when it is an error. With `duration` it leaves on its
  * own, and waits while the pointer or the focus is on it.
+ *
+ * `announce={false}` is for a notice that lands in a live region that already
+ * exists (the backoffice's notices): a second one inside it would be read twice.
  */
 export function HoloNotice({
   tone = "info",
   title,
   children,
+  action,
+  announce = true,
+  lang,
   onDismiss,
   dismissLabel,
   duration,
@@ -25,6 +31,11 @@ export function HoloNotice({
   tone?: NoticeTone;
   title: string;
   children?: ReactNode;
+  /** The next step the result offers: undo it, try it again. */
+  action?: { label: string; onClick: () => void };
+  announce?: boolean;
+  /** The language of its words, when it is not the document's. */
+  lang?: string;
   /** Milliseconds until it leaves; only with `onDismiss`. */
   duration?: number;
 } & (
@@ -48,7 +59,8 @@ export function HoloNotice({
 
   return (
     <div
-      role={tone === "bad" ? "alert" : "status"}
+      role={announce ? (tone === "bad" ? "alert" : "status") : undefined}
+      lang={lang}
       data-tone={tone}
       className={styles.notice}
       onPointerEnter={() => setPointed(true)}
@@ -60,6 +72,11 @@ export function HoloNotice({
       <div className={styles.noticeText}>
         <p className={styles.noticeTitle}>{title}</p>
         {children}
+        {action && (
+          <HoloButton size="sm" className={styles.noticeAction} onClick={action.onClick}>
+            {action.label}
+          </HoloButton>
+        )}
       </div>
       {onDismiss && (
         <HoloIconButton label={dismissLabel} size="sm" onClick={onDismiss}>

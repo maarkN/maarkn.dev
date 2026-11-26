@@ -24,7 +24,7 @@
 
 import { useState, useTransition } from "react";
 import { Pencil } from "lucide-react";
-import { toast } from "sonner";
+import { useNotify } from "@/components/admin/notify";
 import type { SponsorshipSignal } from "@prisma/client";
 import type { ActionResult } from "@/app/_actions/action-result";
 import {
@@ -106,6 +106,7 @@ export function KeyFieldsDialog({
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const notify = useNotify();
 
   const [sponsorship, setSponsorship] = useState<string>(
     initial.sponsorship ?? INHERIT,
@@ -127,12 +128,12 @@ export function KeyFieldsDialog({
       const res = await action(id, formData);
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {});
-        toast.error(res.message);
+        notify.error(res.message);
         return;
       }
       setErrors({});
       setOpen(false);
-      toast.success(res.message ?? "Candidatura atualizada.");
+      notify.success(res.message ?? "Candidatura atualizada.");
     });
   }
 

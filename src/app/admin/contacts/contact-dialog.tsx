@@ -1,30 +1,22 @@
 "use client";
 
 /**
- * Criar/editar um contato — um componente para os dois casos: sem `initial` é
- * criação, com `initial` é edição (§5 do `src/app/admin/AGENTS.md`).
+ * Create and edit a contact in a window, without leaving the list (AGENTS.md
+ * §5). The same component for both: without `initial` it creates.
  *
- * `useTransition` e não `useActionState`: com a transition o resultado da
- * action está na mão dentro da mesma função, então dá para fechar o dialog e
- * dar o toast sem um `useEffect` observando estado.
- *
- * PII: os campos aqui são e-mail e telefone de outra pessoa. O formulário não
- * tem `autoComplete` de contato nem `type="email"` com sugestão do navegador
- * ligada — `autoComplete="off"` em tudo, para não jogar o dado de um recrutador
- * no cofre de autopreenchimento do navegador do usuário.
+ * A refusal keeps the window open with what was typed (`submitKeepingValues`,
+ * A15), each error next to its field and the focus on the first of them; a
+ * failure of the server says so in a notice that offers to try again.
  */
 
-import { useState, useTransition } from "react";
-import { Pencil, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { useRef, useState, useTransition } from "react";
+import { Pencil, Plus, Save } from "lucide-react";
+import type { ActionResult } from "@/app/_actions/action-result";
 import { saveContact } from "@/app/_actions/contacts";
-import {
-  FieldError,
-  FieldHelp,
-  RequiredHint,
-  describedBy,
-} from "@/components/admin/field-output";
-import { submitKeepingValues } from "@/components/admin/form-submit";
+import { useCommonLabels } from "@/components/admin/admin-locale";
+import { FieldError, FieldHelp, RequiredHint, describedBy } from "@/components/admin/field-output";
+import { submitKeepingValues, useFocusFirstInvalid } from "@/components/admin/form-submit";
+import { useNotify } from "@/components/admin/notify";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,18 +29,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useCompanyOptions } from "./company-options";
-import { CONTACT_CHANNELS, CONTACT_CHANNEL_LABELS } from "./vocabulary";
+import { fill } from "@/lib/admin/text";
+import { useCompanyOptions, useContactsWords } from "./company-options";
+import { CONTACT_CHANNELS } from "./vocabulary";
 
-/** Espelho do sentinela de `@/app/_actions/contacts` (o Radix proíbe `value=""`). */
+/** Mirror of the sentinel of `@/app/_actions/contacts`: Radix forbids `value=""`. */
 const NONE = "none";
 
 export type ContactInitial = {
@@ -66,21 +53,30 @@ export type ContactInitial = {
 
 export function ContactDialog({ initial }: { initial?: ContactInitial }) {
   const companies = useCompanyOptions();
+  const { contact: words, vocab } = useContactsWords();
+  const common = useCommonLabels();
+  const notify = useNotify();
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const form = useRef<HTMLFormElement>(null);
+  useFocusFirstInvalid(form, errors);
+  const f = words.fields;
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await saveContact(initial?.id ?? null, formData);
+      const result = await saveContact(initial?.id ?? null, formData).catch(
+        (): ActionResult<{ id: string }> => ({ ok: false, message: common.failed }),
+      );
       if (!result.ok) {
         setErrors(result.fieldErrors ?? {});
-        toast.error(result.message);
+        if (result.fieldErrors) notify.error(result.message);
+        else notify.error(result.message, { action: { label: common.retry, onClick: () => form.current?.requestSubmit() } });
         return;
       }
       setErrors({});
-      setOpen(false); // fecha só no sucesso
-      toast.success(result.message ?? "Contato salvo.");
+      setOpen(false); // closes on success only
+      notify.success(result.message ?? words.saved);
     });
   }
 
@@ -97,73 +93,58 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Editar o contato ${initial.name}`}
-            title="Editar"
+            data-row-open=""
+            aria-label={fill(words.edit, { name: initial.name })}
+            title={fill(words.edit, { name: initial.name })}
           >
-            <Pencil className="size-4" />
+            <Pencil aria-hidden="true" />
           </Button>
         ) : (
-          <Button size="sm">
-            <Plus className="size-4" />
-            [ novo contato ]
+          <Button>
+            <Plus aria-hidden="true" />
+            {words.create}
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
-        {/* `onSubmit` e não `action=`: o React 19 reseta o formulário ao fim
-            de QUALQUER função de `action`, e no caminho de erro isso apagava
-            tudo o que o usuário tinha digitado (ver
-            `@/components/admin/form-submit`). */}
-        <form onSubmit={(event) => submitKeepingValues(event, onSubmit)}>
+      <DialogContent className="sm:max-w-2xl">
+        {/* A15: `onSubmit`, never `action=`: React 19 resets the form at the end
+            of ANY `action` function, which emptied it on an error. */}
+        {/* `noValidate`: the errors are the screen's, next to each field, and
+            not the browser's bubble. */}
+        <form ref={form} noValidate onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="grid gap-6">
           <DialogHeader>
-            <DialogTitle>
-              {initial ? "Editar contato" : "Novo contato"}
-            </DialogTitle>
-            <DialogDescription>
-              Dados pessoais de terceiros. Ficam privados: nenhuma rota pública
-              lê esta tabela.
-            </DialogDescription>
+            <DialogTitle>{initial ? words.editTitle : words.newTitle}</DialogTitle>
+            <DialogDescription>{words.description}</DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-3 py-4 sm:grid-cols-2">
-            <Field
-              id="contact-name"
-              name="name"
-              label="Nome"
-              defaultValue={initial?.name ?? ""}
-              error={errors.name}
-              required
-            />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field id="contact-name" name="name" label={f.name} defaultValue={initial?.name ?? ""} error={errors.name} required />
             <Field
               id="contact-role"
               name="roleTitle"
-              label="Cargo"
+              label={f.roleTitle}
               defaultValue={initial?.roleTitle ?? ""}
               error={errors.roleTitle}
-              placeholder="Technical Recruiter"
+              placeholder={f.rolePlaceholder}
             />
 
-            <div className="space-y-1.5">
-              <Label htmlFor="contact-company">Empresa</Label>
-              {/* Sem `disabled` quando a lista vem vazia (falha de leitura):
-                  um Select desabilitado não envia campo nenhum, e o save
-                  interpretaria isso como "tirar a empresa" — apagando o vínculo
-                  em silêncio numa edição. */}
+            <div className="space-y-2">
+              <Label htmlFor="contact-company">{f.company}</Label>
+              {/* Never `disabled` when the list comes empty (a failed read): a
+                  disabled Select sends no field, and saving would read it as
+                  "remove the company", unlinking it in silence. */}
               <Select name="companyId" defaultValue={initial?.companyId ?? NONE}>
                 <SelectTrigger
                   id="contact-company"
                   className="w-full"
-                  aria-describedby={
-                    errors.companyId
-                      ? "contact-company-error"
-                      : "contact-company-help"
-                  }
+                  aria-invalid={Boolean(errors.companyId)}
+                  aria-describedby={describedBy("contact-company-help", errors.companyId && "contact-company-error")}
                 >
-                  <SelectValue placeholder="Sem empresa" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>Sem empresa</SelectItem>
+                  <SelectItem value={NONE}>{f.noCompany}</SelectItem>
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.name}
@@ -171,55 +152,48 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.companyId ? (
-                <FieldError id="contact-company-error">
-                  {errors.companyId}
-                </FieldError>
-              ) : (
-                <FieldHelp id="contact-company-help">
-                  Só empresas que já existem — a lista é compartilhada com vagas
-                  e candidaturas.
-                </FieldHelp>
-              )}
+              <FieldHelp id="contact-company-help">{f.companyHelp}</FieldHelp>
+              <FieldError id="contact-company-error">{errors.companyId}</FieldError>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="contact-channel">Canal</Label>
+            <div className="space-y-2">
+              <Label htmlFor="contact-channel">{f.channel}</Label>
               <Select name="channel" defaultValue={initial?.channel ?? NONE}>
-                <SelectTrigger id="contact-channel" className="w-full">
-                  <SelectValue placeholder="Canal" />
+                <SelectTrigger
+                  id="contact-channel"
+                  className="w-full"
+                  aria-invalid={Boolean(errors.channel)}
+                  aria-describedby={describedBy(errors.channel && "contact-channel-error")}
+                >
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>Não informado</SelectItem>
+                  <SelectItem value={NONE}>{f.noChannel}</SelectItem>
                   {CONTACT_CHANNELS.map((channel) => (
                     <SelectItem key={channel} value={channel}>
-                      {CONTACT_CHANNEL_LABELS[channel]}
+                      {vocab.channel[channel]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <FieldError id="contact-channel-error">{errors.channel}</FieldError>
             </div>
 
             <Field
               id="contact-email"
               name="email"
-              label="E-mail"
+              type="email"
+              label={f.email}
               defaultValue={initial?.email ?? ""}
               error={errors.email}
-              placeholder="nome@empresa.com"
+              placeholder={f.emailPlaceholder}
             />
-            <Field
-              id="contact-phone"
-              name="phone"
-              label="Telefone"
-              defaultValue={initial?.phone ?? ""}
-              error={errors.phone}
-              placeholder="+1 416 555 0100"
-            />
+            <Field id="contact-phone" name="phone" type="tel" label={f.phone} defaultValue={initial?.phone ?? ""} error={errors.phone} />
             <Field
               id="contact-linkedin"
               name="linkedinUrl"
-              label="LinkedIn"
+              type="url"
+              label={f.linkedinUrl}
               defaultValue={initial?.linkedinUrl ?? ""}
               error={errors.linkedinUrl}
               placeholder="https://www.linkedin.com/in/…"
@@ -228,35 +202,34 @@ export function ContactDialog({ initial }: { initial?: ContactInitial }) {
             <Field
               id="contact-timezone"
               name="timezone"
-              label="Fuso horário"
+              label={f.timezone}
               defaultValue={initial?.timezone ?? ""}
               error={errors.timezone}
               placeholder="America/Toronto"
             />
 
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="contact-notes">Notas</Label>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="contact-notes">{f.notesMd}</Label>
               <Textarea
                 id="contact-notes"
                 name="notesMd"
                 rows={4}
                 defaultValue={initial?.notesMd ?? ""}
-                placeholder="Contexto da conversa, preferências, o que ficou combinado…"
+                placeholder={f.notesPlaceholder}
+                aria-invalid={Boolean(errors.notesMd)}
+                aria-describedby={describedBy(errors.notesMd && "contact-notes-error")}
               />
+              <FieldError id="contact-notes-error">{errors.notesMd}</FieldError>
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={isPending}
-            >
-              [ cancelar ]
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+              {common.cancel}
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "[ salvando… ]" : "[ salvar ]"}
+              <Save aria-hidden="true" />
+              {isPending ? common.saving : words.save}
             </Button>
           </DialogFooter>
         </form>
@@ -269,6 +242,7 @@ function Field({
   id,
   name,
   label,
+  type = "text",
   defaultValue,
   error,
   placeholder,
@@ -278,6 +252,7 @@ function Field({
   id: string;
   name: string;
   label: string;
+  type?: string;
   defaultValue: string;
   error?: string;
   placeholder?: string;
@@ -285,7 +260,7 @@ function Field({
   className?: string;
 }) {
   return (
-    <div className={`space-y-1.5 ${className ?? ""}`}>
+    <div className={`space-y-2 ${className ?? ""}`}>
       <Label htmlFor={id}>
         {label}
         {required && <RequiredHint />}
@@ -293,11 +268,13 @@ function Field({
       <Input
         id={id}
         name={name}
+        type={type}
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
-        // PII de terceiro: fora do autopreenchimento do navegador.
+        // Someone else's personal data: out of the browser's autofill.
         autoComplete="off"
+        className="w-full"
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy(error && `${id}-error`)}
       />

@@ -132,7 +132,8 @@ describe("generate (painel /admin)", () => {
 
     expect(state.status).toBe("error");
     expect(JSON.stringify(state)).not.toContain("jane@acme.example");
-    expect(state.status === "error" && state.message).toContain("SEC1");
+    expect(state.status === "error" && state.message).toBe("framing_blocked");
+    expect(state.status === "error" && state.codes).toContain("SEC1");
     expect(createGeneration).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });

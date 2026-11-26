@@ -1,6 +1,8 @@
 import "server-only";
 import type { Prisma, SponsorshipSignal } from "@prisma/client";
 import { db, dbConfigured } from "@/lib/db";
+import type { Sort } from "@/lib/admin/sort";
+import { safeDbError } from "@/lib/safe-error";
 import {
   SPONSORSHIP_ROUTES,
   isSponsorshipRoute,
@@ -168,7 +170,7 @@ export function hasAnyJobFilter(filters: JobFilters): boolean {
 
 /** Chave do `<Suspense>`: muda junto com a consulta, para o skeleton reaparecer
  * em vez de a tabela congelar com o resultado anterior. */
-export function jobsQueryKey(filters: JobFilters, page: number): string {
+export function jobsQueryKey(filters: JobFilters, page: number, sort?: Sort<string>): string {
   return [
     filters.q,
     filters.verdict,
@@ -179,6 +181,7 @@ export function jobsQueryKey(filters: JobFilters, page: number): string {
     filters.scoreMax,
     filters.link,
     page,
+    sort ? `${sort.key}:${sort.dir}` : "",
   ].join("|");
 }
 
@@ -251,10 +254,31 @@ export type JobListResult = {
   failed: boolean;
 };
 
+/** The columns the list of jobs is ordered by. */
+export const JOB_SORT_KEYS = ["title", "score", "posted"] as const;
+export type JobSortKey = (typeof JOB_SORT_KEYS)[number];
+/** The best score first: what to look at today. */
+export const DEFAULT_JOB_SORT: Sort<JobSortKey> = { key: "score", dir: "desc" };
+
+function jobOrder({ key, dir }: Sort<JobSortKey>): Prisma.JobOrderByWithRelationInput[] {
+  // `fitScore` is the job's canonical score; Prisma cannot order by a scalar of
+  // a to-many relation, so the radar's score cannot come in here. In practice
+  // it goes with `fitScore`, and what has neither falls to the end.
+  const tail: Prisma.JobOrderByWithRelationInput[] = [
+    { priority: { sort: "asc", nulls: "last" } },
+    { updatedAt: "desc" },
+    { id: "asc" },
+  ];
+  if (key === "title") return [{ title: dir }, ...tail];
+  if (key === "posted") return [{ postedAt: { sort: dir, nulls: "last" } }, ...tail];
+  return [{ fitScore: { sort: dir, nulls: "last" } }, { postedAt: { sort: "desc", nulls: "last" } }, ...tail];
+}
+
 export async function listJobs(args: {
   filters: JobFilters;
   page: number;
   pageSize?: number;
+  sort?: Sort<JobSortKey>;
 }): Promise<JobListResult> {
   const pageSize = args.pageSize ?? JOBS_PAGE_SIZE;
   const empty: JobListResult = {
@@ -277,23 +301,13 @@ export async function listJobs(args: {
     const rows = await db.job.findMany({
       where,
       select: LIST_SELECT,
-      // "Ordenação por pontuação desc". `fitScore` é a pontuação canônica da
-      // vaga; o Prisma não sabe ordenar por escalar de relação `to-many`, então
-      // a pontuação do radar não pode entrar aqui — na prática ela acompanha o
-      // `fitScore` (quem tem hit pontuado tem fitScore), e quem não tem nenhuma
-      // das duas cai no fim com `nulls: "last"`, que é onde deve ficar.
-      orderBy: [
-        { fitScore: { sort: "desc", nulls: "last" } },
-        { priority: { sort: "asc", nulls: "last" } },
-        { postedAt: { sort: "desc", nulls: "last" } },
-        { updatedAt: "desc" },
-      ],
+      orderBy: jobOrder(args.sort ?? DEFAULT_JOB_SORT),
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
     return { rows, total, page, totalPages, failed: false };
   } catch (err) {
-    console.error("[admin] list jobs failed", err);
+    console.error("[admin] list jobs failed", safeDbError(err));
     return empty;
   }
 }
@@ -312,7 +326,7 @@ export async function listJobMarkets(): Promise<string[]> {
       .filter((market): market is string => Boolean(market))
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list job markets failed", err);
+    console.error("[admin] list job markets failed", safeDbError(err));
     return [];
   }
 }
@@ -335,7 +349,7 @@ export async function listRadarVerdicts(): Promise<string[]> {
       .filter((verdict): verdict is string => Boolean(verdict))
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list radar verdicts failed", err);
+    console.error("[admin] list radar verdicts failed", safeDbError(err));
     return [];
   }
 }
@@ -359,7 +373,7 @@ export async function countUnmappedRadarHits(): Promise<number> {
   try {
     return await db.radarHit.count({ where: { jobId: null } });
   } catch (err) {
-    console.error("[admin] count unmapped radar hits failed", err);
+    console.error("[admin] count unmapped radar hits failed", safeDbError(err));
     return 0;
   }
 }

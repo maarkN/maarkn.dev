@@ -1,6 +1,8 @@
 import "server-only";
 import type { FunnelStage, Prisma, SponsorshipSignal } from "@prisma/client";
 import { db, dbConfigured } from "@/lib/db";
+import { safeDbError } from "@/lib/safe-error";
+import type { Sort } from "@/lib/admin/sort";
 import {
   FUNNEL_STAGE_PHASES,
   SPONSORSHIP_ROUTES,
@@ -135,6 +137,7 @@ export function hasAnyApplicationFilter(filters: ApplicationFilters): boolean {
 export function applicationsQueryKey(
   filters: ApplicationFilters,
   page: number,
+  sort?: Sort<string>,
 ): string {
   return [
     filters.q,
@@ -145,6 +148,7 @@ export function applicationsQueryKey(
     filters.sponsorship,
     filters.source,
     page,
+    sort ? `${sort.key}:${sort.dir}` : "",
   ].join("|");
 }
 
@@ -226,6 +230,33 @@ export function buildApplicationWhere(
   return and.length > 0 ? { AND: and } : {};
 }
 
+/** The columns the list is ordered by (spec admin-listing). */
+export const APPLICATION_SORT_KEYS = ["company", "stage", "sent", "updated"] as const;
+export type ApplicationSortKey = (typeof APPLICATION_SORT_KEYS)[number];
+/** The order of the funnel, and within a stage the priority, then what moved last. */
+export const DEFAULT_APPLICATION_SORT: Sort<ApplicationSortKey> = { key: "stage", dir: "asc" };
+
+function applicationOrder(sort: Sort<ApplicationSortKey>): Prisma.ApplicationOrderByWithRelationInput[] {
+  const { dir } = sort;
+  const tail: Prisma.ApplicationOrderByWithRelationInput[] = [
+    { priority: { sort: "asc", nulls: "last" } },
+    { updatedAt: "desc" },
+    { id: "asc" },
+  ];
+  switch (sort.key) {
+    case "company":
+      return [{ company: { name: dir } }, { folderName: dir }, { id: "asc" }];
+    case "sent":
+      return [{ appliedAt: { sort: dir, nulls: "last" } }, ...tail];
+    case "updated":
+      return [{ updatedAt: dir }, { id: "asc" }];
+    default:
+      // `stage` is a NATIVE enum: Postgres orders it by DECLARATION, which is
+      // the order of the funnel. No `CASE`, no helper column.
+      return [{ stage: dir }, ...tail];
+  }
+}
+
 export type ApplicationListResult = {
   rows: ApplicationListRow[];
   total: number;
@@ -240,6 +271,7 @@ export async function listApplications(args: {
   filters: ApplicationFilters;
   page: number;
   pageSize?: number;
+  sort?: Sort<ApplicationSortKey>;
 }): Promise<ApplicationListResult> {
   const pageSize = args.pageSize ?? APPLICATIONS_PAGE_SIZE;
   const empty: ApplicationListResult = {
@@ -262,19 +294,13 @@ export async function listApplications(args: {
     const rows = await db.application.findMany({
       where,
       select: LIST_SELECT,
-      // `stage` e enum NATIVO: o Postgres ordena pela ordem de DECLARACAO, que
-      // e a ordem do funil. Nao ha `CASE` nem coluna auxiliar aqui.
-      orderBy: [
-        { stage: "asc" },
-        { priority: { sort: "asc", nulls: "last" } },
-        { updatedAt: "desc" },
-      ],
+      orderBy: applicationOrder(args.sort ?? DEFAULT_APPLICATION_SORT),
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
     return { rows, total, page, totalPages, failed: false };
   } catch (err) {
-    console.error("[admin] list applications failed", err);
+    console.error("[admin] list applications failed", safeDbError(err));
     return empty;
   }
 }
@@ -301,7 +327,7 @@ export async function listApplicationMarkets(): Promise<string[]> {
     }
     return [...markets].sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list application markets failed", err);
+    console.error("[admin] list application markets failed", safeDbError(err));
     return [];
   }
 }
@@ -321,7 +347,7 @@ export async function listApplicationSources(): Promise<string[]> {
       .filter((source): source is string => Boolean(source))
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list application sources failed", err);
+    console.error("[admin] list application sources failed", safeDbError(err));
     return [];
   }
 }

@@ -1,36 +1,26 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2, ExternalLink, Kanban, Pencil, Plus } from "lucide-react";
+import { ExternalLink, Pencil, Plus } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { DeleteApplicationButton } from "@/components/admin/delete-application-button";
+import { OpensRow, RowLink, SortableHead } from "@/components/admin/listing";
 import { PageHeader } from "@/components/admin/page-header";
-import {
-  ApplicationSourceBadge,
-  FunnelStageBadge,
-  SponsorshipBadge,
-} from "@/components/admin/status-badge";
-import {
-  ListingIndexCell,
-  ListingIndexHead,
-  TableEmptyRow,
-  TableLoadingRow,
-} from "@/components/admin/table-pager";
+import { ResultNotice } from "@/components/admin/result-notice";
+import { StageLabel } from "@/components/admin/stage";
+import { TableStateRow } from "@/components/admin/table-pager";
+import { ViewSwitch } from "@/components/admin/view-switch";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { AdminDictionary } from "@/i18n/config";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
-import { getAdminFormat } from "@/lib/admin/request";
+import { getAdminFormat, getAdminLabels } from "@/lib/admin/request";
+import { clearedHref, currentHref, parseSort, sortHref, type Sort } from "@/lib/admin/sort";
+import { fill } from "@/lib/admin/text";
 import { EMPTY } from "@/lib/format";
-import { SPONSORSHIP_HINTS } from "@/lib/applications";
 import {
+  APPLICATION_SORT_KEYS,
+  DEFAULT_APPLICATION_SORT,
   applicationsQueryKey,
   effectiveMarket,
   effectiveSponsorship,
@@ -41,90 +31,99 @@ import {
   parseApplicationFilters,
   parsePage,
   type ApplicationFilters,
+  type ApplicationSortKey,
 } from "@/lib/applications-query";
 import { ApplicationsToolbar } from "./applications-toolbar";
+import { DeleteApplication } from "./delete-application";
 
-// Guard de sessão + searchParams: esta rota nunca é pré-renderizada.
+// Session guard + searchParams: this route is never prerendered.
 export const dynamic = "force-dynamic";
 
-// A coluna de índice conta: `colSpan` que mentir deixa a linha vazia curta.
+const PATH = "/admin/applications";
 const COLS = 7;
 
-export default async function ApplicationsPage({
-  searchParams,
-}: PageProps<"/admin/applications">) {
+type Params = Record<string, string | string[] | undefined>;
+
+/**
+ * On a phone the list keeps the company, the stage and the actions; the rest is
+ * in the dossier. The other columns come in where they fit: from a laptop
+ * (1024 px) and from a desktop (1280 px) up.
+ */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
+
+export default async function ApplicationsPage({ searchParams }: PageProps<"/admin/applications">) {
   const session = await auth();
   if (!session?.user) redirect("/admin/login"); // A1
 
-  const params = await searchParams;
+  const params: Params = await searchParams;
   const filters = parseApplicationFilters(params);
   const page = parsePage(params.page);
-  const [markets, sources] = await Promise.all([
+  const sort = parseSort(params, APPLICATION_SORT_KEYS, DEFAULT_APPLICATION_SORT);
+  const [markets, sources, labels] = await Promise.all([
     listApplicationMarkets(),
     listApplicationSources(),
+    getAdminLabels(),
   ]);
+  const { applications: words, vocab, common } = labels;
 
-  // As actions redirecionam com ?created= / ?updated= — como elas redirecionam,
-  // não há retorno para o cliente e portanto não há toast (§2 do AGENTS.md).
-  // Texto vindo da URL: só é renderizado como texto (React escapa), e o corte
-  // evita que uma URL forjada estique o aviso indefinidamente.
+  // The form redirects here with ?created= / ?saved=: the notice says it once.
+  // Text from the URL is only ever rendered as text, and cut short.
   const created = one(params.created).slice(0, 160);
-  const updated = one(params.updated).slice(0, 160);
-  const notice = created
-    ? `Candidatura “${created}” criada.`
-    : updated
-      ? `Candidatura “${updated}” atualizada.`
+  const saved = one(params.saved).slice(0, 160);
+  const result = created
+    ? fill(words.created, { name: created })
+    : saved
+      ? fill(words.saved, { name: saved })
       : null;
 
+  const listQuery = new URLSearchParams();
+  for (const key of ["q", "phase", "market", "route", "sponsorship", "source"] as const) {
+    if (filters[key]) listQuery.set(key, filters[key]);
+  }
+  const boardHref = `${PATH}/board${listQuery.size ? `?${listQuery}` : ""}`;
+
   return (
-    <AdminShell email={session.user.email ?? "admin"}>
-      <div className="space-y-4">
+    <AdminShell email={session.user.email ?? "admin"} translated>
+      <div className="space-y-6 font-text">
         <PageHeader
-          title="Candidaturas"
-          description="Funil completo — estágio, mercado e o gate de visto separado por rota."
+          title={words.title}
+          description={words.description}
           actions={
             <>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/admin/applications/board">
-                  <Kanban className="size-4" />
-                  [ ver como quadro ]
-                </Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link href="/admin/applications/new">
-                  <Plus className="size-4" />
-                  [ nova candidatura ]
+              <ViewSwitch current="list" listHref={PATH} boardHref={boardHref} words={words.views} />
+              <Button asChild>
+                <Link href={`${PATH}/new`}>
+                  <Plus aria-hidden="true" />
+                  {words.create}
                 </Link>
               </Button>
             </>
           }
         />
 
-        {notice && (
-          <p className="flex items-center gap-2 text-xs text-ok">
-            <CheckCircle2 className="size-4" />
-            {notice}
-          </p>
-        )}
+        {result && <ResultNotice message={result} drop={["created", "saved"]} />}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <ApplicationsToolbar
             {...filters}
+            words={{ filters: words.filters, vocab, clear: common.states.clear }}
             markets={markets}
             sources={sources}
             page={page}
+            sort={sort}
             position="top"
           />
 
           <Suspense
-            key={applicationsQueryKey(filters, page)}
+            key={applicationsQueryKey(filters, page, sort)}
             fallback={
-              <ApplicationsTableFrame>
-                <TableLoadingRow cols={COLS} />
-              </ApplicationsTableFrame>
+              <ApplicationsTable params={params} sort={sort} words={words} sortBy={common.sort.by}>
+                <TableStateRow cols={COLS} state="loading" message={words.states.loading} />
+              </ApplicationsTable>
             }
           >
-            <ApplicationsRows filters={filters} page={page} />
+            <ApplicationsRows params={params} filters={filters} page={page} sort={sort} labels={labels} />
           </Suspense>
         </div>
       </div>
@@ -132,174 +131,204 @@ export default async function ApplicationsPage({
   );
 }
 
-/* ── Corpo da tabela (suspenso: é o único trecho que espera o banco) ──────── */
+/* ── The rows (suspended: the only part that waits for the database) ──────── */
 
 async function ApplicationsRows({
+  params,
   filters,
   page,
+  sort,
+  labels,
 }: {
+  params: Params;
   filters: ApplicationFilters;
   page: number;
+  sort: Sort<ApplicationSortKey>;
+  labels: AdminDictionary;
 }) {
-  const { formatDate } = await getAdminFormat();
-  const result = await listApplications({ filters, page });
-  const filtered = hasAnyApplicationFilter(filters);
+  const { applications: words, vocab, common } = labels;
+  const { formatDate, formatDateTime } = await getAdminFormat();
+  const result = await listApplications({ filters, page, sort });
 
   return (
     <>
-      <ApplicationsTableFrame>
+      <ApplicationsTable params={params} sort={sort} words={words} sortBy={common.sort.by}>
         {result.failed ? (
-          <TableEmptyRow
-            cols={COLS}
-            destructive
-            message={
-              dbConfigured
-                ? "Não foi possível carregar as candidaturas."
-                : "DATABASE_URL não configurada — a lista fica vazia até o Postgres subir."
-            }
-          />
+          dbConfigured ? (
+            <TableStateRow
+              cols={COLS}
+              state="failed"
+              message={words.states.failed}
+              action={{ href: currentHref(PATH, params), label: common.retry }}
+            />
+          ) : (
+            <TableStateRow cols={COLS} state="failed" message={common.states.noDatabase} />
+          )
         ) : result.rows.length === 0 ? (
-          <TableEmptyRow
-            cols={COLS}
-            message={
-              filtered
-                ? "Nenhuma candidatura corresponde aos filtros."
-                : "Nenhuma candidatura registrada ainda."
-            }
-          />
+          hasAnyApplicationFilter(filters) ? (
+            <TableStateRow
+              cols={COLS}
+              state="filtered"
+              message={words.states.filtered}
+              action={{ href: clearedHref(PATH), label: common.states.clear }}
+            />
+          ) : (
+            <TableStateRow
+              cols={COLS}
+              state="empty"
+              message={words.states.empty}
+              action={{ href: `${PATH}/new`, label: words.create }}
+            />
+          )
         ) : (
-          result.rows.map((row, index) => {
+          result.rows.map((row) => {
             const sponsorship = effectiveSponsorship(row);
-            const market = effectiveMarket(row);
             const companyName = row.company?.name ?? row.folderName;
             const roleTitle = row.roleTitle || row.job?.title || EMPTY;
-            const place =
-              [market, row.job?.locationText].filter(Boolean).join(" · ") || EMPTY;
+            const place = [effectiveMarket(row), row.job?.locationText].filter(Boolean).join(" · ");
             const jobUrl = row.job?.sourceUrl;
-            // URI sintético criado pelo cutover para as linhas do tracker antigo
-            // que não tinham link algum: não é clicável.
+            // A synthetic URI of the cutover (`legacy://`, `demo://`) is not a link.
             const linkable = Boolean(jobUrl && /^https?:\/\//i.test(jobUrl));
+            const dossier = `${PATH}/${row.id}`;
             return (
-              <TableRow key={row.id}>
-                <ListingIndexCell index={index} />
-                <TableCell>
-                  {/* Flex container não recebe `text-overflow`: quem trunca é
-                      o item de texto, e o valor inteiro fica no seu `title`. */}
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-medium" title={companyName}>
+              <OpensRow key={row.id} href={dossier}>
+                <TableCell className="max-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <RowLink href={dossier} title={companyName} className="truncate">
                       {companyName}
-                    </span>
-                    {row.fit && (
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {row.fit}
-                      </span>
-                    )}
+                    </RowLink>
                     {row.priority != null && (
                       <span
-                        className="shrink-0 tabular-nums text-warn"
-                        title="Prioridade (1 = maior)"
+                        className="shrink-0 font-label text-xs text-warn"
+                        title={fill(words.priority, { n: row.priority })}
                       >
-                        [P{row.priority}]
+                        P{row.priority}
                       </span>
                     )}
                   </div>
-                  <div
-                    className="text-xs text-muted-foreground"
-                    title={row.folderName}
-                  >
-                    {row.folderName}
+                  {row.fit && <div className="truncate text-sm text-muted-foreground">{row.fit}</div>}
+                </TableCell>
+                <TableCell className={`${LG} max-w-0`}>
+                  <div className="truncate" title={roleTitle}>
+                    {roleTitle}
                   </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  <div title={roleTitle}>{roleTitle}</div>
-                  <div className="text-xs" title={place}>
-                    {place}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <FunnelStageBadge status={row.stage} />
-                </TableCell>
-                <TableCell>
-                  <span
-                    title={
-                      sponsorship ? SPONSORSHIP_HINTS[sponsorship] : undefined
-                    }
-                  >
-                    <SponsorshipBadge status={sponsorship} />
-                  </span>
-                  {row.sponsorship === null && row.job && (
-                    <div className="pt-0.5 text-[11px] text-muted-foreground">
-                      herdado da vaga
+                  {place && (
+                    <div className="truncate text-sm text-muted-foreground" title={place}>
+                      {place}
                     </div>
                   )}
                 </TableCell>
-                <TableCell>
-                  <ApplicationSourceBadge status={row.source} />
-                  <div className="pt-0.5 text-xs tabular-nums text-muted-foreground">
-                    {formatDate(row.appliedAt)}
-                  </div>
+                <TableCell className="max-w-0 truncate">
+                  <StageLabel stage={row.stage} words={vocab} />
                 </TableCell>
+                <TableCell className={`${XL} max-w-0`}>
+                  {sponsorship ? (
+                    <span className="block truncate" title={vocab.visaHint[sponsorship]}>
+                      {vocab.visa[sponsorship]}
+                    </span>
+                  ) : (
+                    EMPTY
+                  )}
+                  {row.sponsorship === null && row.job && (
+                    <span className="block text-sm text-muted-foreground">{words.inherited}</span>
+                  )}
+                </TableCell>
+                <TableCell className={`${XL} font-label text-xs whitespace-nowrap`}>{formatDate(row.appliedAt)}</TableCell>
+                <TableCell className={`${LG} font-label text-xs whitespace-nowrap`}>
+                  {formatDateTime(row.updatedAt)}
+                </TableCell>
+                {/* On a phone too: deleting an application happens here. */}
                 <TableCell className="text-right">
-                  <div className="inline-flex items-center gap-1">
+                  <div className="inline-flex items-center gap-1.5">
                     {linkable && (
-                      <Button asChild variant="ghost" size="icon-sm">
-                        <a
-                          href={jobUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Abrir a vaga de ${companyName}`}
-                          title="Abrir a vaga"
-                        >
-                          <ExternalLink className="size-4" />
-                        </a>
-                      </Button>
+                      // The wrapper hides it on a phone: a hologram's own `display` outranks a utility.
+                      <span className="max-md:hidden">
+                        <Button asChild variant="ghost" size="icon-sm">
+                          <a
+                            href={jobUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={fill(words.openJob, { name: companyName })}
+                            title={fill(words.openJob, { name: companyName })}
+                          >
+                            <ExternalLink aria-hidden="true" />
+                          </a>
+                        </Button>
+                      </span>
                     )}
                     <Button asChild variant="ghost" size="icon-sm">
                       <Link
-                        href={`/admin/applications/${row.id}/edit`}
-                        aria-label={`Editar ${companyName}`}
-                        title="Editar"
+                        href={`${PATH}/${row.id}/edit`}
+                        aria-label={fill(words.edit, { name: companyName })}
+                        title={fill(words.edit, { name: companyName })}
                       >
-                        <Pencil className="size-4" />
+                        <Pencil aria-hidden="true" />
                       </Link>
                     </Button>
-                    <DeleteApplicationButton
+                    <DeleteApplication
                       id={row.id}
                       company={companyName}
                       folderName={row.folderName}
+                      role={roleTitle === EMPTY ? null : roleTitle}
+                      place={place || null}
+                      words={words.delete}
                     />
                   </div>
                 </TableCell>
-              </TableRow>
+              </OpensRow>
             );
           })
         )}
-      </ApplicationsTableFrame>
+      </ApplicationsTable>
 
       <ApplicationsToolbar
         {...filters}
         page={result.page}
         totalPages={result.totalPages}
-        total={result.total}
+        total={result.failed ? undefined : result.total}
+        sort={sort}
         position="bottom"
       />
     </>
   );
 }
 
-/** Cabeçalho fixo da tabela — compartilhado pelo skeleton e pelos dados. */
-function ApplicationsTableFrame({ children }: { children: React.ReactNode }) {
+/** The header of the table, shared by the loading state and the data. */
+function ApplicationsTable({
+  params,
+  sort,
+  words,
+  sortBy,
+  children,
+}: {
+  params: Params;
+  sort: Sort<ApplicationSortKey>;
+  words: AdminDictionary["applications"];
+  /** "Ordenar por {column}". */
+  sortBy: string;
+  children: React.ReactNode;
+}) {
+  const { columns } = words;
+  const head = (key: ApplicationSortKey, label: string, className?: string, first: "asc" | "desc" = "asc") => (
+    <SortableHead
+      label={label}
+      title={fill(sortBy, { column: label.toLowerCase() })}
+      href={sortHref(PATH, params, sort, key, first)}
+      dir={sort.key === key ? sort.dir : undefined}
+      className={className}
+    />
+  );
   return (
     <Table className="table-fixed">
       <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <ListingIndexHead />
-          <TableHead>empresa</TableHead>
-          <TableHead>vaga</TableHead>
-          <TableHead className="w-[24ch]">estagio</TableHead>
-          <TableHead className="w-[30ch]">patrocinio</TableHead>
-          <TableHead className="w-[18ch]">origem</TableHead>
-          <TableHead className="w-[14ch] text-right">acoes</TableHead>
+        <TableRow>
+          {head("company", columns.company, "w-auto")}
+          <TableHead className={LG}>{columns.role}</TableHead>
+          {head("stage", columns.stage, "w-32 md:w-48")}
+          <TableHead className={`${XL} w-52`}>{columns.visa}</TableHead>
+          {head("sent", columns.sent, `${XL} w-28`, "desc")}
+          {head("updated", columns.updated, `${LG} w-36`, "desc")}
+          <TableHead className="w-28 text-right md:w-36">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>

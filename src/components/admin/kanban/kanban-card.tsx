@@ -1,168 +1,78 @@
 "use client";
 
-/**
- * Cartao do board + o menu "mover para".
- *
- * ── Por que menu e nao drag-and-drop ──────────────────────────────────────
- * O prompt admite as duas formas e pede a simples que funciona. DnD aqui
- * custaria: (a) uma dependencia (`@dnd-kit/*` ~40 kB) ou o HTML5 drag nativo,
- * que nao funciona em toque e nao tem equivalente de teclado; (b) estado
- * otimista duplicado no cliente para o card nao "voltar" enquanto a Server
- * Action responde; (c) uma segunda fonte de verdade sobre a ordem das colunas.
- * O funil tem 21 estagios e o board mostra ate 17 colunas com rolagem
- * horizontal — arrastar de "radar" ate "aceita" atravessaria a tela inteira.
- * Um `DropdownMenu` agrupado por fase move para QUALQUER estagio em dois
- * cliques, funciona no teclado e no toque, e a atualizacao vem do
- * `revalidatePath` da action (AGENTS.md §1). Trocar por DnD depois nao muda
- * nada do servidor: a action ja e `moveApplicationStage(id, stage)`.
- */
-
-import { useTransition } from "react";
+import type { DragEvent, KeyboardEvent } from "react";
 import Link from "next/link";
-import { Check, Loader2, MoveRight } from "lucide-react";
-import { toast } from "sonner";
-import type { FunnelStage } from "@prisma/client";
-import type { ActionResult } from "@/app/_actions/action-result";
-import {
-  FunnelStageBadge,
-  SponsorshipBadge,
-} from "@/components/admin/status-badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  FUNNEL_STAGE_LABELS,
-  FUNNEL_STAGE_PHASES,
-  SPONSORSHIP_HINTS,
-} from "@/lib/applications";
-import { EMPTY } from "@/lib/format";
-import { cn } from "@/lib/utils";
-import type { KanbanCardData } from "./kanban-types";
+import clsx from "clsx";
+import { HoloFrame } from "@/components/holo/frame";
+import styles from "@/components/holo/holo.module.css";
+import { StageLabel, type StageWords } from "@/components/admin/stage";
+import { fill } from "@/lib/admin/text";
+import type { BoardCard } from "./kanban-types";
 
-export interface KanbanCardProps {
-  card: KanbanCardData;
-  /**
-   * REFERENCIA a uma Server Action (AGENTS.md §6): e serializavel, entao o
-   * Server Component que monta o board consegue passa-la para este Client
-   * Component. O `id` viaja como prop separada e a composicao acontece aqui.
-   */
-  moveAction: (id: string, stage: FunnelStage) => Promise<ActionResult>;
-  /** Mostra o badge do estagio no card — usado na coluna agrupada. */
-  showStage?: boolean;
-}
-
-export function KanbanCard({ card, moveAction, showStage }: KanbanCardProps) {
-  const [isPending, startTransition] = useTransition();
-
-  const companyName = card.company?.name ?? card.folderName;
-  const role = card.roleTitle || card.job?.title || EMPTY;
-  // Candidatura manda, vaga completa — mesma heranca de `effectiveSponsorship`
-  // / `effectiveMarket`, reescrita aqui porque aquele modulo e `server-only`.
-  const sponsorship = card.sponsorship ?? card.job?.sponsorship ?? null;
-  const market = card.market ?? card.job?.market ?? null;
-  const place = [market, card.job?.locationText].filter(Boolean).join(" · ");
-
-  function move(stage: FunnelStage) {
-    startTransition(async () => {
-      const result = await moveAction(card.id, stage);
-      if (!result.ok) {
-        toast.error(result.message);
-        return;
-      }
-      toast.success(result.message ?? "Candidatura movida.");
-    });
-  }
-
+/**
+ * A card of the board: a hologram, because it answers (it opens the dossier,
+ * it is dragged, the arrows move it). Its one target is the link with the name
+ * of the company, stretched over the whole card; the stage is written with the
+ * mark of its phase.
+ */
+export function KanbanCard({
+  card,
+  words,
+  priorityLabel,
+  describedBy,
+  dragging,
+  onKeyDown,
+  onDragStart,
+  onDragEnd,
+}: {
+  card: BoardCard;
+  words: StageWords;
+  /** "Prioridade {n} (1 é a maior)". */
+  priorityLabel: string;
+  /** The id of the sentence that says what the arrows do. */
+  describedBy: string;
+  dragging: boolean;
+  onKeyDown: (event: KeyboardEvent<HTMLAnchorElement>) => void;
+  onDragStart: (event: DragEvent<HTMLElement>) => void;
+  onDragEnd: () => void;
+}) {
   return (
-    <article
-      className={cn(
-        // `admin-selection`, e não um utilitário de fundo no hover: o realce
-        // só é acessível junto com a ida do texto para --foreground (ver admin.css).
-        "admin-selection space-y-0.5 px-2 py-1.5 transition-opacity",
-        isPending && "pointer-events-none opacity-50",
-      )}
+    <li
+      data-card={card.id}
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      className={clsx(styles.holo, styles.panel, styles.card, "admin-board-card", dragging && "opacity-45")}
+      data-holo="card"
     >
-      {/* Linha 1: empresa — cargo. */}
-      <div className="flex items-baseline justify-between gap-1">
-        <Link
-          href={`/admin/applications/${card.id}`}
-          className="min-w-0 flex-1 truncate text-xs transition-colors hover:text-brand"
-          title={`${companyName} — ${role}`}
-        >
-          {companyName}
-          <span className="text-muted-foreground"> — {role}</span>
-        </Link>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              disabled={isPending}
-              aria-label={`Mover ${companyName} para outro estágio`}
-              title="Mover para…"
+      <div className={styles.tilt}>
+        <HoloFrame kind="panel" seed={card.company} />
+        <div className="relative space-y-1.5 px-4 pt-3.5 pb-3.5">
+          <h3 className="font-text text-base leading-snug font-semibold">
+            <Link
+              href={`/admin/applications/${card.id}`}
+              data-card-link=""
+              className={styles.stretched}
+              aria-describedby={describedBy}
+              onKeyDown={onKeyDown}
+              draggable={false}
             >
-              {isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <MoveRight className="size-4" />
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-60">
-            <DropdownMenuLabel>Mover para…</DropdownMenuLabel>
-            {FUNNEL_STAGE_PHASES.map((phase) => (
-              <DropdownMenuGroup key={phase.key}>
-                <DropdownMenuLabel className="pt-2 text-muted-foreground">
-                  {phase.label}
-                </DropdownMenuLabel>
-                {phase.stages.map((stage) => (
-                  <DropdownMenuItem
-                    key={stage}
-                    disabled={stage === card.stage}
-                    onSelect={() => move(stage)}
-                  >
-                    {stage === card.stage ? (
-                      <Check className="size-4" />
-                    ) : (
-                      <span className="size-4" aria-hidden />
-                    )}
-                    {FUNNEL_STAGE_LABELS[stage]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {card.company}
+            </Link>
+          </h3>
+          {card.role && <p className="line-clamp-2 text-sm text-muted-foreground">{card.role}</p>}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-sm">
+            <StageLabel stage={card.stage} words={words} />
+            {card.priority != null && (
+              <span className="font-label text-xs text-foreground" title={fill(priorityLabel, { n: card.priority })}>
+                P{card.priority}
+              </span>
+            )}
+          </div>
+          {card.place && <p className="truncate text-sm text-muted-foreground">{card.place}</p>}
+          {card.followUp && <p className="line-clamp-2 text-sm text-foreground">{card.followUp}</p>}
+        </div>
       </div>
-
-      {/* Linha 2: mercado e patrocínio (+ o estágio exato na coluna agrupada). */}
-      <div className="flex items-baseline gap-2 truncate text-[11px]">
-        {showStage && <FunnelStageBadge status={card.stage} />}
-        <span
-          title={sponsorship ? SPONSORSHIP_HINTS[sponsorship] : undefined}
-          className="shrink-0"
-        >
-          <SponsorshipBadge status={sponsorship} />
-        </span>
-        <span className="truncate text-muted-foreground" title={place}>
-          {place || EMPTY}
-        </span>
-        {card.priority != null && (
-          <span
-            className="shrink-0 tabular-nums text-warn"
-            title="Prioridade (1 = maior)"
-          >
-            [P{card.priority}]
-          </span>
-        )}
-      </div>
-    </article>
+    </li>
   );
 }

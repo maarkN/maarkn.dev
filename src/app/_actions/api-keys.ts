@@ -27,6 +27,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { getAdminLabels } from "@/lib/admin/request";
+import { fill } from "@/lib/admin/text";
+import { safeDbError } from "@/lib/safe-error";
 import { db, dbConfigured } from "@/lib/db";
 import { generateApiKey, isKeyGenerationConfigured } from "@/lib/mcp/auth";
 import { MCP_SCOPES } from "@/lib/mcp/scopes";
@@ -54,26 +57,12 @@ const EXPIRY_PRESET_DAYS: Record<string, number | null> = {
   "365": 365,
 };
 
+/** zod's messages are raw: the sentence of each field is the dictionary's (A4). */
 const createSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Dê um nome para a chave.")
-    .max(
-      MAX_NAME_LENGTH,
-      `O nome pode ter no máximo ${MAX_NAME_LENGTH} caracteres.`,
-    ),
-  scopes: z
-    // A mensagem custom existe porque a padrão do zod lista os 10 escopos em
-    // inglês — e o `message` de uma action vai direto para o toast (A4).
-    .array(z.enum(MCP_SCOPES, { message: "Escopo desconhecido." }))
-    .min(1, "Selecione ao menos um escopo.")
-    // `MCP_SCOPES` tem 10 itens; o teto existe só para recusar payload inflado.
-    .max(MCP_SCOPES.length, "Escopos inválidos."),
-  expiresIn: z.enum(
-    Object.keys(EXPIRY_PRESET_DAYS) as [string, ...string[]],
-    { message: "Prazo de expiração inválido." },
-  ),
+  name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
+  // `MCP_SCOPES` has 10 items; the ceiling only refuses an inflated payload.
+  scopes: z.array(z.enum(MCP_SCOPES)).min(1).max(MCP_SCOPES.length),
+  expiresIn: z.enum(Object.keys(EXPIRY_PRESET_DAYS) as [string, ...string[]]),
 });
 
 /** Dados que a UI recebe depois de criar — inclui a chave em claro, uma vez. */
@@ -122,7 +111,9 @@ export async function createApiKey(
   formData: FormData,
 ): Promise<ActionResult<CreatedApiKey>> {
   const { email } = await requireAdmin();
-  if (!dbConfigured) return { ok: false, message: "Banco indisponível." }; // A3
+  const { apiKeys, common } = await getAdminLabels();
+  const words = apiKeys.create;
+  if (!dbConfigured) return { ok: false, message: common.noDatabase }; // A3
 
   const parsed = createSchema.safeParse({
     name: String(formData.get("name") ?? ""),
@@ -135,20 +126,16 @@ export async function createApiKey(
     for (const issue of parsed.error.issues) {
       // `scopes.0` e `scopes` compartilham o mesmo campo na UI.
       const key = String(issue.path[0] ?? "");
-      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+      if (key && !fieldErrors[key]) fieldErrors[key] = words.errors[key as keyof typeof words.errors] ?? words.errors.invalid;
     }
-    return { ok: false, message: "Confira os campos destacados.", fieldErrors };
+    return { ok: false, message: common.checkFields, fieldErrors };
   }
 
   if (!isKeyGenerationConfigured()) {
     // Sem pepper a chave nasceria com um hash que o servidor nunca conseguiria
     // reproduzir: falhar aqui, alto e claro, é melhor do que entregar ao
     // usuário uma credencial que sempre dará 401.
-    return {
-      ok: false,
-      message:
-        "MCP_KEY_PEPPER não está configurada no servidor — nenhuma chave pode ser criada.",
-    };
+    return { ok: false, message: words.noPepper };
   }
 
   const days = EXPIRY_PRESET_DAYS[parsed.data.expiresIn] ?? null;
@@ -175,7 +162,7 @@ export async function createApiKey(
     revalidatePath("/admin/api-keys");
     return {
       ok: true,
-      message: "Chave criada. Copie agora — ela não será exibida de novo.",
+      message: words.created,
       data: {
         id: row.id,
         name: row.name,
@@ -186,8 +173,8 @@ export async function createApiKey(
       },
     };
   } catch (err) {
-    console.error("[admin] create api key failed", err);
-    return { ok: false, message: "Não foi possível criar a chave." };
+    console.error("[admin] create api key failed", safeDbError(err));
+    return { ok: false, message: words.failed };
   }
 }
 
@@ -201,24 +188,19 @@ export async function revokeApiKey(
   confirmName: string,
 ): Promise<ActionResult> {
   const { email } = await requireAdmin();
-  if (!dbConfigured) return { ok: false, message: "Banco indisponível." }; // A3
-  if (!id) return { ok: false, message: "Chave não informada." };
+  const { apiKeys, common } = await getAdminLabels();
+  const words = apiKeys.revoke;
+  if (!dbConfigured) return { ok: false, message: common.noDatabase }; // A3
+  if (!id) return { ok: false, message: words.missing };
 
   try {
     const key = await db.apiKey.findUnique({
       where: { id },
       select: { id: true, name: true, keyPrefix: true, revokedAt: true },
     });
-    if (!key) return { ok: false, message: "Chave não encontrada." };
-    if (key.revokedAt) {
-      return { ok: false, message: "Esta chave já estava revogada." };
-    }
-    if (confirmName.trim() !== key.name.trim()) {
-      return {
-        ok: false,
-        message: "O nome digitado não confere com o nome da chave.",
-      };
-    }
+    if (!key) return { ok: false, message: words.missing };
+    if (key.revokedAt) return { ok: false, message: words.already };
+    if (confirmName.trim() !== key.name.trim()) return { ok: false, message: words.mismatch };
 
     await db.apiKey.update({
       where: { id },
@@ -228,9 +210,9 @@ export async function revokeApiKey(
     revalidatePath("/admin/api-keys");
     // A auditoria mostra o estado da chave junto de cada chamada.
     revalidatePath("/admin/audit");
-    return { ok: true, message: `Chave "${key.name}" revogada.` };
+    return { ok: true, message: fill(words.done, { name: key.name }) };
   } catch (err) {
-    console.error("[admin] revoke api key failed", err);
-    return { ok: false, message: "Não foi possível revogar a chave." };
+    console.error("[admin] revoke api key failed", safeDbError(err));
+    return { ok: false, message: words.failed };
   }
 }

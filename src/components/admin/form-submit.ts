@@ -38,7 +38,7 @@
  * não uma redundância ao lado de um reset invisível.
  */
 
-import type { FormEvent } from "react";
+import { useEffect, type FormEvent, type RefObject } from "react";
 
 /**
  * Recebe o evento e devolve ao chamador o mesmo `FormData` que o `action=`
@@ -58,7 +58,22 @@ export function submitKeepingValues(
 ) {
   event.preventDefault();
   // `new FormData(form)` sem `submitter`: nenhum botão de submit do painel
-  // carrega `name`/`value` (todos são `[ salvar ]`, `[ criar … ]`). Se algum
+  // carrega `name`/`value` ("Salvar contato", "Criar chave"…). Se algum
   // passar a carregar, é aqui que o `submitter` entra.
   handler(new FormData(event.currentTarget));
+}
+
+/**
+ * After a refusal, the focus goes to the first field that has a problem, in
+ * the order they are on screen: its error is read with it, and the rest of the
+ * form keeps what was typed. Runs once per refusal (a new `errors` object).
+ */
+export function useFocusFirstInvalid(
+  form: RefObject<HTMLFormElement | null>,
+  errors: Record<string, string | undefined> | undefined,
+) {
+  useEffect(() => {
+    if (!errors || !Object.values(errors).some(Boolean)) return;
+    form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [form, errors]);
 }

@@ -1,19 +1,66 @@
 import * as React from "react"
 
+import { HoloFrame } from "@/components/holo/frame"
+import styles from "@/components/holo/holo.module.css"
 import { cn } from "@/lib/utils"
 
+/** Types the browser draws a control of its own for: no frame around them. */
+const NATIVE = new Set(["hidden", "checkbox", "radio", "file", "range", "color"])
+
+/**
+ * A place to write is a hologram (docs/design/moldura.md): solid inside, framed,
+ * the frame closing and turning `--beam-3` with the focus and `--bad` while the
+ * field is `aria-invalid`. `className` sizes the frame, which is the box; the
+ * field fills it.
+ */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  if (type && NATIVE.has(type)) {
+    return (
+      <input
+        type={type}
+        data-slot="input"
+        className={cn(
+          "w-full min-w-0 font-text text-sm text-foreground file:mr-3 file:border file:border-input file:bg-transparent file:px-3 file:py-1.5 file:font-text file:text-foreground disabled:opacity-45",
+          className
+        )}
+        {...props}
+      />
+    )
+  }
   return (
-    <input
-      type={type}
-      data-slot="input"
-      className={cn(
-        "h-8 w-full min-w-0 rounded-none border border-input bg-transparent px-2.5 py-1 text-xs transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 md:text-xs",
-        className
-      )}
-      {...props}
-    />
+    <FieldBox className={className} invalid={props["aria-invalid"]} disabled={props.disabled} seed={props.name ?? props.id}>
+      <input type={type} data-slot="input" className={styles.input} {...props} />
+    </FieldBox>
   )
 }
 
-export { Input }
+/** The frame of a field, shared by `Input` and `Textarea`. */
+function FieldBox({
+  className,
+  invalid,
+  disabled,
+  seed,
+  children,
+}: {
+  className?: string
+  invalid?: React.AriaAttributes["aria-invalid"]
+  disabled?: boolean
+  seed?: string
+  children: React.ReactNode
+}) {
+  const marked = invalid === true || invalid === "true"
+  return (
+    <span
+      data-slot="field-box"
+      data-holo=""
+      data-invalid={marked ? "" : undefined}
+      data-disabled={disabled ? "" : undefined}
+      className={cn(styles.holo, styles.fieldBox, "admin-field", className)}
+    >
+      <HoloFrame seed={seed || "field"} />
+      {children}
+    </span>
+  )
+}
+
+export { FieldBox, Input }

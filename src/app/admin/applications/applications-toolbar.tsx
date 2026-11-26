@@ -1,39 +1,35 @@
 "use client";
 
 /**
- * Filtros + paginação da lista de candidaturas.
+ * The filters of the applications, for the list and for the board, and the
+ * list's pager.
  *
- * Um único client component é dono da URL (§4.2 do AGENTS.md): recebe os valores
- * já aplicados por prop (nada de `useSearchParams`) e escreve o próximo estado
- * com `router.push` dentro de uma transition.
+ * One Client Component owns the URL (AGENTS.md §4.2): it receives the applied
+ * values by prop (no `useSearchParams`) and writes the next state with
+ * `router.push` inside a transition. What is typed or chosen is a draft until
+ * "Filtrar", without a debounce. Any change of filter goes back to the first
+ * page; changing page keeps every filter and the order.
  *
- * `position="top"` renderiza os filtros (draft → applied, SEM debounce);
- * `position="bottom"` renderiza só o `TablePager`. As duas instâncias
- * compartilham a mesma função de montagem da query string, então trocar de
- * página nunca perde um filtro e trocar de filtro sempre volta para a página 1.
+ * The parameters are the same on both screens (`q`, `stage`, `phase`, `route`,
+ * `sponsorship`, `market`, `source`), so going from the list to the board keeps
+ * the cut. The board has no `stage`: there the stage is the column, and the
+ * lens is the phase.
  *
- * ── O filtro de patrocínio tem DOIS controles, de propósito ────────────────
- * A ROTA fica em destaque, fora do `<Select>`, como um par de botões sempre
- * visível — porque é a decisão que muda tudo o que vem depois:
- *
- *   • "Remota (B2B)" = `sponsorship = not_applicable_b2b`. É o foco atual:
- *     vaga remota pagando em moeda forte, contratada como contractor. O gate
- *     de visto **não se aplica**.
- *   • "Relocação" = todos os outros sinais. Aqui patrocínio é o critério
- *     eliminatório nº 1.
- *
- * Um único filtro "precisa de patrocínio?" — que é o que o tracker antigo
- * tinha, em forma de `sponsorsVisa Boolean` — descartaria justamente as vagas
- * que são o alvo de hoje. O `<Select>` de sinal continua existindo para
- * refinar DENTRO da rota (ex.: relocação + "não informa" = fila de verificação).
+ * ── The visa has TWO controls, on purpose ──────────────────────────────────
+ * The ROUTE first: remote (B2B/contractor), where the visa does not apply, and
+ * relocation, where sponsorship decides. A single "needs sponsorship?" filter,
+ * which is what the old tracker had, would throw away exactly the jobs that are
+ * today's target. The signal refines inside the route.
  */
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { FilterPanel } from "@/components/admin/filter-panel";
 import { TablePager } from "@/components/admin/table-pager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -43,44 +39,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import type { AdminDictionary } from "@/i18n/config";
 import {
-  FUNNEL_STAGE_LABELS,
   FUNNEL_STAGE_PHASES,
-  SPONSORSHIP_HINTS,
-  SPONSORSHIP_LABELS,
-  SPONSORSHIP_ROUTE_HINTS,
   SPONSORSHIP_ROUTE_KEYS,
-  SPONSORSHIP_ROUTE_LABELS,
   SPONSORSHIP_SIGNALS,
-  sourceLabel,
+  type ApplicationSource,
 } from "@/lib/applications";
 import type { ApplicationFilters } from "@/lib/applications-query";
-import { cn } from "@/lib/utils";
+import { fill } from "@/lib/admin/text";
 
-/** Sentinela: `<SelectItem value="">` é proibido pelo Radix. */
+/** Sentinel: `<SelectItem value="">` is forbidden by Radix. */
 const ALL = "all";
 
-interface ApplicationsToolbarProps extends ApplicationFilters {
+const KEYS = ["q", "stage", "phase", "market", "route", "sponsorship", "source"] as const;
+
+export type ApplicationsToolbarWords = {
+  filters: AdminDictionary["applications"]["filters"];
+  vocab: Pick<AdminDictionary["vocab"], "stage" | "phase" | "route" | "routeHint" | "visa" | "visaHint" | "source">;
+  clear: string;
+};
+
+type Props = ApplicationFilters & {
+  words?: ApplicationsToolbarWords;
+  mode?: "list" | "board";
   page: number;
   position: "top" | "bottom";
-  /** Só em `position="top"`: valores distintos já presentes na base. */
+  /** Only on top: the values already in the database. */
   markets?: string[];
   sources?: string[];
-  /** Só em `position="bottom"`: vêm da contagem feita no Server Component. */
+  /** Only at the bottom: from the count the Server Component made. */
   totalPages?: number;
   total?: number;
-}
+  /** The order of the list, kept when the page changes. */
+  sort?: { key: string; dir: string };
+};
 
-type Patch = Partial<ApplicationFilters> & { page?: number };
-
-export function ApplicationsToolbar(props: ApplicationsToolbarProps) {
+export function ApplicationsToolbar(props: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-
-  // "draft": o que está digitado/selecionado. Só vira URL no submit — exceto a
-  // rota, que aplica no clique (é um botão, não um campo de formulário).
   const [draft, setDraft] = useState<ApplicationFilters>({
     q: props.q,
     stage: props.stage,
@@ -91,26 +89,16 @@ export function ApplicationsToolbar(props: ApplicationsToolbarProps) {
     source: props.source,
   });
 
-  function push(patch: Patch) {
-    const next = { ...draft, ...patch };
+  function push(next: ApplicationFilters, page = 1) {
     const params = new URLSearchParams();
-    for (const key of [
-      "q",
-      "stage",
-      "phase",
-      "market",
-      "route",
-      "sponsorship",
-      "source",
-    ] as const) {
-      if (next[key]) params.set(key, next[key]);
+    for (const key of KEYS) if (next[key]) params.set(key, next[key]);
+    if (props.sort) {
+      params.set("sort", props.sort.key);
+      params.set("dir", props.sort.dir);
     }
-    // Qualquer mudança de filtro volta para a primeira página.
-    const page = patch.page ?? 1;
     if (page > 1) params.set("page", String(page));
-
-    const qs = params.toString();
-    startTransition(() => router.push(qs ? `${pathname}?${qs}` : pathname));
+    const query = params.toString();
+    startTransition(() => router.push(query ? `${pathname}?${query}` : pathname));
   }
 
   if (props.position === "bottom") {
@@ -120,241 +108,187 @@ export function ApplicationsToolbar(props: ApplicationsToolbarProps) {
         totalPages={props.totalPages ?? 1}
         total={props.total}
         disabled={isPending}
-        onPageChange={(page) => push({ page })}
+        onPageChange={(page) => push(props, page)}
       />
     );
   }
 
-  const hasFilters = Object.values(draft).some(Boolean);
+  const { filters, vocab, clear } = props.words!;
+  const board = props.mode === "board";
+  const applied = KEYS.some((key) => props[key]);
+  const set = (key: keyof ApplicationFilters) => (value: string) =>
+    setDraft((current) => ({ ...current, [key]: value === ALL ? "" : value }));
 
-  function clear() {
-    const empty: ApplicationFilters = {
-      q: "",
-      stage: "",
-      phase: "",
-      market: "",
-      route: "",
-      sponsorship: "",
-      source: "",
-    };
-    setDraft(empty);
-    push({ ...empty, page: 1 });
-  }
-
-  /** O `<Select>` de estágio carrega dois vocabulários numa lista só: fase
-   * (grupo) e estágio exato. O prefixo mantém a URL com dois params limpos. */
-  const stageValue = draft.stage
-    ? `stage:${draft.stage}`
-    : draft.phase
-      ? `phase:${draft.phase}`
-      : ALL;
-
+  /** Phase (a group) and exact stage share one select; the prefix keeps the URL with two clean parameters. */
+  const stageValue = draft.stage ? `stage:${draft.stage}` : draft.phase ? `phase:${draft.phase}` : ALL;
   function onStageChange(value: string) {
     if (value === ALL) return setDraft((d) => ({ ...d, stage: "", phase: "" }));
     const [kind, key] = value.split(":");
-    setDraft((d) =>
-      kind === "phase"
-        ? { ...d, phase: key, stage: "" }
-        : { ...d, stage: key, phase: "" },
-    );
+    setDraft((d) => (kind === "phase" ? { ...d, phase: key, stage: "" } : { ...d, stage: key, phase: "" }));
   }
 
   return (
-    <form
-      className="space-y-3 pb-3"
-      onSubmit={(event) => {
-        event.preventDefault();
-        push({});
-      }}
-    >
-      {/* Rota — o critério que separa os dois planos. Aplica no clique. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Rota</span>
-        <div className="inline-flex overflow-hidden rounded-none border border-border">
-          <RouteButton
-            active={draft.route === ""}
-            disabled={isPending}
-            label="Todas"
-            title="Sem filtro de rota: mostra remoto B2B e relocação juntos."
-            onClick={() => {
-              setDraft((d) => ({ ...d, route: "", sponsorship: "" }));
-              push({ route: "", sponsorship: "" });
-            }}
+    <FilterPanel applied={KEYS.filter((key) => props[key]).length}>
+      <form
+        aria-label={filters.label}
+        className="flex flex-wrap items-end gap-x-3 gap-y-4 pb-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          push(draft);
+        }}
+      >
+        <Field id="filter-q" label={filters.search} className="w-full sm:w-64">
+          <Input
+            id="filter-q"
+            type="search"
+            value={draft.q}
+            onChange={(event) => setDraft((d) => ({ ...d, q: event.target.value }))}
+            placeholder={filters.searchPlaceholder}
+            className="w-full"
           />
-          {SPONSORSHIP_ROUTE_KEYS.map((route) => (
-            <RouteButton
-              key={route}
-              active={draft.route === route}
-              disabled={isPending}
-              label={SPONSORSHIP_ROUTE_LABELS[route]}
-              title={SPONSORSHIP_ROUTE_HINTS[route]}
-              onClick={() => {
-                // Trocar de rota zera o sinal: um sinal da outra rota deixaria
-                // a lista vazia sem explicação.
-                setDraft((d) => ({ ...d, route, sponsorship: "" }));
-                push({ route, sponsorship: "" });
-              }}
-            />
-          ))}
-        </div>
+        </Field>
 
-        <Separator orientation="vertical" className="mx-1 h-6" />
-
-        <Select
-          value={draft.sponsorship || ALL}
-          onValueChange={(value) =>
-            setDraft((d) => ({ ...d, sponsorship: value === ALL ? "" : value }))
-          }
-        >
-          <SelectTrigger className="w-64" aria-label="Sinal de patrocínio">
-            <SelectValue placeholder="Sinal de patrocínio" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Qualquer sinal</SelectItem>
-            {SPONSORSHIP_SIGNALS.map((signal) => (
-              <SelectItem
-                key={signal}
-                value={signal}
-                title={SPONSORSHIP_HINTS[signal]}
-              >
-                {SPONSORSHIP_LABELS[signal]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          value={draft.q}
-          onChange={(event) =>
-            setDraft((d) => ({ ...d, q: event.target.value }))
-          }
-          placeholder="Empresa, vaga ou chave…"
-          aria-label="Buscar por empresa, vaga ou chave natural"
-          className="w-56"
-        />
-
-        <Select value={stageValue} onValueChange={onStageChange}>
-          <SelectTrigger className="w-52" aria-label="Estágio do funil">
-            <SelectValue placeholder="Estágio" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Todos os estágios</SelectItem>
-            {FUNNEL_STAGE_PHASES.map((phase) => (
-              <SelectGroup key={phase.key}>
-                <SelectLabel>{phase.label}</SelectLabel>
-                <SelectItem value={`phase:${phase.key}`}>
-                  Todos de “{phase.label}”
-                </SelectItem>
-                {phase.stages.map((stage) => (
-                  <SelectItem key={stage} value={`stage:${stage}`}>
-                    {FUNNEL_STAGE_LABELS[stage]}
+        <Field id="filter-stage" label={board ? filters.phaseOnly : filters.phase} className="w-full sm:w-56">
+          <Select value={stageValue} onValueChange={onStageChange}>
+            <SelectTrigger id="filter-stage" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allPhases}</SelectItem>
+              {FUNNEL_STAGE_PHASES.map((phase) =>
+                board ? (
+                  <SelectItem key={phase.key} value={`phase:${phase.key}`}>
+                    {vocab.phase[phase.key]}
                   </SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
+                ) : (
+                  <SelectGroup key={phase.key}>
+                    <SelectLabel>{vocab.phase[phase.key]}</SelectLabel>
+                    <SelectItem value={`phase:${phase.key}`}>{fill(filters.wholePhase, { phase: vocab.phase[phase.key] })}</SelectItem>
+                    {phase.stages.map((stage) => (
+                      <SelectItem key={stage} value={`stage:${stage}`}>
+                        {vocab.stage[stage]}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ),
+              )}
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <Select
-          value={draft.market || ALL}
-          onValueChange={(value) =>
-            setDraft((d) => ({ ...d, market: value === ALL ? "" : value }))
-          }
-        >
-          <SelectTrigger className="w-40" aria-label="Mercado">
-            <SelectValue placeholder="Mercado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Todos os mercados</SelectItem>
-            {withSelected(props.markets ?? [], draft.market).map((market) => (
-              <SelectItem key={market} value={market}>
-                {market}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={draft.source || ALL}
-          onValueChange={(value) =>
-            setDraft((d) => ({ ...d, source: value === ALL ? "" : value }))
-          }
-        >
-          <SelectTrigger className="w-44" aria-label="Origem">
-            <SelectValue placeholder="Origem" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Todas as origens</SelectItem>
-            {withSelected(props.sources ?? [], draft.source).map((source) => (
-              <SelectItem key={source} value={source}>
-                {sourceLabel(source)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button type="submit" variant="outline" size="sm" disabled={isPending}>
-          <Search className="size-4" />
-          [ filtrar ]
-        </Button>
-
-        {hasFilters && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={clear}
-            disabled={isPending}
+        <Field id="filter-route" label={filters.route} className="w-full sm:w-56">
+          <Select
+            value={draft.route || ALL}
+            // Changing route clears the signal: a signal of the other route would
+            // leave the list empty with no reason given.
+            onValueChange={(value) => setDraft((d) => ({ ...d, route: value === ALL ? "" : value, sponsorship: "" }))}
           >
-            <X className="size-4" />
-            [ limpar ]
+            <SelectTrigger id="filter-route" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allRoutes}</SelectItem>
+              {SPONSORSHIP_ROUTE_KEYS.map((route) => (
+                <SelectItem key={route} value={route} title={vocab.routeHint[route]}>
+                  {vocab.route[route]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field id="filter-visa" label={filters.visa} className="w-full sm:w-64">
+          <Select value={draft.sponsorship || ALL} onValueChange={set("sponsorship")}>
+            <SelectTrigger id="filter-visa" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.anyVisa}</SelectItem>
+              {SPONSORSHIP_SIGNALS.map((signal) => (
+                <SelectItem key={signal} value={signal} title={vocab.visaHint[signal]}>
+                  {vocab.visa[signal]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field id="filter-market" label={filters.market} className="w-full sm:w-44">
+          <Select value={draft.market || ALL} onValueChange={set("market")}>
+            <SelectTrigger id="filter-market" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allMarkets}</SelectItem>
+              {withSelected(props.markets ?? [], draft.market).map((market) => (
+                <SelectItem key={market} value={market}>
+                  {market}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field id="filter-source" label={filters.source} className="w-full sm:w-48">
+          <Select value={draft.source || ALL} onValueChange={set("source")}>
+            <SelectTrigger id="filter-source" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allSources}</SelectItem>
+              {withSelected(props.sources ?? [], draft.source).map((source) => (
+                <SelectItem key={source} value={source}>
+                  {vocab.source[source as ApplicationSource] ?? source}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <div className="flex items-center gap-2 pb-1">
+          <Button type="submit" variant="outline" disabled={isPending}>
+            <Search aria-hidden="true" />
+            {filters.apply}
           </Button>
-        )}
-      </div>
-    </form>
+          {applied && (
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isPending}
+              onClick={() => {
+                const empty = { q: "", stage: "", phase: "", market: "", route: "", sponsorship: "", source: "" };
+                setDraft(empty);
+                push(empty);
+              }}
+            >
+              <X aria-hidden="true" />
+              {clear}
+            </Button>
+          )}
+        </div>
+      </form>
+    </FilterPanel>
   );
 }
 
-function RouteButton({
-  active,
-  disabled,
-  label,
-  title,
-  onClick,
-}: {
-  active: boolean;
-  disabled: boolean;
-  label: string;
-  title: string;
-  onClick: () => void;
-}) {
+/** A filter with its visible label, which is its name. */
+function Field({ id, label, className, children }: { id: string; label: string; className?: string; children: React.ReactNode }) {
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      disabled={disabled}
-      title={title}
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "rounded-none border-0 px-3",
-        active && "bg-brand/15 text-foreground hover:bg-brand/20",
-      )}
-    >
-      {label}
-    </Button>
+    <div className={className}>
+      <Label htmlFor={id} className="pb-1.5">
+        {label}
+      </Label>
+      {children}
+    </div>
   );
 }
 
 /**
- * O valor aplicado precisa existir entre as opções, senão o Radix mostra o
- * placeholder em vez do valor corrente (ex.: última candidatura daquele mercado
- * excluída enquanto o filtro estava ativo).
+ * The applied value has to be among the options, or Radix shows the
+ * placeholder instead of it (the last application of that market deleted while
+ * the filter was on, say).
  */
 function withSelected(values: string[], selected: string): string[] {
   if (!selected || values.includes(selected)) return values;
-  return [...values, selected].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return [...values, selected].sort((a, b) => a.localeCompare(b));
 }

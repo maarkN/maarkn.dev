@@ -1144,11 +1144,973 @@
       "description": "For the times shown in the backoffice. Dates without a time, such as when an application was sent, do not change with the time zone.",
       "label": "Time zone",
       "help": "A name from the IANA database, such as America/Sao_Paulo.",
-      "save": "save time zone",
-      "saving": "saving…",
+      "save": "Save time zone",
+      "saving": "Saving…",
       "saved": "Time zone saved.",
       "unknown": "Unknown time zone. Use a name from the list.",
       "failed": "The time zone could not be saved."
+    },
+    "common": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "required": "required",
+      "retry": "Try again",
+      "undo": "Undo",
+      "dismiss": "Dismiss the notice",
+      "saving": "Saving…",
+      "failed": "Something went wrong on our side. Nothing you typed was lost.",
+      "checkFields": "Check the highlighted fields: each one says what is missing.",
+      "noDatabase": "The database is not configured. Set DATABASE_URL and try again.",
+      "pager": {
+        "label": "Pagination",
+        "position": "Page {page} of {pages}",
+        "total": {
+          "one": "1 record",
+          "many": "{count} records"
+        },
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "states": {
+        "loading": "Loading…",
+        "clear": "Clear filters",
+        "noDatabase": "The database is not configured, so there is nothing to list. Set DATABASE_URL and reload."
+      },
+      "sort": {
+        "by": "Sort by {column}"
+      },
+      "confirm": {
+        "type": "To confirm, type the name: {name}",
+        "pending": "Deleting…",
+        "lost": "This cannot be undone."
+      },
+      "filters": {
+        "label": "Filters",
+        "applied": {
+          "one": "1 applied",
+          "many": "{count} applied"
+        }
+      }
+    },
+    "vocab": {
+      "stage": {
+        "radar": "Radar",
+        "shortlisted": "Shortlisted",
+        "package_drafting": "Package in progress",
+        "package_ready": "Package ready",
+        "awaiting_my_send": "Waiting for me to send",
+        "ready": "Ready to send",
+        "applied": "Sent",
+        "recruiter_contact": "Recruiter contact",
+        "screening": "Screening",
+        "assessment": "Assessment",
+        "technical_challenge": "Technical challenge",
+        "interview": "Interview",
+        "final_interview": "Final interview",
+        "reference_check": "Reference check",
+        "offer": "Offer",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn",
+        "no_response": "No response",
+        "ghosted": "Ghosted",
+        "skipped": "Discarded"
+      },
+      "closureReason": {
+        "salary": "Salary",
+        "visa": "Visa",
+        "technical_fit": "Technical fit",
+        "seniority": "Seniority",
+        "language": "Language",
+        "location": "Location",
+        "job_closed": "Job closed",
+        "internal_candidate": "Internal candidate",
+        "withdrawal": "Withdrawal",
+        "not_informed": "Not informed",
+        "other": "Other"
+      },
+      "interviewStatus": {
+        "planned": "Planned",
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "phase": {
+        "pre_send": "Before sending",
+        "sent": "Sent",
+        "evaluation": "In evaluation",
+        "outcome": "Outcome"
+      },
+      "column": {
+        "selected": "Shortlisted",
+        "ready": "Ready",
+        "sent": "Sent",
+        "talking": "In conversation",
+        "evaluation": "Assessment and interviews",
+        "offer": "Offers"
+      },
+      "visa": {
+        "not_applicable_b2b": "Not applicable (B2B/contractor)",
+        "explicit_support": "Sponsors explicitly",
+        "newcomer_friendly": "Newcomer friendly",
+        "silent": "Not stated",
+        "requires_authorization": "Requires prior authorization",
+        "country_residency_required": "Requires residency in the country",
+        "explicit_no_sponsorship": "Does not sponsor (explicit)",
+        "requires_citizenship": "Requires citizenship"
+      },
+      "visaHint": {
+        "not_applicable_b2b": "Remote job hired as a contractor or B2B: the visa does not come into it.",
+        "explicit_support": "The posting says it sponsors a work visa.",
+        "newcomer_friendly": "The company usually hires newcomers, without an explicit promise of sponsorship.",
+        "silent": "The posting says nothing about sponsorship: it has to be checked.",
+        "requires_authorization": "Requires work authorization in the country. Rules the job out on the relocation route.",
+        "country_residency_required": "Requires residency in the country. Rules the job out on the relocation route.",
+        "explicit_no_sponsorship": "The posting says it does not sponsor. Rules the job out on the relocation route.",
+        "requires_citizenship": "Requires citizenship. Rules the job out on the relocation route."
+      },
+      "route": {
+        "remote_b2b": "Remote (B2B/contractor)",
+        "relocation": "Relocation"
+      },
+      "routeHint": {
+        "remote_b2b": "Current focus: remote work paid in a strong currency, no visa.",
+        "relocation": "In the background: moving countries, where sponsorship decides."
+      },
+      "source": {
+        "vanhack": "VanHack",
+        "linkedin": "LinkedIn",
+        "company_site": "Company site",
+        "indeed": "Indeed",
+        "glassdoor": "Glassdoor",
+        "recruiter": "Recruiter",
+        "referral": "Referral",
+        "radar": "Job radar",
+        "other": "Other"
+      },
+      "verdict": {
+        "top_find": "Top find",
+        "shortlisted": "Shortlisted",
+        "approved": "Approved",
+        "kept": "Kept",
+        "stretch": "Stretch",
+        "eliminated": "Eliminated",
+        "not_verified": "Not verified",
+        "none": "No verdict"
+      },
+      "verification": {
+        "confirmado": "Description confirmed",
+        "divergente": "Description differs",
+        "inacessível": "Description unreachable",
+        "expirada": "Posting expired"
+      },
+      "link": {
+        "unlinked": "Outside the funnel",
+        "linked": "In the funnel"
+      },
+      "workMode": {
+        "remote": "Remote",
+        "hybrid": "Hybrid",
+        "onsite": "On site"
+      },
+      "employmentType": {
+        "full_time": "Full-time",
+        "contract": "Contract",
+        "b2b": "B2B",
+        "freelance": "Freelance"
+      },
+      "channel": {
+        "linkedin": "LinkedIn",
+        "email": "Email",
+        "vanhack": "VanHack",
+        "referral": "Referral",
+        "portal": "Job portal",
+        "phone": "Phone",
+        "event": "Event",
+        "other": "Other"
+      },
+      "referenceLanguage": {
+        "pt-BR": "Portuguese",
+        "en-US": "English",
+        "es-ES": "Spanish",
+        "de-DE": "German"
+      },
+      "projectStatus": {
+        "live": "Live",
+        "internal": "Internal",
+        "nda": "Under NDA",
+        "archived": "Archived"
+      },
+      "projectCategory": {
+        "web": "Web",
+        "mobile": "Mobile",
+        "ai": "AI",
+        "backend": "Backend",
+        "client": "Client"
+      },
+      "visibility": {
+        "public": "Public",
+        "private": "Private"
+      },
+      "generatorLanguage": {
+        "en": "English",
+        "pt-BR": "Portuguese"
+      },
+      "chatStatus": {
+        "ok": "Answered",
+        "mock": "Simulated",
+        "pending": "Interrupted",
+        "error": "Error"
+      },
+      "auditStatus": {
+        "ok": "Done",
+        "running": "Running",
+        "denied": "Denied",
+        "error": "Error"
+      },
+      "auditReason": {
+        "missing_header": "no Authorization header",
+        "malformed_header": "malformed Authorization",
+        "malformed_key": "key out of format",
+        "unknown_key": "unknown key",
+        "revoked": "revoked key",
+        "expired": "expired key",
+        "no_scopes": "key without valid scopes",
+        "server_misconfigured": "server misconfigured (no pepper)",
+        "unavailable": "server unavailable",
+        "missing_scope": "insufficient scope",
+        "unknown_tool": "unknown tool",
+        "invalid_arguments": "invalid arguments",
+        "forbidden_argument": "forbidden argument (visibility)",
+        "payload_too_large": "request too large",
+        "invalid_json": "invalid JSON",
+        "bad_origin": "browser origin refused",
+        "method_not_allowed": "HTTP method not allowed",
+        "rate_limited": "call limit reached",
+        "audit_unavailable": "audit unavailable",
+        "tool_error": "error of the tool itself",
+        "internal_error": "internal error"
+      },
+      "keyStatus": {
+        "active": "Active",
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "scope": {
+        "sync:read": "Read the state of the sync (which files changed)",
+        "sync:write": "Open and close sync rounds and record the state",
+        "applications:read": "Read applications, events and checklists",
+        "applications:write": "Create and update applications",
+        "jobs:read": "Read jobs and the radar",
+        "jobs:write": "Create and update jobs",
+        "content:read": "Read experiences, career projects, skills and posts",
+        "content:write": "Create and update experiences and projects",
+        "profile:read": "Read profile facts (salary target, references, rules R1 to R8)",
+        "resume:generate": "Generate a resume and a cover letter from a job"
+      },
+      "expiry": {
+        "7": "7 days",
+        "30": "30 days",
+        "90": "90 days",
+        "180": "180 days",
+        "365": "1 year",
+        "never": "Never expires"
+      }
+    },
+    "applications": {
+      "title": "Applications",
+      "description": "The whole funnel. Open a row to see the dossier, or drag on the board to change the stage.",
+      "views": {
+        "label": "View as",
+        "list": "List",
+        "board": "Board"
+      },
+      "create": "New application",
+      "created": "Application “{name}” created.",
+      "saved": "Application “{name}” saved.",
+      "columns": {
+        "company": "Company",
+        "role": "Job",
+        "stage": "Stage",
+        "visa": "Visa",
+        "sent": "Sent",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "inherited": "from the job",
+      "priority": "Priority {n} (1 is the highest)",
+      "openJob": "Open the job posting at {name}",
+      "edit": "Edit the application {name}",
+      "delete": {
+        "trigger": "Delete the application {name}",
+        "title": "Delete the application {name}?",
+        "lost": "It leaves the funnel with its history, interviews, documents and checklist. The company and the job stay.",
+        "folder": "Vault folder: {key}.",
+        "confirm": "Delete application",
+        "done": "Application “{name}” deleted.",
+        "failed": "The application could not be deleted. It is still in the funnel."
+      },
+      "states": {
+        "loading": "Loading the applications…",
+        "empty": "No applications yet. The first one can be a job you are only aiming at.",
+        "filtered": "No applications match these filters.",
+        "failed": "The applications did not load: the database did not answer. Nothing was lost."
+      },
+      "filters": {
+        "label": "Filter applications",
+        "search": "Search",
+        "searchPlaceholder": "Company, job or folder",
+        "phase": "Phase or stage",
+        "allPhases": "All phases",
+        "wholePhase": "The whole “{phase}” phase",
+        "phaseOnly": "Phase",
+        "route": "Route",
+        "allRoutes": "All routes",
+        "visa": "Visa",
+        "anyVisa": "Any signal",
+        "market": "Market",
+        "allMarkets": "All markets",
+        "source": "Source",
+        "allSources": "All sources",
+        "apply": "Filter"
+      }
+    },
+    "board": {
+      "title": "Application board",
+      "description": "The open applications, by column. Drag a card to another column, or use the arrows with it in focus.",
+      "keys": "With a card in focus, ← and → take it to the next column.",
+      "total": {
+        "one": "1 open application in this view.",
+        "many": "{count} open applications in this view."
+      },
+      "cap": "Up to {cap} cards per column; the rest is on the list.",
+      "column": "{name}: {count}",
+      "hidden": {
+        "one": "1 more is not shown here.",
+        "many": "{count} more are not shown here."
+      },
+      "none": "None",
+      "moved": "“{name}” moved to {column}.",
+      "unmoved": "“{name}” went back to {column}.",
+      "reopened": "It was in {stage}, and its closure reason ({reason}) was removed.",
+      "restored": "“{name}” went back to {stage}, with its closure reason ({reason}).",
+      "already": "“{name}” is already in {column}.",
+      "failed": "“{name}” could not be moved. It is still in {column}.",
+      "states": {
+        "loading": "Loading the board…",
+        "empty": "No open applications yet.",
+        "filtered": "No open applications match these filters.",
+        "failed": "The board did not load: the database did not answer."
+      }
+    },
+    "applicationForm": {
+      "newTitle": "New application",
+      "newDescription": "Record a job you are aiming at, even before sending anything.",
+      "editDescription": "Edit the application",
+      "sections": {
+        "job": "Job and company",
+        "jobHelp": "Who is hiring, and for what position.",
+        "funnel": "Funnel",
+        "funnelHelp": "Where it stands, and which route it takes.",
+        "dates": "Dates and target",
+        "datesHelp": "What the response rate is made of.",
+        "links": "Links",
+        "linksHelp": "The job URL identifies the job: without it, no job is created.",
+        "notes": "Notes",
+        "notesHelp": "Markdown. What you need to remember before talking to them."
+      },
+      "fields": {
+        "company": "Company",
+        "companyHelp": "Creates the company, or uses the one that already has this name.",
+        "roleTitle": "Job",
+        "market": "Market",
+        "marketHelp": "For example: CA, IE, DE, EU-remote, BR-B2B.",
+        "locationText": "Location",
+        "locationHelp": "For example: Toronto, ON · Remote (EU).",
+        "folderName": "Vault folder",
+        "folderHelp": "It is what keeps the agent from duplicating this application. Use the exact name of the folder in “04 - Candidaturas”.",
+        "stage": "Stage",
+        "sponsorship": "Visa",
+        "sponsorshipHelp": "“Not applicable (B2B/contractor)” is the remote route: the visa does not count there.",
+        "inherit": "The job's",
+        "source": "Source",
+        "fit": "Fit",
+        "fitHelp": "For example: ⭐, ⭐ Go, Good.",
+        "priority": "Priority",
+        "priorityHelp": "From 1 to 99; 1 is the highest.",
+        "appliedAt": "Sent on",
+        "followUp": "Follow up",
+        "followUpHelp": "A date or a short note.",
+        "targetSalary": "Target salary",
+        "jobUrl": "Job URL",
+        "careersUrl": "Careers page URL",
+        "careersHelp": "It belongs to the company, not to the job.",
+        "notesMd": "Notes"
+      },
+      "errors": {
+        "company": "Write the company's name, up to 160 characters.",
+        "roleTitle": "The job's name is longer than 160 characters: shorten it.",
+        "folderName": "Use only lowercase letters, numbers and hyphens, with “--” between company and job.",
+        "market": "The market is longer than 60 characters: shorten it.",
+        "locationText": "The location is longer than 120 characters: shorten it.",
+        "stage": "Choose a stage from the list.",
+        "sponsorship": "Choose a visa signal from the list.",
+        "source": "Choose a source from the list.",
+        "fit": "The fit is longer than 60 characters: shorten it.",
+        "priority": "The priority is a whole number from 1 to 99.",
+        "careersUrl": "Write the full address, starting with https://.",
+        "jobUrl": "Write the full address, starting with https://.",
+        "targetSalary": "The target salary is longer than 200 characters: shorten it.",
+        "appliedAt": "Choose a valid date.",
+        "followUp": "The follow-up text is longer than 200 characters: shorten it.",
+        "notesMd": "The notes are longer than 20,000 characters: shorten them.",
+        "invalid": "This value was not accepted: check it.",
+        "duplicateFolder": "There is already an application with this folder. Change the folder, or open the application that exists.",
+        "duplicateJob": "This URL already belongs to another job. Check the address.",
+        "duplicate": "This value is already in use."
+      },
+      "failed": "The application could not be saved. What you typed is still here.",
+      "noDatabase": "The database is not configured: nothing was saved. Set DATABASE_URL.",
+      "create": "Create application",
+      "save": "Save application",
+      "cancel": "Back to the list"
+    },
+    "moves": {
+      "missing": "This application no longer exists. Reload the page.",
+      "badStage": "That stage does not exist. Reload the page.",
+      "already": "“{name}” is already in {stage}.",
+      "failed": "The database did not save the change. Try again.",
+      "moved": "“{name}” moved to {stage}.",
+      "changed": "“{name}” changed stage since then and is in {stage}. Reload the page."
+    },
+    "jobs": {
+      "title": "Jobs",
+      "description": "What is out there, before it becomes an application: score, radar verdict and visa.",
+      "applications": "See applications",
+      "columns": {
+        "job": "Job",
+        "score": "Score",
+        "verdict": "Verdict",
+        "visa": "Visa",
+        "posted": "Posted",
+        "funnel": "Funnel",
+        "actions": "Actions"
+      },
+      "unknownCompany": "Unknown company",
+      "closed": "Closed",
+      "radarScore": "radar {score}",
+      "rank": "#{rank} on the radar",
+      "scoreHint": "The job's score; the radar's shows below when both exist.",
+      "reason": "Reason: {reason}",
+      "verifiedOn": "on {date}",
+      "scannedOn": "radar of {date}",
+      "outside": "Outside the funnel",
+      "openPosting": "Open the posting of {job}",
+      "promote": "Create an application from {job}",
+      "promoted": "Application “{name}” created from the job.",
+      "existing": "This job already had an application: opening it.",
+      "promoteFailed": "The application could not be created. The job is still here.",
+      "missing": "This job no longer exists. Reload the page.",
+      "unmapped": {
+        "one": "1 radar scan line has not become a job yet, so it is not shown here.",
+        "many": "{count} radar scan lines have not become jobs yet, so they are not shown here."
+      },
+      "unmappedHelp": "A line enters the list when the sync records the job, with the address of the posting.",
+      "states": {
+        "loading": "Loading the jobs…",
+        "empty": "No jobs on the radar yet. They arrive through the agent's sync.",
+        "filtered": "No jobs match these filters.",
+        "failed": "The jobs did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter jobs",
+        "search": "Search",
+        "searchPlaceholder": "Job, company or address",
+        "verdict": "Verdict",
+        "allVerdicts": "All verdicts",
+        "market": "Market",
+        "allMarkets": "All markets",
+        "route": "Route",
+        "allRoutes": "All routes",
+        "visa": "Visa",
+        "anyVisa": "Any signal",
+        "link": "Funnel",
+        "anyLink": "In and out",
+        "scoreMin": "Minimum score",
+        "scoreMax": "Maximum score",
+        "scoreHelp": "From 0 to 100.",
+        "apply": "Filter"
+      }
+    },
+    "contacts": {
+      "title": "Contacts",
+      "description": "Recruiters and professional references. This is other people's personal data: it stays private, and no public page reads it.",
+      "tabs": {
+        "label": "Kind of contact",
+        "contacts": "Recruiters and contacts",
+        "references": "Professional references"
+      },
+      "privacy": "This screen is the only one that reads these tables. The contacts of an application also arrive through the agent.",
+      "columns": {
+        "name": "Name",
+        "company": "Company",
+        "contact": "Contact",
+        "channel": "Channel",
+        "relationship": "Relationship",
+        "consent": "Consent",
+        "actions": "Actions"
+      },
+      "events": {
+        "one": "1 event",
+        "many": "{count} events"
+      },
+      "interviews": {
+        "one": "1 interview",
+        "many": "{count} interviews"
+      },
+      "canContact": "May be contacted",
+      "noConsent": "No consent",
+      "noConsentHint": "Cannot be handed to a recruiter yet.",
+      "linkedin": "LinkedIn",
+      "states": {
+        "loadingContacts": "Loading the contacts…",
+        "loadingReferences": "Loading the references…",
+        "emptyContacts": "No contacts yet.",
+        "emptyReferences": "No references yet.",
+        "filteredContacts": "No contacts match these filters.",
+        "filteredReferences": "No references match this search.",
+        "failedContacts": "The contacts did not load: the database did not answer.",
+        "failedReferences": "The references did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter contacts",
+        "search": "Search",
+        "searchContacts": "Name, title, email or company",
+        "searchReferences": "Name, company or key",
+        "channel": "Channel",
+        "allChannels": "All channels",
+        "company": "Company",
+        "allCompanies": "All companies",
+        "apply": "Filter"
+      },
+      "contact": {
+        "create": "New contact",
+        "edit": "Edit the contact {name}",
+        "newTitle": "New contact",
+        "editTitle": "Edit the contact",
+        "description": "Someone else's personal data. It stays private: no public page reads this table.",
+        "fields": {
+          "name": "Name",
+          "roleTitle": "Title",
+          "rolePlaceholder": "Technical Recruiter",
+          "company": "Company",
+          "noCompany": "No company",
+          "companyHelp": "Only companies that exist: the list is the same as the jobs' and applications'.",
+          "channel": "Channel",
+          "noChannel": "Not stated",
+          "email": "Email",
+          "emailPlaceholder": "name@company.com",
+          "phone": "Phone",
+          "linkedinUrl": "LinkedIn",
+          "timezone": "Time zone",
+          "notesMd": "Notes",
+          "notesPlaceholder": "Context of the conversation, preferences, what was agreed…"
+        },
+        "errors": {
+          "name": "Write the name, up to 160 characters.",
+          "roleTitle": "The title is longer than 160 characters: shorten it.",
+          "companyId": "That company no longer exists: choose another.",
+          "email": "Write a full email, like name@company.com.",
+          "phone": "The phone is longer than 60 characters: shorten it.",
+          "linkedinUrl": "Write the full address, starting with https://.",
+          "timezone": "The time zone is longer than 60 characters: shorten it.",
+          "channel": "Choose a channel from the list.",
+          "notesMd": "The notes are longer than 20,000 characters: shorten them.",
+          "invalid": "This value was not accepted: check it.",
+          "duplicate": "There is already a contact with this name at this company."
+        },
+        "save": "Save contact",
+        "saved": "Contact saved.",
+        "failed": "The contact could not be saved. What you typed is still here.",
+        "delete": {
+          "trigger": "Delete the contact {name}",
+          "title": "Delete the contact {name}?",
+          "lost": "The events and interviews they appear in stay, without the contact.",
+          "confirm": "Delete contact",
+          "done": "Contact “{name}” deleted.",
+          "failed": "The contact could not be deleted. It is still on the list."
+        }
+      },
+      "reference": {
+        "create": "New reference",
+        "edit": "Edit the reference {name}",
+        "newTitle": "New reference",
+        "editTitle": "Edit the reference",
+        "description": "Who can speak about your work. Someone else's personal data: it stays private.",
+        "fields": {
+          "name": "Name",
+          "slug": "Key",
+          "slugPlaceholder": "Comes from the name",
+          "slugHelp": "Identifies the reference in the sync. Left empty, it comes from the name.",
+          "relationship": "Relationship",
+          "relationshipPlaceholder": "Direct manager, peer, client…",
+          "companyName": "Company",
+          "roleTitle": "Title",
+          "language": "Language",
+          "noLanguage": "Not stated",
+          "email": "Email",
+          "phone": "Phone",
+          "linkedinUrl": "LinkedIn",
+          "canContact": "May be contacted",
+          "canContactHelp": "Tick it only when the person agreed that their contact be handed to a recruiter.",
+          "noteMd": "Notes",
+          "notePlaceholder": "When you worked together, what this person can vouch for…"
+        },
+        "errors": {
+          "slug": "Use only lowercase letters, numbers and hyphens.",
+          "name": "Write the name, up to 160 characters.",
+          "relationship": "The relationship is longer than 160 characters: shorten it.",
+          "companyName": "The company is longer than 160 characters: shorten it.",
+          "roleTitle": "The title is longer than 160 characters: shorten it.",
+          "email": "Write a full email, like name@company.com.",
+          "phone": "The phone is longer than 60 characters: shorten it.",
+          "linkedinUrl": "Write the full address, starting with https://.",
+          "language": "Choose a language from the list.",
+          "noteMd": "The notes are longer than 20,000 characters: shorten them.",
+          "invalid": "This value was not accepted: check it.",
+          "duplicate": "The key “{slug}” already belongs to another reference. Choose another."
+        },
+        "save": "Save reference",
+        "saved": "Reference saved.",
+        "failed": "The reference could not be saved. What you typed is still here.",
+        "delete": {
+          "trigger": "Delete the reference {name}",
+          "title": "Delete the reference {name}?",
+          "lost": "It leaves the panel; no application changes.",
+          "confirm": "Delete reference",
+          "done": "Reference “{name}” deleted.",
+          "failed": "The reference could not be deleted. It is still on the list."
+        }
+      }
+    },
+    "projects": {
+      "title": "Projects",
+      "description": "The showcase of the public site. The address of each comes from its slug, under /projects.",
+      "create": "New project",
+      "columns": {
+        "project": "Project",
+        "category": "Category",
+        "status": "Status",
+        "source": "Code",
+        "featured": "Featured",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "featured": "Featured",
+      "edit": "Edit the project {name}",
+      "delete": {
+        "trigger": "Delete the project {name}",
+        "title": "Delete the project {name}?",
+        "lost": "It leaves the site and the backoffice: the page /projects/{slug} stops existing.",
+        "confirm": "Delete project",
+        "done": "Project “{name}” deleted.",
+        "failed": "The project could not be deleted. It is still on the site."
+      },
+      "states": {
+        "loading": "Loading the projects…",
+        "empty": "No projects yet.",
+        "filtered": "No projects match these filters.",
+        "failed": "The projects did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter projects",
+        "search": "Search",
+        "searchPlaceholder": "Name or slug",
+        "category": "Category",
+        "allCategories": "All categories",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "apply": "Filter"
+      }
+    },
+    "generator": {
+      "title": "CV generator",
+      "description": "Paste the description of a job: the search brings the closest passages of your CV and dossiers, and the generator writes the resume, the cover letter and the screening answers.",
+      "form": {
+        "label": "Generate materials for a job",
+        "roleTitle": "Job",
+        "company": "Company",
+        "language": "Language of the text",
+        "jobDescription": "Job description",
+        "jobPlaceholder": "Paste the full job description here…",
+        "jobHelp": "The whole posting, not only the title: at least 40 characters.",
+        "grounded": "The text leans on your CV and dossiers: it does not make up facts or degrees.",
+        "submit": "Generate materials",
+        "pending": "Generating…",
+        "done": "Materials generated."
+      },
+      "errors": {
+        "unauthorized": "The session expired. Sign in again.",
+        "short": "Paste a fuller description: at least 40 characters.",
+        "noKey": "The server has no OPENAI_API_KEY. Set it and try again.",
+        "noContext": "The knowledge base is empty. Run pnpm db:ingest and try again.",
+        "failed": "The generation failed. The pasted text is still here.",
+        "framingDown": "The framing validator did not run: nothing was generated or saved.",
+        "blocked": "The framing validator blocked the text ({codes}). Nothing was saved."
+      },
+      "result": {
+        "sources": "Sources: {sources}",
+        "open": "Open the print version",
+        "resume": "Resume",
+        "coverLetter": "Cover letter",
+        "screening": "Screening answers",
+        "copy": "Copy {what}",
+        "copied": "{what}: copied.",
+        "copyFailed": "The browser did not allow copying. Select the text and copy it by hand.",
+        "download": "Download {what} as Markdown",
+        "empty": "(empty)"
+      },
+      "recent": {
+        "title": "Recent generations",
+        "help": "Each opens in its print version, where the PDF comes from.",
+        "columns": {
+          "role": "Job",
+          "company": "Company",
+          "language": "Language",
+          "created": "Created",
+          "actions": "Actions"
+        },
+        "untitled": "Untitled job",
+        "open": "Open the generation {name}",
+        "states": {
+          "loading": "Loading the generations…",
+          "empty": "Nothing generated yet.",
+          "filtered": "No generations match this search.",
+          "failed": "The generations did not load: the database did not answer."
+        },
+        "filters": {
+          "label": "Search generations",
+          "search": "Search",
+          "searchPlaceholder": "Job or company",
+          "apply": "Search"
+        }
+      },
+      "detail": {
+        "print": "Print or save as PDF",
+        "empty": "This generation is empty."
+      }
+    },
+    "figures": {
+      "label": "Figures"
+    },
+    "chat": {
+      "title": "Assistant",
+      "description": "Every visitor question that reached the model, with the answer and an estimate of tokens. Limits: {perIp} messages per visitor every {minutes} min, and {daily} a day in total.",
+      "figures": {
+        "messages": "Messages",
+        "today": "Today",
+        "visitors": "Visitors",
+        "tokens": "Tokens (estimated)",
+        "tokensToday": "Tokens today",
+        "budget": "Today's budget",
+        "budgetHint": "{used} of {max}"
+      },
+      "columns": {
+        "when": "When",
+        "question": "Question",
+        "visitor": "Visitor",
+        "status": "Status",
+        "tokens": "Tokens",
+        "latency": "Latency"
+      },
+      "showAnswer": "See the answer",
+      "noAnswer": "(no answer recorded)",
+      "model": "Model: {model}",
+      "split": "{prompt} in the question, {answer} in the answer",
+      "states": {
+        "loading": "Loading the questions…",
+        "empty": "No questions yet.",
+        "filtered": "No questions match these filters.",
+        "failed": "The questions did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter questions",
+        "search": "Search",
+        "searchPlaceholder": "Words of the question",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "apply": "Filter"
+      }
+    },
+    "audit": {
+      "title": "Audit",
+      "description": "One line per call to the MCP server, including the denied ones. Arguments and results arrive here summarised and without secrets; no key in the clear is recorded.",
+      "keys": "See the keys",
+      "figures": {
+        "calls": "Calls",
+        "day": "Last 24 h",
+        "denied": "Denied (24 h)",
+        "deniedHint": "probing, scope or limit",
+        "errors": "Errors (24 h)",
+        "running": "Running",
+        "runningHint": "never closed: they hung or brought the process down"
+      },
+      "columns": {
+        "when": "When",
+        "tool": "Tool",
+        "key": "Key",
+        "status": "Status",
+        "latency": "Latency",
+        "origin": "Origin"
+      },
+      "details": "See the details",
+      "arguments": "Arguments",
+      "result": "Result",
+      "unknownKey": "Unidentified key",
+      "callsOf": "Only the calls of the key {name}",
+      "ms": "{ms} ms",
+      "states": {
+        "loading": "Loading the calls…",
+        "empty": "No calls recorded yet.",
+        "filtered": "No calls match these filters.",
+        "failed": "The calls did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter calls",
+        "search": "Search",
+        "searchPlaceholder": "Name of the tool",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "key": "Key",
+        "allKeys": "All keys",
+        "noKey": "No identified key",
+        "apply": "Filter"
+      }
+    },
+    "apiKeys": {
+      "title": "MCP and keys",
+      "description": "The credentials of the MCP server. The key in the clear shows once, when it is created; the database keeps only an HMAC of it.",
+      "audit": "See the audit",
+      "noPepper": "MCP_KEY_PEPPER is not set. Without it the server refuses every call to the MCP and no key can be created. Generate one with openssl rand -base64 48 and restart the process.",
+      "columns": {
+        "name": "Name",
+        "prefix": "Prefix",
+        "scopes": "Scopes",
+        "lastUsed": "Last used",
+        "expires": "Expires",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "createdOn": "created on {date}",
+      "never": "Never",
+      "noExpiry": "Does not expire",
+      "write": "write",
+      "writeHint": "Write scope",
+      "readHint": "Read scope",
+      "calls": "See the calls of the key {name}",
+      "states": {
+        "loading": "Loading the keys…",
+        "empty": "No keys yet. Create the first one to connect the agent.",
+        "filtered": "No keys match these filters.",
+        "failed": "The keys did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter keys",
+        "search": "Search",
+        "searchPlaceholder": "Name or prefix",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "apply": "Filter"
+      },
+      "create": {
+        "trigger": "New key",
+        "title": "New API key",
+        "description": "A credential of the MCP server. Scopes apply per tool, on the server: give only what the key needs.",
+        "name": "Name",
+        "namePlaceholder": "Obsidian agent, macbook",
+        "nameHelp": "This is the name you will type to revoke the key later.",
+        "scopes": "Scopes",
+        "scopesHelp": "There is no inheritance: applications:write does not give applications:read. Tick both when you need both.",
+        "readOnly": "Read only",
+        "clearScopes": "Untick all",
+        "writeWarning": {
+          "one": "1 write scope: this key will be able to change funnel data through the MCP.",
+          "many": "{count} write scopes: this key will be able to change funnel data through the MCP."
+        },
+        "expires": "Expiry",
+        "submit": "Create key",
+        "pending": "Creating…",
+        "created": "Key created. Copy it now: it will not show again.",
+        "shownTitle": "Key created: copy it now",
+        "shownDescription": "This is the only time the key shows. The server keeps only an HMAC of it: neither the panel, the API nor the database can show it again. If you lose it, revoke it and create another.",
+        "secretWarning": "Keep it in a secret manager. Do not put it in a repository (this one is public), nor in a chat, an issue or a log.",
+        "token": "Key",
+        "copy": "Copy the key",
+        "copied": "Key copied.",
+        "copyFailed": "The browser did not allow copying. Select the text and copy it by hand.",
+        "summary": {
+          "name": "Name",
+          "prefix": "Prefix",
+          "expires": "Expires on",
+          "scopes": "Scopes"
+        },
+        "acknowledge": "I keep the key in a safe place and know it will not show again.",
+        "done": "Done",
+        "errors": {
+          "name": "Give the key a name, up to 80 characters.",
+          "scopes": "Tick at least one scope.",
+          "expiresIn": "Choose an expiry from the list.",
+          "invalid": "This value was not accepted: check it."
+        },
+        "noPepper": "MCP_KEY_PEPPER is not set on the server: no key can be created.",
+        "failed": "The key could not be created. Nothing was recorded."
+      },
+      "revoke": {
+        "trigger": "Revoke the key {name}",
+        "title": "Revoke the key {name}?",
+        "lost": "The key {prefix}… is refused on the next call to the MCP. It cannot be reactivated: only another one created.",
+        "confirm": "Revoke key",
+        "pending": "Revoking…",
+        "done": "Key “{name}” revoked.",
+        "missing": "This key no longer exists. Reload the page.",
+        "already": "This key was already revoked.",
+        "mismatch": "The name typed is not the key's.",
+        "failed": "The key could not be revoked. It is still active."
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "The account of the backoffice. Access is for one person only: the account the seed created.",
+      "account": {
+        "title": "Account",
+        "description": "Which identity you sign in to the backoffice with.",
+        "email": "Email",
+        "role": "Role"
+      },
+      "password": {
+        "title": "Change the password",
+        "description": "The current password is checked on the server before the change: an open session alone is not enough. The new one is stored with bcrypt at cost 12, as in the seed.",
+        "noDatabase": "The database is not configured: changing the password is unavailable.",
+        "current": "Current password",
+        "new": "New password",
+        "newHelp": "At least 12 characters, different from the current one.",
+        "confirm": "Repeat the new password",
+        "submit": "Change password",
+        "pending": "Changing…",
+        "done": "Password changed.",
+        "errors": {
+          "currentPassword": "Write the current password.",
+          "newPassword": "The new password needs 12 to 128 characters.",
+          "confirmPassword": "Repeat the new password, exactly the same.",
+          "mismatch": "The repetition is not the same as the new password.",
+          "same": "The new password has to be different from the current one.",
+          "wrong": "The current password does not match.",
+          "invalid": "This value was not accepted: check it."
+        },
+        "noEmail": "The session has no email: sign in again to change the password.",
+        "noUser": "The backoffice account was not found.",
+        "failed": "The password could not be changed. The current one still works."
+      }
     }
   }
 }

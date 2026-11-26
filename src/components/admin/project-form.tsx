@@ -23,7 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Loader2, Save, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { useNotify } from "@/components/admin/notify";
 import { saveProject } from "@/app/_actions/admin-projects";
 import {
   FieldError,
@@ -179,6 +179,7 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const notify = useNotify();
   const [visibility, setVisibility] = useState(
     project?.sourceVisibility === "private" ? "private" : "public",
   );
@@ -188,11 +189,11 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
       const res = await saveProject(project?.id ?? null, formData);
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {});
-        toast.error(res.message);
+        notify.error(res.message);
         return;
       }
       setErrors({});
-      toast.success(res.message ?? "Projeto salvo.");
+      notify.success(res.message ?? "Projeto salvo.");
       router.push("/admin/projects");
     });
   }
@@ -468,6 +469,7 @@ function SwitchField({ name, label, help, defaultChecked }: ShellProps & { defau
 const COVER_HELP = "Opcional. Substitui a capa estilizada nos cards. Máx. 8 MB.";
 
 function CoverImageField({ initial }: { initial?: string | null }) {
+  const notify = useNotify();
   const [url, setUrl] = useState(initial ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -487,7 +489,7 @@ function CoverImageField({ initial }: { initial?: string | null }) {
       const json = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !json.url) throw new Error(json.error ?? "upload_failed");
       setUrl(json.url);
-      toast.success("Imagem enviada.");
+      notify.success("Imagem enviada.");
     } catch (err) {
       const code = err instanceof Error ? err.message : "upload_failed";
       const message =
@@ -497,7 +499,7 @@ function CoverImageField({ initial }: { initial?: string | null }) {
             ? "Formato de imagem não aceito."
             : "Não foi possível enviar a imagem.";
       setError(message);
-      toast.error(message);
+      notify.error(message);
     } finally {
       setBusy(false);
     }
