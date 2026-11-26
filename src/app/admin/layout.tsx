@@ -27,8 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * as data (`AdminLocaleProvider`), so that the two never disagree about a date.
  */
 export default async function AdminRootLayout({ children }: { children: React.ReactNode }) {
-  const [{ locale, timeZone }, untranslated] = await Promise.all([
+  const [{ locale, timeZone }, labels, untranslated] = await Promise.all([
     getAdminSettings(),
+    getAdminLabels(),
     getAdminDictionary(UNTRANSLATED),
   ]);
 
@@ -39,14 +40,17 @@ export default async function AdminRootLayout({ children }: { children: React.Re
             anything (see src/app/[lang]/layout.tsx). */}
         <script id="theme-boot" dangerouslySetInnerHTML={{ __html: siteThemeBootScript }} />
         <SiteThemeSync />
-        <AdminLocaleProvider locale={locale} timeZone={timeZone}>
+        <AdminLocaleProvider
+          locale={locale}
+          timeZone={timeZone}
+          // The shared words of the screens, and of the ones still in Portuguese.
+          common={{ [UNTRANSLATED]: untranslated.common, [locale]: labels.common }}
+        >
           <TooltipProvider>{children}</TooltipProvider>
+          {/* A8: the only one. Each notice says the language of its own words
+              (`useNotify`), which is the screen's. */}
+          <Toaster containerAriaLabel={labels.shell.notices} />
         </AdminLocaleProvider>
-        {/* A8: the only one. What lands in it comes from screens that were not
-            translated yet; one that was says the language of its own words. */}
-        <div lang={UNTRANSLATED}>
-          <Toaster containerAriaLabel={untranslated.shell.notices} />
-        </div>
       </body>
     </html>
   );

@@ -4,20 +4,16 @@ import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 
 import { useScreenLanguage } from "@/components/admin/admin-locale"
+import { textOf } from "@/components/holo/text"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { AdminWindow } from "@/components/ui/dialog"
 
 /**
- * ── Barra de título e `[esc]` (bko-04) ─────────────────────────────────────
- * Igual ao `Dialog`: a régua do título vem de `::before`/`::after` em
- * `src/app/admin/admin.css`.
- *
- * O `[esc]` aqui NÃO é um `Close` — o `AlertDialog` do Radix não tem um, de
- * propósito: um diálogo de alerta não se fecha por engano. Ele é o próprio
- * `AlertDialogPrimitive.Cancel`, que é exatamente o que a tecla Esc dispara,
- * então o rótulo continua verdadeiro: apertar `[esc]` e apertar Esc percorrem
- * o mesmo caminho e devolvem o foco ao gatilho. O botão `[ cancelar ]` do
- * rodapé segue sendo o alvo grande; este é o atalho escrito.
+ * The window that asks before something that cannot be undone: the frame of
+ * `Dialog`, without the close button in the corner. `Esc` and the cancel button
+ * of the footer are the way out, and the cancel button has the focus when it
+ * opens, so the default is not to go ahead.
  */
 
 function AlertDialog({
@@ -61,12 +57,10 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = "default",
-  showEscButton = true,
   children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
-  showEscButton?: boolean
 }) {
   return (
     <AlertDialogPortal>
@@ -76,30 +70,12 @@ function AlertDialogContent({
         lang={useScreenLanguage()}
         data-size={size}
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-none bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 outline-none sm:max-w-md",
           className
         )}
         {...props}
       >
-        {/* ANTES de `children`, e isso importa: o Radix guarda uma única
-            `cancelRef` e dá o foco inicial a ela. Como os refs são anexados
-            na ordem da árvore, o último `Cancel` montado é quem fica com a
-            referência — então o `[esc]` vem primeiro para que o foco caia no
-            `[ cancelar ]` do rodapé, o alvo grande, e não no atalho do canto.
-            A posição na tela não muda: o botão é absoluto. */}
-        {showEscButton && (
-          <AlertDialogPrimitive.Cancel asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-2 right-2 text-muted-foreground"
-              size="xs"
-              aria-label="cancelar [esc]"
-            >
-              [esc]
-            </Button>
-          </AlertDialogPrimitive.Cancel>
-        )}
-        {children}
+        <AdminWindow seed={textOf(children)}>{children}</AdminWindow>
       </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   )
@@ -112,8 +88,6 @@ function AlertDialogHeader({
   return (
     <div
       data-slot="alert-dialog-header"
-      // Alinhado à esquerda em qualquer largura: a régua do título só faz
-      // sentido começando na margem, e saída de terminal não é centralizada.
       className={cn(
         "grid grid-rows-[auto_1fr] place-items-start gap-1.5 text-left has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4",
         className
@@ -131,7 +105,7 @@ function AlertDialogFooter({
     <div
       data-slot="alert-dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end",
         className
       )}
       {...props}
@@ -163,7 +137,7 @@ function AlertDialogTitle({
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        "text-sm font-medium group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
+        "font-title text-2xl leading-tight font-[560] text-foreground [font-stretch:108%] group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
         className
       )}
       {...props}
@@ -179,7 +153,7 @@ function AlertDialogDescription({
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
       className={cn(
-        "text-xs/relaxed text-balance text-muted-foreground md:text-pretty *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        "font-text text-sm/relaxed text-pretty text-muted-foreground *:[a]:text-foreground *:[a]:underline *:[a]:decoration-brand *:[a]:underline-offset-3",
         className
       )}
       {...props}

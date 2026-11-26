@@ -1131,6 +1131,285 @@
       "saved": "Fuso salvo.",
       "unknown": "Fuso desconhecido. Use um nome da lista.",
       "failed": "Não foi possível salvar o fuso."
+    },
+    "common": {
+      "close": "Fechar",
+      "cancel": "Cancelar",
+      "required": "obrigatório",
+      "retry": "Tentar de novo",
+      "undo": "Desfazer",
+      "dismiss": "Dispensar o aviso",
+      "saving": "Salvando…",
+      "failed": "Algo deu errado do nosso lado. Nada foi perdido do que você digitou.",
+      "checkFields": "Confira os campos destacados: cada um diz o que falta.",
+      "noDatabase": "O banco não está configurado. Defina DATABASE_URL e tente de novo.",
+      "pager": {
+        "label": "Paginação",
+        "position": "Página {page} de {pages}",
+        "total": {
+          "one": "1 registro",
+          "many": "{count} registros"
+        },
+        "previous": "Anterior",
+        "next": "Próxima",
+        "keys": "Atalhos: N próxima página, P página anterior, fora dos campos de texto."
+      },
+      "states": {
+        "loading": "Carregando…",
+        "clear": "Limpar filtros",
+        "noDatabase": "O banco não está configurado, então não há o que listar. Defina DATABASE_URL e recarregue."
+      },
+      "sort": {
+        "by": "Ordenar por {column}"
+      },
+      "confirm": {
+        "type": "Para confirmar, digite o nome: {name}",
+        "field": "Nome, como aparece acima",
+        "pending": "Excluindo…",
+        "lost": "Não dá para desfazer."
+      }
+    },
+    "vocab": {
+      "stage": {
+        "radar": "Radar",
+        "shortlisted": "Selecionada",
+        "package_drafting": "Pacote em redação",
+        "package_ready": "Pacote pronto",
+        "awaiting_my_send": "Aguardando meu envio",
+        "ready": "Pronta para enviar",
+        "applied": "Enviada",
+        "recruiter_contact": "Contato do recrutador",
+        "screening": "Triagem",
+        "assessment": "Avaliação",
+        "technical_challenge": "Desafio técnico",
+        "interview": "Entrevista",
+        "final_interview": "Entrevista final",
+        "reference_check": "Checagem de referências",
+        "offer": "Oferta",
+        "accepted": "Aceita",
+        "rejected": "Recusada",
+        "withdrawn": "Retirada",
+        "no_response": "Sem resposta",
+        "ghosted": "Ghosting",
+        "skipped": "Descartada"
+      },
+      "phase": {
+        "pre_send": "Antes do envio",
+        "sent": "Enviada",
+        "evaluation": "Em avaliação",
+        "outcome": "Desfecho"
+      },
+      "column": {
+        "selected": "Selecionadas",
+        "ready": "Prontas",
+        "sent": "Enviadas",
+        "talking": "Em conversa",
+        "evaluation": "Avaliação e entrevistas",
+        "offer": "Ofertas"
+      },
+      "visa": {
+        "not_applicable_b2b": "Não se aplica (B2B/contractor)",
+        "explicit_support": "Patrocina explicitamente",
+        "newcomer_friendly": "Amigável a recém-chegados",
+        "silent": "Não informa",
+        "requires_authorization": "Exige autorização prévia",
+        "country_residency_required": "Exige residência no país",
+        "explicit_no_sponsorship": "Não patrocina (explícito)",
+        "requires_citizenship": "Exige cidadania"
+      },
+      "visaHint": {
+        "not_applicable_b2b": "Vaga remota contratada como contractor ou B2B: o visto não entra na conta.",
+        "explicit_support": "A vaga diz que patrocina visto de trabalho.",
+        "newcomer_friendly": "A empresa costuma contratar recém-chegados, sem promessa explícita de patrocínio.",
+        "silent": "A vaga não diz nada sobre patrocínio: precisa ser verificado.",
+        "requires_authorization": "Exige autorização de trabalho no país. Elimina a vaga na rota de relocação.",
+        "country_residency_required": "Exige residência no país. Elimina a vaga na rota de relocação.",
+        "explicit_no_sponsorship": "A vaga diz que não patrocina. Elimina a vaga na rota de relocação.",
+        "requires_citizenship": "Exige cidadania. Elimina a vaga na rota de relocação."
+      },
+      "route": {
+        "remote_b2b": "Remota (B2B/contractor)",
+        "relocation": "Relocação"
+      },
+      "routeHint": {
+        "remote_b2b": "Foco atual: trabalho remoto pago em moeda forte, sem visto.",
+        "relocation": "Plano de fundo: mudar de país, e aí o patrocínio decide."
+      },
+      "source": {
+        "vanhack": "VanHack",
+        "linkedin": "LinkedIn",
+        "company_site": "Site da empresa",
+        "indeed": "Indeed",
+        "glassdoor": "Glassdoor",
+        "recruiter": "Recrutador",
+        "referral": "Indicação",
+        "radar": "Radar de vagas",
+        "other": "Outra"
+      }
+    },
+    "applications": {
+      "title": "Candidaturas",
+      "description": "O funil inteiro. Abra uma linha para ver o dossiê, ou arraste no quadro para mudar o estágio.",
+      "views": {
+        "label": "Ver como",
+        "list": "Lista",
+        "board": "Quadro"
+      },
+      "create": "Nova candidatura",
+      "created": "Candidatura “{name}” criada.",
+      "saved": "Candidatura “{name}” salva.",
+      "columns": {
+        "company": "Empresa",
+        "role": "Vaga",
+        "stage": "Estágio",
+        "visa": "Visto",
+        "sent": "Enviada",
+        "updated": "Atualizada",
+        "actions": "Ações"
+      },
+      "inherited": "da vaga",
+      "priority": "Prioridade {n} (1 é a maior)",
+      "openJob": "Abrir o anúncio da vaga em {name}",
+      "edit": "Editar a candidatura {name}",
+      "delete": {
+        "trigger": "Excluir a candidatura {name}",
+        "title": "Excluir a candidatura {name}?",
+        "lost": "Ela sai do funil com o histórico, as entrevistas, os documentos e o checklist. A empresa e a vaga continuam.",
+        "confirm": "Excluir candidatura",
+        "done": "Candidatura “{name}” excluída.",
+        "failed": "Não foi possível excluir a candidatura. Ela continua no funil."
+      },
+      "states": {
+        "loading": "Carregando as candidaturas…",
+        "empty": "Nenhuma candidatura ainda. A primeira pode ser uma vaga que você só está mirando.",
+        "filtered": "Nenhuma candidatura com estes filtros.",
+        "failed": "As candidaturas não carregaram: o banco não respondeu. Nada foi perdido."
+      },
+      "filters": {
+        "label": "Filtrar candidaturas",
+        "search": "Busca",
+        "searchPlaceholder": "Empresa, vaga ou pasta",
+        "phase": "Fase ou estágio",
+        "allPhases": "Todas as fases",
+        "wholePhase": "Toda a fase “{phase}”",
+        "phaseOnly": "Fase",
+        "route": "Rota",
+        "allRoutes": "Todas as rotas",
+        "visa": "Visto",
+        "anyVisa": "Qualquer sinal",
+        "market": "Mercado",
+        "allMarkets": "Todos os mercados",
+        "source": "Origem",
+        "allSources": "Todas as origens",
+        "apply": "Filtrar"
+      }
+    },
+    "board": {
+      "title": "Quadro de candidaturas",
+      "description": "As candidaturas abertas, por coluna. Arraste um cartão para outra coluna, ou use as setas com ele em foco.",
+      "keys": "Com um cartão em foco, ← e → o levam para a coluna ao lado.",
+      "total": {
+        "one": "1 candidatura aberta neste recorte.",
+        "many": "{count} candidaturas abertas neste recorte."
+      },
+      "cap": "Até {cap} cartões por coluna; o resto está na lista.",
+      "column": "{name}: {count}",
+      "hidden": {
+        "one": "Mais 1 não aparece aqui.",
+        "many": "Mais {count} não aparecem aqui."
+      },
+      "seeList": "Ver na lista",
+      "none": "Nenhuma",
+      "card": "{company}, {stage}",
+      "moved": "“{name}” foi para {column}.",
+      "unmoved": "“{name}” voltou para {column}.",
+      "already": "“{name}” já está em {column}.",
+      "failed": "Não foi possível mover “{name}”. Ela continua em {column}.",
+      "states": {
+        "loading": "Carregando o quadro…",
+        "empty": "Nenhuma candidatura aberta ainda.",
+        "filtered": "Nenhuma candidatura aberta com estes filtros.",
+        "failed": "O quadro não carregou: o banco não respondeu."
+      }
+    },
+    "applicationForm": {
+      "newTitle": "Nova candidatura",
+      "newDescription": "Registre uma vaga que você mira, mesmo antes de enviar.",
+      "editDescription": "Editar a candidatura",
+      "sections": {
+        "job": "Vaga e empresa",
+        "jobHelp": "Quem contrata e para qual posição.",
+        "funnel": "Funil",
+        "funnelHelp": "Em que ponto ela está e por qual rota passa.",
+        "dates": "Datas e alvo",
+        "datesHelp": "O que alimenta a taxa de resposta.",
+        "links": "Links",
+        "linksHelp": "A URL da vaga identifica a vaga: sem ela, nenhuma vaga é criada.",
+        "notes": "Notas",
+        "notesHelp": "Markdown. O que você precisa lembrar antes de falar com eles."
+      },
+      "fields": {
+        "company": "Empresa",
+        "companyHelp": "Cria a empresa, ou usa a que já existe com o mesmo nome.",
+        "roleTitle": "Vaga",
+        "market": "Mercado",
+        "marketHelp": "Por exemplo: CA, IE, DE, EU-remoto, BR-B2B.",
+        "locationText": "Local",
+        "locationHelp": "Por exemplo: Toronto, ON · Remoto (EU).",
+        "folderName": "Pasta no vault",
+        "folderHelp": "É o que impede o agente de duplicar esta candidatura. Use o nome exato da pasta em “04 - Candidaturas”.",
+        "stage": "Estágio",
+        "sponsorship": "Visto",
+        "sponsorshipHelp": "“Não se aplica (B2B/contractor)” é a rota remota: o visto não conta nela.",
+        "inherit": "O da vaga",
+        "source": "Origem",
+        "fit": "Aderência",
+        "fitHelp": "Por exemplo: ⭐, ⭐ Go, Bom.",
+        "priority": "Prioridade",
+        "priorityHelp": "De 1 a 99; 1 é a maior.",
+        "appliedAt": "Enviada em",
+        "followUp": "Cobrar",
+        "followUpHelp": "Uma data ou uma nota curta.",
+        "targetSalary": "Salário alvo",
+        "jobUrl": "URL da vaga",
+        "careersUrl": "URL da página de carreiras",
+        "careersHelp": "Fica na empresa, não na vaga.",
+        "notesMd": "Notas"
+      },
+      "errors": {
+        "company": "Escreva o nome da empresa, com até 160 caracteres.",
+        "roleTitle": "O nome da vaga passa de 160 caracteres: encurte.",
+        "folderName": "Use só minúsculas, números e hífen, com “--” entre empresa e vaga.",
+        "market": "O mercado passa de 60 caracteres: encurte.",
+        "locationText": "O local passa de 120 caracteres: encurte.",
+        "stage": "Escolha um estágio da lista.",
+        "sponsorship": "Escolha um sinal de visto da lista.",
+        "source": "Escolha uma origem da lista.",
+        "fit": "A aderência passa de 60 caracteres: encurte.",
+        "priority": "A prioridade é um número inteiro de 1 a 99.",
+        "careersUrl": "Escreva o endereço completo, começando com https://.",
+        "jobUrl": "Escreva o endereço completo, começando com https://.",
+        "targetSalary": "O salário alvo passa de 200 caracteres: encurte.",
+        "appliedAt": "Escolha uma data válida.",
+        "followUp": "O texto de cobrança passa de 200 caracteres: encurte.",
+        "notesMd": "As notas passam de 20.000 caracteres: encurte.",
+        "invalid": "Este valor não foi aceito: confira.",
+        "duplicateFolder": "Já existe uma candidatura com esta pasta. Mude a pasta, ou abra a candidatura que já existe.",
+        "duplicateJob": "Esta URL já é de outra vaga. Confira o endereço.",
+        "duplicate": "Este valor já está em uso."
+      },
+      "failed": "Não foi possível salvar a candidatura. O que você digitou continua aqui.",
+      "noDatabase": "O banco não está configurado: nada foi salvo. Defina DATABASE_URL.",
+      "create": "Criar candidatura",
+      "save": "Salvar candidatura",
+      "cancel": "Voltar à lista"
+    },
+    "moves": {
+      "missing": "Esta candidatura não existe mais. Recarregue a página.",
+      "badStage": "Esse estágio não existe. Recarregue a página.",
+      "already": "“{name}” já está em {stage}.",
+      "failed": "O banco não gravou a mudança. Tente de novo.",
+      "moved": "“{name}” foi para {stage}."
     }
   }
 }

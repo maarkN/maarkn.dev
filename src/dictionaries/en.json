@@ -1132,6 +1132,285 @@
       "saved": "Time zone saved.",
       "unknown": "Unknown time zone. Use a name from the list.",
       "failed": "The time zone could not be saved."
+    },
+    "common": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "required": "required",
+      "retry": "Try again",
+      "undo": "Undo",
+      "dismiss": "Dismiss the notice",
+      "saving": "Saving…",
+      "failed": "Something went wrong on our side. Nothing you typed was lost.",
+      "checkFields": "Check the highlighted fields: each one says what is missing.",
+      "noDatabase": "The database is not configured. Set DATABASE_URL and try again.",
+      "pager": {
+        "label": "Pagination",
+        "position": "Page {page} of {pages}",
+        "total": {
+          "one": "1 record",
+          "many": "{count} records"
+        },
+        "previous": "Previous",
+        "next": "Next",
+        "keys": "Shortcuts: N next page, P previous page, outside text fields."
+      },
+      "states": {
+        "loading": "Loading…",
+        "clear": "Clear filters",
+        "noDatabase": "The database is not configured, so there is nothing to list. Set DATABASE_URL and reload."
+      },
+      "sort": {
+        "by": "Sort by {column}"
+      },
+      "confirm": {
+        "type": "To confirm, type the name: {name}",
+        "field": "Name, as written above",
+        "pending": "Deleting…",
+        "lost": "This cannot be undone."
+      }
+    },
+    "vocab": {
+      "stage": {
+        "radar": "Radar",
+        "shortlisted": "Shortlisted",
+        "package_drafting": "Package in progress",
+        "package_ready": "Package ready",
+        "awaiting_my_send": "Waiting for me to send",
+        "ready": "Ready to send",
+        "applied": "Sent",
+        "recruiter_contact": "Recruiter contact",
+        "screening": "Screening",
+        "assessment": "Assessment",
+        "technical_challenge": "Technical challenge",
+        "interview": "Interview",
+        "final_interview": "Final interview",
+        "reference_check": "Reference check",
+        "offer": "Offer",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn",
+        "no_response": "No response",
+        "ghosted": "Ghosted",
+        "skipped": "Discarded"
+      },
+      "phase": {
+        "pre_send": "Before sending",
+        "sent": "Sent",
+        "evaluation": "In evaluation",
+        "outcome": "Outcome"
+      },
+      "column": {
+        "selected": "Shortlisted",
+        "ready": "Ready",
+        "sent": "Sent",
+        "talking": "In conversation",
+        "evaluation": "Assessment and interviews",
+        "offer": "Offers"
+      },
+      "visa": {
+        "not_applicable_b2b": "Not applicable (B2B/contractor)",
+        "explicit_support": "Sponsors explicitly",
+        "newcomer_friendly": "Newcomer friendly",
+        "silent": "Not stated",
+        "requires_authorization": "Requires prior authorization",
+        "country_residency_required": "Requires residency in the country",
+        "explicit_no_sponsorship": "Does not sponsor (explicit)",
+        "requires_citizenship": "Requires citizenship"
+      },
+      "visaHint": {
+        "not_applicable_b2b": "Remote job hired as a contractor or B2B: the visa does not come into it.",
+        "explicit_support": "The posting says it sponsors a work visa.",
+        "newcomer_friendly": "The company usually hires newcomers, without an explicit promise of sponsorship.",
+        "silent": "The posting says nothing about sponsorship: it has to be checked.",
+        "requires_authorization": "Requires work authorization in the country. Rules the job out on the relocation route.",
+        "country_residency_required": "Requires residency in the country. Rules the job out on the relocation route.",
+        "explicit_no_sponsorship": "The posting says it does not sponsor. Rules the job out on the relocation route.",
+        "requires_citizenship": "Requires citizenship. Rules the job out on the relocation route."
+      },
+      "route": {
+        "remote_b2b": "Remote (B2B/contractor)",
+        "relocation": "Relocation"
+      },
+      "routeHint": {
+        "remote_b2b": "Current focus: remote work paid in a strong currency, no visa.",
+        "relocation": "In the background: moving countries, where sponsorship decides."
+      },
+      "source": {
+        "vanhack": "VanHack",
+        "linkedin": "LinkedIn",
+        "company_site": "Company site",
+        "indeed": "Indeed",
+        "glassdoor": "Glassdoor",
+        "recruiter": "Recruiter",
+        "referral": "Referral",
+        "radar": "Job radar",
+        "other": "Other"
+      }
+    },
+    "applications": {
+      "title": "Applications",
+      "description": "The whole funnel. Open a row to see the dossier, or drag on the board to change the stage.",
+      "views": {
+        "label": "View as",
+        "list": "List",
+        "board": "Board"
+      },
+      "create": "New application",
+      "created": "Application “{name}” created.",
+      "saved": "Application “{name}” saved.",
+      "columns": {
+        "company": "Company",
+        "role": "Job",
+        "stage": "Stage",
+        "visa": "Visa",
+        "sent": "Sent",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "inherited": "from the job",
+      "priority": "Priority {n} (1 is the highest)",
+      "openJob": "Open the job posting at {name}",
+      "edit": "Edit the application {name}",
+      "delete": {
+        "trigger": "Delete the application {name}",
+        "title": "Delete the application {name}?",
+        "lost": "It leaves the funnel with its history, interviews, documents and checklist. The company and the job stay.",
+        "confirm": "Delete application",
+        "done": "Application “{name}” deleted.",
+        "failed": "The application could not be deleted. It is still in the funnel."
+      },
+      "states": {
+        "loading": "Loading the applications…",
+        "empty": "No applications yet. The first one can be a job you are only aiming at.",
+        "filtered": "No applications match these filters.",
+        "failed": "The applications did not load: the database did not answer. Nothing was lost."
+      },
+      "filters": {
+        "label": "Filter applications",
+        "search": "Search",
+        "searchPlaceholder": "Company, job or folder",
+        "phase": "Phase or stage",
+        "allPhases": "All phases",
+        "wholePhase": "The whole “{phase}” phase",
+        "phaseOnly": "Phase",
+        "route": "Route",
+        "allRoutes": "All routes",
+        "visa": "Visa",
+        "anyVisa": "Any signal",
+        "market": "Market",
+        "allMarkets": "All markets",
+        "source": "Source",
+        "allSources": "All sources",
+        "apply": "Filter"
+      }
+    },
+    "board": {
+      "title": "Application board",
+      "description": "The open applications, by column. Drag a card to another column, or use the arrows with it in focus.",
+      "keys": "With a card in focus, ← and → take it to the next column.",
+      "total": {
+        "one": "1 open application in this view.",
+        "many": "{count} open applications in this view."
+      },
+      "cap": "Up to {cap} cards per column; the rest is on the list.",
+      "column": "{name}: {count}",
+      "hidden": {
+        "one": "1 more is not shown here.",
+        "many": "{count} more are not shown here."
+      },
+      "seeList": "See on the list",
+      "none": "None",
+      "card": "{company}, {stage}",
+      "moved": "“{name}” moved to {column}.",
+      "unmoved": "“{name}” went back to {column}.",
+      "already": "“{name}” is already in {column}.",
+      "failed": "“{name}” could not be moved. It is still in {column}.",
+      "states": {
+        "loading": "Loading the board…",
+        "empty": "No open applications yet.",
+        "filtered": "No open applications match these filters.",
+        "failed": "The board did not load: the database did not answer."
+      }
+    },
+    "applicationForm": {
+      "newTitle": "New application",
+      "newDescription": "Record a job you are aiming at, even before sending anything.",
+      "editDescription": "Edit the application",
+      "sections": {
+        "job": "Job and company",
+        "jobHelp": "Who is hiring, and for what position.",
+        "funnel": "Funnel",
+        "funnelHelp": "Where it stands, and which route it takes.",
+        "dates": "Dates and target",
+        "datesHelp": "What the response rate is made of.",
+        "links": "Links",
+        "linksHelp": "The job URL identifies the job: without it, no job is created.",
+        "notes": "Notes",
+        "notesHelp": "Markdown. What you need to remember before talking to them."
+      },
+      "fields": {
+        "company": "Company",
+        "companyHelp": "Creates the company, or uses the one that already has this name.",
+        "roleTitle": "Job",
+        "market": "Market",
+        "marketHelp": "For example: CA, IE, DE, EU-remote, BR-B2B.",
+        "locationText": "Location",
+        "locationHelp": "For example: Toronto, ON · Remote (EU).",
+        "folderName": "Vault folder",
+        "folderHelp": "It is what keeps the agent from duplicating this application. Use the exact name of the folder in “04 - Candidaturas”.",
+        "stage": "Stage",
+        "sponsorship": "Visa",
+        "sponsorshipHelp": "“Not applicable (B2B/contractor)” is the remote route: the visa does not count there.",
+        "inherit": "The job's",
+        "source": "Source",
+        "fit": "Fit",
+        "fitHelp": "For example: ⭐, ⭐ Go, Good.",
+        "priority": "Priority",
+        "priorityHelp": "From 1 to 99; 1 is the highest.",
+        "appliedAt": "Sent on",
+        "followUp": "Follow up",
+        "followUpHelp": "A date or a short note.",
+        "targetSalary": "Target salary",
+        "jobUrl": "Job URL",
+        "careersUrl": "Careers page URL",
+        "careersHelp": "It belongs to the company, not to the job.",
+        "notesMd": "Notes"
+      },
+      "errors": {
+        "company": "Write the company's name, up to 160 characters.",
+        "roleTitle": "The job's name is longer than 160 characters: shorten it.",
+        "folderName": "Use only lowercase letters, numbers and hyphens, with “--” between company and job.",
+        "market": "The market is longer than 60 characters: shorten it.",
+        "locationText": "The location is longer than 120 characters: shorten it.",
+        "stage": "Choose a stage from the list.",
+        "sponsorship": "Choose a visa signal from the list.",
+        "source": "Choose a source from the list.",
+        "fit": "The fit is longer than 60 characters: shorten it.",
+        "priority": "The priority is a whole number from 1 to 99.",
+        "careersUrl": "Write the full address, starting with https://.",
+        "jobUrl": "Write the full address, starting with https://.",
+        "targetSalary": "The target salary is longer than 200 characters: shorten it.",
+        "appliedAt": "Choose a valid date.",
+        "followUp": "The follow-up text is longer than 200 characters: shorten it.",
+        "notesMd": "The notes are longer than 20,000 characters: shorten them.",
+        "invalid": "This value was not accepted: check it.",
+        "duplicateFolder": "There is already an application with this folder. Change the folder, or open the application that exists.",
+        "duplicateJob": "This URL already belongs to another job. Check the address.",
+        "duplicate": "This value is already in use."
+      },
+      "failed": "The application could not be saved. What you typed is still here.",
+      "noDatabase": "The database is not configured: nothing was saved. Set DATABASE_URL.",
+      "create": "Create application",
+      "save": "Save application",
+      "cancel": "Back to the list"
+    },
+    "moves": {
+      "missing": "This application no longer exists. Reload the page.",
+      "badStage": "That stage does not exist. Reload the page.",
+      "already": "“{name}” is already in {stage}.",
+      "failed": "The database did not save the change. Try again.",
+      "moved": "“{name}” moved to {stage}."
     }
   }
 }

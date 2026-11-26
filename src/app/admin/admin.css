@@ -64,9 +64,10 @@ body.admin-root {
      survives for its one real consumer, the inline style of ui/sonner.tsx. */
   --radius: 0;
 
-  /* The screens keep the monospaced face until their own change redesigns
-     them; the shell around them names its faces itself. Cascadia Code, and
-     never `--font` of the CLI version, which may be another face. */
+  /* The screens not redesigned yet keep the monospaced face; a redesigned one
+     writes `font-text` at its root, and every primitive of src/components/ui
+     names the face of the site's text itself. Cascadia Code, and never `--font`
+     of the CLI version, which may be another face. */
   --font: var(--type-label);
   font-family: var(--font);
 
@@ -114,15 +115,8 @@ body.admin-root {
   }
 }
 
-/* Dense forms in a monospace face read better with a little more air. `:where`,
-   so that a field of the shell keeps its own face and height. */
-:where(.admin-root) :is(input, select, textarea) {
-  line-height: 1.5;
-}
-
-/* Every visible field in the admin goes through the shadcn primitives, which
-   already carry `border-input` at rest and `border-ring` + `ring-ring/50` on
-   focus. This is the floor for the elements that carry no focus class of
+/* Every field and button of the screens is a hologram (src/components/ui), whose
+   frame is the focus. This is the floor for the elements that carry no focus of
    their own — links, <summary>, checkboxes, file pickers.
 
    Também cobre duas paradas de tabulação que NÃO são controles e por isso
@@ -154,116 +148,148 @@ body.admin-root {
 }
 
 /* ════════════════════════════════════════════════
-   LISTING — the `ls` look, on a table that is still a table.
-   `<pre>` with padded text would be more faithful and would destroy the
-   column header, the cell↔header association and table navigation in a
-   screen reader. So the DOM stays <table>/<thead>/<th scope="col"> (see
-   src/components/ui/table.tsx) and only the paint changes.
-
-   Monospaced alignment is only trustworthy with widths in `ch` and tabular
-   numerals. The fixed layout is NOT set here: a table that declares no width
-   at all would get equal columns and truncate text that has nowhere to go.
-   It is opted into at the frame (`<Table className="table-fixed">`) by the
-   listings that do declare `ch` widths on their headers, and there it
-   promotes each width to the law of the whole column — a long company name
-   truncates instead of pushing every other column out of line. Columns with
-   no width share what is left: that is the free-text column, by design.
+   FIELDS — the frame of a place to write (src/components/ui/input.tsx and
+   select.tsx), denser than the site's: a screen of the backoffice has a dozen.
    ════════════════════════════════════════════════ */
-.admin-root .admin-listing {
-  width: 100%;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-  border-radius: 0;
-  box-shadow: none;
+.admin-root .admin-field {
+  margin-top: 0;
+  min-width: 0;
 }
-
-/* The column header reads as the comment line above the output. */
-.admin-root .admin-listing thead th {
-  color: var(--ink-3);
-  font-weight: 400;
+.admin-root .admin-field > :is(input, textarea) {
+  min-height: 44px;
+  padding: 9px 14px;
+  font-size: .9375rem;
 }
-
-/* Truncation is the rule: the cell clips, and the one-line <div>s inside it
-   get the ellipsis. A div holding a control is left alone — it hugs its
-   buttons, and clipping it would eat the 2px focus outline. */
-.admin-root .admin-listing :is(th, td),
-.admin-root .admin-listing td > div:not(:has(:is(button, a, input, [role="button"]))) {
+.admin-root .admin-field > textarea {
+  min-height: 6.5em;
+}
+.admin-root .admin-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--type-text);
+  font-size: .9375rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  /* Only forced-colors modes paint it; the frame is the focus. */
+  outline: 2px solid transparent;
+}
+.admin-root .admin-select > :not(span[aria-hidden]) {
+  position: relative;
+}
+.admin-root .admin-select > [data-slot="select-value"] {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
+.admin-root .admin-select[data-placeholder] > [data-slot="select-value"] {
+  color: var(--ink-2);
+}
+.admin-root .admin-select[data-disabled] {
+  opacity: .45;
+}
 
-/* ── the hovered row ──────────────────────────────────────────────────────
-   Background `--accent`, text `--foreground`, uniformly: no colour a cell
-   carries has to be measured a second time on that surface. Rows that are not
-   data (the empty line, the error line, the loading line) opt out with
-   `hover:bg-transparent`. */
-.admin-root .admin-listing tbody tr:hover {
+/* ════════════════════════════════════════════════
+   WINDOW — the frame of a panel around a dialog (src/components/ui/dialog.tsx).
+   The plate and the frame stay; the body scrolls inside them.
+   ════════════════════════════════════════════════ */
+.admin-root .admin-window {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: calc(100dvh - 2rem);
+  color: var(--ink);
+  font-family: var(--type-text);
+}
+.admin-root .admin-window-body {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  min-height: 0;
+  margin: 0 8px 8px 0;
+  padding: 28px 22px 20px 30px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.admin-root .admin-window-close {
+  position: absolute;
+  top: 20px;
+  right: 22px;
+}
+
+/* ════════════════════════════════════════════════
+   TABLE — content, so solid. The row that opens a record answers to the pointer
+   as a whole; the keyboard reaches the link inside it (`RowLink`).
+   ════════════════════════════════════════════════ */
+.admin-root .admin-table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.admin-root .admin-table thead tr {
+  border-bottom: 1px solid var(--input);
+}
+.admin-root .admin-table tbody tr[data-opens] {
+  cursor: pointer;
+}
+.admin-root .admin-table tbody tr[data-opens]:hover {
   background: var(--accent);
 }
-.admin-root .admin-listing tbody tr:hover :is(td, td *) {
-  color: var(--foreground);
+.admin-root .admin-table tbody tr[data-opens]:hover .admin-row-link {
+  text-decoration-thickness: 2px;
 }
-.admin-root .admin-listing tbody tr.hover\:bg-transparent:hover {
-  background: transparent;
-}
-.admin-root .admin-listing tbody tr.hover\:bg-transparent:hover :is(td, td *) {
-  color: inherit;
+/* A cell that has to fit says so with `truncate`; the whole value goes in its title. */
+.admin-root .admin-table th[aria-sort] {
+  color: var(--ink);
 }
 
-/* ── a linha que abriu um overlay é uma linha SELECIONADA ─────────────────
-   O primitive do shadcn marca a linha que contém um controle expandido com meia
-   opacidade de `--muted` e a escolhida com `--muted` cheio, e nos dois casos
-   deixa cada célula com a sua própria cor. Mesma decisão do hover, então mesma
-   pintura: `--accent` cheio e todo o texto em `--foreground`. */
-.admin-root .admin-listing tbody tr:has([aria-expanded="true"]),
-.admin-root .admin-listing tbody tr[data-state="selected"] {
-  background: var(--accent);
+/* The link that opens the record: ink, with the beam under it (fundamentos.md). */
+.admin-root .admin-row-link {
+  color: var(--ink);
+  font-weight: 560;
+  text-decoration: underline;
+  text-decoration-color: var(--beam);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
-.admin-root .admin-listing tbody tr:has([aria-expanded="true"]) :is(td, td *),
-.admin-root .admin-listing tbody tr[data-state="selected"] :is(td, td *) {
-  color: var(--foreground);
-}
-.admin-root .admin-listing tbody tr:has([aria-expanded="true"]) a.hover\:text-brand:hover,
-.admin-root .admin-listing tbody tr[data-state="selected"] a.hover\:text-brand:hover {
-  color: var(--brand);
+.admin-root .admin-row-link:hover {
+  text-decoration-thickness: 2px;
 }
 
-/* The same selection, for output that is NOT a <table>: the Kanban card. The
-   background and the trip to `--foreground` are one decision, so they are one
-   class: reach for this, never for a bare hover-background utility. */
-.admin-root .admin-selection:hover {
-  background: var(--accent);
-}
-.admin-root .admin-selection:hover * {
-  color: var(--foreground);
-}
-
-/* …and give the link back its hover hue. Forcing the selection to one ink also
-   swallowed the brand-on-hover utility that links under /admin carry: this
-   file is imported from TypeScript and therefore sits outside every @layer,
-   which beats any Tailwind utility regardless of specificity. Without this
-   rule a link inside a hovered row has no hover affordance at all unless it
-   also happens to underline. `--brand` is 4.95:1 on `--accent` at worst
-   (light). The escaped selector below is that utility's own class name. */
-.admin-root .admin-listing tbody tr:hover a.hover\:text-brand:hover,
-.admin-root .admin-selection:hover a.hover\:text-brand:hover {
-  color: var(--brand);
+/* A key, written where its action is (A13). */
+.admin-root .admin-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6em;
+  padding: 0 .35em;
+  border: 1px solid var(--input);
+  color: var(--ink);
+  font-family: var(--type-label);
+  font-size: .75rem;
+  line-height: 1.5;
 }
 
-/* The decorative index column (`001`, `002`…): `ls -1 | nl`, not the id. */
-.admin-root .admin-listing [data-listing-index] {
-  color: var(--ink-3);
-}
-
-/* ── loading: a progress line, not a grey box ─────────────────────────────
-   The blocks are drawn in full and revealed by an animated clip, so under
-   `prefers-reduced-motion: reduce` the global rule in globals.css collapses
-   the animation to its last frame — a full, motionless bar. Nothing blinks,
-   nothing pulses, and the row still says "carregando" to a screen reader. */
+/* ── loading: a bar, not a grey box ───────────────────────────────────────
+   The bar is drawn in full and revealed by an animated clip, so under
+   `prefers-reduced-motion: reduce` the global rule in globals.css collapses the
+   animation to its last frame: a full, motionless bar. The sentence beside it
+   is what a screen reader receives. */
 .admin-root .admin-progress {
   display: inline-block;
-  color: var(--primary);
-  background: var(--accent);
+  width: 12rem;
+  max-width: 40%;
+  height: 4px;
+  background: var(--primary);
   animation: admin-progress-fill 1.4s linear infinite;
 }
 
@@ -273,99 +299,16 @@ body.admin-root {
 }
 
 /* ════════════════════════════════════════════════
-   DIÁLOGO — a barra de título em régua.
-   `── editar candidatura ─────────────` : dois traços antes do título e uma
-   fileira de U+2500 depois, preenchendo o que sobrou da linha.
-
-   Por que aqui e não em utilitário no primitive: a régua é uma string de
-   sessenta e quatro traços. Escrita como valor arbitrário de `content` ela
-   apareceria três vezes (dialog, alert-dialog, sheet) dentro de atributos que
-   já passam de trezentos caracteres. O comprimento fixo + recorte é o truque:
-   o pseudo-elemento é um item flexível que encolhe até zero, então a régua
-   sempre termina exatamente na borda, em qualquer largura de diálogo.
-
-   Isto alcança o conteúdo mesmo portalizado: o Radix monta o portal em
-   `document.body`, e é o `<body>` que carrega `.admin-root`
-   (src/app/admin/layout.tsx).
-
-   O recuo à direita abre espaço para o `[esc]`, que fica ancorado no canto
-   superior direito do conteúdo — sem ele a régua passaria por baixo do botão.
+   NOTICES — where they land (src/components/ui/sonner.tsx). Each is a
+   `HoloNotice`; the stack only gives it room.
    ════════════════════════════════════════════════ */
-.admin-root :is(
-  [data-slot="dialog-title"],
-  [data-slot="alert-dialog-title"],
-  [data-slot="sheet-title"]
-) {
-  display: flex;
-  align-items: center;
-  gap: 1ch;
+.admin-root [data-sonner-toaster] {
+  --width: min(440px, calc(100vw - 32px));
+  font-family: var(--type-text);
+}
+.admin-root .admin-notice {
+  width: var(--width);
+}
+.admin-root .admin-notice :is([data-content], [data-title]) {
   width: 100%;
-  min-width: 0;
-  /* A régua é um texto de sessenta e quatro traços sem quebra, e o `grid` do
-     diálogo dava a ela a largura que pedia: o conteúdo passava da borda. */
-  contain: inline-size;
-  /* Os três são `<h2>`, e o site escreve `h2` em outra fonte. */
-  font-family: var(--font);
-  font-stretch: 100%;
-  font-weight: 500;
-  line-height: 1.5;
-  overflow: hidden;
-  white-space: nowrap;
-  text-align: left;
-  padding-right: 3.5rem;
-}
-
-.admin-root :is(
-  [data-slot="dialog-title"],
-  [data-slot="alert-dialog-title"],
-  [data-slot="sheet-title"]
-)::before {
-  /* `/ ""` é o alt-text de `content` (CSS Generated Content, o mesmo par que
-     `content: url(...) / "descrição"`): o traço é desenhado e o nome acessível
-     recebe string vazia. Sem ele a régua ENTRA no nome do diálogo — o Radix
-     aponta o `aria-labelledby` do conteúdo para o título, e o algoritmo de
-     accname (accname 1.2 §4.3.2, passo 2.F) inclui conteúdo gerado. O
-     `overflow: hidden` recorta o desenho, não a árvore de acessibilidade. */
-  content: "──" / "";
-  flex: none;
-  color: var(--ink-3);
-}
-
-.admin-root :is(
-  [data-slot="dialog-title"],
-  [data-slot="alert-dialog-title"],
-  [data-slot="sheet-title"]
-)::after {
-  /* Alt-text vazio pelo mesmo motivo do `::before` — ver o comentário lá. */
-  content: "────────────────────────────────────────────────────────────────" / "";
-  flex: 1 1 0;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--ink-3);
-}
-
-/* ════════════════════════════════════════════════
-   TOAST — a linha de saída da ação.
-   O tema (superfície, borda, marcadores, posição) está em
-   src/components/ui/sonner.tsx; aqui ficam as duas coisas que precisam
-   alcançar o DOM interno do sonner: a fonte da linha e a cor do marcador.
-
-   `✓` em `--ok` e `✗` em `--destructive`, sobre `--popover`. O marcador é texto e é `aria-hidden` — a cor é reforço, não o canal.
-   ════════════════════════════════════════════════ */
-.admin-root [data-sonner-toaster],
-.admin-root [data-sonner-toast] {
-  font-family: var(--font);
-}
-
-.admin-root [data-sonner-toast] .admin-output-marker {
-  color: var(--ink-3);
-  font-family: var(--font);
-}
-
-.admin-root [data-sonner-toast][data-type="success"] .admin-output-marker {
-  color: var(--ok);
-}
-
-.admin-root [data-sonner-toast][data-type="error"] .admin-output-marker {
-  color: var(--destructive);
 }

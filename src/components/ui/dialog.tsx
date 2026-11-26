@@ -3,24 +3,22 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
-import { useScreenLanguage } from "@/components/admin/admin-locale"
+import { X } from "lucide-react"
+
+import { useCommonLabels, useScreenLanguage } from "@/components/admin/admin-locale"
+import { HoloFrame } from "@/components/holo/frame"
+import styles from "@/components/holo/holo.module.css"
+import { textOf } from "@/components/holo/text"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 /**
- * ── Barra de título e `[esc]` (bko-04) ─────────────────────────────────────
- * O título é desenhado como régua (`── editar candidatura ──────────`) por
- * `::before`/`::after` em `src/app/admin/admin.css`, e não em utilitários
- * aqui: a régua é uma fileira de `─` de comprimento variável, que em Tailwind
- * viraria um `content-[...]` de sessenta caracteres repetido em três
- * primitives. O CSS do admin alcança o diálogo mesmo portalizado porque
- * `.admin-root` está no `<body>` (admin/layout.tsx), e o portal do Radix
- * monta ali dentro.
+ * A window of the backoffice is the hologram's (docs/design/moldura.md): the
+ * frame of a panel, solid behind, the title in the face of titles and a close
+ * button in the corner. Radix keeps what a window owes the keyboard: the focus
+ * stays inside, `Esc` closes, and the focus goes back to whoever opened it.
  *
- * O botão de fechar passa a ser `[esc]` — que é literalmente o atalho, já
- * entregue pelo Radix. O texto visível é `[esc]` e o nome acessível é
- * "fechar [esc]": contém o texto visível (1.4.11/2.5.3) e ainda diz o que o
- * botão faz, em vez de anunciar "abre colchete e-s-c fecha colchete".
+ * What scrolls is the body, inside the frame: the lines stay where they are.
  */
 function Dialog({
   ...props
@@ -70,6 +68,7 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const { close } = useCommonLabels()
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -77,26 +76,45 @@ function DialogContent({
         data-slot="dialog-content"
         lang={useScreenLanguage()}
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-none bg-popover p-4 text-xs/relaxed text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 outline-none sm:max-w-lg",
           className
         )}
         {...props}
       >
-        {children}
-        {showCloseButton && (
+        <AdminWindow seed={textOf(children)} close={showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-2 right-2 text-muted-foreground"
-              size="xs"
-              aria-label="fechar [esc]"
-            >
-              [esc]
+            <Button variant="ghost" size="icon-sm" aria-label={close}>
+              <X aria-hidden="true" />
             </Button>
           </DialogPrimitive.Close>
-        )}
+        )}>
+          {children}
+        </AdminWindow>
       </DialogPrimitive.Content>
     </DialogPortal>
+  )
+}
+
+/**
+ * The frame, the plate behind it and the body that scrolls; shared by the
+ * dialog and the alert dialog. `close` sits in the corner, over the body.
+ */
+function AdminWindow({
+  seed,
+  close,
+  children,
+}: {
+  seed: string
+  close?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className={cn(styles.holo, styles.panel, "admin-window")}>
+      <span className={styles.windowPlate} aria-hidden="true" />
+      <HoloFrame kind="panel" seed={seed || "window"} />
+      <div className="admin-window-body">{children}</div>
+      {close && <div className="admin-window-close">{close}</div>}
+    </div>
   )
 }
 
@@ -104,7 +122,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-1 text-left", className)}
+      className={cn("flex flex-col gap-1.5 pr-12 text-left", className)}
       {...props}
     />
   )
@@ -128,12 +146,17 @@ function DialogFooter({
       {...props}
     >
       {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close asChild>
-          <Button variant="outline">[ fechar ]</Button>
-        </DialogPrimitive.Close>
-      )}
+      {showCloseButton && <FooterClose />}
     </div>
+  )
+}
+
+function FooterClose() {
+  const { close } = useCommonLabels()
+  return (
+    <DialogPrimitive.Close asChild>
+      <Button variant="outline">{close}</Button>
+    </DialogPrimitive.Close>
   )
 }
 
@@ -144,7 +167,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-sm font-medium", className)}
+      className={cn("font-title text-2xl leading-tight font-[560] text-foreground [font-stretch:108%]", className)}
       {...props}
     />
   )
@@ -158,7 +181,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        "text-xs/relaxed text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        "font-text text-sm/relaxed text-muted-foreground *:[a]:text-foreground *:[a]:underline *:[a]:decoration-brand *:[a]:underline-offset-3",
         className
       )}
       {...props}
@@ -167,6 +190,7 @@ function DialogDescription({
 }
 
 export {
+  AdminWindow,
   Dialog,
   DialogClose,
   DialogContent,

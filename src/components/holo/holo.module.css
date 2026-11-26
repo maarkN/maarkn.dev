@@ -777,6 +777,9 @@ textarea.input {
   margin: 2px 0 0;
   color: var(--ink-2);
 }
+.noticeAction {
+  margin-top: 10px;
+}
 
 /* ── square button with an icon only (close, dismiss) ────────────────────── */
 
