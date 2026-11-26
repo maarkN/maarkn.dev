@@ -13,6 +13,17 @@ import { createFakeDb, type FakeDb } from "@/lib/mcp/test/fake-db";
 const held = vi.hoisted(() => ({ db: {} as Record<string, unknown> }));
 
 vi.mock("server-only", () => ({}));
+// The language and the time zone of the backoffice come from the request; a
+// request without cookies gets the defaults.
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: () => undefined }),
+  headers: async () => new Headers(),
+}));
+// The shell is an async Server Component with tests of its own; here only the
+// screen inside it matters, and `renderToStaticMarkup` renders nothing async.
+vi.mock("@/components/admin/admin-shell", () => ({
+  AdminShell: ({ children }: { children: React.ReactNode }) => children,
+}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
