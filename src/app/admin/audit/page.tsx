@@ -35,6 +35,11 @@ const WIDE = "hidden md:table-cell";
 
 type Params = Record<string, string | string[] | undefined>;
 
+/** A day ago, apart from the components' bodies (`react-hooks/purity`). */
+function since24h(): Date {
+  return new Date(Date.now() - DAY_MS);
+}
+
 function one(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v) ?? "";
 }
@@ -144,7 +149,7 @@ async function listKeys(): Promise<{ id: string; name: string; keyPrefix: string
 async function AuditFigures({ labels }: { labels: AdminDictionary }) {
   const words = labels.audit.figures;
   const { formatNumber } = await getAdminFormat();
-  const dayAgo = new Date(Date.now() - DAY_MS);
+  const dayAgo = since24h();
 
   // A3: without DATABASE_URL every figure reads zero instead of throwing.
   let total = 0;

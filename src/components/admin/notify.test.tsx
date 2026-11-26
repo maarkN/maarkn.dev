@@ -5,7 +5,7 @@
  * button to dismiss it; it leaves on its own; and it says the language of its
  * words, which is the screen's.
  */
-import { act } from "react";
+import { act, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -38,8 +38,12 @@ afterEach(async () => {
 });
 
 let notify: Notify;
+const keep = (bound: Notify) => {
+  notify = bound;
+};
 function Caller() {
-  notify = useNotify();
+  const bound = useNotify();
+  useEffect(() => keep(bound), [bound]);
   return null;
 }
 
