@@ -138,10 +138,12 @@ describe("saveProject — texto nos dois idiomas", () => {
     });
   });
 
-  it("revalida a home dos dois idiomas e o sitemap", async () => {
+  it("revalida a Versão CLI e a home dos dois idiomas e o sitemap", async () => {
     await saveProject("p1", form());
     const paths = revalidatePath.mock.calls.map(([path]) => path);
-    expect(paths).toEqual(expect.arrayContaining(["/en", "/pt-BR", "/sitemap.xml"]));
+    expect(paths).toEqual(
+      expect.arrayContaining(["/en/terminal", "/pt-BR/terminal", "/en", "/pt-BR", "/sitemap.xml"]),
+    );
   });
 });
 

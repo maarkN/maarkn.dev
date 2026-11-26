@@ -9,6 +9,7 @@ import { db, dbConfigured } from "@/lib/db";
 import { httpUrlSchema } from "@/lib/http-url";
 import { encodeStringList } from "@/lib/json-list";
 import { MAX_SUCCESS_CASES } from "@/lib/project-text";
+import { terminalHref } from "@/lib/terminal/address";
 import type { ActionResult } from "./action-result";
 
 /**
@@ -184,15 +185,18 @@ function isUniqueViolation(err: unknown, field: string): boolean {
 }
 
 /**
- * The public listing and the detail render per request; the home (where the
- * `projects` command reads from) and the sitemap are cached for an hour. The
- * home is revalidated by its literal path, one per language: its route pattern
- * carries a route group.
+ * The public listing and the detail render per request; the CLI version (where
+ * the `projects` command reads from), the home and the sitemap are cached for
+ * an hour. Pages are revalidated by their literal path, one per language: their
+ * route patterns carry route groups.
  */
 function revalidateProjects() {
   revalidatePath("/admin/projects");
   revalidatePath("/admin");
-  for (const lang of locales) revalidatePath(`/${lang}`);
+  for (const lang of locales) {
+    revalidatePath(`/${lang}`);
+    revalidatePath(terminalHref(lang));
+  }
   revalidatePath("/sitemap.xml");
 }
 
