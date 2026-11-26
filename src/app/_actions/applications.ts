@@ -29,6 +29,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import { getAdminLabels } from "@/lib/admin/request";
+import { fill } from "@/lib/admin/text";
 import { db, dbConfigured } from "@/lib/db";
 import { safeDbError } from "@/lib/safe-error";
 import {
@@ -302,7 +304,8 @@ export async function createApplication(
 
   revalidatePath("/admin/applications");
   revalidatePath("/admin");
-  redirect("/admin/applications?created=" + encodeURIComponent(folderName));
+  // The list says it in a notice, with the name the list shows.
+  redirect("/admin/applications?created=" + encodeURIComponent(data.company));
 }
 
 export async function updateApplication(
@@ -359,13 +362,14 @@ export async function updateApplication(
 
   revalidatePath("/admin/applications");
   revalidatePath("/admin");
-  redirect("/admin/applications?updated=" + encodeURIComponent(folderName));
+  redirect("/admin/applications?saved=" + encodeURIComponent(data.company));
 }
 
 export async function deleteApplication(id: string): Promise<ActionResult> {
   await requireAdmin(); // A2
+  const { applications: words, common } = await getAdminLabels();
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." };
+    return { ok: false, message: common.noDatabase };
   }
   let label: string;
   try {
@@ -381,9 +385,9 @@ export async function deleteApplication(id: string): Promise<ActionResult> {
     // A action nao lanca (contrato `ActionResult`, AGENTS.md §2): sem este
     // catch a UI daria toast de sucesso numa exclusao que falhou.
     console.error("[admin] delete application failed", safeDbError(err));
-    return { ok: false, message: "Não foi possível excluir a candidatura." };
+    return { ok: false, message: words.delete.failed };
   }
   revalidatePath("/admin/applications");
   revalidatePath("/admin");
-  return { ok: true, message: `Candidatura “${label}” excluída.` };
+  return { ok: true, message: fill(words.delete.done, { name: label }) };
 }

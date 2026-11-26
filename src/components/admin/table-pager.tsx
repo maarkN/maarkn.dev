@@ -1,164 +1,104 @@
 /**
- * Table chrome shared by every backoffice list page: the status line that
- * paginates, the loading row, the empty/error row and the decorative index
- * column.
+ * What every list of the backoffice shares around its table: the pager, with
+ * its keys written on it, and the rows that stand for the states of the list.
  *
  * NOTE ON "use client": this module deliberately has no directive.
  * - `TablePager` takes an `onPageChange` callback and binds a keydown
- *   listener, so it can only be rendered from a Client Component — importing
- *   it there pulls it into the client graph automatically. See
- *   `src/app/admin/AGENTS.md` for the canonical "filters + pager in one small
- *   client component" recipe.
- * - `TableLoadingRow` / `TableEmptyRow` / `ListingIndex*` are pure markup and
- *   stay on the server when a Server Component imports them.
- * Adding "use client" here would force all of them into the client bundle for
- * no gain.
+ *   listener, so it is rendered from a Client Component (the toolbar that owns
+ *   the URL, AGENTS.md §4.2), which pulls it into the client graph.
+ * - `TableStateRow` is markup, and stays on the server when a Server Component
+ *   renders it.
  */
 
 import * as React from "react";
-import { TableCell, TableHead, TableRow } from "@/components/ui/table";
-import { useAdminFormat } from "@/components/admin/admin-locale";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { useAdminFormat, useCommonLabels } from "@/components/admin/admin-locale";
+import { counted, fill } from "@/lib/admin/text";
 import { cn } from "@/lib/utils";
 
-/* ── coluna de índice ─────────────────────────────────────────────────────
- *
- * `001`, `002`… contínuo DENTRO da página, como `ls -1 | nl`. Não é o id e
- * não é estável entre páginas: é âncora visual do alinhamento, e por isso
- * `aria-hidden` — um leitor de tela que anunciasse "001" em cada linha
- * estaria lendo decoração. A largura fica no <th>, que é quem manda sob
- * `table-layout: fixed`.
- */
-
-/** Largura da coluna de índice. Exportada para os `colSpan` não mentirem. */
-export const LISTING_INDEX_WIDTH = "w-[7ch]";
-
-export function ListingIndexHead() {
-  return <TableHead aria-hidden className={LISTING_INDEX_WIDTH} />;
-}
-
-export function ListingIndexCell({ index }: { index: number }) {
-  return (
-    <TableCell aria-hidden data-listing-index>
-      {String(index + 1).padStart(3, "0")}
-    </TableCell>
-  );
-}
-
-/* ── paginação como linha de status ──────────────────────────────────────── */
+/* ── the pager ───────────────────────────────────────────────────────────── */
 
 interface TablePagerProps {
   /** 1-based current page. */
   page: number;
-  /** Total number of pages (clamped to >= 1 for display). */
+  /** Total number of pages (at least 1 on screen). */
   totalPages: number;
-  /** Total record count, shown when available. */
+  /** Total number of records, when it is known. */
   total?: number;
   onPageChange: (page: number) => void;
-  /** Locks both actions — use while a transition is pending. */
+  /** Locks both buttons, while a transition is pending. */
   disabled?: boolean;
 }
 
 /**
- * `74 registros · página 1/4   [n]ext  [p]rev`
+ * `74 registros · Página 2 de 4   [Anterior P] [Próxima N]`
  *
- * As etiquetas são `<button>` de verdade — o colchete é pintura, não um
- * `<span>` com `onClick`. O atalho é anunciado na própria etiqueta porque
- * atalho que não se vê não existe.
+ * The keys are written on the buttons that they press (A13): a shortcut that
+ * is not on screen does not exist. Each button's name is its visible word, and
+ * `aria-keyshortcuts` tells the key to whoever cannot see it.
  */
-export function TablePager({
-  page,
-  totalPages,
-  total,
-  onPageChange,
-  disabled,
-}: TablePagerProps) {
+export function TablePager({ page, totalPages, total, onPageChange, disabled }: TablePagerProps) {
   const { formatNumber } = useAdminFormat();
+  const { pager } = useCommonLabels();
   const lastPage = Math.max(totalPages, 1);
   const canNext = !disabled && page < lastPage;
   const canPrev = !disabled && page > 1;
 
-  useListingShortcut(
-    canNext ? () => onPageChange(page + 1) : null,
-    canPrev ? () => onPageChange(page - 1) : null,
-  );
+  useListingShortcut(canNext ? () => onPageChange(page + 1) : null, canPrev ? () => onPageChange(page - 1) : null);
 
   return (
-    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-2 text-xs text-muted-foreground">
-      <span className="tabular-nums">
-        {total !== undefined && `${formatNumber(total)} registros · `}
-        página {page}/{lastPage}
-      </span>
-      <span className="flex items-baseline gap-3">
-        <PagerAction
-          label="[n]ext"
-          title="Próxima página (tecla n)"
-          accessibleName="Próxima página"
-          disabled={!canNext}
-          onClick={() => onPageChange(page + 1)}
-        />
-        <PagerAction
-          label="[p]rev"
-          title="Página anterior (tecla p)"
-          accessibleName="Página anterior"
+    <nav aria-label={pager.label} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pt-4 font-text text-sm">
+      <p className="text-muted-foreground tabular-nums">
+        {total !== undefined && `${counted(pager.total, total, formatNumber(total))} · `}
+        {fill(pager.position, { page: formatNumber(page), pages: formatNumber(lastPage) })}
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          aria-keyshortcuts="p"
           disabled={!canPrev}
           onClick={() => onPageChange(page - 1)}
-        />
-      </span>
-    </div>
-  );
-}
-
-function PagerAction({
-  label,
-  title,
-  accessibleName,
-  disabled,
-  onClick,
-}: {
-  label: string;
-  title: string;
-  accessibleName: string;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      /* O nome acessível COMEÇA pelo rótulo visível e depois explica.
-         A bko-03 tinha escrito só a frase ("Próxima página (tecla n)") com o
-         argumento de que `[n]ext` é desenho — e isso reprovava a SC 2.5.3
-         (Label in Name, nível A): quem comanda por voz diz o que lê na tela,
-         e "next" não estava no nome. Apanhado pelo Lighthouse na bko-05
-         (`label-content-name-mismatch`). O colchete entra junto porque o
-         rótulo visível é `[n]ext` inteiro. */
-      aria-label={`${label} — ${accessibleName} (tecla ${label[1]})`}
-      title={title}
-      disabled={disabled}
-      onClick={onClick}
-      className="text-brand hover:underline disabled:cursor-default disabled:text-ink-3 disabled:no-underline"
-    >
-      {label}
-    </button>
+        >
+          <ChevronLeft aria-hidden="true" />
+          {pager.previous}
+          <kbd className="admin-kbd" aria-hidden="true">
+            P
+          </kbd>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          aria-keyshortcuts="n"
+          disabled={!canNext}
+          onClick={() => onPageChange(page + 1)}
+        >
+          {pager.next}
+          <kbd className="admin-kbd" aria-hidden="true">
+            N
+          </kbd>
+          <ChevronRight aria-hidden="true" />
+        </Button>
+      </div>
+    </nav>
   );
 }
 
 /**
- * Liga teclas de uma letra fora de campo editável.
+ * Binds `n` and `p` outside an editable field.
  *
- * O risco é digitar `n` no filtro e trocar de página: o handler está no
- * `document`, então precisa perguntar onde está o foco. `INPUT`, `TEXTAREA`,
- * `SELECT`, `contenteditable` e os papéis ARIA de campo (o `<Select>` do
- * Radix é um `<button role="combobox">`, não um `<select>`) ficam de fora,
- * e qualquer combinação com modificador também — `Ctrl+N` é do navegador.
+ * The risk is typing `n` in the search and changing page: the handler is on the
+ * `document`, so it asks where the focus is. `INPUT`, `TEXTAREA`, `SELECT`,
+ * `contenteditable` and the ARIA roles of a field (the Radix `<Select>` is a
+ * `<button role="combobox">`) are left out, and so is any combination with a
+ * modifier: `Ctrl+N` is the browser's.
  */
-function useListingShortcut(
-  onNext: (() => void) | null,
-  onPrev: (() => void) | null,
-) {
-  // O listener é registrado UMA vez, no `document`; as ações mudam a cada
-  // render (a página muda) e chegam até ele por este ref, atualizado num
-  // efeito — escrever em ref durante o render é o que `react-hooks/refs`
-  // proíbe, e com razão.
+function useListingShortcut(onNext: (() => void) | null, onPrev: (() => void) | null) {
+  // One listener, on the `document`; the actions change with the page and reach
+  // it through this ref, written in an effect (`react-hooks/refs`).
   const actions = React.useRef({ onNext, onPrev });
   React.useEffect(() => {
     actions.current = { onNext, onPrev };
@@ -168,10 +108,11 @@ function useListingShortcut(
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
       if (isEditableTarget(document.activeElement)) return;
+      // A window is open over the list: its keys are its own.
+      if (document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]')) return;
       const key = event.key.toLowerCase();
       if (key !== "n" && key !== "p") return;
-      // `preventDefault` mesmo com a ação nula: na última página, `n` não
-      // avança E não vira caractere em lugar nenhum.
+      // Even with nothing to do: on the last page, `n` neither moves nor types.
       event.preventDefault();
       const run = key === "n" ? actions.current.onNext : actions.current.onPrev;
       run?.();
@@ -182,83 +123,99 @@ function useListingShortcut(
 }
 
 const EDITABLE_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
-const EDITABLE_ROLES = new Set([
-  "textbox",
-  "searchbox",
-  "combobox",
-  "spinbutton",
-  "listbox",
-  "menu",
-  "menuitem",
-  "option",
-]);
+const EDITABLE_ROLES = new Set(["textbox", "searchbox", "combobox", "spinbutton", "listbox", "menu", "menuitem", "option"]);
 
-/** Exportado para o teste: é a regra inteira do atalho. */
+/** Exported for the test: it is the whole rule of the shortcut. */
 export function isEditableTarget(element: Element | null): boolean {
   if (!element) return false;
   if (EDITABLE_TAGS.has(element.tagName)) return true;
   const role = element.getAttribute("role");
   if (role && EDITABLE_ROLES.has(role)) return true;
-  // `isContentEditable` pega o caso herdado (um filho dentro da caixa
-  // editável); o atributo pega o caso direto — e é o único dos dois que o
-  // jsdom implementa, por isso os dois estão aqui.
+  // `isContentEditable` catches the inherited case; the attribute the direct one,
+  // and is the only one of the two that jsdom implements.
   if (element instanceof HTMLElement && element.isContentEditable) return true;
   const editable = element.getAttribute("contenteditable");
   return editable !== null && editable !== "false";
 }
 
-/* ── estados ─────────────────────────────────────────────────────────────── */
+/* ── the states of a list ────────────────────────────────────────────────── */
 
 /**
- * Carregando: uma linha de progresso, não seis retângulos cinza.
- *
- * Os blocos são desenhados inteiros e revelados por um `clip-path` animado
- * (`.admin-progress`), então sob `prefers-reduced-motion: reduce` a regra
- * global de globals.css encerra a animação no último quadro — barra cheia,
- * parada. O texto "carregando" é o que o leitor de tela recebe; os blocos são
- * `aria-hidden`.
+ * The four states a list tells apart (spec admin-listing), each with the next
+ * step: no record yet (create one), nothing for the filters (clear them), the
+ * reading failed (try again; never "empty"), and loading.
  */
-export function TableLoadingRow({ cols }: { cols: number }) {
+export type TableState = "loading" | "empty" | "filtered" | "failed";
+
+/** The next step of a state: a link, with its words. */
+export type StateAction = { href: string; label: string };
+
+/**
+ * The sentence that says which state a list is in, and its next step. Loading
+ * is a bar drawn in full and revealed by an animated clip, whose last frame
+ * (the one left under reduced motion) is the full bar; the sentence is what a
+ * screen reader receives.
+ */
+export function StateMessage({
+  state,
+  message,
+  action,
+  className,
+}: {
+  state: TableState;
+  message: string;
+  action?: StateAction;
+  className?: string;
+}) {
   return (
-    <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={cols} className="py-3 text-muted-foreground">
-        <span role="status" className="flex items-center gap-2">
-          <span aria-hidden>#</span>
-          carregando
-          <span className="admin-progress" aria-hidden>
-            {"█".repeat(24)}
-          </span>
-        </span>
+    <div
+      role={state === "loading" ? "status" : undefined}
+      data-list-state={state}
+      className={cn("flex flex-wrap items-center gap-x-4 gap-y-3 font-text text-base text-foreground", className)}
+    >
+      {state === "failed" && <span aria-hidden="true" className="size-2.5 shrink-0 rotate-45 bg-destructive" />}
+      <span className="max-w-[60ch]">{message}</span>
+      {state === "loading" && <span className="admin-progress" aria-hidden="true" />}
+      {action && (
+        <Button asChild variant={state === "empty" ? "default" : "outline"}>
+          <Link href={action.href}>{action.label}</Link>
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/** A row across the whole table that says which state the list is in. */
+export function TableStateRow({
+  cols,
+  ...state
+}: {
+  cols: number;
+  state: TableState;
+  message: string;
+  action?: StateAction;
+}) {
+  return (
+    <TableRow>
+      <TableCell colSpan={cols} className="py-8">
+        <StateMessage {...state} />
       </TableCell>
     </TableRow>
   );
 }
 
-/**
- * Vazio / erro: uma linha de comentário, como um shell que não achou nada.
- * O `#` é decoração — o leitor de tela recebe a frase, não o sinal.
- */
-export function TableEmptyRow({
-  cols,
-  message = "nenhum registro",
-  destructive,
-}: {
-  cols: number;
-  message?: string;
-  destructive?: boolean;
-}) {
-  return (
-    <TableRow className="hover:bg-transparent">
-      <TableCell
-        colSpan={cols}
-        className={cn(
-          "py-6 whitespace-normal",
-          destructive ? "text-destructive" : "text-muted-foreground",
-        )}
-      >
-        <span aria-hidden>{"# "}</span>
-        {message}
-      </TableCell>
-    </TableRow>
-  );
+/* TEMPORARY-R09: the old pieces, until every screen is migrated. */
+export const LISTING_INDEX_WIDTH = "";
+export function ListingIndexHead() {
+  return null;
+}
+export function ListingIndexCell(props: { index: number }) {
+  void props;
+  return null;
+}
+export function TableLoadingRow({ cols }: { cols: number }) {
+  return <TableStateRow cols={cols} state="loading" message="…" />;
+}
+export function TableEmptyRow({ cols, message = "—", destructive }: { cols: number; message?: string; destructive?: boolean }) {
+  return <TableStateRow cols={cols} state={destructive ? "failed" : "empty"} message={message} />;
 }
