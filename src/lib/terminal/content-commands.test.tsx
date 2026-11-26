@@ -184,6 +184,16 @@ describe("projects and open", () => {
     expect(h.navigate).toHaveBeenCalledWith("/en/projects/bravo");
   });
 
+  it("marks a summary written in another language, and only that one", async () => {
+    const [first, ...rest] = data.projects;
+    const h = harness(undefined, {
+      projects: [{ ...first!, tagline: "só em português", taglineLang: "pt-BR" }, ...rest],
+    });
+    const html = (await h.run("projects")).join("");
+    expect(html).toContain('<span lang="pt-BR">só em português</span>');
+    expect(html.match(/lang="pt-BR"/g)).toHaveLength(1);
+  });
+
   it("rejects an index outside the last list", async () => {
     const h = harness();
     await h.run("projects");

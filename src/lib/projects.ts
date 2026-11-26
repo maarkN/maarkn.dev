@@ -40,6 +40,12 @@ export type Project = {
   coverImage?: string | null;
 };
 
+/**
+ * The seed: these projects and their copy in the dictionaries fill the database
+ * and are what the site shows without one. Once a row exists, its text in the
+ * database wins (ADR 0003), so editing copy here does not change the published
+ * site.
+ */
 export const projects: Project[] = [
   {
     slug: "remote-harness",
@@ -295,6 +301,17 @@ export const projects: Project[] = [
  * doesn't support them. `scripts/sync-projects.ts` deletes them from the DB.
  */
 export const retiredProjectSlugs: string[] = ["vanilla-farming-assistant"];
+
+/**
+ * Seed of the success cases, in the order the home shows them. Their problem,
+ * work and result are in the dictionaries (`projects.cases`). With a database
+ * the choice is Marco's, made in the backoffice; this list fills an empty one.
+ */
+export const successCaseSlugs: string[] = [
+  "dermatology-ai-platform",
+  "medical-shift-marketplace",
+  "voip-platform",
+];
 
 export const projectCategories: ProjectCategory[] = [
   "web",

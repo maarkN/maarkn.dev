@@ -66,6 +66,17 @@ export default async function EditProjectPage({
             description: project.description,
             role: project.role,
             features: decodeStringList(project.featuresJson),
+            taglinePt: project.taglinePt,
+            descriptionPt: project.descriptionPt,
+            rolePt: project.rolePt,
+            featuresPt: decodeStringList(project.featuresPtJson),
+            caseProblemPt: project.caseProblemPt,
+            caseProblemEn: project.caseProblemEn,
+            caseWorkPt: project.caseWorkPt,
+            caseWorkEn: project.caseWorkEn,
+            caseResultPt: project.caseResultPt,
+            caseResultEn: project.caseResultEn,
+            casePosition: project.casePosition,
             coverImage: project.coverImage,
           }}
         />
