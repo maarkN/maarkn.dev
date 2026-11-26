@@ -1152,8 +1152,7 @@
           "many": "{count} records"
         },
         "previous": "Previous",
-        "next": "Next",
-        "keys": "Shortcuts: N next page, P previous page, outside text fields."
+        "next": "Next"
       },
       "states": {
         "loading": "Loading…",
@@ -1165,7 +1164,6 @@
       },
       "confirm": {
         "type": "To confirm, type the name: {name}",
-        "field": "Name, as written above",
         "pending": "Deleting…",
         "lost": "This cannot be undone."
       },
@@ -1454,9 +1452,7 @@
         "one": "1 more is not shown here.",
         "many": "{count} more are not shown here."
       },
-      "seeList": "See on the list",
       "none": "None",
-      "card": "{company}, {stage}",
       "moved": "“{name}” moved to {column}.",
       "unmoved": "“{name}” went back to {column}.",
       "already": "“{name}” is already in {column}.",
@@ -1571,7 +1567,6 @@
       "outside": "Outside the funnel",
       "openPosting": "Open the posting of {job}",
       "promote": "Create an application from {job}",
-      "promoteShort": "Create application",
       "promoted": "Application “{name}” created from the job.",
       "existing": "This job already had an application: opening it.",
       "promoteFailed": "The application could not be created. The job is still here.",

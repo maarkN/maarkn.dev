@@ -1151,8 +1151,7 @@
           "many": "{count} registros"
         },
         "previous": "Anterior",
-        "next": "Próxima",
-        "keys": "Atalhos: N próxima página, P página anterior, fora dos campos de texto."
+        "next": "Próxima"
       },
       "states": {
         "loading": "Carregando…",
@@ -1164,7 +1163,6 @@
       },
       "confirm": {
         "type": "Para confirmar, digite o nome: {name}",
-        "field": "Nome, como aparece acima",
         "pending": "Excluindo…",
         "lost": "Não dá para desfazer."
       },
@@ -1453,9 +1451,7 @@
         "one": "Mais 1 não aparece aqui.",
         "many": "Mais {count} não aparecem aqui."
       },
-      "seeList": "Ver na lista",
       "none": "Nenhuma",
-      "card": "{company}, {stage}",
       "moved": "“{name}” foi para {column}.",
       "unmoved": "“{name}” voltou para {column}.",
       "already": "“{name}” já está em {column}.",
@@ -1570,7 +1566,6 @@
       "outside": "Fora do funil",
       "openPosting": "Abrir o anúncio de {job}",
       "promote": "Criar candidatura a partir de {job}",
-      "promoteShort": "Criar candidatura",
       "promoted": "Candidatura “{name}” criada a partir da vaga.",
       "existing": "Esta vaga já tinha candidatura: abrindo a que existe.",
       "promoteFailed": "Não foi possível criar a candidatura. A vaga continua aqui.",
