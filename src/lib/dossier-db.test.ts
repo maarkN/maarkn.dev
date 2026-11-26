@@ -430,6 +430,72 @@ describe.skipIf(!SERVER)("dossier fields on a real Postgres", () => {
         expect(await acme()).toMatchObject({ stage: "rejected", closureReason: "visa" });
       });
 
+      describe("reverting a run over what changed after it", () => {
+        const revert = async (syncRunId: unknown) => {
+          await run("close_sync_run", { syncRunId, status: "ok" });
+          return run("revert_sync_run", { syncRunId, confirm: "reverter", dryRun: false });
+        };
+
+        it("a reason given after the run: the application reopens, and the history says which went", async () => {
+          const { id } = await acme();
+          await run("update_application_stage", { folderName: "acme", stage: "interview" });
+          const { syncRunId } = await run("open_sync_run", { resume: false });
+          await run("update_application_stage", { folderName: "acme", stage: "rejected", syncRunId });
+          await run("upsert_application", { folderName: "acme", closureReason: "visa" });
+
+          const reverted = await revert(syncRunId);
+
+          expect(reverted.falhas).toEqual([]);
+          expect(await acme()).toMatchObject({ stage: "interview", closureReason: null });
+          expect(
+            await db.applicationEvent.findMany({
+              where: { applicationId: id, fromStage: "rejected" },
+              select: { toStage: true, bodyMd: true },
+            }),
+          ).toEqual([
+            { toStage: "interview", bodyMd: expect.stringContaining("Motivo de encerramento removido: Visto.") },
+          ]);
+        });
+
+        it("a date removed after the run: the date and the notes come back, and it is scheduled again", async () => {
+          const [D1, D2] = ["2026-12-01T17:30:00.000Z", "2026-12-08T17:30:00.000Z"];
+          const interview = { folderName: "acme", sourceKey: "kept" };
+          await run("upsert_interview", { ...interview, kind: "technical", scheduledAt: D1, notesMd: "before" });
+          const { syncRunId } = await run("open_sync_run", { resume: false });
+          await run("upsert_interview", { ...interview, scheduledAt: D2, notesMd: "from run", syncRunId });
+          await run("upsert_interview", { ...interview, scheduledAt: null });
+
+          const reverted = await revert(syncRunId);
+
+          expect(reverted.falhas).toEqual([]);
+          expect(await db.interview.findMany()).toMatchObject([
+            { status: "scheduled", scheduledAt: new Date(D1), notesMd: "before" },
+          ]);
+        });
+
+        it("what the rules do not let come back is a failure that says why, and the rest comes back", async () => {
+          const interview = { folderName: "acme", sourceKey: "kept" };
+          await run("upsert_interview", {
+            ...interview,
+            kind: "technical",
+            scheduledAt: "2026-12-01T17:30:00.000Z",
+            notesMd: "before",
+          });
+          const { syncRunId } = await run("open_sync_run", { resume: false });
+          await run("upsert_interview", { ...interview, status: "completed", notesMd: "from run", syncRunId });
+          await run("upsert_interview", { ...interview, status: "cancelled", scheduledAt: null });
+
+          const reverted = await revert(syncRunId);
+
+          expect(reverted.falhas).toEqual([
+            { entityType: "Interview", entityId: expect.any(String), erro: expect.stringMatching(/^Restaurado em parte: .*Falta a data/) },
+          ]);
+          expect(await db.interview.findMany()).toMatchObject([
+            { status: "cancelled", scheduledAt: null, notesMd: "before" },
+          ]);
+        });
+      });
+
       it("the company's text reaches both of its applications", async () => {
         const company = { folderName: "acme" };
         await run("upsert_application", { folderName: "acme", company, projectInfoMd: "one" });

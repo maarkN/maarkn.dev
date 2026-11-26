@@ -247,8 +247,9 @@ export type ClosureReasonChange = {
 /**
  * O que uma mudanca de estagio faz com o motivo: sair de recusada/retirada o
  * apaga, e ir de uma para a outra o mantem. TODO caminho que escreve `stage`
- * passa por aqui e grava o `patch` no MESMO update — o CHECK
- * `Application_closureReason_stage` recusa a linha que ficar no meio.
+ * (as tools do MCP, as tres telas e a reversao de uma rodada) passa por aqui e
+ * grava o `patch` no MESMO update — o CHECK `Application_closureReason_stage`
+ * recusa a linha que ficar no meio.
  */
 export function closureReasonOnStageChange(
   to: FunnelStage,

@@ -1,10 +1,20 @@
 import "server-only";
+import type { FunnelStage, InterviewStatus, Prisma } from "@prisma/client";
 import { z } from "zod";
+import {
+  acceptsClosureReason,
+  closureReasonLabel,
+  closureReasonOnStageChange,
+  closureReasonRemovedNote,
+  CLOSURE_REASON_STAGES,
+} from "@/lib/applications";
 import { db } from "@/lib/db";
+import { resolveInterviewState } from "@/lib/interviews";
 import {
   defineMcpTool,
   jsonResult,
   McpToolError,
+  type McpToolContext,
 } from "@/lib/mcp/tool";
 import { safeErrorMessage } from "@/lib/mcp/redact";
 import {
@@ -340,31 +350,39 @@ export const closeSyncRun = defineMcpTool({
  * Delegates que o rollback sabe reverter. So entram entidades que alguma tool
  * de F3b escreve — reverter algo que ninguem grava seria codigo morto com
  * poder de DELETE, e este repositorio e publico.
+ *
+ * O nome do modelo, e nao o delegate: o delegate e lido de `db` na hora de
+ * reverter, como em qualquer outra tool.
  */
 type ScalarDelegate = {
   update(args: { where: { id: string }; data: Record<string, unknown> }): Promise<unknown>;
   delete(args: { where: { id: string } }): Promise<unknown>;
 };
 
-const REVERTERS: Record<string, ScalarDelegate> = {
-  Company: db.company as unknown as ScalarDelegate,
-  Job: db.job as unknown as ScalarDelegate,
-  JobTech: db.jobTech as unknown as ScalarDelegate,
-  Application: db.application as unknown as ScalarDelegate,
-  ApplicationEvent: db.applicationEvent as unknown as ScalarDelegate,
-  Document: db.document as unknown as ScalarDelegate,
-  Contact: db.contact as unknown as ScalarDelegate,
-  ChecklistItem: db.checklistItem as unknown as ScalarDelegate,
-  ScreeningQuestion: db.screeningQuestion as unknown as ScalarDelegate,
-  RequirementCoverage: db.requirementCoverage as unknown as ScalarDelegate,
-  HonestyNote: db.honestyNote as unknown as ScalarDelegate,
-  Interview: db.interview as unknown as ScalarDelegate,
-  Experience: db.experience as unknown as ScalarDelegate,
-  CareerProject: db.careerProject as unknown as ScalarDelegate,
-  ResumeBullet: db.resumeBullet as unknown as ScalarDelegate,
-  Skill: db.skill as unknown as ScalarDelegate,
-  GeneratedResume: db.generatedResume as unknown as ScalarDelegate,
+const REVERTERS: Record<string, string> = {
+  Company: "company",
+  Job: "job",
+  JobTech: "jobTech",
+  Application: "application",
+  ApplicationEvent: "applicationEvent",
+  Document: "document",
+  Contact: "contact",
+  ChecklistItem: "checklistItem",
+  ScreeningQuestion: "screeningQuestion",
+  RequirementCoverage: "requirementCoverage",
+  HonestyNote: "honestyNote",
+  Interview: "interview",
+  Experience: "experience",
+  CareerProject: "careerProject",
+  ResumeBullet: "resumeBullet",
+  Skill: "skill",
+  GeneratedResume: "generatedResume",
 };
+
+function reverterFor(entityType: string): ScalarDelegate | undefined {
+  const model = REVERTERS[entityType];
+  return model ? (db as unknown as Record<string, ScalarDelegate>)[model] : undefined;
+}
 
 /**
  * Campos que o rollback NUNCA reaplica. `visibility` esta aqui porque promover
@@ -373,6 +391,123 @@ const REVERTERS: Record<string, ScalarDelegate> = {
  */
 const NEVER_REVERT = new Set(["id", "visibility", "createdAt", "updatedAt"]);
 
+/**
+ * O que a reversao de UM fato escreve.
+ *
+ * O `before` guarda so os campos que a rodada mudou. Reaplicado cru sobre uma
+ * linha que mudou depois da rodada, ele monta uma linha que as regras do
+ * dossie recusam (e os CHECKs da migracao `dossier_fields` tambem): uma
+ * candidatura aberta com o motivo de encerramento gravado depois, ou uma
+ * entrevista prevista com a data restaurada. A reversao passa pelas mesmas
+ * regras de quem escreve esses campos.
+ */
+type RestorePlan = {
+  data: Scalars;
+  /** O que foi escrito alem do `before`, e por que. */
+  ajustes: string[];
+  /** O que do `before` nao voltou, e por que. */
+  recusas: string[];
+  /** Evento de linha do tempo gravado na mesma transacao do update. */
+  evento?: Prisma.ApplicationEventUncheckedCreateInput;
+};
+
+async function planRestore(
+  entityType: string,
+  entityId: string,
+  data: Scalars,
+  ctx: McpToolContext,
+  syncRunId: string
+): Promise<RestorePlan> {
+  const plan: RestorePlan = { data, ajustes: [], recusas: [] };
+  if (entityType === "Application") {
+    if (!("stage" in data) && !("closureReason" in data)) return plan;
+    const current = await db.application.findUnique({
+      where: { id: entityId },
+      select: { stage: true, closureReason: true },
+    });
+    if (!current) return plan; // o update relata que a linha sumiu
+    const stage = (data.stage ?? current.stage) as FunnelStage;
+
+    if ("closureReason" in data) {
+      // A rodada mudou o motivo. Ele so volta onde motivo existe.
+      if (data.closureReason && !acceptsClosureReason(stage)) {
+        plan.recusas.push(
+          `Motivo de encerramento '${closureReasonLabel(data.closureReason as never)}' nao restaurado: a candidatura esta em '${stage}', e motivo so existe em ${CLOSURE_REASON_STAGES.join(" ou ")}.`
+        );
+        delete data.closureReason;
+      }
+      return plan;
+    }
+
+    // A rodada mudou so o estagio: voltar a um estagio aberto remove o motivo
+    // gravado depois dela, como em toda mudanca de estagio, e registra qual.
+    const closure = closureReasonOnStageChange(stage, current.closureReason);
+    if (closure.removed) {
+      Object.assign(data, closure.patch);
+      plan.ajustes.push(
+        `${closureReasonRemovedNote(closure.removed)} Foi gravado depois da rodada, e a candidatura voltou a '${stage}'.`
+      );
+      plan.evento = {
+        applicationId: entityId,
+        type: "stage_change",
+        fromStage: current.stage,
+        toStage: stage,
+        subject: `${current.stage} -> ${stage}`,
+        bodyMd: `${closureReasonRemovedNote(closure.removed)}\n\nReversao da rodada ${syncRunId}.`,
+        lastMcpTool: ctx.tool,
+        lastApiKeyId: ctx.apiKeyId,
+      };
+    }
+    return plan;
+  }
+
+  if (entityType === "Interview") {
+    if (!("status" in data) && !("scheduledAt" in data)) return plan;
+    const current = await db.interview.findUnique({
+      where: { id: entityId },
+      select: { status: true, scheduledAt: true },
+    });
+    if (!current) return plan;
+    const state = resolveInterviewState(current, {
+      status: "status" in data ? (data.status as InterviewStatus) : undefined,
+      scheduledAt:
+        "scheduledAt" in data
+          ? data.scheduledAt === null
+            ? null
+            : new Date(data.scheduledAt as string)
+          : undefined,
+    });
+    if (!state.ok) {
+      plan.recusas.push(`Situacao e data nao restauradas: ${state.message}`);
+      delete data.status;
+      delete data.scheduledAt;
+      return plan;
+    }
+    if (!("status" in data) && state.status !== current.status) {
+      plan.ajustes.push(
+        `Situacao ${current.status} -> ${state.status}: a data restaurada decide entre prevista e marcada.`
+      );
+    }
+    data.status = state.status;
+    data.scheduledAt = state.scheduledAt;
+  }
+  return plan;
+}
+
+/**
+ * Mensagem de uma falha da reversao. Um CHECK recusado diz qual e por que,
+ * sem o texto cru do Prisma, que comeca pelo caminho do arquivo e termina com
+ * a linha inteira (notas, contatos) recusada.
+ */
+export function revertFailureMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  const check = /violates check constraint \\?"([A-Za-z0-9_]+)/.exec(raw)?.[1];
+  if (check) {
+    return `Recusado pelo CHECK ${check}: a linha mudou durante a reversao, e o valor anterior nao cabe nela como esta agora. Nada deste fato foi gravado; revise no admin.`;
+  }
+  return safeErrorMessage(err).slice(0, 200);
+}
+
 export const revertSyncRun = defineMcpTool({
   name: "revert_sync_run",
   title: "Desfazer uma rodada de sincronizacao",
@@ -380,6 +515,7 @@ export const revertSyncRun = defineMcpTool({
     "DESTRUTIVO. Reaplica, na ordem inversa, o valor anterior de cada fato gravado por uma rodada: o que a rodada CRIOU e apagado, o que ela ALTEROU volta ao valor de antes. " +
     "Exige confirm='reverter' para nao ser disparado por engano. So funciona em rodadas ja fechadas (ok/failed) — feche antes com close_sync_run. " +
     "Visibilidade nunca e revertida (promover para publico e decisao humana na UI). " +
+    "As regras do dossie valem aqui tambem: voltar a um estagio aberto remove o motivo de encerramento gravado depois da rodada (e registra qual na linha do tempo), e a situacao de uma entrevista acompanha a data restaurada. O que a regra nao deixa voltar aparece em 'falhas', com o motivo; o que ela mudou alem do valor anterior, em 'ajustes'. " +
     "Os registros de SyncState escritos pela rodada sao apagados, para que a proxima chamada de check_sync_state peca os arquivos de novo.",
   scopes: ["sync:write"],
   inputSchema: {
@@ -454,9 +590,10 @@ export const revertSyncRun = defineMcpTool({
     let apagados = 0;
     let restaurados = 0;
     const falhas: { entityType: string; entityId: string; erro: string }[] = [];
+    const ajustes: { entityType: string; entityId: string; nota: string }[] = [];
 
     for (const fact of facts) {
-      const delegate = REVERTERS[fact.entityType];
+      const delegate = reverterFor(fact.entityType);
       if (!delegate) {
         falhas.push({
           entityType: fact.entityType,
@@ -470,14 +607,34 @@ export const revertSyncRun = defineMcpTool({
           await delegate.delete({ where: { id: fact.entityId } });
           apagados += 1;
         } else {
-          const data: Scalars = {};
+          const restored: Scalars = {};
           for (const [key, value] of Object.entries(fact.before as Scalars)) {
-            if (!NEVER_REVERT.has(key)) data[key] = value;
+            if (!NEVER_REVERT.has(key)) restored[key] = value;
           }
-          if (Object.keys(data).length > 0) {
-            await delegate.update({ where: { id: fact.entityId }, data });
+          const plan = await planRestore(fact.entityType, fact.entityId, restored, ctx, run.id);
+          if (Object.keys(plan.data).length > 0) {
+            const update = delegate.update({ where: { id: fact.entityId }, data: plan.data });
+            if (plan.evento) {
+              await db.$transaction([
+                update as Prisma.PrismaPromise<unknown>,
+                db.applicationEvent.create({ data: plan.evento }),
+              ]);
+            } else {
+              await update;
+            }
           }
-          restaurados += 1;
+          for (const nota of plan.ajustes) {
+            ajustes.push({ entityType: fact.entityType, entityId: fact.entityId, nota });
+          }
+          if (plan.recusas.length > 0) {
+            falhas.push({
+              entityType: fact.entityType,
+              entityId: fact.entityId,
+              erro: `Restaurado em parte: ${plan.recusas.join(" ")} O resto deste fato voltou.`,
+            });
+          } else {
+            restaurados += 1;
+          }
         }
       } catch (err) {
         // Linha ja apagada por cascade, ou FK que impede a ordem escolhida.
@@ -486,7 +643,7 @@ export const revertSyncRun = defineMcpTool({
         falhas.push({
           entityType: fact.entityType,
           entityId: fact.entityId,
-          erro: safeErrorMessage(err).slice(0, 200),
+          erro: revertFailureMessage(err),
         });
       }
     }
@@ -507,6 +664,7 @@ export const revertSyncRun = defineMcpTool({
       restaurados,
       syncStateRemovidos: syncStates.count,
       falhas,
+      ajustes,
       contexto: { auditId: ctx.auditId },
       instrucao:
         falhas.length > 0

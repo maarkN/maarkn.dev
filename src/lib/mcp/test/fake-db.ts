@@ -1,8 +1,11 @@
+import { Prisma } from "@prisma/client";
+
 /**
- * An in-memory stand-in for the few Prisma calls the application tools make, so
- * their tests run without a database (CI has none). It holds the two CHECKs of
- * the `dossier_fields` migration: a write that the real database would refuse
- * is refused here too. What only a real Postgres can answer is in
+ * An in-memory stand-in for the few Prisma calls the application tools and the
+ * rollback of a sync run make, so their tests run without a database (CI has
+ * none). It holds the two CHECKs of the `dossier_fields` migration, with the
+ * message Postgres gives: a write that the real database would refuse is
+ * refused here too. What only a real Postgres can answer is in
  * `src/lib/dossier-db.test.ts`.
  */
 
@@ -22,14 +25,15 @@ class Table {
 
   constructor(
     private readonly name: string,
-    private readonly defaults: Record<string, unknown> = {},
+    private readonly defaults: Record<string, unknown> | ((seq: number) => Record<string, unknown>) = {},
     private readonly check: (row: Row) => void = () => {},
   ) {}
 
   private save(row: Row, data: Where): Row {
     const next = { ...row };
     for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) next[key] = value;
+      // JSON null, as Prisma writes it.
+      if (value !== undefined) next[key] = value === Prisma.DbNull ? null : value;
     }
     this.check(next);
     return next;
@@ -37,9 +41,21 @@ class Table {
 
   create = async ({ data }: { data: Where }): Promise<Row> => {
     this.seq += 1;
-    const row = this.save({ id: `${this.name}_${this.seq}`, ...this.defaults }, data);
+    const defaults = typeof this.defaults === "function" ? this.defaults(this.seq) : this.defaults;
+    const row = this.save({ id: `${this.name}_${this.seq}`, ...defaults }, data);
     this.rows.push(row);
     return { ...row };
+  };
+  delete = async ({ where }: { where: Where }): Promise<Row> => {
+    const index = this.rows.findIndex((row) => matches(row, where));
+    if (index < 0) throw new Error(`${this.name}: no row to delete`);
+    return this.rows.splice(index, 1)[0];
+  };
+  deleteMany = async ({ where }: { where?: Where } = {}): Promise<{ count: number }> => {
+    const kept = this.rows.filter((row) => !matches(row, where));
+    const count = this.rows.length - kept.length;
+    this.rows = kept;
+    return { count };
   };
   update = async ({ where, data }: { where: Where; data: Where }): Promise<Row> => {
     const index = this.rows.findIndex((row) => matches(row, where));
@@ -84,6 +100,13 @@ class Table {
   groupBy = async () => [];
 }
 
+/** What Prisma throws when Postgres refuses a row by a CHECK (the message only). */
+function checkViolation(table: string, constraint: string): Error {
+  return new Error(
+    `Error occurred during query execution: new row for relation \\"${table}\\" violates check constraint \\"${constraint}\\"`,
+  );
+}
+
 function sort(rows: Row[], orderBy: unknown): Row[] {
   const keys = (Array.isArray(orderBy) ? orderBy : orderBy ? [orderBy] : []) as Record<
     string,
@@ -118,7 +141,7 @@ export function createFakeDb() {
     },
     (row) => {
       if (row.closureReason && row.stage !== "rejected" && row.stage !== "withdrawn") {
-        throw new Error("CHECK Application_closureReason_stage");
+        throw checkViolation("Application", "Application_closureReason_stage");
       }
     },
   );
@@ -128,12 +151,15 @@ export function createFakeDb() {
     (row) => {
       const dated = row.scheduledAt !== null;
       if (row.status === "planned" ? dated : row.status !== "cancelled" && !dated) {
-        throw new Error("CHECK Interview_status_date");
+        throw checkViolation("Interview", "Interview_status_date");
       }
     },
   );
   const applicationEvent = new Table("applicationEvent");
-  const provenance = new Table("provenance");
+  // Rows in the order they were recorded: the rollback reads them backwards.
+  const provenance = new Table("provenance", (seq) => ({ recordedAt: new Date(seq) }));
+  const syncRun = new Table("syncRun", () => ({ startedAt: new Date(), finishedAt: null }));
+  const syncState = new Table("syncState");
 
   /** The relations `get_application` and `list_applications` read. */
   const withRelations = async (row: Row | null, include?: Where): Promise<Row | null> => {
@@ -174,6 +200,10 @@ export function createFakeDb() {
     interview,
     applicationEvent,
     provenance,
+    syncRun,
+    syncState,
+    /** The operations already ran, one after the other; none fails here halfway. */
+    $transaction: async (operations: Promise<unknown>[]) => Promise.all(operations),
     /** The raw rows, for assertions. */
     rows: {
       company: () => company.rows,
