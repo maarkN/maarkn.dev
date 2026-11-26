@@ -1,60 +1,48 @@
 "use client";
 
 /**
- * "Criar candidatura a partir desta vaga".
+ * "Create an application from this job".
  *
- * Renderizado direto de dentro do `rows.map()` do Server Component — só recebe
- * props serializáveis e importa a Server Action ele mesmo.
- *
- * Por que o `router.push` mora AQUI e não na action: uma action que chama
- * `redirect()` nunca retorna, e sem retorno não há `toast.success` (§2 do
- * `src/app/admin/AGENTS.md`). A action devolve o id, o cliente mostra o toast e
- * navega — a única forma de ter as duas coisas.
+ * Rendered straight from the `rows.map()` of the Server Component: it receives
+ * serializable props and imports the Server Action itself. The navigation is
+ * HERE and not in the action: an action that calls `redirect()` never returns,
+ * and without a return there is no notice (AGENTS.md §2).
  */
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import type { ActionResult } from "@/app/_actions/action-result";
 import { createApplicationFromJob } from "@/app/_actions/jobs";
+import { useCommonLabels } from "@/components/admin/admin-locale";
+import { useNotify } from "@/components/admin/notify";
 import { Button } from "@/components/ui/button";
 
-export function PromoteJobButton({
-  jobId,
-  jobLabel,
-}: {
-  jobId: string;
-  /** Só para o rótulo acessível: "…a candidatura de Senior Backend @ Acme". */
-  jobLabel: string;
-}) {
+export function PromoteJobButton({ jobId, label }: { jobId: string; /** "Criar candidatura a partir de …". */ label: string }) {
   const router = useRouter();
+  const notify = useNotify();
+  const common = useCommonLabels();
   const [isPending, startTransition] = useTransition();
 
+  function promote() {
+    startTransition(async () => {
+      // The action does not throw (`ActionResult`); a network failure might.
+      const result = await createApplicationFromJob(jobId).catch((): ActionResult<never> => ({
+        ok: false,
+        message: common.failed,
+      }));
+      if (!result.ok || !result.data) {
+        notify.error(result.ok ? common.failed : result.message, { action: { label: common.retry, onClick: promote } });
+        return;
+      }
+      if (result.message) notify.success(result.message);
+      router.push(`/admin/applications/${result.data.id}`);
+    });
+  }
+
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      disabled={isPending}
-      aria-label={`Criar candidatura a partir de ${jobLabel}`}
-      title="Criar candidatura a partir desta vaga"
-      onClick={() => {
-        startTransition(async () => {
-          // A action não lança (contrato `ActionResult`): o único sinal de
-          // falha é `ok: false`.
-          const result = await createApplicationFromJob(jobId);
-          if (!result.ok || !result.data) {
-            toast.error(
-              result.ok ? "Não foi possível criar a candidatura." : result.message,
-            );
-            return;
-          }
-          toast.success(result.message ?? "Candidatura criada.");
-          router.push(`/admin/applications/${result.data.id}`);
-        });
-      }}
-    >
-      <Sparkles className="size-4" />
+    <Button type="button" variant="ghost" size="icon-sm" disabled={isPending} aria-label={label} title={label} onClick={promote}>
+      <Sparkles aria-hidden="true" />
     </Button>
   );
 }

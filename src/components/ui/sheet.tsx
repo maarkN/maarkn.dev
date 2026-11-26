@@ -79,11 +79,13 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close data-slot="sheet-close" asChild>
-            <Button variant="ghost" size="icon-sm" className="absolute top-3 right-3" aria-label={close}>
-              <X aria-hidden="true" />
-            </Button>
-          </SheetPrimitive.Close>
+          <div className="absolute top-3 right-3">
+            <SheetPrimitive.Close data-slot="sheet-close" asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={close}>
+                <X aria-hidden="true" />
+              </Button>
+            </SheetPrimitive.Close>
+          </div>
         )}
       </SheetPrimitive.Content>
     </SheetPortal>

@@ -1,113 +1,70 @@
 "use client";
 
 /**
- * Filtros + paginação do radar de vagas.
+ * The filters of the jobs, and their pager. The same recipe as the
+ * applications' (AGENTS.md §4.2): one Client Component owns the URL, receives
+ * the applied values by prop, and writes the next state on "Filtrar". Any
+ * change of filter goes back to the first page; the order is kept.
  *
- * Mesma receita da toolbar de candidaturas (§4.2 do `src/app/admin/AGENTS.md`):
- * um único client component é dono da URL, recebe o estado aplicado por prop
- * (nada de `useSearchParams`) e escreve o próximo com `router.push` dentro de
- * uma transition. `position="top"` = filtros (draft → applied, SEM debounce);
- * `position="bottom"` = só o `TablePager`.
- *
- * Dois controles ficam FORA do `<Select>`, como botões sempre visíveis, porque
- * são as duas decisões que mudam a leitura da tela inteira:
- *
- *   • ROTA — "Remota (B2B)" contra "Relocação". O gate de visto não é um
- *     booleano (ver o cabeçalho de `@/lib/applications`): um filtro único
- *     "precisa de patrocínio?" jogaria fora exatamente as vagas que são o alvo
- *     de hoje.
- *   • VÍNCULO — "Sem candidatura" transforma o radar numa fila de trabalho:
- *     é a pergunta que se faz ao abrir esta tela.
+ * The route comes before the signal, as on the applications: remote
+ * (B2B/contractor), where the visa does not apply, and relocation, where
+ * sponsorship decides.
  */
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { FilterPanel } from "@/components/admin/filter-panel";
 import { TablePager } from "@/components/admin/table-pager";
+import { FieldHelp } from "@/components/admin/field-output";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import {
-  SPONSORSHIP_HINTS,
-  SPONSORSHIP_LABELS,
-  SPONSORSHIP_ROUTE_HINTS,
-  SPONSORSHIP_ROUTE_KEYS,
-  SPONSORSHIP_ROUTE_LABELS,
-  SPONSORSHIP_SIGNALS,
-} from "@/lib/applications";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { AdminDictionary } from "@/i18n/config";
+import { SPONSORSHIP_ROUTE_KEYS, SPONSORSHIP_SIGNALS } from "@/lib/applications";
 import type { JobFilters } from "./jobs-query";
-import {
-  JOB_LINK_HINTS,
-  JOB_LINK_KEYS,
-  JOB_LINK_LABELS,
-  RADAR_NO_VERDICT,
-  radarVerdictLabel,
-} from "./radar";
+import { JOB_LINK_KEYS, RADAR_NO_VERDICT } from "./radar";
 
-/** Sentinela: `<SelectItem value="">` é proibido pelo Radix. */
+/** Sentinel: `<SelectItem value="">` is forbidden by Radix. */
 const ALL = "all";
 
-const FILTER_KEYS = [
-  "q",
-  "verdict",
-  "market",
-  "route",
-  "sponsorship",
-  "scoreMin",
-  "scoreMax",
-  "link",
-] as const;
+const KEYS = ["q", "verdict", "market", "route", "sponsorship", "scoreMin", "scoreMax", "link"] as const;
+const EMPTY: JobFilters = { q: "", verdict: "", market: "", route: "", sponsorship: "", scoreMin: "", scoreMax: "", link: "" };
 
-interface JobsToolbarProps extends JobFilters {
+export type JobsToolbarWords = {
+  filters: AdminDictionary["jobs"]["filters"];
+  vocab: Pick<AdminDictionary["vocab"], "verdict" | "route" | "routeHint" | "visa" | "visaHint" | "link">;
+  clear: string;
+};
+
+type Props = JobFilters & {
+  words?: JobsToolbarWords;
   page: number;
   position: "top" | "bottom";
-  /** Só em `position="top"`: valores distintos já presentes na base. */
   markets?: string[];
   verdicts?: string[];
-  /** Só em `position="bottom"`: vêm da contagem feita no Server Component. */
   totalPages?: number;
   total?: number;
-}
+  sort?: { key: string; dir: string };
+};
 
-type Patch = Partial<JobFilters> & { page?: number };
-
-export function JobsToolbar(props: JobsToolbarProps) {
+export function JobsToolbar(props: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [draft, setDraft] = useState<JobFilters>(() => Object.fromEntries(KEYS.map((key) => [key, props[key]])) as JobFilters);
 
-  const [draft, setDraft] = useState<JobFilters>({
-    q: props.q,
-    verdict: props.verdict,
-    market: props.market,
-    route: props.route,
-    sponsorship: props.sponsorship,
-    scoreMin: props.scoreMin,
-    scoreMax: props.scoreMax,
-    link: props.link,
-  });
-
-  function push(patch: Patch) {
-    const next = { ...draft, ...patch };
+  function push(next: JobFilters, page = 1) {
     const params = new URLSearchParams();
-    for (const key of FILTER_KEYS) {
-      if (next[key]) params.set(key, next[key]);
+    for (const key of KEYS) if (next[key]) params.set(key, next[key]);
+    if (props.sort) {
+      params.set("sort", props.sort.key);
+      params.set("dir", props.sort.dir);
     }
-    // Qualquer mudança de filtro volta para a primeira página.
-    const page = patch.page ?? 1;
     if (page > 1) params.set("page", String(page));
-
-    const qs = params.toString();
-    startTransition(() => router.push(qs ? `${pathname}?${qs}` : pathname));
+    const query = params.toString();
+    startTransition(() => router.push(query ? `${pathname}?${query}` : pathname));
   }
 
   if (props.position === "bottom") {
@@ -117,266 +74,192 @@ export function JobsToolbar(props: JobsToolbarProps) {
         totalPages={props.totalPages ?? 1}
         total={props.total}
         disabled={isPending}
-        onPageChange={(page) => push({ page })}
+        onPageChange={(page) => push(props, page)}
       />
     );
   }
 
-  const hasFilters = Object.values(draft).some(Boolean);
-
-  function clear() {
-    const empty: JobFilters = {
-      q: "",
-      verdict: "",
-      market: "",
-      route: "",
-      sponsorship: "",
-      scoreMin: "",
-      scoreMax: "",
-      link: "",
-    };
-    setDraft(empty);
-    push({ ...empty, page: 1 });
-  }
+  const { filters, vocab, clear } = props.words!;
+  const applied = KEYS.some((key) => props[key]);
+  const choose = (key: keyof JobFilters) => (value: string) => setDraft((d) => ({ ...d, [key]: value === ALL ? "" : value }));
+  const verdictName = (verdict: string) => vocab.verdict[verdict as keyof typeof vocab.verdict] ?? verdict;
 
   return (
-    <form
-      className="space-y-3 pb-3"
-      onSubmit={(event) => {
-        event.preventDefault();
-        push({});
-      }}
-    >
-      {/* Rota + vínculo — aplicam no clique (são botões, não campos). */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Rota</span>
-        <div className="inline-flex overflow-hidden rounded-none border border-border">
-          <ToggleButton
-            active={draft.route === ""}
-            disabled={isPending}
-            label="Todas"
-            title="Sem filtro de rota: mostra remoto B2B e relocação juntos."
-            onClick={() => {
-              setDraft((d) => ({ ...d, route: "", sponsorship: "" }));
-              push({ route: "", sponsorship: "" });
-            }}
+    <FilterPanel applied={KEYS.filter((key) => props[key]).length}>
+      <form
+        aria-label={filters.label}
+        className="flex flex-wrap items-end gap-x-3 gap-y-4 pb-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          push(draft);
+        }}
+      >
+        <Field id="jobs-q" label={filters.search} className="w-full sm:w-64">
+          <Input
+            id="jobs-q"
+            type="search"
+            value={draft.q}
+            onChange={(event) => setDraft((d) => ({ ...d, q: event.target.value }))}
+            placeholder={filters.searchPlaceholder}
+            className="w-full"
           />
-          {SPONSORSHIP_ROUTE_KEYS.map((route) => (
-            <ToggleButton
-              key={route}
-              active={draft.route === route}
-              disabled={isPending}
-              label={SPONSORSHIP_ROUTE_LABELS[route]}
-              title={SPONSORSHIP_ROUTE_HINTS[route]}
-              onClick={() => {
-                // Trocar de rota zera o sinal: um sinal da outra rota deixaria
-                // a lista vazia sem explicação.
-                setDraft((d) => ({ ...d, route, sponsorship: "" }));
-                push({ route, sponsorship: "" });
-              }}
-            />
-          ))}
-        </div>
+        </Field>
 
-        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Field id="jobs-verdict" label={filters.verdict} className="w-full sm:w-52">
+          <Select value={draft.verdict || ALL} onValueChange={choose("verdict")}>
+            <SelectTrigger id="jobs-verdict" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allVerdicts}</SelectItem>
+              <SelectItem value={RADAR_NO_VERDICT}>{vocab.verdict.none}</SelectItem>
+              {withSelected(props.verdicts ?? [], draft.verdict)
+                .filter((verdict) => verdict !== RADAR_NO_VERDICT)
+                .map((verdict) => (
+                  <SelectItem key={verdict} value={verdict}>
+                    {verdictName(verdict)}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <span className="text-xs font-medium text-muted-foreground">Funil</span>
-        <div className="inline-flex overflow-hidden rounded-none border border-border">
-          <ToggleButton
-            active={draft.link === ""}
-            disabled={isPending}
-            label="Todas"
-            title="Sem filtro: vagas com e sem candidatura."
-            onClick={() => {
-              setDraft((d) => ({ ...d, link: "" }));
-              push({ link: "" });
-            }}
-          />
-          {JOB_LINK_KEYS.map((link) => (
-            <ToggleButton
-              key={link}
-              active={draft.link === link}
-              disabled={isPending}
-              label={JOB_LINK_LABELS[link]}
-              title={JOB_LINK_HINTS[link]}
-              onClick={() => {
-                setDraft((d) => ({ ...d, link }));
-                push({ link });
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-end gap-2">
-        <Input
-          value={draft.q}
-          onChange={(event) => setDraft((d) => ({ ...d, q: event.target.value }))}
-          placeholder="Vaga, empresa ou URL…"
-          aria-label="Buscar por vaga, empresa ou URL"
-          className="w-56"
-        />
-
-        <Select
-          value={draft.verdict || ALL}
-          onValueChange={(value) =>
-            setDraft((d) => ({ ...d, verdict: value === ALL ? "" : value }))
-          }
-        >
-          <SelectTrigger className="w-48" aria-label="Veredito do radar">
-            <SelectValue placeholder="Veredito" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Todos os vereditos</SelectItem>
-            <SelectItem value={RADAR_NO_VERDICT}>Sem veredito</SelectItem>
-            {withSelected(props.verdicts ?? [], draft.verdict)
-              .filter((verdict) => verdict !== RADAR_NO_VERDICT)
-              .map((verdict) => (
-                <SelectItem key={verdict} value={verdict}>
-                  {radarVerdictLabel(verdict)}
+        <Field id="jobs-link" label={filters.link} className="w-full sm:w-48">
+          <Select value={draft.link || ALL} onValueChange={choose("link")}>
+            <SelectTrigger id="jobs-link" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.anyLink}</SelectItem>
+              {JOB_LINK_KEYS.map((link) => (
+                <SelectItem key={link} value={link}>
+                  {vocab.link[link]}
                 </SelectItem>
               ))}
-          </SelectContent>
-        </Select>
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <Select
-          value={draft.market || ALL}
-          onValueChange={(value) =>
-            setDraft((d) => ({ ...d, market: value === ALL ? "" : value }))
-          }
-        >
-          <SelectTrigger className="w-40" aria-label="Mercado">
-            <SelectValue placeholder="Mercado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Todos os mercados</SelectItem>
-            {withSelected(props.markets ?? [], draft.market).map((market) => (
-              <SelectItem key={market} value={market}>
-                {market}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Field id="jobs-route" label={filters.route} className="w-full sm:w-56">
+          <Select
+            value={draft.route || ALL}
+            onValueChange={(value) => setDraft((d) => ({ ...d, route: value === ALL ? "" : value, sponsorship: "" }))}
+          >
+            <SelectTrigger id="jobs-route" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allRoutes}</SelectItem>
+              {SPONSORSHIP_ROUTE_KEYS.map((route) => (
+                <SelectItem key={route} value={route} title={vocab.routeHint[route]}>
+                  {vocab.route[route]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <Select
-          value={draft.sponsorship || ALL}
-          onValueChange={(value) =>
-            setDraft((d) => ({ ...d, sponsorship: value === ALL ? "" : value }))
-          }
-        >
-          <SelectTrigger className="w-64" aria-label="Sinal de patrocínio">
-            <SelectValue placeholder="Sinal de patrocínio" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Qualquer sinal</SelectItem>
-            {SPONSORSHIP_SIGNALS.map((signal) => (
-              <SelectItem
-                key={signal}
-                value={signal}
-                title={SPONSORSHIP_HINTS[signal]}
-              >
-                {SPONSORSHIP_LABELS[signal]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Field id="jobs-visa" label={filters.visa} className="w-full sm:w-64">
+          <Select value={draft.sponsorship || ALL} onValueChange={choose("sponsorship")}>
+            <SelectTrigger id="jobs-visa" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.anyVisa}</SelectItem>
+              {SPONSORSHIP_SIGNALS.map((signal) => (
+                <SelectItem key={signal} value={signal} title={vocab.visaHint[signal]}>
+                  {vocab.visa[signal]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <div className="flex items-end gap-1">
-          <div className="space-y-1">
-            <Label htmlFor="score-min" className="text-xs text-muted-foreground">
-              Pontuação
-            </Label>
+        <Field id="jobs-market" label={filters.market} className="w-full sm:w-44">
+          <Select value={draft.market || ALL} onValueChange={choose("market")}>
+            <SelectTrigger id="jobs-market" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allMarkets}</SelectItem>
+              {withSelected(props.markets ?? [], draft.market).map((market) => (
+                <SelectItem key={market} value={market}>
+                  {market}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <fieldset className="flex items-end gap-2" aria-describedby="jobs-score-help">
+          <legend className="sr-only">{`${filters.scoreMin} · ${filters.scoreMax}`}</legend>
+          <Field id="jobs-score-min" label={filters.scoreMin} className="w-32">
             <Input
-              id="score-min"
+              id="jobs-score-min"
               type="number"
               inputMode="numeric"
               min={0}
               max={100}
               value={draft.scoreMin}
-              onChange={(event) =>
-                setDraft((d) => ({ ...d, scoreMin: event.target.value }))
-              }
-              placeholder="mín."
-              aria-label="Pontuação mínima"
-              className="w-20 tabular-nums"
+              onChange={(event) => setDraft((d) => ({ ...d, scoreMin: event.target.value }))}
+              className="w-full"
             />
-          </div>
-          <span className="pb-2 text-muted-foreground">–</span>
-          <Input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={100}
-            value={draft.scoreMax}
-            onChange={(event) =>
-              setDraft((d) => ({ ...d, scoreMax: event.target.value }))
-            }
-            placeholder="máx."
-            aria-label="Pontuação máxima"
-            className="w-20 tabular-nums"
-          />
-        </div>
+          </Field>
+          <Field id="jobs-score-max" label={filters.scoreMax} className="w-32">
+            <Input
+              id="jobs-score-max"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={100}
+              value={draft.scoreMax}
+              onChange={(event) => setDraft((d) => ({ ...d, scoreMax: event.target.value }))}
+              className="w-full"
+            />
+          </Field>
+          <FieldHelp id="jobs-score-help" className="pb-3">
+            {filters.scoreHelp}
+          </FieldHelp>
+        </fieldset>
 
-        <Button type="submit" variant="outline" size="sm" disabled={isPending}>
-          <Search className="size-4" />
-          [ filtrar ]
-        </Button>
-
-        {hasFilters && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={clear}
-            disabled={isPending}
-          >
-            <X className="size-4" />
-            [ limpar ]
+        <div className="flex items-center gap-2 pb-1">
+          <Button type="submit" variant="outline" disabled={isPending}>
+            <Search aria-hidden="true" />
+            {filters.apply}
           </Button>
-        )}
-      </div>
-    </form>
+          {applied && (
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isPending}
+              onClick={() => {
+                setDraft(EMPTY);
+                push(EMPTY);
+              }}
+            >
+              <X aria-hidden="true" />
+              {clear}
+            </Button>
+          )}
+        </div>
+      </form>
+    </FilterPanel>
   );
 }
 
-function ToggleButton({
-  active,
-  disabled,
-  label,
-  title,
-  onClick,
-}: {
-  active: boolean;
-  disabled: boolean;
-  label: string;
-  title: string;
-  onClick: () => void;
-}) {
+function Field({ id, label, className, children }: { id: string; label: string; className?: string; children: React.ReactNode }) {
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      disabled={disabled}
-      title={title}
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "rounded-none border-0 px-3",
-        active && "bg-brand/15 text-foreground hover:bg-brand/20",
-      )}
-    >
-      {label}
-    </Button>
+    <div className={className}>
+      <Label htmlFor={id} className="pb-1.5">
+        {label}
+      </Label>
+      {children}
+    </div>
   );
 }
 
-/**
- * O valor aplicado precisa existir entre as opções, senão o Radix mostra o
- * placeholder em vez do valor corrente (ex.: filtro por um veredito que sumiu
- * da base entre duas varreduras).
- */
+/** The applied value has to be among the options, or Radix shows the placeholder. */
 function withSelected(values: string[], selected: string): string[] {
   if (!selected || values.includes(selected)) return values;
-  return [...values, selected].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return [...values, selected].sort((a, b) => a.localeCompare(b));
 }

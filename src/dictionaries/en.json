@@ -1168,6 +1168,13 @@
         "field": "Name, as written above",
         "pending": "Deleting…",
         "lost": "This cannot be undone."
+      },
+      "filters": {
+        "label": "Filters",
+        "applied": {
+          "one": "1 applied",
+          "many": "{count} applied"
+        }
       }
     },
     "vocab": {
@@ -1246,6 +1253,70 @@
         "referral": "Referral",
         "radar": "Job radar",
         "other": "Other"
+      },
+      "verdict": {
+        "top_find": "Top find",
+        "shortlisted": "Shortlisted",
+        "approved": "Approved",
+        "kept": "Kept",
+        "stretch": "Stretch",
+        "eliminated": "Eliminated",
+        "not_verified": "Not verified",
+        "none": "No verdict"
+      },
+      "verification": {
+        "confirmado": "Description confirmed",
+        "divergente": "Description differs",
+        "inacessível": "Description unreachable",
+        "expirada": "Posting expired"
+      },
+      "link": {
+        "unlinked": "Outside the funnel",
+        "linked": "In the funnel"
+      },
+      "workMode": {
+        "remote": "Remote",
+        "hybrid": "Hybrid",
+        "onsite": "On site"
+      },
+      "employmentType": {
+        "full_time": "Full-time",
+        "contract": "Contract",
+        "b2b": "B2B",
+        "freelance": "Freelance"
+      },
+      "channel": {
+        "linkedin": "LinkedIn",
+        "email": "Email",
+        "vanhack": "VanHack",
+        "referral": "Referral",
+        "portal": "Job portal",
+        "phone": "Phone",
+        "event": "Event",
+        "other": "Other"
+      },
+      "referenceLanguage": {
+        "pt-BR": "Portuguese",
+        "en-US": "English",
+        "es-ES": "Spanish",
+        "de-DE": "German"
+      },
+      "projectStatus": {
+        "live": "Live",
+        "internal": "Internal",
+        "nda": "Under NDA",
+        "archived": "Archived"
+      },
+      "projectCategory": {
+        "web": "Web",
+        "mobile": "Mobile",
+        "ai": "AI",
+        "backend": "Backend",
+        "client": "Client"
+      },
+      "visibility": {
+        "public": "Public",
+        "private": "Private"
       }
     },
     "applications": {
@@ -1411,6 +1482,257 @@
       "already": "“{name}” is already in {stage}.",
       "failed": "The database did not save the change. Try again.",
       "moved": "“{name}” moved to {stage}."
+    },
+    "jobs": {
+      "title": "Jobs",
+      "description": "What is out there, before it becomes an application: score, radar verdict and visa.",
+      "applications": "See applications",
+      "columns": {
+        "job": "Job",
+        "score": "Score",
+        "verdict": "Verdict",
+        "visa": "Visa",
+        "posted": "Posted",
+        "funnel": "Funnel",
+        "actions": "Actions"
+      },
+      "unknownCompany": "Unknown company",
+      "closed": "Closed",
+      "radarScore": "radar {score}",
+      "rank": "#{rank} on the radar",
+      "scoreHint": "The job's score; the radar's shows below when both exist.",
+      "reason": "Reason: {reason}",
+      "verifiedOn": "on {date}",
+      "scannedOn": "radar of {date}",
+      "outside": "Outside the funnel",
+      "openPosting": "Open the posting of {job}",
+      "promote": "Create an application from {job}",
+      "promoteShort": "Create application",
+      "promoted": "Application “{name}” created from the job.",
+      "existing": "This job already had an application: opening it.",
+      "promoteFailed": "The application could not be created. The job is still here.",
+      "missing": "This job no longer exists. Reload the page.",
+      "unmapped": {
+        "one": "1 radar scan line has not become a job yet, so it is not shown here.",
+        "many": "{count} radar scan lines have not become jobs yet, so they are not shown here."
+      },
+      "unmappedHelp": "A line enters the list when the sync records the job, with the address of the posting.",
+      "states": {
+        "loading": "Loading the jobs…",
+        "empty": "No jobs on the radar yet. They arrive through the agent's sync.",
+        "filtered": "No jobs match these filters.",
+        "failed": "The jobs did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter jobs",
+        "search": "Search",
+        "searchPlaceholder": "Job, company or address",
+        "verdict": "Verdict",
+        "allVerdicts": "All verdicts",
+        "market": "Market",
+        "allMarkets": "All markets",
+        "route": "Route",
+        "allRoutes": "All routes",
+        "visa": "Visa",
+        "anyVisa": "Any signal",
+        "link": "Funnel",
+        "anyLink": "In and out",
+        "scoreMin": "Minimum score",
+        "scoreMax": "Maximum score",
+        "scoreHelp": "From 0 to 100.",
+        "apply": "Filter"
+      }
+    },
+    "contacts": {
+      "title": "Contacts",
+      "description": "Recruiters and professional references. This is other people's personal data: it stays private, and no public page reads it.",
+      "tabs": {
+        "label": "Kind of contact",
+        "contacts": "Recruiters and contacts",
+        "references": "Professional references"
+      },
+      "privacy": "This screen is the only one that reads these tables. The contacts of an application also arrive through the agent.",
+      "columns": {
+        "name": "Name",
+        "company": "Company",
+        "contact": "Contact",
+        "channel": "Channel",
+        "relationship": "Relationship",
+        "consent": "Consent",
+        "actions": "Actions"
+      },
+      "events": {
+        "one": "1 event",
+        "many": "{count} events"
+      },
+      "interviews": {
+        "one": "1 interview",
+        "many": "{count} interviews"
+      },
+      "canContact": "May be contacted",
+      "noConsent": "No consent",
+      "noConsentHint": "Cannot be handed to a recruiter yet.",
+      "linkedin": "LinkedIn",
+      "states": {
+        "loadingContacts": "Loading the contacts…",
+        "loadingReferences": "Loading the references…",
+        "emptyContacts": "No contacts yet.",
+        "emptyReferences": "No references yet.",
+        "filteredContacts": "No contacts match these filters.",
+        "filteredReferences": "No references match this search.",
+        "failedContacts": "The contacts did not load: the database did not answer.",
+        "failedReferences": "The references did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter contacts",
+        "search": "Search",
+        "searchContacts": "Name, title, email or company",
+        "searchReferences": "Name, company or key",
+        "channel": "Channel",
+        "allChannels": "All channels",
+        "company": "Company",
+        "allCompanies": "All companies",
+        "apply": "Filter"
+      },
+      "contact": {
+        "create": "New contact",
+        "edit": "Edit the contact {name}",
+        "newTitle": "New contact",
+        "editTitle": "Edit the contact",
+        "description": "Someone else's personal data. It stays private: no public page reads this table.",
+        "fields": {
+          "name": "Name",
+          "roleTitle": "Title",
+          "rolePlaceholder": "Technical Recruiter",
+          "company": "Company",
+          "noCompany": "No company",
+          "companyHelp": "Only companies that exist: the list is the same as the jobs' and applications'.",
+          "channel": "Channel",
+          "noChannel": "Not stated",
+          "email": "Email",
+          "emailPlaceholder": "name@company.com",
+          "phone": "Phone",
+          "linkedinUrl": "LinkedIn",
+          "timezone": "Time zone",
+          "notesMd": "Notes",
+          "notesPlaceholder": "Context of the conversation, preferences, what was agreed…"
+        },
+        "errors": {
+          "name": "Write the name, up to 160 characters.",
+          "roleTitle": "The title is longer than 160 characters: shorten it.",
+          "companyId": "That company no longer exists: choose another.",
+          "email": "Write a full email, like name@company.com.",
+          "phone": "The phone is longer than 60 characters: shorten it.",
+          "linkedinUrl": "Write the full address, starting with https://.",
+          "timezone": "The time zone is longer than 60 characters: shorten it.",
+          "channel": "Choose a channel from the list.",
+          "notesMd": "The notes are longer than 20,000 characters: shorten them.",
+          "invalid": "This value was not accepted: check it.",
+          "duplicate": "There is already a contact with this name at this company."
+        },
+        "save": "Save contact",
+        "saved": "Contact saved.",
+        "failed": "The contact could not be saved. What you typed is still here.",
+        "delete": {
+          "trigger": "Delete the contact {name}",
+          "title": "Delete the contact {name}?",
+          "lost": "The events and interviews they appear in stay, without the contact.",
+          "confirm": "Delete contact",
+          "done": "Contact “{name}” deleted.",
+          "failed": "The contact could not be deleted. It is still on the list."
+        }
+      },
+      "reference": {
+        "create": "New reference",
+        "edit": "Edit the reference {name}",
+        "newTitle": "New reference",
+        "editTitle": "Edit the reference",
+        "description": "Who can speak about your work. Someone else's personal data: it stays private.",
+        "fields": {
+          "name": "Name",
+          "slug": "Key",
+          "slugPlaceholder": "Comes from the name",
+          "slugHelp": "Identifies the reference in the sync. Left empty, it comes from the name.",
+          "relationship": "Relationship",
+          "relationshipPlaceholder": "Direct manager, peer, client…",
+          "companyName": "Company",
+          "roleTitle": "Title",
+          "language": "Language",
+          "noLanguage": "Not stated",
+          "email": "Email",
+          "phone": "Phone",
+          "linkedinUrl": "LinkedIn",
+          "canContact": "May be contacted",
+          "canContactHelp": "Tick it only when the person agreed that their contact be handed to a recruiter.",
+          "noteMd": "Notes",
+          "notePlaceholder": "When you worked together, what this person can vouch for…"
+        },
+        "errors": {
+          "slug": "Use only lowercase letters, numbers and hyphens.",
+          "name": "Write the name, up to 160 characters.",
+          "relationship": "The relationship is longer than 160 characters: shorten it.",
+          "companyName": "The company is longer than 160 characters: shorten it.",
+          "roleTitle": "The title is longer than 160 characters: shorten it.",
+          "email": "Write a full email, like name@company.com.",
+          "phone": "The phone is longer than 60 characters: shorten it.",
+          "linkedinUrl": "Write the full address, starting with https://.",
+          "language": "Choose a language from the list.",
+          "noteMd": "The notes are longer than 20,000 characters: shorten them.",
+          "invalid": "This value was not accepted: check it.",
+          "duplicate": "The key “{slug}” already belongs to another reference. Choose another."
+        },
+        "save": "Save reference",
+        "saved": "Reference saved.",
+        "failed": "The reference could not be saved. What you typed is still here.",
+        "delete": {
+          "trigger": "Delete the reference {name}",
+          "title": "Delete the reference {name}?",
+          "lost": "It leaves the panel; no application changes.",
+          "confirm": "Delete reference",
+          "done": "Reference “{name}” deleted.",
+          "failed": "The reference could not be deleted. It is still on the list."
+        }
+      }
+    },
+    "projects": {
+      "title": "Projects",
+      "description": "The showcase of the public site. The address of each comes from its slug, under /projects.",
+      "create": "New project",
+      "columns": {
+        "project": "Project",
+        "category": "Category",
+        "status": "Status",
+        "source": "Code",
+        "featured": "Featured",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "featured": "Featured",
+      "edit": "Edit the project {name}",
+      "delete": {
+        "trigger": "Delete the project {name}",
+        "title": "Delete the project {name}?",
+        "lost": "It leaves the site and the backoffice: the page /projects/{slug} stops existing.",
+        "confirm": "Delete project",
+        "done": "Project “{name}” deleted.",
+        "failed": "The project could not be deleted. It is still on the site."
+      },
+      "states": {
+        "loading": "Loading the projects…",
+        "empty": "No projects yet.",
+        "filtered": "No projects match these filters.",
+        "failed": "The projects did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter projects",
+        "search": "Search",
+        "searchPlaceholder": "Name or slug",
+        "category": "Category",
+        "allCategories": "All categories",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "apply": "Filter"
+      }
     }
   }
 }

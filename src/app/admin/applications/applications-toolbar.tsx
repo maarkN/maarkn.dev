@@ -25,6 +25,7 @@
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { FilterPanel } from "@/components/admin/filter-panel";
 import { TablePager } from "@/components/admin/table-pager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,144 +128,146 @@ export function ApplicationsToolbar(props: Props) {
   }
 
   return (
-    <form
-      aria-label={filters.label}
-      className="flex flex-wrap items-end gap-x-3 gap-y-4 pb-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        push(draft);
-      }}
-    >
-      <Field id="filter-q" label={filters.search} className="w-full sm:w-64">
-        <Input
-          id="filter-q"
-          type="search"
-          value={draft.q}
-          onChange={(event) => setDraft((d) => ({ ...d, q: event.target.value }))}
-          placeholder={filters.searchPlaceholder}
-          className="w-full"
-        />
-      </Field>
+    <FilterPanel applied={KEYS.filter((key) => props[key]).length}>
+      <form
+        aria-label={filters.label}
+        className="flex flex-wrap items-end gap-x-3 gap-y-4 pb-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          push(draft);
+        }}
+      >
+        <Field id="filter-q" label={filters.search} className="w-full sm:w-64">
+          <Input
+            id="filter-q"
+            type="search"
+            value={draft.q}
+            onChange={(event) => setDraft((d) => ({ ...d, q: event.target.value }))}
+            placeholder={filters.searchPlaceholder}
+            className="w-full"
+          />
+        </Field>
 
-      <Field id="filter-stage" label={board ? filters.phaseOnly : filters.phase} className="w-full sm:w-56">
-        <Select value={stageValue} onValueChange={onStageChange}>
-          <SelectTrigger id="filter-stage" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{filters.allPhases}</SelectItem>
-            {FUNNEL_STAGE_PHASES.map((phase) =>
-              board ? (
-                <SelectItem key={phase.key} value={`phase:${phase.key}`}>
-                  {vocab.phase[phase.key]}
-                </SelectItem>
-              ) : (
-                <SelectGroup key={phase.key}>
-                  <SelectLabel>{vocab.phase[phase.key]}</SelectLabel>
-                  <SelectItem value={`phase:${phase.key}`}>{fill(filters.wholePhase, { phase: vocab.phase[phase.key] })}</SelectItem>
-                  {phase.stages.map((stage) => (
-                    <SelectItem key={stage} value={`stage:${stage}`}>
-                      {vocab.stage[stage]}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ),
-            )}
-          </SelectContent>
-        </Select>
-      </Field>
+        <Field id="filter-stage" label={board ? filters.phaseOnly : filters.phase} className="w-full sm:w-56">
+          <Select value={stageValue} onValueChange={onStageChange}>
+            <SelectTrigger id="filter-stage" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allPhases}</SelectItem>
+              {FUNNEL_STAGE_PHASES.map((phase) =>
+                board ? (
+                  <SelectItem key={phase.key} value={`phase:${phase.key}`}>
+                    {vocab.phase[phase.key]}
+                  </SelectItem>
+                ) : (
+                  <SelectGroup key={phase.key}>
+                    <SelectLabel>{vocab.phase[phase.key]}</SelectLabel>
+                    <SelectItem value={`phase:${phase.key}`}>{fill(filters.wholePhase, { phase: vocab.phase[phase.key] })}</SelectItem>
+                    {phase.stages.map((stage) => (
+                      <SelectItem key={stage} value={`stage:${stage}`}>
+                        {vocab.stage[stage]}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ),
+              )}
+            </SelectContent>
+          </Select>
+        </Field>
 
-      <Field id="filter-route" label={filters.route} className="w-full sm:w-56">
-        <Select
-          value={draft.route || ALL}
-          // Changing route clears the signal: a signal of the other route would
-          // leave the list empty with no reason given.
-          onValueChange={(value) => setDraft((d) => ({ ...d, route: value === ALL ? "" : value, sponsorship: "" }))}
-        >
-          <SelectTrigger id="filter-route" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{filters.allRoutes}</SelectItem>
-            {SPONSORSHIP_ROUTE_KEYS.map((route) => (
-              <SelectItem key={route} value={route} title={vocab.routeHint[route]}>
-                {vocab.route[route]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field id="filter-visa" label={filters.visa} className="w-full sm:w-64">
-        <Select value={draft.sponsorship || ALL} onValueChange={set("sponsorship")}>
-          <SelectTrigger id="filter-visa" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{filters.anyVisa}</SelectItem>
-            {SPONSORSHIP_SIGNALS.map((signal) => (
-              <SelectItem key={signal} value={signal} title={vocab.visaHint[signal]}>
-                {vocab.visa[signal]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field id="filter-market" label={filters.market} className="w-full sm:w-44">
-        <Select value={draft.market || ALL} onValueChange={set("market")}>
-          <SelectTrigger id="filter-market" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{filters.allMarkets}</SelectItem>
-            {withSelected(props.markets ?? [], draft.market).map((market) => (
-              <SelectItem key={market} value={market}>
-                {market}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field id="filter-source" label={filters.source} className="w-full sm:w-48">
-        <Select value={draft.source || ALL} onValueChange={set("source")}>
-          <SelectTrigger id="filter-source" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{filters.allSources}</SelectItem>
-            {withSelected(props.sources ?? [], draft.source).map((source) => (
-              <SelectItem key={source} value={source}>
-                {vocab.source[source as ApplicationSource] ?? source}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <div className="flex items-center gap-2 pb-1">
-        <Button type="submit" variant="outline" disabled={isPending}>
-          <Search aria-hidden="true" />
-          {filters.apply}
-        </Button>
-        {applied && (
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={isPending}
-            onClick={() => {
-              const empty = { q: "", stage: "", phase: "", market: "", route: "", sponsorship: "", source: "" };
-              setDraft(empty);
-              push(empty);
-            }}
+        <Field id="filter-route" label={filters.route} className="w-full sm:w-56">
+          <Select
+            value={draft.route || ALL}
+            // Changing route clears the signal: a signal of the other route would
+            // leave the list empty with no reason given.
+            onValueChange={(value) => setDraft((d) => ({ ...d, route: value === ALL ? "" : value, sponsorship: "" }))}
           >
-            <X aria-hidden="true" />
-            {clear}
+            <SelectTrigger id="filter-route" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allRoutes}</SelectItem>
+              {SPONSORSHIP_ROUTE_KEYS.map((route) => (
+                <SelectItem key={route} value={route} title={vocab.routeHint[route]}>
+                  {vocab.route[route]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field id="filter-visa" label={filters.visa} className="w-full sm:w-64">
+          <Select value={draft.sponsorship || ALL} onValueChange={set("sponsorship")}>
+            <SelectTrigger id="filter-visa" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.anyVisa}</SelectItem>
+              {SPONSORSHIP_SIGNALS.map((signal) => (
+                <SelectItem key={signal} value={signal} title={vocab.visaHint[signal]}>
+                  {vocab.visa[signal]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field id="filter-market" label={filters.market} className="w-full sm:w-44">
+          <Select value={draft.market || ALL} onValueChange={set("market")}>
+            <SelectTrigger id="filter-market" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allMarkets}</SelectItem>
+              {withSelected(props.markets ?? [], draft.market).map((market) => (
+                <SelectItem key={market} value={market}>
+                  {market}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field id="filter-source" label={filters.source} className="w-full sm:w-48">
+          <Select value={draft.source || ALL} onValueChange={set("source")}>
+            <SelectTrigger id="filter-source" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allSources}</SelectItem>
+              {withSelected(props.sources ?? [], draft.source).map((source) => (
+                <SelectItem key={source} value={source}>
+                  {vocab.source[source as ApplicationSource] ?? source}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <div className="flex items-center gap-2 pb-1">
+          <Button type="submit" variant="outline" disabled={isPending}>
+            <Search aria-hidden="true" />
+            {filters.apply}
           </Button>
-        )}
-      </div>
-    </form>
+          {applied && (
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isPending}
+              onClick={() => {
+                const empty = { q: "", stage: "", phase: "", market: "", route: "", sponsorship: "", source: "" };
+                setDraft(empty);
+                push(empty);
+              }}
+            >
+              <X aria-hidden="true" />
+              {clear}
+            </Button>
+          )}
+        </div>
+      </form>
+    </FilterPanel>
   );
 }
 

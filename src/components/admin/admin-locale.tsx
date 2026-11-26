@@ -92,7 +92,7 @@ export function useWrittenLanguage(): AdminLocale {
   return screen ?? locale;
 }
 
-const NESTED = new Set(["pager", "total", "states", "sort", "confirm"]);
+const NESTED = new Set(["pager", "total", "states", "sort", "confirm", "filters", "applied"]);
 const MISSING: CommonLabels = new Proxy({} as CommonLabels, {
   get: (_, key) => (typeof key === "string" && NESTED.has(key) ? MISSING : ""),
 });

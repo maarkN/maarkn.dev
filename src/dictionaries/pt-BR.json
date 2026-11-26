@@ -1167,6 +1167,13 @@
         "field": "Nome, como aparece acima",
         "pending": "Excluindo…",
         "lost": "Não dá para desfazer."
+      },
+      "filters": {
+        "label": "Filtros",
+        "applied": {
+          "one": "1 aplicado",
+          "many": "{count} aplicados"
+        }
       }
     },
     "vocab": {
@@ -1245,6 +1252,70 @@
         "referral": "Indicação",
         "radar": "Radar de vagas",
         "other": "Outra"
+      },
+      "verdict": {
+        "top_find": "Achado top",
+        "shortlisted": "Selecionada",
+        "approved": "Aprovada",
+        "kept": "Mantida",
+        "stretch": "Acima do perfil",
+        "eliminated": "Eliminada",
+        "not_verified": "Não verificada",
+        "none": "Sem veredito"
+      },
+      "verification": {
+        "confirmado": "Descrição confirmada",
+        "divergente": "Descrição divergente",
+        "inacessível": "Descrição inacessível",
+        "expirada": "Anúncio expirado"
+      },
+      "link": {
+        "unlinked": "Fora do funil",
+        "linked": "No funil"
+      },
+      "workMode": {
+        "remote": "Remoto",
+        "hybrid": "Híbrido",
+        "onsite": "Presencial"
+      },
+      "employmentType": {
+        "full_time": "CLT/full-time",
+        "contract": "Contrato",
+        "b2b": "B2B",
+        "freelance": "Freelance"
+      },
+      "channel": {
+        "linkedin": "LinkedIn",
+        "email": "E-mail",
+        "vanhack": "VanHack",
+        "referral": "Indicação",
+        "portal": "Portal da vaga",
+        "phone": "Telefone",
+        "event": "Evento",
+        "other": "Outro"
+      },
+      "referenceLanguage": {
+        "pt-BR": "Português",
+        "en-US": "Inglês",
+        "es-ES": "Espanhol",
+        "de-DE": "Alemão"
+      },
+      "projectStatus": {
+        "live": "No ar",
+        "internal": "Interno",
+        "nda": "Sob NDA",
+        "archived": "Arquivado"
+      },
+      "projectCategory": {
+        "web": "Web",
+        "mobile": "Mobile",
+        "ai": "IA",
+        "backend": "Backend",
+        "client": "Cliente"
+      },
+      "visibility": {
+        "public": "Público",
+        "private": "Privado"
       }
     },
     "applications": {
@@ -1410,6 +1481,257 @@
       "already": "“{name}” já está em {stage}.",
       "failed": "O banco não gravou a mudança. Tente de novo.",
       "moved": "“{name}” foi para {stage}."
+    },
+    "jobs": {
+      "title": "Vagas",
+      "description": "O que existe lá fora, antes de virar candidatura: nota, veredito do radar e visto.",
+      "applications": "Ver candidaturas",
+      "columns": {
+        "job": "Vaga",
+        "score": "Nota",
+        "verdict": "Veredito",
+        "visa": "Visto",
+        "posted": "Publicada",
+        "funnel": "Funil",
+        "actions": "Ações"
+      },
+      "unknownCompany": "Empresa não identificada",
+      "closed": "Encerrada",
+      "radarScore": "radar {score}",
+      "rank": "#{rank} no radar",
+      "scoreHint": "Nota da vaga; a do radar aparece embaixo quando as duas existem.",
+      "reason": "Motivo: {reason}",
+      "verifiedOn": "em {date}",
+      "scannedOn": "radar de {date}",
+      "outside": "Fora do funil",
+      "openPosting": "Abrir o anúncio de {job}",
+      "promote": "Criar candidatura a partir de {job}",
+      "promoteShort": "Criar candidatura",
+      "promoted": "Candidatura “{name}” criada a partir da vaga.",
+      "existing": "Esta vaga já tinha candidatura: abrindo a que existe.",
+      "promoteFailed": "Não foi possível criar a candidatura. A vaga continua aqui.",
+      "missing": "Esta vaga não existe mais. Recarregue a página.",
+      "unmapped": {
+        "one": "1 linha de varredura do radar ainda não virou vaga, e por isso não aparece aqui.",
+        "many": "{count} linhas de varredura do radar ainda não viraram vaga, e por isso não aparecem aqui."
+      },
+      "unmappedHelp": "Uma linha entra na lista quando a sincronização grava a vaga, com o endereço do anúncio.",
+      "states": {
+        "loading": "Carregando as vagas…",
+        "empty": "Nenhuma vaga no radar ainda. Elas chegam pela sincronização do agente.",
+        "filtered": "Nenhuma vaga com estes filtros.",
+        "failed": "As vagas não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar vagas",
+        "search": "Busca",
+        "searchPlaceholder": "Vaga, empresa ou endereço",
+        "verdict": "Veredito",
+        "allVerdicts": "Todos os vereditos",
+        "market": "Mercado",
+        "allMarkets": "Todos os mercados",
+        "route": "Rota",
+        "allRoutes": "Todas as rotas",
+        "visa": "Visto",
+        "anyVisa": "Qualquer sinal",
+        "link": "Funil",
+        "anyLink": "Dentro e fora",
+        "scoreMin": "Nota mínima",
+        "scoreMax": "Nota máxima",
+        "scoreHelp": "De 0 a 100.",
+        "apply": "Filtrar"
+      }
+    },
+    "contacts": {
+      "title": "Contatos",
+      "description": "Recrutadores e referências profissionais. São dados pessoais de outras pessoas: ficam privados, e nenhuma página pública os lê.",
+      "tabs": {
+        "label": "Tipo de contato",
+        "contacts": "Recrutadores e contatos",
+        "references": "Referências profissionais"
+      },
+      "privacy": "Esta tela é a única que lê estas tabelas. Os contatos de uma candidatura chegam também pelo agente.",
+      "columns": {
+        "name": "Nome",
+        "company": "Empresa",
+        "contact": "Contato",
+        "channel": "Canal",
+        "relationship": "Relação",
+        "consent": "Autorização",
+        "actions": "Ações"
+      },
+      "events": {
+        "one": "1 evento",
+        "many": "{count} eventos"
+      },
+      "interviews": {
+        "one": "1 entrevista",
+        "many": "{count} entrevistas"
+      },
+      "canContact": "Pode ser contatada",
+      "noConsent": "Sem autorização",
+      "noConsentHint": "Ainda não pode ser passada a um recrutador.",
+      "linkedin": "LinkedIn",
+      "states": {
+        "loadingContacts": "Carregando os contatos…",
+        "loadingReferences": "Carregando as referências…",
+        "emptyContacts": "Nenhum contato ainda.",
+        "emptyReferences": "Nenhuma referência ainda.",
+        "filteredContacts": "Nenhum contato com estes filtros.",
+        "filteredReferences": "Nenhuma referência com esta busca.",
+        "failedContacts": "Os contatos não carregaram: o banco não respondeu.",
+        "failedReferences": "As referências não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar contatos",
+        "search": "Busca",
+        "searchContacts": "Nome, cargo, e-mail ou empresa",
+        "searchReferences": "Nome, empresa ou chave",
+        "channel": "Canal",
+        "allChannels": "Todos os canais",
+        "company": "Empresa",
+        "allCompanies": "Todas as empresas",
+        "apply": "Filtrar"
+      },
+      "contact": {
+        "create": "Novo contato",
+        "edit": "Editar o contato {name}",
+        "newTitle": "Novo contato",
+        "editTitle": "Editar o contato",
+        "description": "Dados pessoais de outra pessoa. Ficam privados: nenhuma página pública lê esta tabela.",
+        "fields": {
+          "name": "Nome",
+          "roleTitle": "Cargo",
+          "rolePlaceholder": "Technical Recruiter",
+          "company": "Empresa",
+          "noCompany": "Sem empresa",
+          "companyHelp": "Só empresas que já existem: a lista é a mesma das vagas e candidaturas.",
+          "channel": "Canal",
+          "noChannel": "Não informado",
+          "email": "E-mail",
+          "emailPlaceholder": "nome@empresa.com",
+          "phone": "Telefone",
+          "linkedinUrl": "LinkedIn",
+          "timezone": "Fuso horário",
+          "notesMd": "Notas",
+          "notesPlaceholder": "Contexto da conversa, preferências, o que ficou combinado…"
+        },
+        "errors": {
+          "name": "Escreva o nome, com até 160 caracteres.",
+          "roleTitle": "O cargo passa de 160 caracteres: encurte.",
+          "companyId": "Essa empresa não existe mais: escolha outra.",
+          "email": "Escreva um e-mail completo, como nome@empresa.com.",
+          "phone": "O telefone passa de 60 caracteres: encurte.",
+          "linkedinUrl": "Escreva o endereço completo, começando com https://.",
+          "timezone": "O fuso passa de 60 caracteres: encurte.",
+          "channel": "Escolha um canal da lista.",
+          "notesMd": "As notas passam de 20.000 caracteres: encurte.",
+          "invalid": "Este valor não foi aceito: confira.",
+          "duplicate": "Já existe um contato com esse nome nesta empresa."
+        },
+        "save": "Salvar contato",
+        "saved": "Contato salvo.",
+        "failed": "Não foi possível salvar o contato. O que você digitou continua aqui.",
+        "delete": {
+          "trigger": "Excluir o contato {name}",
+          "title": "Excluir o contato {name}?",
+          "lost": "Os eventos e entrevistas em que ele aparece continuam, sem o contato.",
+          "confirm": "Excluir contato",
+          "done": "Contato “{name}” excluído.",
+          "failed": "Não foi possível excluir o contato. Ele continua na lista."
+        }
+      },
+      "reference": {
+        "create": "Nova referência",
+        "edit": "Editar a referência {name}",
+        "newTitle": "Nova referência",
+        "editTitle": "Editar a referência",
+        "description": "Quem pode falar do seu trabalho. Dados pessoais de outra pessoa: ficam privados.",
+        "fields": {
+          "name": "Nome",
+          "slug": "Chave",
+          "slugPlaceholder": "Vem do nome",
+          "slugHelp": "Identifica a referência na sincronização. Em branco, vem do nome.",
+          "relationship": "Relação",
+          "relationshipPlaceholder": "Gestor direto, par, cliente…",
+          "companyName": "Empresa",
+          "roleTitle": "Cargo",
+          "language": "Idioma",
+          "noLanguage": "Não informado",
+          "email": "E-mail",
+          "phone": "Telefone",
+          "linkedinUrl": "LinkedIn",
+          "canContact": "Pode ser contatada",
+          "canContactHelp": "Marque só quando a pessoa autorizou que o contato dela seja passado a um recrutador.",
+          "noteMd": "Notas",
+          "notePlaceholder": "Quando trabalharam juntos, o que essa pessoa pode atestar…"
+        },
+        "errors": {
+          "slug": "Use só minúsculas, números e hífen.",
+          "name": "Escreva o nome, com até 160 caracteres.",
+          "relationship": "A relação passa de 160 caracteres: encurte.",
+          "companyName": "A empresa passa de 160 caracteres: encurte.",
+          "roleTitle": "O cargo passa de 160 caracteres: encurte.",
+          "email": "Escreva um e-mail completo, como nome@empresa.com.",
+          "phone": "O telefone passa de 60 caracteres: encurte.",
+          "linkedinUrl": "Escreva o endereço completo, começando com https://.",
+          "language": "Escolha um idioma da lista.",
+          "noteMd": "As notas passam de 20.000 caracteres: encurte.",
+          "invalid": "Este valor não foi aceito: confira.",
+          "duplicate": "A chave “{slug}” já é de outra referência. Escolha outra."
+        },
+        "save": "Salvar referência",
+        "saved": "Referência salva.",
+        "failed": "Não foi possível salvar a referência. O que você digitou continua aqui.",
+        "delete": {
+          "trigger": "Excluir a referência {name}",
+          "title": "Excluir a referência {name}?",
+          "lost": "Ela sai do painel; nenhuma candidatura muda.",
+          "confirm": "Excluir referência",
+          "done": "Referência “{name}” excluída.",
+          "failed": "Não foi possível excluir a referência. Ela continua na lista."
+        }
+      }
+    },
+    "projects": {
+      "title": "Projetos",
+      "description": "A vitrine do site público. O endereço de cada um vem do slug, em /projects.",
+      "create": "Novo projeto",
+      "columns": {
+        "project": "Projeto",
+        "category": "Categoria",
+        "status": "Situação",
+        "source": "Código",
+        "featured": "Destaque",
+        "updated": "Atualizado",
+        "actions": "Ações"
+      },
+      "featured": "Em destaque",
+      "edit": "Editar o projeto {name}",
+      "delete": {
+        "trigger": "Excluir o projeto {name}",
+        "title": "Excluir o projeto {name}?",
+        "lost": "Ele sai do site e do backoffice: a página /projects/{slug} deixa de existir.",
+        "confirm": "Excluir projeto",
+        "done": "Projeto “{name}” excluído.",
+        "failed": "Não foi possível excluir o projeto. Ele continua no site."
+      },
+      "states": {
+        "loading": "Carregando os projetos…",
+        "empty": "Nenhum projeto ainda.",
+        "filtered": "Nenhum projeto com estes filtros.",
+        "failed": "Os projetos não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar projetos",
+        "search": "Busca",
+        "searchPlaceholder": "Nome ou slug",
+        "category": "Categoria",
+        "allCategories": "Todas as categorias",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "apply": "Filtrar"
+      }
     }
   }
 }
