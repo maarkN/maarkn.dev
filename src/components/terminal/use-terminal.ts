@@ -10,7 +10,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme, type ThemeApi } from "@/components/theme-provider";
 import { abortError } from "@/lib/terminal/abort";
 import { resetConversation } from "@/lib/terminal/ask-command";
 import { complete } from "@/lib/terminal/complete";
@@ -113,6 +113,23 @@ export type UseTerminalOptions = {
   /** Runs after `reboot` wiped the screen; the host restarts the boot overlay. */
   onReboot?: () => void;
 };
+
+/**
+ * The theme a replayed line sees. The provider already brought the palette
+ * and the font back on its own (it survives remounts, and the boot script
+ * covers reloads), so the rebuilt `theme`/`font` lines describe the look
+ * instead of setting it again: replayed, a bare `theme` would switch it back,
+ * and `theme classic` would undo a later switch made with the bar.
+ */
+function replayedTheme(theme: ThemeApi): ThemeApi {
+  return {
+    ...theme,
+    setTheme: () => {},
+    setFont: () => {},
+    toggleTheme: () => theme.theme,
+    toggleFont: () => theme.font,
+  };
+}
 
 /**
  * Owns everything interactive in the shell: printed lines, the prompt value,
@@ -362,13 +379,19 @@ export function useTerminal({
     baseRef.current = baseContext;
   }, [runner, baseContext]);
 
-  // Replays the saved commands once, silently (no history, no animation).
+  // Replays the saved commands once, silently (no history, no animation),
+  // with the palette and the font read-only (see `replayedTheme`).
   const ensureRestored = useCallback(() => {
     if (!restored.current) {
       restored.current = (async () => {
         const { lastCommands } = readSession();
         for (const line of lastCommands) {
-          await runnerRef.current.run(line, baseRef.current(), { record: false, instant: true });
+          const base = baseRef.current();
+          await runnerRef.current.run(
+            line,
+            { ...base, theme: replayedTheme(base.theme) },
+            { record: false, instant: true },
+          );
         }
         return lastCommands;
       })();

@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Preferência sobrevive à troca de idioma
-Trocar de idioma MUST manter a paleta e a fonte ativas, na tela e no armazenamento, por qualquer caminho e nos dois sentidos. O valor guardado MUST mudar apenas quando o visitante troca a paleta ou a fonte.
+Trocar de idioma MUST manter a paleta e a fonte ativas, na tela e no armazenamento, por qualquer caminho e nos dois sentidos. Trocar de idioma MUST NOT gravar a paleta nem a fonte; o valor guardado muda quando o visitante as troca e na carga do documento, pela migração de valores antigos e pelo padrão da primeira visita.
 
 #### Scenario: Comando lang
 - **WHEN** o visitante usa `classic` e `daddytime` em `/en` e executa `lang pt`
