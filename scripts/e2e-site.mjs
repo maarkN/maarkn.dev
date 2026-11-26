@@ -12,6 +12,7 @@
  *   node scripts/e2e-site.mjs             # ou: pnpm test:e2e
  *   … --width 390 --height 844            # viewport estreita
  *   … --only home:pt-BR                   # só os casos cujo nome contém isso
+ *   … --only cli-lang                     # a paleta e a fonte na troca de idioma
  *   … --verbose                           # lista também o que passou
  *   … --json
  *
@@ -30,6 +31,7 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { cliLookCases } from "./e2e-cli-look.mjs";
 
 const CHROME =
   process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -177,10 +179,13 @@ async function walkProjects(page, t, locale) {
   t.equal(page.errors, [], "nenhum erro no console");
 }
 
-const CASES = ["en", "pt-BR"].flatMap((locale) => [
-  { name: `home:${locale}`, run: (page, t) => walkHome(page, t, locale) },
-  { name: `projects:${locale}`, run: (page, t) => walkProjects(page, t, locale) },
-]);
+const CASES = [
+  ...["en", "pt-BR"].flatMap((locale) => [
+    { name: `home:${locale}`, run: (page, t) => walkHome(page, t, locale) },
+    { name: `projects:${locale}`, run: (page, t) => walkProjects(page, t, locale) },
+  ]),
+  ...cliLookCases,
+];
 
 /* ── asserções ───────────────────────────────────────────────────────────── */
 
@@ -431,6 +436,63 @@ async function createPage(cdp) {
       })()`,
     );
 
+  /** Roda `source` em todo documento novo desta aba, antes dos scripts da página. */
+  const beforeLoad = (source) => call("Page.addScriptToEvaluateOnNewDocument", { source });
+
+  /** Preferências do sistema: esquema de cores e movimento reduzido. */
+  const prefer = ({ scheme = "dark", motion = "no-preference" }) =>
+    call("Emulation.setEmulatedMedia", {
+      features: [
+        { name: "prefers-color-scheme", value: scheme },
+        { name: "prefers-reduced-motion", value: motion },
+      ],
+    });
+
+  /** Uma tecla de verdade: `press("Tab", { shift: true })`. */
+  const press = async (key, { shift = false, ctrl = false, meta = false } = {}) => {
+    const codes = {
+      Tab: 9, Enter: 13, Escape: 27, " ": 32, PageDown: 34, End: 35, Home: 36,
+      ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, k: 75,
+    };
+    const base = {
+      key,
+      code: key === " " ? "Space" : key.length === 1 ? `Key${key.toUpperCase()}` : key,
+      windowsVirtualKeyCode: codes[key] ?? 0,
+      modifiers: (ctrl ? 2 : 0) | (meta ? 4 : 0) | (shift ? 8 : 0),
+    };
+    const text = key === "Enter" ? "\r" : key === " " ? " " : undefined;
+    await call("Input.dispatchKeyEvent", { type: text ? "keyDown" : "rawKeyDown", ...base, text });
+    await call("Input.dispatchKeyEvent", { type: "keyUp", ...base });
+  };
+
+  /** Escreve no elemento com foco, como quem digita. */
+  const type = (text) => call("Input.insertText", { text });
+
+  /** Recarrega o documento, como F5. */
+  const reload = async () => {
+    response = null;
+    const loaded = new Promise((resolve) => {
+      const stop = cdp.on((msg) => {
+        if (msg.sessionId !== sessionId || msg.method !== "Page.loadEventFired") return;
+        stop();
+        resolve();
+      });
+    });
+    await call("Page.reload");
+    await loaded;
+    if (response?.status !== 200) throw new Error(`recarregar respondeu ${response?.status ?? "nada"}`);
+  };
+
+  /**
+   * O botão voltar do navegador. Uma navegação do roteador é do mesmo
+   * documento e não dispara `load`: quem chama espera o que precisa.
+   */
+  const back = async () => {
+    const { currentIndex, entries } = await call("Page.getNavigationHistory");
+    if (currentIndex < 1) throw new Error("não há para onde voltar");
+    await call("Page.navigateToHistoryEntry", { entryId: entries[currentIndex - 1].id });
+  };
+
   return {
     errors,
     open,
@@ -440,6 +502,12 @@ async function createPage(cdp) {
     scroll,
     scrollState,
     inView,
+    beforeLoad,
+    prefer,
+    press,
+    type,
+    reload,
+    back,
     async close() {
       off();
       await cdp.send("Target.disposeBrowserContext", { browserContextId });
