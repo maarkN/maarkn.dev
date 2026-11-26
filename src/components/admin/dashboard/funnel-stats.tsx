@@ -11,7 +11,8 @@ import { StatCard } from "@/app/admin/_components/stat-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dbConfigured } from "@/lib/db";
-import { EMPTY, formatDateTime, formatNumber, formatPercent } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
+import { EMPTY } from "@/lib/format";
 import { loadFunnelSnapshot } from "./dashboard-data";
 
 /**
@@ -45,6 +46,7 @@ export function FunnelStatsSkeleton() {
 }
 
 export async function FunnelStats() {
+  const { formatDateTime, formatNumber, formatPercent } = await getAdminFormat();
   const snapshot = await loadFunnelSnapshot();
 
   if (snapshot.failed) {

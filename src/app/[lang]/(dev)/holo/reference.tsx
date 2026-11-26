@@ -12,13 +12,14 @@ import { HoloNotice } from "@/components/holo/notice";
 import { HoloSwitch } from "@/components/holo/switch";
 import { HoloTabs } from "@/components/holo/tabs";
 import { HoloTag } from "@/components/holo/tag";
+import { HoloWindow } from "@/components/holo/window";
 import { setSiteTheme, useSiteTheme } from "@/components/site-theme";
 import { SITE_THEMES } from "@/lib/site-theme";
 import styles from "./reference.module.css";
 
 const TOKENS = [
   "bg", "bg-2", "bg-3", "sunk", "ink", "ink-2", "ink-3", "beam", "beam-2", "beam-3",
-  "on-beam", "ok", "warn", "bad", "plate", "c1", "c2",
+  "on-beam", "ok", "warn", "bad", "plate", "on-plate", "c1", "c2",
 ];
 
 /** A made-up screen: no third-party image ever enters the repository. */
@@ -212,6 +213,14 @@ export function Reference({ lang }: { lang: string }) {
             <p key={i}>{`Parágrafo ${i + 1}: texto corrido, mais alto que a tela e sem nenhum controle.`}</p>
           ))}
         </HoloDialog>
+        <div style={{ marginTop: 24, maxWidth: 440 }} data-shot="window">
+          <HoloWindow title="A página é a janela" heading="h3">
+            <p>Sem nada atrás para onde voltar, não tem botão de fechar.</p>
+            <div style={{ marginTop: 16 }}>
+              <HoloField label="Senha" name="window-password" type="password" autoComplete="off" aria-invalid />
+            </div>
+          </HoloWindow>
+        </div>
       </section>
 
       <section id="campos" aria-labelledby="t-campos">
@@ -219,6 +228,7 @@ export function Reference({ lang }: { lang: string }) {
         <div className={styles.grid}>
           <HoloField label="Nome" name="name" placeholder="Como você se chama" data-shot="field" />
           <HoloField label="E-mail" name="email" type="email" hint="Só para responder você." defaultValue="sem-arroba" error="Falta o @ no endereço. Exemplo: nome@empresa.com" />
+          <HoloField label="Usuário" name="user" aria-invalid data-shot="field-invalid" />
           <HoloField label="Empresa" name="company" disabled defaultValue="Desligado" />
           <HoloField label="Mensagem" name="message" multiline rows={4} />
         </div>

@@ -7,7 +7,7 @@
  * `CoverageLevel`, `DocKind`, severidade de `HonestyNote`, desfecho de
  * `Interview`, tipo de `ApplicationEvent` — aparecem em uma tela só. Ficam
  * juntos do consumidor e reaproveitam `makeStatusBadge`, então o contrato de
- * cor — um token da paleta em `text-*`, sem fundo, dentro de colchetes —
+ * cor — um token do tema em `text-*`, sem fundo, dentro de colchetes —
  * continua um só.
  *
  * Três dos cinco vocabulários são **texto livre no banco** (status do
@@ -40,11 +40,11 @@ export const COVERAGE_LABELS: Record<CoverageLevel, string> = {
 };
 
 const COVERAGE_CLASSNAMES: Record<CoverageLevel, string> = {
-  strong: "text-green",
-  has: "text-green",
-  shallow: "text-orange",
+  strong: "text-ok",
+  has: "text-ok",
+  shallow: "text-warn",
   gap: "text-destructive",
-  advantage: "text-purple",
+  advantage: "text-ink",
 };
 
 // `Record<CoverageLevel, …>` nos dois mapas: acrescentar um nível ao enum do
@@ -78,19 +78,19 @@ export const DOC_KIND_LABELS: Record<DocKind, string> = {
 /** A cor agrupa por PAPEL no pacote (peça enviada · insumo da vaga · preparo),
  *  não um matiz por tipo: doze cores numa coluna estreita seriam ruído. */
 const DOC_KIND_CLASSNAMES: Record<DocKind, string> = {
-  cv: "text-cyan",
-  cover_letter: "text-purple",
-  job_data: "text-comment",
-  job_info: "text-comment",
-  notes: "text-comment",
-  email: "text-cyan",
-  screening_answers: "text-green",
-  recruiter_reply: "text-cyan",
-  challenge_prep: "text-purple",
-  practice: "text-purple",
+  cv: "text-beam-2",
+  cover_letter: "text-ink",
+  job_data: "text-ink-3",
+  job_info: "text-ink-3",
+  notes: "text-ink-3",
+  email: "text-beam-2",
+  screening_answers: "text-ok",
+  recruiter_reply: "text-beam-2",
+  challenge_prep: "text-ink",
+  practice: "text-ink",
   english_eval_script:
-    "text-pink",
-  mini_spec: "text-orange",
+    "text-beam-3",
+  mini_spec: "text-warn",
 };
 
 export const DOC_KIND_STYLES: StatusStyles = Object.fromEntries(
@@ -107,27 +107,27 @@ export const DocKindBadge = makeStatusBadge(DOC_KIND_STYLES, "DocKind");
 export const DOC_STATUS_STYLES: StatusStyles = {
   draft: {
     label: "Rascunho",
-    className: "text-orange",
+    className: "text-warn",
   },
   ready: {
     label: "Pronto",
-    className: "text-cyan",
+    className: "text-beam-2",
   },
   final: {
     label: "Final",
-    className: "text-green",
+    className: "text-ok",
   },
   sent: {
     label: "Enviado",
-    className: "text-green",
+    className: "text-ok",
   },
   pending: {
     label: "Pendente",
-    className: "text-comment",
+    className: "text-ink-3",
   },
   archived: {
     label: "Arquivado",
-    className: "text-comment",
+    className: "text-ink-3",
   },
 };
 
@@ -148,11 +148,11 @@ export const HONESTY_SEVERITY_STYLES: StatusStyles = {
   },
   warning: {
     label: "Atenção",
-    className: "text-orange",
+    className: "text-warn",
   },
   info: {
     label: "Informativo",
-    className: "text-comment",
+    className: "text-ink-3",
   },
 };
 
@@ -166,7 +166,7 @@ export const HonestySeverityBadge = makeStatusBadge(
 export const INTERVIEW_OUTCOME_STYLES: StatusStyles = {
   passed: {
     label: "Aprovado",
-    className: "text-green",
+    className: "text-ok",
   },
   failed: {
     label: "Reprovado",
@@ -174,11 +174,11 @@ export const INTERVIEW_OUTCOME_STYLES: StatusStyles = {
   },
   pending: {
     label: "Pendente",
-    className: "text-orange",
+    className: "text-warn",
   },
   cancelled: {
     label: "Cancelada",
-    className: "text-comment",
+    className: "text-ink-3",
   },
 };
 
@@ -274,7 +274,7 @@ export function eventChannelLabel(value: string): string {
 export const VERIFICATION_STYLES: StatusStyles = {
   confirmado: {
     label: "Confirmada",
-    className: "text-green",
+    className: "text-ok",
   },
   divergente: {
     label: "Divergente",
@@ -282,11 +282,11 @@ export const VERIFICATION_STYLES: StatusStyles = {
   },
   inacessivel: {
     label: "Inacessível",
-    className: "text-orange",
+    className: "text-warn",
   },
   expirada: {
     label: "Expirada",
-    className: "text-comment",
+    className: "text-ink-3",
   },
 };
 

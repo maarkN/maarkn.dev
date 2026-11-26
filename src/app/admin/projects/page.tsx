@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Pencil, Plus, Star } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
-import { formatDateTime } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DeleteProjectButton } from "@/components/admin/delete-project-button";
 import { PageHeader } from "@/components/admin/page-header";
@@ -127,6 +127,7 @@ async function ProjectsTable({
   status: string;
   page: number;
 }) {
+  const { formatDateTime } = await getAdminFormat();
   const where = {
     ...(category ? { category } : {}),
     ...(status ? { status } : {}),
@@ -228,7 +229,7 @@ async function ProjectsTable({
                 <TableCell>
                   {p.featured ? (
                     <Star
-                      className="size-4 fill-current text-amber-400"
+                      className="size-4 fill-current text-warn"
                       aria-label="Em destaque"
                     />
                   ) : (

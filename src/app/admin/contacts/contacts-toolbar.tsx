@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatNumber } from "@/lib/format";
+import { useAdminFormat } from "@/components/admin/admin-locale";
 import { cn } from "@/lib/utils";
 import type { CompanyOption, ContactFilters } from "./contacts-query";
 import {
@@ -55,6 +55,7 @@ interface ContactsToolbarProps extends ContactFilters {
 type Patch = Partial<ContactFilters> & { page?: number };
 
 export function ContactsToolbar(props: ContactsToolbarProps) {
+  const { formatNumber } = useAdminFormat();
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
@@ -130,7 +131,7 @@ export function ContactsToolbar(props: ContactsToolbarProps) {
             }}
             className={cn(
               "rounded-none border-0 px-3",
-              draft.tab === tab && "bg-brand/15 text-brand hover:bg-brand/20",
+              draft.tab === tab && "bg-brand/15 text-foreground hover:bg-brand/20",
             )}
           >
             {CONTACT_TAB_LABELS[tab]}

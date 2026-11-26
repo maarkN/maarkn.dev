@@ -1,17 +1,14 @@
 /**
- * Canonical backoffice page header.
+ * Canonical backoffice page header: the title of the screen, one line of context
+ * and its actions.
  *
  *   <div className="space-y-4">
  *     <PageHeader title="Candidaturas" description="…" actions={<Button …/>} />
- *     <Card><CardContent>{/* Table + TablePager *\/}</CardContent></Card>
+ *     {/* toolbar + Table + TablePager *\/}
  *   </div>
  *
- * The title is NOT drawn any more: the breadcrumb of `AdminChrome` already
- * announces the screen as the command that opened it (`ls applications/`,
- * `cat applications/<folder>.md`), and a second heading right below it was the
- * same name twice. It survives as the screen's `<h1>` for assistive tech and
- * for the document outline — visually hidden, never removed. The back link
- * went the same way: `cd ..` in the chrome's footer is the way out.
+ * There is no "voltar" here: the way back is the menu, and the trail above the
+ * screen where it is inside another one.
  *
  * Server-safe: no hooks, no handlers. Pass an already-client `actions` node
  * when the buttons need interactivity.
@@ -20,9 +17,9 @@
 import { cn } from "@/lib/utils";
 
 export interface PageHeaderProps {
-  /** The screen's accessible name. Rendered as a visually hidden `<h1>`. */
+  /** The name of the screen: its one `<h1>`. */
   title: React.ReactNode;
-  /** One line of context, shown as a comment under the breadcrumb. */
+  /** One line of context under the title. */
   description?: React.ReactNode;
   /** Right-hand slot: buttons, dialog triggers, filters toggle. */
   actions?: React.ReactNode;
@@ -37,12 +34,14 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div
-      className={cn("flex flex-wrap items-start justify-between gap-3", className)}
+      className={cn("flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pb-2", className)}
     >
-      <div className="min-w-0">
-        <h1 className="sr-only">{title}</h1>
+      <div className="min-w-0 max-w-[68ch]">
+        <h1 className="font-title text-[2rem] leading-[1.1] font-[560] text-balance wrap-anywhere [font-stretch:112%]">
+          {title}
+        </h1>
         {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="pt-1 font-text text-base text-muted-foreground">{description}</p>
         )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

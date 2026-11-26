@@ -20,13 +20,13 @@ carregar dados: pare e leia a tabela abaixo.
 | A1 | **Todo `page.tsx` sob `/admin` começa com o guard.** `const session = await auth(); if (!session?.user) redirect("/admin/login");` Não há middleware: `src/proxy.ts` exclui `/admin` do matcher de propósito. Página nova sem guard = área administrativa aberta, e o repositório é **público**. |
 | A2 | **Toda Server Action começa com `await requireAdmin()`.** Sem exceção, inclusive as de leitura. |
 | A3 | **`next build` roda sem `DATABASE_URL`.** Todo caminho que toca o banco checa `dbConfigured` de `@/lib/db` e degrada (lista vazia + aviso), nunca lança. Isso vale para `generateStaticParams`, `sitemap`, ISR e qualquer coisa avaliada no build. |
-| A4 | **UI em pt-BR.** Rótulos, botões, toasts, mensagens de erro, cabeçalho de tabela. |
-| A5 | **Nunca `toLocaleString`/`toLocaleDateString` solto.** Use `@/lib/format`. Locale e time zone estão pinados lá justamente para não haver hydration mismatch. Regra de escolha: **`formatDate` para data de calendário** (`appliedAt`, datas do vault, qualquer coisa que veio de um `<input type="date">` — são gravadas como meia-noite **UTC** e por isso são lidas em UTC) e **`formatDateTime` para timestamp de sistema** (`createdAt`, `updatedAt`, logs — instantes reais, exibidos em America/Sao_Paulo). Trocar os dois causa erro de um dia. |
-| A6 | **Nenhum primitivo caseiro.** Botão, input, tabela, dialog, badge, select vêm de `@/components/ui/*` (shadcn, style `radix-lyra`). Se faltar um, `pnpm dlx shadcn@latest add <nome>` — não escreva à mão. |
-| A7 | **Cores:** use os tokens shadcn (`bg-card`, `text-muted-foreground`, `border-border`, `bg-sidebar`). O azul da marca é **`text-brand` / `bg-brand`**, *não* `bg-accent` (que no shadcn é o fundo de hover). Nunca reatribua `--muted`, `--accent` ou `--border` no `globals.css`. **Esse vocabulário só existe dentro de `.admin-root`:** os NOMES são declarados no `@theme inline` de `globals.css` e os VALORES em `src/app/admin/admin.css` (bko-01). Fora de `src/app/admin`, `src/components/ui` e `src/components/admin` a utility resolve para nada — um painel invisível em produção, não um erro de compilação. `scripts/check-admin-utilities.ts` roda dentro de `pnpm lint` e reprova o CI (bko-05). No site público use os nomes da paleta: `bg-bg`, `text-fg`, `text-comment`, `border-line`. |
-| A8 | **Um só `<Toaster/>`**, já montado em `src/app/admin/layout.tsx`. Não registre outro. |
+| A4 | **Interface em português e inglês, sem prefixo no endereço.** O idioma é um cookie do backoffice, depois o do site, depois o do navegador (`@/lib/admin/locale`); quem resolve é o servidor, em `@/lib/admin/request`, e a troca fica no menu da conta. Texto fixo mora na chave **`admin`** de `src/dictionaries/*.json`, nos dois idiomas (`pnpm lint` cobra a paridade): `getAdminLabels()` no servidor, e só os rótulos necessários vão por prop para o cliente. **Nenhuma página do site carrega essa chave** (`getDictionary` a tira). Tela que ainda não foi traduzida continua em pt-BR: o `AdminShell` a marca com `lang="pt-BR"` (`Untranslated`), o que ela abre em portal herda a marca, e o que já foi traduzido, a parte ou a tela inteira, entra em `Translated` na change que o traduz. O que Marco digitou nunca é traduzido. |
+| A5 | **Nunca `toLocaleString`/`toLocaleDateString` solto, e nunca um formatador montado na tela.** `@/lib/format` só exporta `createFormat({ locale, timeZone })`; quem escolhe os dois é a requisição. No Server Component, `const { formatDate } = await getAdminFormat()` (`@/lib/admin/request`); no Client Component, `useAdminFormat()` (`@/components/admin/admin-locale`); componente síncrono que serve aos dois recebe `format: Format` por prop. Servidor e navegador recebem os mesmos dois valores como dado, e é isso que evita hydration mismatch. Regra de escolha: **`formatDate` para data de calendário** (`appliedAt`, datas do vault, qualquer coisa que veio de um `<input type="date">` — são gravadas como meia-noite **UTC** e por isso são lidas em UTC, qualquer que seja o fuso) e **`formatDateTime` para timestamp de sistema** (`createdAt`, `updatedAt`, logs — instantes reais, exibidos no **fuso configurado**, São Paulo por padrão). Trocar os dois causa erro de um dia. |
+| A6 | **Nenhum primitivo caseiro.** Nas telas, botão, input, tabela, dialog, badge e select vêm de `@/components/ui/*` (shadcn, style `radix-lyra`). Se faltar um, `pnpm dlx shadcn@latest add <nome>` — não escreva à mão. **A estrutura em volta (`@/components/admin/shell`) e o login são hologramas**, de `@/components/holo` (tabela no `AGENTS.md` da raiz), e da pasta `ui` só abrem o menu (`dropdown-menu`) e a dica (`tooltip`). Os dois não se misturam: um holograma entra numa tela com a change que a redesenha. |
+| A7 | **Cores: só as do tema.** Use os tokens shadcn (`bg-card`, `text-muted-foreground`, `border-border`) e os de texto do site (`text-ok`, `text-warn`, `text-ink-3`, `text-beam-2`). Os VALORES estão em `src/app/admin/admin.css`, sob `body.admin-root`, e apontam para os tokens dos três temas (`src/app/site.css`): **nenhuma cor literal, nenhuma da escala do Tailwind e nenhuma da Versão CLI** (`text-green`, `var(--purple)`…), que existem no `:root` mas não mudam com o tema. `scripts/check-admin-colors.ts` roda dentro de `pnpm lint` e aponta o arquivo; as exceções (papel do gerador, monograma e gradiente do projeto) estão em `@/lib/admin/color-audit`, com o motivo. `text-brand` é o feixe: só no que se clica, e `bg-accent` é fundo de hover. **Nenhum alfa em texto**, e preenchimento translúcido novo entra em `TINTS` de `@/lib/admin/contrast-audit`, que `scripts/check-contrast.ts` mede nos três temas (4.5:1 para texto, 3:1 para borda de controle). **O vocabulário shadcn só existe dentro de `.admin-root`**: fora de `src/app/admin`, `src/components/ui` e `src/components/admin` a utility resolve para nada, e `scripts/check-admin-utilities.ts` reprova. |
+| A8 | **Um só `<Toaster/>`**, já montado em `src/app/admin/layout.tsx`, marcado em pt-BR como as telas que o usam. Não registre outro; aviso já traduzido vai em `<span lang={locale}>`. |
 | A9 | **Ajuda, obrigatoriedade e erro de campo vêm de `@/components/admin/field-output`** (`FieldHelp`, `RequiredHint`, `FieldError`, `describedBy`) — nunca um `<p className="text-xs text-destructive">` solto. O `#` e o `stderr:` são `aria-hidden`; o erro carrega `role="alert"` e um `id` que o campo referencia por `aria-describedby`. Obrigatoriedade é `(obrigatório)` escrito dentro do `<Label>`, nunca um `*`. |
-| A10 | **Botão com texto visível escreve o rótulo entre colchetes** — `[ salvar ]`, `[ cancelar ]`, `[ excluir definitivamente ]`, em minúsculas. Os colchetes são **texto do `<button>`**, não `::before`/`::after`. Fora da regra, de propósito: botão só de ícone (o nome vem do `aria-label`), `variant="link"`, e os segmentados de aba/rota que carregam `aria-pressed` — ali o estado já é pintado. |
+| A10 | **Nas telas, botão com texto visível escreve o rótulo entre colchetes** — `[ salvar ]`, `[ cancelar ]`, `[ excluir definitivamente ]`, em minúsculas. Os colchetes são **texto do `<button>`**, não `::before`/`::after`. Fora da regra, de propósito: botão só de ícone (o nome vem do `aria-label`), `variant="link"`, os segmentados de aba/rota que carregam `aria-pressed` — ali o estado já é pintado — e os hologramas da estrutura e do login (`Criar`, `Tentar de novo`, `Entrar`), que se escrevem como no site: só o texto, com inicial maiúscula. |
 | A11 | **Diálogo de exclusão ecoa o comando equivalente** com `<DestructiveEcho command="rm -rf …" />` e usa `variant="destructive"` no `AlertDialogAction`. O eco é **ilustrativo**: não existe comando por trás e nenhuma change deve tentar "fazer funcionar". A confirmação por digitação do nome exato (§6) continua sendo o freio real e não pode ser enfraquecida. |
 | A12 | **Listagem é saída de `ls`, e a pintura mora no CSS.** A tabela continua `<table>/<thead>/<th scope="col">` — `<pre>` destruiria cabeçalho, associação célula↔coluna e navegação por tabela no leitor de tela. Quem transforma o desenho é a classe `admin-listing`, aplicada UMA vez dentro de `@/components/ui/table.tsx`; nenhuma página a escreve. A listagem **não** fica dentro de `<Card>` (a bko-03 tirou o cartão). Cabeçalho em minúsculas e sem acento (`empresa`, `vaga`, `estagio`, `acoes`), largura em `ch` no `<th>` e `table-fixed` no `<Table>` quando as larguras existem. A coluna decorativa de índice (`001`, `002`…) vem de `ListingIndexHead`/`ListingIndexCell` e é `aria-hidden`: é âncora visual, não o id. |
 | A13 | **Atalho que não se anuncia não existe.** Toda tecla ligada numa rota aparece escrita na própria linha da ação — a paginação mostra `[n]ext` / `[p]rev`, e o nome acessível do botão **começa pelo rótulo visível** (`"[n]ext — Próxima página (tecla n)"`): a SC 2.5.3 (Label in Name) exige que o texto visível esteja contido no nome acessível, senão comando por voz não alcança o botão. Não existe overlay de `?` e não deve passar a existir. O `useListingShortcut` do `TablePager` é o único atalho de uma letra do admin; se um novo aparecer, ele copia a mesma regra de guarda (`isEditableTarget`, nenhum modificador, `preventDefault` mesmo com ação nula). |
@@ -49,7 +49,7 @@ carregar dados: pare e leia a tabela abaixo.
 | `onError: () => toast.error(…)` | a action **retorna** `{ ok: false, message }`; o cliente decide o toast. Não use `throw`. |
 | `queryClient.invalidateQueries({ queryKey })` | **`revalidatePath("/admin/…")`** dentro da action (servidor). O RSC payload é refeito sozinho ao fim da transition. |
 | `navigate({ search: { page } })` | `router.push("?" + params)` dentro de `startTransition`. |
-| `<Outlet/>` + `AppShell` | `{children}` + `AdminShell` (`@/components/admin/admin-shell`) — é ele que veste o chrome de terminal. |
+| `<Outlet/>` + `AppShell` | `{children}` + `AdminShell` (`@/components/admin/admin-shell`) — é ele que põe o menu, o topo e o caminho em volta da tela. |
 
 **A consequência prática mais importante:** não há cache no cliente para invalidar. Quem invalida é o
 servidor, via `revalidatePath`. Se a lista não atualizou depois de salvar, é porque faltou `revalidatePath`
@@ -78,7 +78,8 @@ Regras:
   Use `safeDbError(err)` de `@/lib/safe-error`: nome da classe + código (`P2002`) + modelo, nada mais.
   (`_actions/contacts.ts` e `admin/contacts/contacts-query.ts` ainda têm uma cópia local chamada
   `safeError`; equivalente, pendente de consolidação.)
-- **`message` é texto pt-BR pronto para o toast.** Não devolva código de erro cru.
+- **`message` é texto pronto para o toast**, no idioma da tela que chama: pt-BR nas que ainda não foram
+  traduzidas, `getAdminLabels()` nas que já foram. Não devolva código de erro cru.
 - **Nunca vaze detalhe interno** (stack, SQL, e-mail de outro usuário) no `message`.
 - `fieldErrors` é `{ [nome do campo]: mensagem }`, montado a partir de `zod`.
 
@@ -130,14 +131,21 @@ tem ~15 campos, e o cabeçalho aponta para `/admin/applications/new` com
 `src/app/admin/applications/page.tsx` faz hoje). `Dialog` (§5) é para entidade curta, editada sem
 sair da lista: contato, referência, chave de API.
 
+**O `PageHeader` traz o único `<h1>` da tela, à vista.** Não existe botão "voltar": a saída é o menu e, numa
+tela dentro de outra, o caminho que a estrutura desenha acima do conteúdo (`trail` em `@/lib/admin/nav`).
+Página de um registro passa o nome dele em `<AdminShell name={…}>`, que é a última parte do caminho.
+
 Convenções de célula: números com `tabular-nums`, ícone dentro de botão sempre `className="size-4"`.
-Nada de `font-mono`: o admin inteiro já é monoespaçado.
+Nada de `font-mono`: o conteúdo das telas já é monoespaçado, até a change que redesenha cada uma. A
+estrutura em volta usa as fontes do site.
 
 **A listagem é saída de comando** (bko-03). A `<table>` continua sendo uma `<table>` — o visual vem da
 classe `.admin-listing`, aplicada uma vez dentro de `ui/table.tsx`. O que cada listagem precisa fazer:
 
 - `<Table className="table-fixed">` e uma largura em `ch` (`w-[24ch]`) em todo `<TableHead>` que não seja
   a coluna de texto livre. Sem o par `table-fixed` + `ch`, o alinhamento monoespaçado não se sustenta.
+  Coluna livre com link ou botão pede também um `min-w-[…ch]` na tabela: no celular ela encolhe até zero,
+  e o foco vai para um elemento sem largura.
 - `<ListingIndexHead />` no cabeçalho e `<ListingIndexCell index={i} />` como primeira célula de cada
   linha — a coluna `001`, `002`… é decorativa (`aria-hidden`) e **conta no `colSpan`**: `COLS` inclui ela.
 - Cabeçalho em minúsculas e sem acento (`estagio`, `acoes`): é nome de coluna de saída, não título.
@@ -182,7 +190,7 @@ import {
 import { FunnelStageBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDate } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { ApplicationsToolbar } from "./applications-toolbar";
 
 export const dynamic = "force-dynamic"; // guard + searchParams: nunca prerenderize
@@ -232,6 +240,7 @@ export default async function ApplicationsPage({
     }
   }
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const { formatDate } = await getAdminFormat(); // A5
 
   return (
     <AdminShell email={session.user.email ?? "admin"}>
@@ -885,7 +894,7 @@ toast.info("Nada mudou desde a última sincronização.");
   tema por chamada: posição (canto inferior direito), tema e marcadores `✓`/`✗` vivem em
   `src/components/ui/sonner.tsx`, porque o toast do admin é uma **linha de saída** (bko-04).
 - **Toast é só do cliente.** Server Action não dá toast — ela devolve `message` e quem chama decide.
-- Sempre em pt-BR, uma frase, com ponto final.
+- No idioma da tela (A4), uma frase, com ponto final.
 - **Sucesso silencioso é bug:** toda mutação confirmada mostra `toast.success`. Toda falha mostra
   `toast.error` com a `message` da action.
 - Não use `toast.promise` aqui: o `isPending` do `useTransition` já cobre o estado de carregamento e
@@ -904,16 +913,23 @@ toast.info("Nada mudou desde a última sincronização.");
 - [ ] `revalidatePath` em toda action que escreve.
 - [ ] `toast.success` / `toast.error` em toda mutação.
 - [ ] Nenhum `<SelectItem value="">`, nenhum `toLocaleDateString`, nenhum primitivo caseiro.
-- [ ] Rótulos em pt-BR.
-- [ ] Se criou rota nova que já está no `NAV` do `terminal/admin-tree-nav.tsx`, **vire o `ready` para `true`** e tire a entrada do bloco final de `# em breve`.
-- [ ] Se a rota é nova de verdade, acrescente-a à tabela de `terminal/admin-route-chrome.ts` (caminho + comando + destino do `cd ..`) e ao teste dela.
+- [ ] Texto fixo no dicionário, nos dois idiomas (A4); tela traduzida, inteira em `Translated`.
+- [ ] Datas e números por `getAdminFormat`/`useAdminFormat` (A5); nenhuma cor fora do tema (A7).
+- [ ] Rota nova que já está no `NAV` de `@/lib/admin/nav`: troque o `href: null` ("em breve") pelo endereço.
+- [ ] Rota nova que não está: acrescente-a ao `NAV` (ou a `SECTIONS`, se é uma tela dentro de outra), o nome nos
+      dois dicionários e o ícone em `shell/icons.ts`. O menu, o celular e a busca leem de lá.
 - [ ] Listagem sem `<Card>`, cabeçalho em minúsculas, coluna de índice, larguras em `ch` (A12).
 - [ ] Atalho novo escrito na tela, e o nome acessível do controle começando pelo rótulo visível (A13).
 - [ ] Animação nova legível no último quadro; conferida com `node scripts/a11y-admin-axe.mjs --motion` (A14).
 - [ ] Token do vocabulário shadcn só dentro do admin (A7) — `pnpm lint` reprova o resto.
 - [ ] Varredura de acessibilidade da rota nova:
       `ADMIN_EMAIL=… ADMIN_PASSWORD=… node scripts/a11y-admin-axe.mjs --only <rota>`
-      e a mesma coisa com `--keyboard`. Zero `critical`/`serious`, zero parada sem foco visível.
+      e a mesma coisa com `--keyboard`, nos três temas (`--theme`) e nos dois idiomas (`--lang`). Zero
+      `critical`/`serious`, zero parada sem foco visível.
+- [ ] A estrutura continua de pé: `node scripts/e2e-site.mjs --admin` em 390, 1024 e 1440 px. Rota nova entra em
+      `SCREENS` de `scripts/e2e-admin.mjs`. O que fica por cima da tela já tem lugar em `--site-top` e
+      `--site-base`, e é por eles que o documento rola (`scroll-padding`, em `admin.css`): não escreva
+      `scroll-margin` numa tela.
 - [ ] `pnpm lint` e `env -u DATABASE_URL pnpm build` verdes.
 
 ---
@@ -922,22 +938,25 @@ toast.info("Nada mudou desde a última sincronização.");
 
 | Arquivo | O que oferece |
 |---|---|
-| `src/components/admin/admin-shell.tsx` | `AdminShell({ email, name?, children })` — aplica o chrome de terminal; reexporta `NAV` · `isNavItemActive` · `activeNavHref` |
-| `src/components/admin/terminal/admin-route-chrome.ts` | `describeAdminRoute(pathname, name?)` → `{ path, command, back }` (tabela normativa rota → caminho → comando) · `ADMIN_CWD` |
-| `src/components/admin/terminal/admin-chrome.tsx` | `AdminChrome` — barra + árvore + breadcrumb + `{children}` + `cd ..` |
-| `src/components/admin/terminal/admin-status-bar.tsx` | `AdminStatusBar({ path })` — reusa `terminal.module.css` do site; só o controle `exit` |
-| `src/components/admin/terminal/admin-tree-nav.tsx` | `AdminTreeNav({ pathname, email })` · `NAV` · `isNavItemActive` · `activeNavHref` |
-| `src/components/admin/page-header.tsx` | `PageHeader({ title, description?, actions?, className? })` — `title` vira `<h1 class="sr-only">`: o título visível é o breadcrumb do chrome |
+| `src/components/admin/admin-shell.tsx` | `AdminShell({ email, name?, children })` — a estrutura em volta da tela, e a marca de idioma da que ainda não foi traduzida |
+| `src/components/admin/shell/*` | a estrutura: menu em grupos e recolhível (`side-menu`), barra do celular (`phone-bar`), busca (`search-button`, `search-window`), `create-menu`, `account-menu`, caminho (`trail`), tudo em `shell.module.css` |
+| `src/components/admin/admin-locale.tsx` | `AdminLocaleProvider` (um, no layout) · `useAdminFormat` · `Untranslated` · `Translated` · `useScreenLanguage` (o `lang` do que é portalizado) |
+| `src/lib/admin/nav.ts` | `NAV` (menu; `href: null` = em breve) · `CREATE` · `SHORTCUTS` · `currentItem(pathname)` · `trail(pathname, name?)` |
+| `src/lib/admin/search.ts` | o que a busca acha: telas, ações e candidaturas · `_actions/search.ts` entrega as candidaturas, só quando a busca abre |
+| `src/lib/admin/request.ts` | **(`server-only`)** `getAdminSettings` (idioma e fuso da requisição) · `getAdminFormat` · `getAdminLabels` |
+| `src/lib/admin/locale.ts` · `time-zone.ts` | quais idiomas e fusos, os cookies e como se resolvem · o idioma é gravado no navegador e recarrega o documento (`shell/change-language`), o fuso por `_actions/preferences.ts` |
+| `src/components/admin/page-header.tsx` | `PageHeader({ title, description?, actions?, className? })` — `title` é o `<h1>` da tela |
 | `src/components/admin/table-pager.tsx` | `TablePager` (linha de status + teclas `n`/`p`) · `TableLoadingRow` · `TableEmptyRow` · `ListingIndexHead`/`ListingIndexCell`/`LISTING_INDEX_WIDTH` · `isEditableTarget` |
 | `src/components/admin/form-submit.ts` | `submitKeepingValues(event, handler)` — submissão que não deixa o React 19 esvaziar o formulário (A15, §5.3) |
 | `src/components/admin/field-output.tsx` | `FieldHelp` · `RequiredHint` · `FieldError` (`stderr:`) · `describedBy` (A9) |
 | `src/components/admin/destructive-echo.tsx` | `DestructiveEcho({ command })` — o `$ rm -rf …` ilustrativo do diálogo de exclusão (A11) |
-| `src/app/admin/admin.css` | os VALORES dos tokens shadcn sob `.admin-root`, com o número de contraste medido ao lado de cada desvio · `.admin-listing` · `.admin-selection` · `.admin-progress` · a régua `──` do título de diálogo · o piso de `:focus-visible` |
-| `scripts/a11y-admin-axe.mjs` | varredura das 18 rotas + overlays: axe-core (padrão), `--keyboard`, `--motion`, `--width 390` |
+| `src/app/admin/admin.css` | os VALORES dos tokens shadcn, apontando para os do tema, com o pior número de contraste dos três · `.admin-listing` · `.admin-selection` · `.admin-progress` · a régua `──` do título de diálogo · o piso de `:focus-visible` |
+| `scripts/a11y-admin-axe.mjs` | varredura das 18 rotas + overlays, os da estrutura inclusive: axe-core (padrão), `--keyboard`, `--motion`, `--width 390`, `--theme`, `--lang` |
+| `scripts/e2e-admin.mjs` | os casos de `node scripts/e2e-site.mjs --admin`: entrada, tema, idioma, menu, busca, teclado, foco, celular, impressão |
 | `scripts/a11y-dialog-accname.mjs` | prova de que a régua `──` do título não vaza para o nome acessível |
-| `scripts/check-admin-utilities.ts` | a guarda do `pnpm lint` contra o vazamento do vocabulário shadcn (A7) |
+| `scripts/check-admin-utilities.ts` · `check-admin-colors.ts` | as guardas do `pnpm lint`: o vocabulário shadcn não sai do admin, e nenhuma cor de fora do tema entra (A7) |
 | `src/components/admin/status-badge.tsx` | `makeStatusBadge` · `StatusBadge` · `statusLabelFrom` · `FunnelStageBadge` · `SponsorshipBadge` · `ApplicationSourceBadge` · badges de status/categoria de projeto e visibilidade |
-| `src/lib/format.ts` | `formatDate` (data de calendário, UTC) · `formatDateTime` (instante, America/Sao_Paulo) · `formatMoney(value, currency = "BRL")` · `formatNumber` · `formatPercent` · `toDateInputValue` (inverso exato de `new Date("YYYY-MM-DD")`) · `EMPTY` (`"—"`) |
+| `src/lib/format.ts` | `createFormat({ locale, timeZone })` → `formatDate` (data de calendário, UTC) · `formatDateTime` (instante, fuso configurado) · `formatMoney(value, currency = "BRL")` · `formatNumber` · `formatPercent` · e, sem idioma: `toDateInputValue` (inverso exato de `new Date("YYYY-MM-DD")`) · `EMPTY` (`"—"`) |
 | `src/components/ui/*` | 19 primitivos shadcn (style `radix-lyra`) |
 | `src/lib/db.ts` | `db` (PrismaClient) e `dbConfigured` |
 | `src/lib/auth.ts` | `auth()` |

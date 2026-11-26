@@ -17,7 +17,7 @@
 
 import * as React from "react";
 import { TableCell, TableHead, TableRow } from "@/components/ui/table";
-import { formatNumber } from "@/lib/format";
+import { useAdminFormat } from "@/components/admin/admin-locale";
 import { cn } from "@/lib/utils";
 
 /* ── coluna de índice ─────────────────────────────────────────────────────
@@ -72,6 +72,7 @@ export function TablePager({
   onPageChange,
   disabled,
 }: TablePagerProps) {
+  const { formatNumber } = useAdminFormat();
   const lastPage = Math.max(totalPages, 1);
   const canNext = !disabled && page < lastPage;
   const canPrev = !disabled && page > 1;
@@ -134,7 +135,7 @@ function PagerAction({
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className="text-brand hover:underline disabled:cursor-default disabled:text-comment disabled:no-underline"
+      className="text-brand hover:underline disabled:cursor-default disabled:text-ink-3 disabled:no-underline"
     >
       {label}
     </button>

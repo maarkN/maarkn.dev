@@ -41,11 +41,14 @@ const GLOBALS = join(SRC, "app", "globals.css");
  *                              público importar um deles, é ESTA lista que
  *                              precisa ser revista, não a exceção ampliada.
  *  - `src/components/admin`  — os componentes que só o backoffice monta.
+ *  - `src/lib/admin`         — as medições do próprio vocabulário, que o citam
+ *                              sem nunca pintar nada.
  */
 const ALLOWED = [
   join("src", "app", "admin"),
   join("src", "components", "ui"),
   join("src", "components", "admin"),
+  join("src", "lib", "admin"),
 ];
 
 /** Prefixos de utility que aceitam um nome de cor. */

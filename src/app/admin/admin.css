@@ -1,129 +1,122 @@
 /* ════════════════════════════════════════════════
-   ADMIN THEME — the shadcn token values, scoped.
+   BACKOFFICE — the shadcn vocabulary, on the theme that is on.
    The names (`--color-background`, `--color-primary`…) are declared in the
    `@theme inline` block of globals.css, the only file Tailwind v4 reads
-   `@theme` from; this file — imported by admin/layout.tsx, not by CSS —
-   carries the values. `inline` makes the utilities emit `var(--primary)`
-   instead of a build-time literal, so they resolve here and nowhere else.
-   Every value points straight at a palette name from globals.css: one
-   indirection, no legacy aliases. The two colour literals below (#BABFCC,
-   #F28B8B) are contrast lifts and carry the measured numbers.
-   The admin is always rendered in the `soft` palette (see admin/layout.tsx)
-   and is always dark — no dark-mode variant is used anywhere under /admin.
+   `@theme` from; this file carries their values. Every value is a token of
+   site.css, so the three themes reach every screen by construction. There is
+   no literal colour here, nor anywhere under /admin: the exceptions are listed,
+   with their reasons, in src/lib/admin/color-audit.ts, and `pnpm lint` refuses
+   the rest. It also refuses the CLI version's colours, which exist on :root and
+   do not change with the theme.
+
+   Contrast is measured from this file by `scripts/check-contrast.ts`
+   (src/lib/admin/contrast-audit.ts): the numbers below are the worst of the
+   three themes, over the surface where the pair is worst.
    ════════════════════════════════════════════════ */
 
-.admin-root {
-  --background:    var(--bg);
-  --foreground:    var(--fg);
+/* `body.` so that it outranks `.site-root`, whatever the order of the sheets. */
+body.admin-root {
+  /* Where a screen is written: the sheet. The planes behind it are `--bg`. */
+  --background:    var(--bg-2);
+  --foreground:    var(--ink);
 
-  /* Elevated surface = the same one the public site uses. */
-  --card:                 var(--bg-dim);
-  --card-foreground:      var(--fg);
-  --popover:              var(--bg-dim);
-  --popover-foreground:   var(--fg);
+  /* Recessed in the sheet; what floats over it is the sheet again, with an edge. */
+  --card:                 var(--bg);
+  --card-foreground:      var(--ink);
+  --popover:              var(--bg-2);
+  --popover-foreground:   var(--ink);
 
-  --primary:              var(--purple);
-  /* NOT #ffffff: white on --purple is 2.25:1 and fails AA. --bg is 6.3:1. */
-  --primary-foreground:   var(--bg);
+  /* 4.70:1 (dracula, under the pointer: 80% of it over `--accent`). */
+  --primary:              var(--beam);
+  --primary-foreground:   var(--on-beam);
 
   /* In the shadcn vocabulary these three are SURFACES, not text colours.
-     Reading them as text is what makes a panel go invisible; the secondary
-     text colour is --muted-foreground. */
-  --secondary:            var(--sel);
-  --secondary-foreground: var(--fg);
-  --muted:                var(--sel);
-  --accent:               var(--sel);
-  --accent-foreground:    var(--fg);
+     Not `--bg-3`, the surface of what is in focus: there `--ink-3`, the beam
+     and `--bad` miss 4.5:1 in at least one theme. On `--sunk` every ink of the
+     three themes is 4.51:1 or more. */
+  --secondary:            var(--sunk);
+  --secondary-foreground: var(--ink);
+  --muted:                var(--sunk);
+  --accent:               var(--sunk);
+  --accent-foreground:    var(--ink);
 
-  /* Lifted from --comment (#8F93A0). Measured with the WCAG relative-luminance
-     formula on the `soft` palette (the only one the admin ever renders):
+  /* 5.30:1 (light, on `--sunk`). No alpha modifier on it, or on any text: at
+     60% the ink itself is 3.40:1 in the light theme. */
+  --muted-foreground:     var(--ink-2);
 
-       text \ surface   --bg #282A36   --card #21222C   --sel #44475A
-       --comment            4.64            5.15            2.98
-       #A2A6B3 (change 14)  5.86            6.50            3.77
-       #BABFCC              7.74            8.58            4.97
-
-     --sel is the binding surface: `bg-muted`, `bg-accent` and `bg-secondary`
-     all resolve to it, and that is where secondary text actually lands —
-     AvatarFallback (`bg-muted text-muted-foreground`), hovered menu items,
-     `data-[state=selected]` rows. Neither --comment nor the change-14 value
-     clears 4.5:1 there; #BABFCC does, on all three surfaces.
-     Do NOT add an alpha modifier to this colour: `text-muted-foreground/70`
-     composites to 4.95:1 on --card but only 4.11:1 on a hovered table row
-     (`hover:bg-muted/50`) and 3.31:1 on --sel. No token value fixes that —
-     the ceiling for any 70% text on --card is 6.57:1 (pure white), and at
-     70%×60% it is 3.96:1. Dim by choosing a colour, never by alpha. */
-  --muted-foreground:     #BABFCC;
-
-  /* Lifted from --red (#EE6666): 4.01:1 over --bg and 4.43:1 over --card is
-     under 4.5:1, and this colour is read as bare `text-destructive` (a linha
-     `stderr:` do FieldError, o `$ rm -rf …` do DestructiveEcho, o marcador ✗
-     do toast). #F28B8B reads 6.00:1 / 6.65:1 there.
-     A caixa tingida `bg-destructive/10` continua existindo no `Badge`
-     destrutivo e no item de menu em foco (5.58:1 sobre --card), mas desde a
-     bko-04 ela NÃO é mais o caso do botão: `variant="destructive"` virou
-     sólido (`bg-destructive` + `text-destructive-foreground`), com texto a
-     6.00:1 e a própria superfície a 6.65:1 contra --popover — 1.4.11 pede
-     3.0, que a variante tingida (1.19:1) não dava. */
-  --destructive:          #F28B8B;
+  /* 4.90:1 (light, on `--sunk`). Not over its own tint: at 10% it is 4.22:1
+     there, so a tinted box writes in `--foreground`. On it, `--bg` is 4.56:1
+     (light, under the pointer: 90% of it over the sheet). */
+  --destructive:          var(--bad);
   --destructive-foreground: var(--bg);
 
   /* Decorative separators. */
-  --border:               var(--line);
-  /* Control boundaries need 3:1 (WCAG 1.4.11) and --line reads 1.25:1 on
-     --bg / 1.38:1 on --card, so field borders use the comment grey instead:
-     4.64:1 on --bg, 5.15:1 on --card. (It would be 2.98:1 on --sel; no
-     field is rendered on that surface today.) */
-  --input:                var(--comment);
-  --ring:                 var(--purple);
+  --border:               color-mix(in srgb, var(--ink-3) 35%, transparent);
+  /* Edges of a control need 3:1 (WCAG 1.4.11): 4.75:1 (light, on `--sunk`). */
+  --input:                var(--ink-3);
+  /* The focus of everything in the design: 4.59:1 (light, on `--sunk`). */
+  --ring:                 var(--beam-3);
 
-  /* RESOLVED in bko-03, option (b): the radius is MARKUP, not a token.
-     Tailwind v4 reads the `rounded-*` scale from --radius-sm/md/lg, which
-     globals.css does not declare — measured in the built CSS, those keep the
-     framework defaults (.25rem / .375rem). Declaring the scale was the other
-     option and was rejected:
-       • `@theme` only works in globals.css, so the scale would have to be
-         declared in a file that does NOT import this one, while its value
-         (--radius) lives here. Every `rounded-*` in the repository would then
-         emit a var() that resolves to nothing outside `.admin-root`.
-       • it would buy exactly five call sites — the five medium-radius
-         utilities left in four toolbars were all that remained. bko-03
-         converted them to square, so the scale would have zero consumers.
-     Net: 43 square-corner utilities in the markup are what flattens the
-     admin. The bko-01 design.md had already stopped claiming "one token,
-     twenty primitives" and deferred the call to change 03; that paragraph in
-     the archive now records this answer. --radius survives at 0 for its one
-     real consumer, the inline style in src/components/ui/sonner.tsx.
-     (This comment deliberately avoids spelling any utility class name:
-     Tailwind v4 scans CSS files too, and a class written in prose here is
-     enough to make it emit the rule.) */
+  /* What is clickable inside a screen. */
+  --brand:                        var(--beam);
+
+  /* The radius is markup, not a token: every primitive is written square. This
+     survives for its one real consumer, the inline style of ui/sonner.tsx. */
   --radius: 0;
 
-  /* Not in the design.md table — required by markup that predates it.
-     --brand is the link/active-filter accent (`text-brand`, `bg-brand/15`);
-     the palette's blue is --cyan. The sidebar set is the elevated surface
-     plus the selection grey, so the nav matches cards and popovers. */
-  --brand:                        var(--cyan);
-  --sidebar:                      var(--bg-dim);
-  --sidebar-foreground:           var(--fg);
-  --sidebar-border:               var(--line);
-  --sidebar-accent:               var(--sel);
-  --sidebar-accent-foreground:    var(--fg);
-
-  /* Everything in the admin is monospace; the three family names resolve to
-     the same face so no proportional font is ever requested. */
-  --font-sans:    var(--font);
-  --font-display: var(--font);
-  --font-mono:    var(--font);
+  /* The screens keep the monospaced face until their own change redesigns
+     them; the shell around them names its faces itself. Cascadia Code, and
+     never `--font` of the CLI version, which may be another face. */
+  --font: var(--type-label);
   font-family: var(--font);
 
-  background: var(--background);
+  background: var(--bg);
   color: var(--foreground);
 }
 
-/* Dense forms in a monospace face read better with a little more air. */
-.admin-root :is(input, select, textarea) {
-  font-family: var(--font);
+/* The bars that stay over the page: what is scrolled to must not stop behind
+   them. A padding of the document, and not the margins of site.css: a margin is
+   lost at the first box on the way that scrolls or clips (a cell, a card, a table
+   wider than the screen), and the way back, which is outside <main>, has none. */
+:root:has(body.admin-root.site-root) {
+  --site-top: 76px;
+  --site-base: 0px;
+  scroll-padding-block: calc(var(--site-top) + 16px) calc(var(--site-base) + 16px);
+  /* The windows of the screens lock the scroll and make up for the bar
+     themselves; a gutter that stays would be made up for twice. */
+  scrollbar-gutter: auto;
+}
+@media (max-width: 767.98px) {
+  :root:has(body.admin-root.site-root) {
+    --site-top: 60px;
+    --site-base: 72px;
+  }
+}
+.admin-root :is(main, main *) {
+  scroll-margin-block: 0;
+}
+/* A control of the top or of the menu is never behind them, and with the padding
+   reaching it would scroll the page. */
+:root:has(body.admin-root.site-root :is(header, aside):not(main *) :focus) {
+  scroll-padding-block: 0;
+}
+
+/* Engines without `scrollbar-color` would paint the CLI version's bars. */
+.admin-root ::-webkit-scrollbar-track { background: var(--bg); }
+.admin-root ::-webkit-scrollbar-thumb,
+.admin-root ::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+/* A border without a colour is a separator, and not the ink of the text. In the
+   layer of the preflight, so that every utility still outranks it. */
+@layer base {
+  .admin-root :is(*, ::before, ::after) {
+    border-color: var(--border);
+  }
+}
+
+/* Dense forms in a monospace face read better with a little more air. `:where`,
+   so that a field of the shell keeps its own face and height. */
+:where(.admin-root) :is(input, select, textarea) {
   line-height: 1.5;
 }
 
@@ -143,7 +136,10 @@
      não tem outro caminho. Aparece no admin quando a listagem estoura a
      largura (viewport estreito).
    Este arquivo é importado do TypeScript, então fica fora de todo `@layer` e
-   vence a utility `outline-none` independentemente de especificidade. */
+   vence a utility `outline-none` independentemente de especificidade.
+
+   `[data-holo]` fica de fora: nos hologramas da estrutura o foco é a própria
+   moldura (src/components/holo). */
 .admin-root :is(
   input[type="checkbox"],
   input[type="file"],
@@ -152,7 +148,7 @@
   summary,
   [data-slot="tabs-content"],
   [data-slot="table-container"]
-):focus-visible {
+):not([data-holo]):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -183,7 +179,7 @@
 
 /* The column header reads as the comment line above the output. */
 .admin-root .admin-listing thead th {
-  color: var(--comment);
+  color: var(--ink-3);
   font-weight: 400;
 }
 
@@ -196,26 +192,16 @@
   text-overflow: ellipsis;
 }
 
-/* ── the hovered row is the terminal SELECTION ────────────────────────────
-   Background --sel, foreground --fg, uniformly — which is what selecting a
-   line in a terminal does. It is also the only version of this highlight
-   that is accessible without re-measuring every colour in the table:
-   measured on --sel (#44475A), the admin's own palette reads
-
-     --fg 8.46   --muted-foreground 4.97   --yellow 7.44   --cyan 6.26
-     --green 5.84   --orange 5.83   --purple 4.07   --pink 3.91
-     --destructive 3.85   --comment 2.98   --red 2.93
-
-   so five of the eleven would fail 1.4.3 on a hovered row if each cell kept
-   its own colour. At rest the listing sits on --bg, where the whole palette
-   clears 4.5:1 (--red is the floor at 4.56). Rows that are not data —
-   the empty line, the error line, the loading line — opt out with
+/* ── the hovered row ──────────────────────────────────────────────────────
+   Background `--accent`, text `--foreground`, uniformly: no colour a cell
+   carries has to be measured a second time on that surface. Rows that are not
+   data (the empty line, the error line, the loading line) opt out with
    `hover:bg-transparent`. */
 .admin-root .admin-listing tbody tr:hover {
-  background: var(--sel);
+  background: var(--accent);
 }
 .admin-root .admin-listing tbody tr:hover :is(td, td *) {
-  color: var(--fg);
+  color: var(--foreground);
 }
 .admin-root .admin-listing tbody tr.hover\:bg-transparent:hover {
   background: transparent;
@@ -225,52 +211,40 @@
 }
 
 /* ── a linha que abriu um overlay é uma linha SELECIONADA ─────────────────
-   O primitive do shadcn marca a linha que contém um controle expandido com
-   `has-aria-expanded:bg-muted/50` e a linha escolhida com
-   `data-[state=selected]:bg-muted`. As duas repintam o FUNDO e deixam cada
-   célula com a sua própria cor — exatamente o que a regra de hover acima
-   existe para impedir. Medido: meia opacidade de --sel sobre --bg compõe
-   #363948, onde --comment cai a 3.75:1 e --red a 3.68:1; em --sel cheio
-   (o caso `selected`) são 2.98 e 2.93. Encontrado pelo axe na bko-05: abrir
-   o diálogo de excluir numa listagem marcava a linha do gatilho e derrubava
-   o índice `001` e as etiquetas `[…]` em --comment abaixo de AA.
-   Mesma decisão do hover, então mesma pintura: --sel cheio e todo o texto
-   em --fg (10.63:1 sobre o meio-tom, 8.46:1 sobre --sel). */
+   O primitive do shadcn marca a linha que contém um controle expandido com meia
+   opacidade de `--muted` e a escolhida com `--muted` cheio, e nos dois casos
+   deixa cada célula com a sua própria cor. Mesma decisão do hover, então mesma
+   pintura: `--accent` cheio e todo o texto em `--foreground`. */
 .admin-root .admin-listing tbody tr:has([aria-expanded="true"]),
 .admin-root .admin-listing tbody tr[data-state="selected"] {
-  background: var(--sel);
+  background: var(--accent);
 }
 .admin-root .admin-listing tbody tr:has([aria-expanded="true"]) :is(td, td *),
 .admin-root .admin-listing tbody tr[data-state="selected"] :is(td, td *) {
-  color: var(--fg);
+  color: var(--foreground);
 }
 .admin-root .admin-listing tbody tr:has([aria-expanded="true"]) a.hover\:text-brand:hover,
 .admin-root .admin-listing tbody tr[data-state="selected"] a.hover\:text-brand:hover {
   color: var(--brand);
 }
 
-/* The same selection, for output that is NOT a <table>: the Kanban card.
-   Painting --sel on hover and stopping there would leave every colour the
-   card carries measured against --sel, where `[unknown]`/`[pre_send]`/
-   `[withdrawn]`/`—` (--comment, 2.98) and `[rejected]`/`[blocked]`
-   (--destructive, 3.85) fail 1.4.3. The background and the trip to --fg are
-   one decision, so they are one class: reach for this, never for a bare
-   hover-background utility. */
+/* The same selection, for output that is NOT a <table>: the Kanban card. The
+   background and the trip to `--foreground` are one decision, so they are one
+   class: reach for this, never for a bare hover-background utility. */
 .admin-root .admin-selection:hover {
-  background: var(--sel);
+  background: var(--accent);
 }
 .admin-root .admin-selection:hover * {
-  color: var(--fg);
+  color: var(--foreground);
 }
 
-/* …and give the link back its hover hue. Forcing the selection to --fg also
+/* …and give the link back its hover hue. Forcing the selection to one ink also
    swallowed the brand-on-hover utility that links under /admin carry: this
    file is imported from TypeScript and therefore sits outside every @layer,
    which beats any Tailwind utility regardless of specificity. Without this
    rule a link inside a hovered row has no hover affordance at all unless it
-   also happens to underline. --brand (= --cyan) measures 6.26 on --sel, so
-   the colour comes back without costing contrast. The escaped selector below
-   is that utility's own class name. */
+   also happens to underline. `--brand` is 4.95:1 on `--accent` at worst
+   (light). The escaped selector below is that utility's own class name. */
 .admin-root .admin-listing tbody tr:hover a.hover\:text-brand:hover,
 .admin-root .admin-selection:hover a.hover\:text-brand:hover {
   color: var(--brand);
@@ -278,7 +252,7 @@
 
 /* The decorative index column (`001`, `002`…): `ls -1 | nl`, not the id. */
 .admin-root .admin-listing [data-listing-index] {
-  color: var(--comment);
+  color: var(--ink-3);
 }
 
 /* ── loading: a progress line, not a grey box ─────────────────────────────
@@ -288,8 +262,8 @@
    nothing pulses, and the row still says "carregando" to a screen reader. */
 .admin-root .admin-progress {
   display: inline-block;
-  color: var(--purple);
-  background: var(--sel);
+  color: var(--primary);
+  background: var(--accent);
   animation: admin-progress-fill 1.4s linear infinite;
 }
 
@@ -327,6 +301,14 @@
   gap: 1ch;
   width: 100%;
   min-width: 0;
+  /* A régua é um texto de sessenta e quatro traços sem quebra, e o `grid` do
+     diálogo dava a ela a largura que pedia: o conteúdo passava da borda. */
+  contain: inline-size;
+  /* Os três são `<h2>`, e o site escreve `h2` em outra fonte. */
+  font-family: var(--font);
+  font-stretch: 100%;
+  font-weight: 500;
+  line-height: 1.5;
   overflow: hidden;
   white-space: nowrap;
   text-align: left;
@@ -346,7 +328,7 @@
      `overflow: hidden` recorta o desenho, não a árvore de acessibilidade. */
   content: "──" / "";
   flex: none;
-  color: var(--comment);
+  color: var(--ink-3);
 }
 
 .admin-root :is(
@@ -359,7 +341,7 @@
   flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
-  color: var(--comment);
+  color: var(--ink-3);
 }
 
 /* ════════════════════════════════════════════════
@@ -368,8 +350,7 @@
    src/components/ui/sonner.tsx; aqui ficam as duas coisas que precisam
    alcançar o DOM interno do sonner: a fonte da linha e a cor do marcador.
 
-   `✓` em --green (10.07:1 sobre --popover) e `✗` em --destructive (6.65:1).
-   O marcador é texto e é `aria-hidden` — a cor é reforço, não o canal.
+   `✓` em `--ok` e `✗` em `--destructive`, sobre `--popover`. O marcador é texto e é `aria-hidden` — a cor é reforço, não o canal.
    ════════════════════════════════════════════════ */
 .admin-root [data-sonner-toaster],
 .admin-root [data-sonner-toast] {
@@ -377,12 +358,12 @@
 }
 
 .admin-root [data-sonner-toast] .admin-output-marker {
-  color: var(--comment);
+  color: var(--ink-3);
   font-family: var(--font);
 }
 
 .admin-root [data-sonner-toast][data-type="success"] .admin-output-marker {
-  color: var(--green);
+  color: var(--ok);
 }
 
 .admin-root [data-sonner-toast][data-type="error"] .admin-output-marker {

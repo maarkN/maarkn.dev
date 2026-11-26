@@ -44,6 +44,8 @@
    ATENÇÃO: este arquivo CONTINUA sendo varrido como texto. Nenhum nome de
    utility é escrito por extenso neste comentário de propósito. */
 @source not "../**/*.md";
+/* As medições do backoffice citam classes, certas e erradas, e não pintam nada. */
+@source not "../lib/admin/{color,contrast}-audit*";
 
 /* ════════════════════════════════════════════════
    CLI VERSION TOKENS — Dracula. `soft` is the default palette,
@@ -170,6 +172,7 @@
   --color-warn:     var(--warn);
   --color-bad:      var(--bad);
   --color-plate:    var(--plate);
+  --color-on-plate: var(--on-plate);
   --color-c1:       var(--c1);
   --color-c2:       var(--c2);
 
@@ -214,11 +217,6 @@
   --color-input:                    var(--input);
   --color-ring:                     var(--ring);
   --color-brand:                    var(--brand);
-  --color-sidebar:                  var(--sidebar);
-  --color-sidebar-foreground:       var(--sidebar-foreground);
-  --color-sidebar-border:           var(--sidebar-border);
-  --color-sidebar-accent:           var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 }
 
 /* ════════════════════════════════════════════════

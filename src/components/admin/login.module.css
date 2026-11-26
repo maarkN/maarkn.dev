@@ -1,0 +1,58 @@
+/* The door of the backoffice: one window over the planes, and nothing else. */
+
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px 16px;
+  background: linear-gradient(
+    112deg,
+    transparent 22%,
+    color-mix(in srgb, var(--beam) 7%, transparent) 22% 41%,
+    transparent 41% 63%,
+    color-mix(in srgb, var(--beam-2) 7%, transparent) 63% 84%,
+    transparent 84%
+  );
+  font-family: var(--type-text);
+  font-size: 1rem;
+}
+.column {
+  display: grid;
+  gap: 24px;
+  width: min(440px, 100%);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding-left: 34px;
+  font-family: var(--type-title);
+  font-size: 1.0625rem;
+  font-weight: 560;
+  font-stretch: 104%;
+}
+.brand span {
+  font-weight: 400;
+}
+/* The page scrolls, not the window. */
+.window.window {
+  max-height: none;
+}
+.window > div {
+  overflow: visible;
+}
+.lead {
+  margin: 0 0 20px;
+  color: var(--ink-2);
+}
+.form {
+  display: grid;
+  gap: 20px;
+}
+.actions {
+  margin-top: 4px;
+}
+.actions button {
+  width: 100%;
+}

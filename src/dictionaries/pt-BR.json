@@ -934,5 +934,203 @@
       "available": "aberto a vagas sênior, remoto ou com mudança",
       "numbers": "Em números"
     }
+  },
+  "admin": {
+    "meta": {
+      "title": "Backoffice · maarkn.dev",
+      "login": "Entrar · backoffice · maarkn.dev"
+    },
+    "shell": {
+      "skip": "Pular para o conteúdo",
+      "brand": "maarkn.dev, visão geral",
+      "menu": "Menu do backoffice",
+      "collapse": "Recolher o menu",
+      "expand": "Expandir o menu",
+      "soon": "em breve",
+      "trail": "Caminho desta tela",
+      "shortcuts": "Atalhos",
+      "more": "Mais",
+      "everything": "Todas as telas",
+      "close": "Fechar",
+      "notices": "Avisos"
+    },
+    "nav": {
+      "groups": {
+        "panel": "Painel",
+        "career": "Carreira",
+        "site": "Site",
+        "system": "Sistema"
+      },
+      "items": {
+        "overview": "Visão geral",
+        "agenda": "Agenda",
+        "applications": "Candidaturas",
+        "jobs": "Vagas",
+        "contacts": "Contatos",
+        "generator": "Gerador de CV",
+        "projects": "Projetos",
+        "experiences": "Experiências",
+        "notes": "Notas",
+        "assistant": "Assistente",
+        "apiKeys": "MCP e chaves",
+        "audit": "Auditoria",
+        "settings": "Configurações"
+      },
+      "screens": {
+        "board": "Quadro",
+        "newApplication": "Nova candidatura",
+        "application": "Candidatura",
+        "newProject": "Novo projeto",
+        "project": "Projeto",
+        "generation": "Geração",
+        "edit": "Editar"
+      }
+    },
+    "create": {
+      "label": "Criar",
+      "items": {
+        "application": "Candidatura",
+        "appointment": "Compromisso",
+        "project": "Projeto",
+        "resume": "Currículo"
+      }
+    },
+    "account": {
+      "label": "{initials}: menu da conta",
+      "theme": "Tema",
+      "themes": {
+        "dusk": "Escuro suave",
+        "light": "Claro suave",
+        "dracula": "Dracula"
+      },
+      "language": "Idioma",
+      "languages": {
+        "pt-BR": "Português",
+        "en": "English"
+      },
+      "settings": "Configurações",
+      "site": "Ver o site",
+      "signOut": "Sair"
+    },
+    "search": {
+      "open": "Buscar ou executar",
+      "title": "Buscar no backoffice",
+      "label": "Uma tela, uma candidatura ou uma ação",
+      "close": "Fechar a busca",
+      "results": "Resultados",
+      "count": {
+        "one": "1 resultado",
+        "many": "{count} resultados"
+      },
+      "none": "Nada aqui corresponde a “{query}”.",
+      "loading": "Carregando as candidaturas…",
+      "failed": "As candidaturas não carregaram. Telas e ações continuam na busca.",
+      "retry": "Tentar de novo",
+      "kinds": {
+        "screen": "Tela",
+        "application": "Candidatura",
+        "action": "Ação"
+      },
+      "actions": {
+        "create": "Criar: {what}",
+        "theme": "Tema: {what}",
+        "language": "Mudar o idioma para {what}",
+        "site": "Ver o site",
+        "signOut": "Sair"
+      },
+      "terms": {
+        "overview": [
+          "início",
+          "painel",
+          "funil"
+        ],
+        "applications": [
+          "funil",
+          "processo"
+        ],
+        "board": [
+          "kanban",
+          "candidaturas"
+        ],
+        "jobs": [
+          "radar",
+          "anúncios"
+        ],
+        "contacts": [
+          "recrutadores",
+          "referências"
+        ],
+        "generator": [
+          "currículo",
+          "carta"
+        ],
+        "projects": [
+          "vitrine",
+          "portfólio"
+        ],
+        "assistant": [
+          "perguntas",
+          "respostas"
+        ],
+        "apiKeys": [
+          "API",
+          "agentes",
+          "skills"
+        ],
+        "audit": [
+          "chamadas",
+          "log"
+        ],
+        "settings": [
+          "senha",
+          "fuso",
+          "conta"
+        ],
+        "create": [
+          "nova",
+          "novo"
+        ],
+        "theme": [
+          "cor",
+          "aparência"
+        ],
+        "language": [
+          "idioma",
+          "língua",
+          "português",
+          "inglês"
+        ],
+        "site": [
+          "público",
+          "home"
+        ],
+        "signOut": [
+          "encerrar",
+          "logout"
+        ]
+      }
+    },
+    "login": {
+      "title": "Entrar no backoffice",
+      "lead": "Área privada. Só a conta de administração entra.",
+      "email": "E-mail",
+      "password": "Senha",
+      "submit": "Entrar",
+      "pending": "Entrando…",
+      "invalid": "E-mail ou senha incorretos.",
+      "failed": "Não foi possível entrar. Tente de novo.",
+      "noDatabase": "DATABASE_URL não está definida. Configure o Postgres antes de entrar."
+    },
+    "timeZone": {
+      "title": "Fuso",
+      "description": "Vale para as horas mostradas no backoffice. Datas sem hora, como a de envio de uma candidatura, não mudam com o fuso.",
+      "label": "Fuso horário",
+      "help": "Um nome da base IANA, como America/Sao_Paulo.",
+      "save": "salvar fuso",
+      "saving": "salvando…",
+      "saved": "Fuso salvo.",
+      "unknown": "Fuso desconhecido. Use um nome da lista.",
+      "failed": "Não foi possível salvar o fuso."
+    }
   }
 }

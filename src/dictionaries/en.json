@@ -935,5 +935,203 @@
       "available": "open to senior roles, remote or with relocation",
       "numbers": "In numbers"
     }
+  },
+  "admin": {
+    "meta": {
+      "title": "Backoffice · maarkn.dev",
+      "login": "Sign in · backoffice · maarkn.dev"
+    },
+    "shell": {
+      "skip": "Skip to content",
+      "brand": "maarkn.dev, overview",
+      "menu": "Backoffice menu",
+      "collapse": "Collapse the menu",
+      "expand": "Expand the menu",
+      "soon": "coming soon",
+      "trail": "Path to this screen",
+      "shortcuts": "Shortcuts",
+      "more": "More",
+      "everything": "Every screen",
+      "close": "Close",
+      "notices": "Notices"
+    },
+    "nav": {
+      "groups": {
+        "panel": "Dashboard",
+        "career": "Career",
+        "site": "Site",
+        "system": "System"
+      },
+      "items": {
+        "overview": "Overview",
+        "agenda": "Calendar",
+        "applications": "Applications",
+        "jobs": "Jobs",
+        "contacts": "Contacts",
+        "generator": "Resume generator",
+        "projects": "Projects",
+        "experiences": "Experience",
+        "notes": "Notes",
+        "assistant": "Assistant",
+        "apiKeys": "MCP and keys",
+        "audit": "Audit",
+        "settings": "Settings"
+      },
+      "screens": {
+        "board": "Board",
+        "newApplication": "New application",
+        "application": "Application",
+        "newProject": "New project",
+        "project": "Project",
+        "generation": "Generation",
+        "edit": "Edit"
+      }
+    },
+    "create": {
+      "label": "Create",
+      "items": {
+        "application": "Application",
+        "appointment": "Appointment",
+        "project": "Project",
+        "resume": "Resume"
+      }
+    },
+    "account": {
+      "label": "{initials}: account menu",
+      "theme": "Theme",
+      "themes": {
+        "dusk": "Soft dark",
+        "light": "Soft light",
+        "dracula": "Dracula"
+      },
+      "language": "Language",
+      "languages": {
+        "pt-BR": "Português",
+        "en": "English"
+      },
+      "settings": "Settings",
+      "site": "View the site",
+      "signOut": "Sign out"
+    },
+    "search": {
+      "open": "Search or run",
+      "title": "Search the backoffice",
+      "label": "A screen, an application or an action",
+      "close": "Close the search",
+      "results": "Results",
+      "count": {
+        "one": "1 result",
+        "many": "{count} results"
+      },
+      "none": "Nothing here matches “{query}”.",
+      "loading": "Loading the applications…",
+      "failed": "The applications did not load. Screens and actions are still here.",
+      "retry": "Try again",
+      "kinds": {
+        "screen": "Screen",
+        "application": "Application",
+        "action": "Action"
+      },
+      "actions": {
+        "create": "Create: {what}",
+        "theme": "Theme: {what}",
+        "language": "Change the language to {what}",
+        "site": "View the site",
+        "signOut": "Sign out"
+      },
+      "terms": {
+        "overview": [
+          "home",
+          "dashboard",
+          "funnel"
+        ],
+        "applications": [
+          "funnel",
+          "process"
+        ],
+        "board": [
+          "kanban",
+          "applications"
+        ],
+        "jobs": [
+          "radar",
+          "listings"
+        ],
+        "contacts": [
+          "recruiters",
+          "references"
+        ],
+        "generator": [
+          "CV",
+          "cover letter"
+        ],
+        "projects": [
+          "showcase",
+          "portfolio"
+        ],
+        "assistant": [
+          "questions",
+          "answers"
+        ],
+        "apiKeys": [
+          "API",
+          "agents",
+          "skills"
+        ],
+        "audit": [
+          "calls",
+          "log"
+        ],
+        "settings": [
+          "password",
+          "time zone",
+          "account"
+        ],
+        "create": [
+          "new",
+          "add"
+        ],
+        "theme": [
+          "colour",
+          "color",
+          "appearance"
+        ],
+        "language": [
+          "language",
+          "portuguese",
+          "english"
+        ],
+        "site": [
+          "public",
+          "home"
+        ],
+        "signOut": [
+          "log out",
+          "logout"
+        ]
+      }
+    },
+    "login": {
+      "title": "Sign in to the backoffice",
+      "lead": "Private area. Only the administrator's account gets in.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "pending": "Signing in…",
+      "invalid": "Wrong email or password.",
+      "failed": "Could not sign in. Try again.",
+      "noDatabase": "DATABASE_URL is not set. Configure Postgres before signing in."
+    },
+    "timeZone": {
+      "title": "Time zone",
+      "description": "For the times shown in the backoffice. Dates without a time, such as when an application was sent, do not change with the time zone.",
+      "label": "Time zone",
+      "help": "A name from the IANA database, such as America/Sao_Paulo.",
+      "save": "save time zone",
+      "saving": "saving…",
+      "saved": "Time zone saved.",
+      "unknown": "Unknown time zone. Use a name from the list.",
+      "failed": "The time zone could not be saved."
+    }
   }
 }

@@ -1,0 +1,113 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { memo, type KeyboardEvent, type ReactNode } from "react";
+import { logoutAction } from "@/app/_actions/auth";
+import { HoloButton } from "@/components/holo/button";
+import { HoloLink } from "@/components/holo/link";
+import { Mark } from "@/components/site/icons";
+import type { AdminLocale } from "@/lib/admin/locale";
+import { currentItem } from "@/lib/admin/nav";
+import { AccountMenu } from "./account-menu";
+import { CreateMenu } from "./create-menu";
+import type { ShellLabels } from "./labels";
+import { COLLAPSED } from "./menu-cookie";
+import { useCollapsed } from "./menu-width";
+import { PhoneBar } from "./phone-bar";
+import { SearchButton } from "./search-button";
+import { SideMenu } from "./side-menu";
+import { Trail } from "./trail";
+import styles from "./shell.module.css";
+
+/** `id` of the screen — the skip link's target. */
+const CONTENT_ID = "content";
+
+/**
+ * The texts change with the language and with nothing else, but they are new
+ * objects each time the server sends the screen again: compared by it, a refresh
+ * of a list does not draw the whole shell.
+ */
+function sameShell<Props extends { locale: AdminLocale; labels: ShellLabels }>(before: Props, after: Props) {
+  return (Object.keys(after) as (keyof Props)[]).every((key) => key === "labels" || before[key] === after[key]);
+}
+const Side = memo(SideMenu, sameShell);
+const Search = memo(SearchButton, sameShell);
+const Create = memo(CreateMenu, sameShell);
+const Account = memo(AccountMenu, sameShell);
+const Phone = memo(PhoneBar, sameShell);
+
+/**
+ * What Tab reached, all of it. A browser is content with less: with the line of
+ * the caret of a multiline field, or a strip of what a scrolling box cuts. What
+ * is taller than the room between the bars stays where the browser put it.
+ */
+function wholeFocus({ key, target }: KeyboardEvent) {
+  if (key !== "Tab" || !(target instanceof HTMLElement)) return;
+  if (target.offsetHeight <= window.innerHeight / 2) target.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+/**
+ * What is around every screen of the backoffice: the menu, the search, "Criar",
+ * the account and the way back. Applied in one place, `AdminShell`.
+ *
+ * The menu and the account are in the document twice, at the side and at the foot
+ * of a phone; the stylesheet shows one, and `display: none` keeps the other away
+ * from the keyboard and from screen readers.
+ */
+export function Shell({
+  email,
+  name,
+  locale,
+  labels,
+  collapsed: fromServer,
+  children,
+}: {
+  email: string;
+  /** The name of the record on screen: the last part of the way back. */
+  name?: string | null;
+  locale: AdminLocale;
+  labels: ShellLabels;
+  /** The menu as the server drew it. */
+  collapsed: boolean;
+  children: ReactNode;
+}) {
+  const pathname = usePathname() ?? "/admin";
+  const current = currentItem(pathname);
+  const collapsed = useCollapsed(fromServer);
+
+  return (
+    <div className={styles.shell} data-menu={collapsed ? COLLAPSED : undefined}>
+      <a href={`#${CONTENT_ID}`} className={styles.skip}>
+        {labels.shell.skip}
+      </a>
+      <Side current={current} collapsed={collapsed} email={email} locale={locale} labels={labels} />
+      <div className={styles.page}>
+        <header className={styles.top}>
+          <HoloLink href="/admin" size="sm" icon className={styles.topBrand} aria-label={labels.shell.brand}>
+            <Mark />
+          </HoloLink>
+          <Search locale={locale} labels={labels} />
+          <Create locale={locale} labels={labels} />
+          <div className={styles.topAccount}>
+            <Account email={email} locale={locale} labels={labels} side="bottom" />
+          </div>
+          {/* The account menu does not open without JavaScript, and it has the way out. */}
+          <noscript>
+            <form action={logoutAction}>
+              <HoloButton type="submit" size="md">
+                {labels.account.signOut}
+              </HoloButton>
+            </form>
+          </noscript>
+        </header>
+        <Trail pathname={pathname} name={name} labels={labels} />
+        {/* `tabIndex={-1}` is what makes the skip link actually move the focus:
+            in WebKit a plain `href="#content"` only scrolls. */}
+        <main id={CONTENT_ID} tabIndex={-1} className={styles.main} onKeyUp={wholeFocus}>
+          {children}
+        </main>
+      </div>
+      <Phone current={current} locale={locale} labels={labels} />
+    </div>
+  );
+}

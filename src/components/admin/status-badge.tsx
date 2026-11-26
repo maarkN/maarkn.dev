@@ -10,19 +10,14 @@
  * `title`, e `statusLabelFrom` continua sendo a fonte dos `<Select>` e
  * filtros, que são onde a frase legível importa.
  *
- * ── Cor: a paleta, não a escala do Tailwind ──────────────────────────────
- * As cores saem dos tokens Dracula (`text-cyan`, `text-green`, `text-yellow`,
- * `text-orange`, `text-pink`, `text-comment`) e de `--destructive`, o
- * vermelho já corrigido do admin. A escala `text-<hue>-300` que estava aqui
- * media 4.34:1 (indigo) e 4.74:1 (violet) sobre `--card` — uma delas abaixo de
- * AA — e trazia doze matizes que a moldura de terminal não tem. Medidas da
- * paleta sobre `--bg` (a superfície da listagem depois que o cartão saiu):
- * cyan 9.74 · yellow 11.58 · green 9.08 · orange 9.07 · purple 6.33 ·
- * pink 6.09 · destructive 6.00 · comment 4.64. Na linha sob o cursor o
- * `.admin-listing` leva todo o texto para `--fg` (8.46:1 sobre `--sel`), então
- * nenhuma destas precisa ser medida uma segunda vez.
+ * ── Cor: os tokens do tema, não a escala do Tailwind ──────────────────────
+ * As cores são os tokens de texto do tema (`text-ok`, `text-warn`, `text-ink-3`,
+ * `text-beam-2`…) e o `--destructive`, medidos sobre toda superfície em que uma
+ * etiqueta aparece (scripts/check-contrast.ts). O feixe fica de fora: é a cor
+ * do que se clica, e etiqueta não se clica. Na linha sob o cursor o
+ * `.admin-listing` leva todo o texto para `--foreground`.
  *
- * Valor desconhecido nunca quebra: cai em `text-comment` com a chave crua,
+ * Valor desconhecido nunca quebra: cai em `text-ink-3` com a chave crua,
  * que é o que se quer enquanto um enum ainda está crescendo.
  */
 
@@ -64,7 +59,7 @@ export function StatusBadge({
   className,
 }: StatusBadgeProps & { styles: StatusStyles }) {
   if (!status) {
-    return <span className={cn("text-comment", className)}>{EMPTY}</span>;
+    return <span className={cn("text-ink-3", className)}>{EMPTY}</span>;
   }
   const style = styles[status];
   return (
@@ -74,7 +69,7 @@ export function StatusBadge({
       title={style?.label ?? status}
       className={cn(
         "whitespace-nowrap",
-        style?.className ?? "text-comment",
+        style?.className ?? "text-ink-3",
         className,
       )}
     >
@@ -120,19 +115,19 @@ export function statusLabelFrom(styles: StatusStyles, key: string): string {
  * ficam na cor de comentario.
  */
 export const FUNNEL_PHASE_TONES: Record<FunnelPhaseKey, string> = {
-  pre_send: "text-comment",
-  sent: "text-cyan",
-  evaluation: "text-yellow",
-  outcome: "text-green",
+  pre_send: "text-ink-3",
+  sent: "text-beam-2",
+  evaluation: "text-warn",
+  outcome: "text-ok",
 };
 
 /** Excecoes dentro de `outcome`. Chave ausente = a cor da fase. */
 const OUTCOME_TONE: Partial<Record<FunnelStage, string>> = {
   rejected: "text-destructive",
-  withdrawn: "text-comment",
-  no_response: "text-comment",
-  ghosted: "text-comment",
-  skipped: "text-comment",
+  withdrawn: "text-ink-3",
+  no_response: "text-ink-3",
+  ghosted: "text-ink-3",
+  skipped: "text-ink-3",
 };
 
 /**
@@ -175,9 +170,9 @@ export const FunnelStageBadge = makeStatusBadge(
  * filtrar "patrocinio ok" e descartar justamente o alvo de hoje.
  */
 const SPONSORSHIP_GATE_CLASSNAMES: Record<SponsorshipGate, string> = {
-  not_applicable: "text-cyan",
-  open: "text-green",
-  unknown: "text-comment",
+  not_applicable: "text-beam-2",
+  open: "text-ok",
+  unknown: "text-ink-3",
   blocked: "text-destructive",
 };
 
@@ -199,15 +194,15 @@ export const SponsorshipBadge = makeStatusBadge(
 /* ── Application.source — src/lib/applications.ts ────────────────────────── */
 
 const APPLICATION_SOURCE_CLASSNAMES: Record<ApplicationSource, string> = {
-  vanhack: "text-purple",
-  linkedin: "text-cyan",
-  company_site: "text-comment",
-  indeed: "text-cyan",
-  glassdoor: "text-green",
-  recruiter: "text-orange",
-  referral: "text-green",
-  radar: "text-pink",
-  other: "text-comment",
+  vanhack: "text-ink",
+  linkedin: "text-beam-2",
+  company_site: "text-ink-3",
+  indeed: "text-beam-2",
+  glassdoor: "text-ok",
+  recruiter: "text-warn",
+  referral: "text-ok",
+  radar: "text-beam-3",
+  other: "text-ink-3",
 };
 
 export const APPLICATION_SOURCE_STYLES: StatusStyles = Object.fromEntries(
@@ -227,19 +222,19 @@ export const ApplicationSourceBadge = makeStatusBadge(
 export const PROJECT_STATUS_STYLES: Record<ProjectStatus, StatusStyle> = {
   live: {
     label: "No ar",
-    className: "text-green",
+    className: "text-ok",
   },
   internal: {
     label: "Interno",
-    className: "text-cyan",
+    className: "text-beam-2",
   },
   nda: {
     label: "NDA",
-    className: "text-orange",
+    className: "text-warn",
   },
   archived: {
     label: "Arquivado",
-    className: "text-comment",
+    className: "text-ink-3",
   },
 };
 
@@ -253,23 +248,23 @@ export const ProjectStatusBadge = makeStatusBadge(
 export const PROJECT_CATEGORY_STYLES: Record<ProjectCategory, StatusStyle> = {
   web: {
     label: "Web",
-    className: "text-cyan",
+    className: "text-beam-2",
   },
   mobile: {
     label: "Mobile",
-    className: "text-purple",
+    className: "text-ink",
   },
   ai: {
     label: "IA",
-    className: "text-pink",
+    className: "text-beam-3",
   },
   backend: {
     label: "Backend",
-    className: "text-orange",
+    className: "text-warn",
   },
   client: {
     label: "Cliente",
-    className: "text-green",
+    className: "text-ok",
   },
 };
 
@@ -283,11 +278,11 @@ export const ProjectCategoryBadge = makeStatusBadge(
 export const VISIBILITY_STYLES: StatusStyles = {
   public: {
     label: "Público",
-    className: "text-green",
+    className: "text-ok",
   },
   private: {
     label: "Privado",
-    className: "text-orange",
+    className: "text-warn",
   },
 };
 

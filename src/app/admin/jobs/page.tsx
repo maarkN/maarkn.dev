@@ -27,7 +27,8 @@ import {
 import { SPONSORSHIP_HINTS } from "@/lib/applications";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
-import { EMPTY, formatDate, formatNumber } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
+import { EMPTY, type Format } from "@/lib/format";
 import { JobsToolbar } from "./jobs-toolbar";
 import { PromoteJobButton } from "./promote-job-button";
 import {
@@ -80,10 +81,11 @@ export default async function JobsPage({
   const params = await searchParams;
   const filters = parseJobFilters(params);
   const page = parseJobsPage(params.page);
-  const [markets, verdicts, unmappedHits] = await Promise.all([
+  const [markets, verdicts, unmappedHits, { formatNumber }] = await Promise.all([
     listJobMarkets(),
     listRadarVerdicts(),
     countUnmappedRadarHits(),
+    getAdminFormat(),
   ]);
 
   return (
@@ -148,7 +150,7 @@ async function JobsRows({
   filters: JobFilters;
   page: number;
 }) {
-  const result = await listJobs({ filters, page });
+  const [result, format] = await Promise.all([listJobs({ filters, page }), getAdminFormat()]);
   const filtered = hasAnyJobFilter(filters);
 
   return (
@@ -175,7 +177,7 @@ async function JobsRows({
           />
         ) : (
           result.rows.map((row, index) => (
-            <JobRow key={row.id} row={row} index={index} />
+            <JobRow key={row.id} row={row} index={index} format={format} />
           ))
         )}
       </JobsTableFrame>
@@ -191,7 +193,8 @@ async function JobsRows({
   );
 }
 
-function JobRow({ row, index }: { row: JobListRow; index: number }) {
+function JobRow({ row, index, format }: { row: JobListRow; index: number; format: Format }) {
+  const { formatDate, formatNumber } = format;
   const hit = latestHit(row);
   const verification = latestVerification(row);
   const application = linkedApplication(row);
@@ -220,14 +223,14 @@ function JobRow({ row, index }: { row: JobListRow; index: number }) {
           <span className="truncate">{row.title}</span>
           {row.priority != null && (
             <span
-              className="shrink-0 tabular-nums text-orange"
+              className="shrink-0 tabular-nums text-warn"
               title="Prioridade (1 = maior)"
             >
               [P{row.priority}]
             </span>
           )}
           {!row.active && (
-            <span className="shrink-0 text-comment" title="Vaga encerrada">
+            <span className="shrink-0 text-ink-3" title="Vaga encerrada">
               [closed]
             </span>
           )}

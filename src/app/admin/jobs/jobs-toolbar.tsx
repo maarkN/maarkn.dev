@@ -363,7 +363,7 @@ function ToggleButton({
       onClick={onClick}
       className={cn(
         "rounded-none border-0 px-3",
-        active && "bg-brand/15 text-brand hover:bg-brand/20",
+        active && "bg-brand/15 text-foreground hover:bg-brand/20",
       )}
     >
       {label}

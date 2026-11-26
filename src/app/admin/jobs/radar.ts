@@ -48,23 +48,23 @@ export const RADAR_VERDICT_LABELS: Record<string, string> = {
 export const RADAR_VERDICT_STYLES: StatusStyles = {
   top_find: {
     label: RADAR_VERDICT_LABELS.top_find,
-    className: "text-green",
+    className: "text-ok",
   },
   shortlisted: {
     label: RADAR_VERDICT_LABELS.shortlisted,
-    className: "text-green",
+    className: "text-ok",
   },
   approved: {
     label: RADAR_VERDICT_LABELS.approved,
-    className: "text-green",
+    className: "text-ok",
   },
   kept: {
     label: RADAR_VERDICT_LABELS.kept,
-    className: "text-orange",
+    className: "text-warn",
   },
   stretch: {
     label: RADAR_VERDICT_LABELS.stretch,
-    className: "text-orange",
+    className: "text-warn",
   },
   eliminated: {
     label: RADAR_VERDICT_LABELS.eliminated,
@@ -72,7 +72,7 @@ export const RADAR_VERDICT_STYLES: StatusStyles = {
   },
   not_verified: {
     label: RADAR_VERDICT_LABELS.not_verified,
-    className: "text-comment",
+    className: "text-ink-3",
   },
 };
 
@@ -86,15 +86,15 @@ export function radarVerdictLabel(value: string | null | undefined): string {
 export const VERIFICATION_VERDICT_STYLES: StatusStyles = {
   confirmado: {
     label: "Confirmada",
-    className: "text-green",
+    className: "text-ok",
   },
   divergente: {
     label: "Divergente",
-    className: "text-orange",
+    className: "text-warn",
   },
   inacessível: {
     label: "Inacessível",
-    className: "text-comment",
+    className: "text-ink-3",
   },
   expirada: {
     label: "Expirada",

@@ -1,35 +1,52 @@
 import type { Metadata } from "next";
 import "../globals.css";
+import "../site.css";
 import "./admin.css";
-import { caskaydia } from "../fonts";
+import { AdminLocaleProvider } from "@/components/admin/admin-locale";
+import { SiteThemeSync } from "@/components/site-theme";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { getAdminDictionary } from "@/i18n/config";
+import { UNTRANSLATED } from "@/lib/admin/locale";
+import { getAdminLabels, getAdminSettings } from "@/lib/admin/request";
+import { siteThemeBootScript } from "@/lib/site-theme";
+import { caskaydia } from "../fonts";
+import { siteFontVars } from "../site-fonts";
 
-export const metadata: Metadata = {
-  title: "Admin · maarkn.dev",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { meta } = await getAdminLabels();
+  return { title: meta.title, robots: { index: false, follow: false } };
+}
 
 /**
- * Admin root layout. Independent from the public `[lang]` layout: the palette
- * is pinned to `soft` server-side and no theme boot script or provider runs,
- * so a visitor's saved `classic` preference never reaches `/admin/**`.
+ * Root layout of the backoffice, apart from the site's `[lang]` one. It has the
+ * theme of the site, by the same script and the same saved choice, and nothing of
+ * the CLI version: its palette and its font stay where they are.
  *
- * The two providers below are the only thing the backoffice adds on top of
- * that: `TooltipProvider` (the shadcn primitives expect one in scope) and
- * sonner's `Toaster`, which every Server Action in the backoffice writes to.
- * The admin palette is pinned server-side, so sonner's own theme is pinned
- * too instead of being read from `next-themes` — there is no provider here.
+ * Language and time zone are resolved here, on the server, and go to the browser
+ * as data (`AdminLocaleProvider`), so that the two never disagree about a date.
  */
-export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminRootLayout({ children }: { children: React.ReactNode }) {
+  const [{ locale, timeZone }, untranslated] = await Promise.all([
+    getAdminSettings(),
+    getAdminDictionary(UNTRANSLATED),
+  ]);
+
   return (
-    <html lang="en" data-theme="soft" data-font="caskaydia" className={caskaydia.variable}>
-      <body className="admin-root min-h-dvh antialiased">
-        <TooltipProvider>{children}</TooltipProvider>
-        {/* Posição, tema e marcadores vivem no próprio componente (bko-04):
-            o toast é uma linha de saída, e `richColors` foi retirado porque
-            tingia o cartão inteiro. */}
-        <Toaster />
+    <html lang={locale} suppressHydrationWarning className={caskaydia.variable}>
+      <body className={`site-root admin-root ${siteFontVars} min-h-dvh antialiased`}>
+        {/* A plain <script>, not next/script: the parser runs it before it paints
+            anything (see src/app/[lang]/layout.tsx). */}
+        <script id="theme-boot" dangerouslySetInnerHTML={{ __html: siteThemeBootScript }} />
+        <SiteThemeSync />
+        <AdminLocaleProvider locale={locale} timeZone={timeZone}>
+          <TooltipProvider>{children}</TooltipProvider>
+        </AdminLocaleProvider>
+        {/* A8: the only one. What lands in it comes from screens that were not
+            translated yet; one that was says the language of its own words. */}
+        <div lang={UNTRANSLATED}>
+          <Toaster containerAriaLabel={untranslated.shell.notices} />
+        </div>
       </body>
     </html>
   );

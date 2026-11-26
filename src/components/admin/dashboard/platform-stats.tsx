@@ -3,7 +3,7 @@ import { StatCard } from "@/app/admin/_components/stat-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dbConfigured } from "@/lib/db";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { loadPlatformStats } from "./dashboard-data";
 
 /**
@@ -36,6 +36,7 @@ export function PlatformStatsSkeleton() {
 }
 
 export async function PlatformStats() {
+  const { formatDateTime, formatNumber } = await getAdminFormat();
   const stats = await loadPlatformStats();
 
   if (stats.failed) {

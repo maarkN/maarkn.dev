@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { FileText } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
-import { formatDateTime } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/admin/page-header";
 import {
@@ -79,7 +79,7 @@ export default async function GeneratorPage({
           <h2 className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
             Gerações recentes
           </h2>
-          <p className="text-xs text-comment">
+          <p className="text-xs text-ink-3">
             # histórico gravado no banco — “[ abrir ]” leva à versão de impressão
           </p>
           <Suspense key={`${q}|${page}`} fallback={<GenerationsSkeleton />}>
@@ -121,6 +121,7 @@ function GenerationsSkeleton() {
 }
 
 async function GenerationsTable({ q, page }: { q: string; page: number }) {
+  const { formatDateTime } = await getAdminFormat();
   const where = q
     ? {
         OR: [
@@ -203,7 +204,7 @@ async function GenerationsTable({ q, page }: { q: string; page: number }) {
                 >
                   {g.company || "—"}
                 </TableCell>
-                <TableCell className="hidden sm:table-cell text-cyan">
+                <TableCell className="hidden sm:table-cell text-beam-2">
                   <span title={languageLabel(g.language)}>[{g.language}]</span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell tabular-nums text-muted-foreground">

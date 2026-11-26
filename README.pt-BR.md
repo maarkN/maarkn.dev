@@ -46,11 +46,11 @@ As rotas internas ainda vestem o chrome do terminal dentro disso (barra de statu
 
 ### Admin
 
-`/admin` (sem prefixo de idioma) é um backoffice de 18 rotas protegido por NextAuth, fixado na paleta `soft` e sempre escuro: painel do funil, o rastreador de candidaturas em lista e em board, o dossiê completo de uma candidatura, vagas, contatos, CRUD de projetos com upload de capa, gerador de CV / carta de apresentação que usa a base de conhecimento, chaves de API do MCP e a auditoria delas, o log de chat da assistente e as configurações. Login em `/admin/login`, desenhado como um tty.
+`/admin` (sem prefixo de idioma) é um backoffice de 18 rotas protegido por NextAuth, nos três temas do site e em dois idiomas: visão geral do funil, o rastreador de candidaturas em lista e em board, o dossiê completo de uma candidatura, vagas, contatos, CRUD de projetos com upload de capa, gerador de CV / carta de apresentação que usa a base de conhecimento, chaves de API do MCP e a auditoria delas, o log de chat da assistente e as configurações. Login em `/admin/login`.
 
-Ele fala a mesma língua visual do terminal público, e isso é decisão, não enfeite: barra de status em estilo tmux, árvore de diretórios, breadcrumb escrito como o comando que abriu a tela, `cd ..` no rodapé, listagens pintadas como saída de `ls` (etiquetas em colchete como `[applied]`, uma coluna decorativa de índice `001`, colunas monoespaçadas medidas em `ch`), erro de campo impresso como `stderr:` e toast como uma linha de saída. Ele **não** é um terminal: não há prompt para digitar nem motor de comandos — as telas continuam formulários e tabelas. Toda cor sai da paleta Dracula em `src/app/admin/admin.css`, onde cada desvio carrega o contraste medido.
+Uma estrutura só cerca todas as telas: menu em quatro grupos que recolhe para ícones, busca (`⌘K` / `Ctrl+K`) por telas, candidaturas e ações, botão "Criar" e menu da conta com tema e idioma; no celular, uma barra na base da tela. O tema é o escolhido no site, aplicado antes da primeira pintura. O idioma começa pelo do site e é um cookie próprio, sem prefixo no endereço; as datas seguem o idioma e um fuso configurável (São Paulo por padrão). Dentro da estrutura as telas ainda são as anteriores, em português: listagens pintadas como saída de `ls`, etiquetas em colchete como `[applied]`, erro de campo impresso como `stderr:`. Toda cor sai dos tokens do tema ativo (`src/app/admin/admin.css`), e todo par é medido nos três.
 
-A acessibilidade é mantida em AA também na superfície privada, e medida em vez de suposta. O `scripts/a11y-admin-axe.mjs` dirige o Chrome headless pelas 18 rotas mais os cinco overlays que só existem depois de um clique (o `Sheet` fica de fora enquanto não estiver montado em rota nenhuma; `A11Y_SHEET_PATH=` o traz de volta): axe-core por padrão, `--keyboard` para o percurso de foco (foco sempre visível, sem fuga do diálogo, Escape devolvendo o foco ao gatilho), `--motion` para `prefers-reduced-motion: reduce` (com `--motion no-preference` como controle negativo) e `--width 390` para a varredura estreita. O Lighthouse de acessibilidade dá 100 em `/admin/login` e `/admin/applications`. Como o vocabulário de token do shadcn só resolve dentro de `.admin-root`, o `scripts/check-admin-utilities.ts` roda dentro do `pnpm lint` e reprova o build se uma dessas utilities vazar para o site público.
+A acessibilidade é mantida em AA também na superfície privada, e medida em vez de suposta. O `scripts/a11y-admin-axe.mjs` dirige o Chrome headless pelas 18 rotas mais os overlays que só existem depois de um clique (o `Sheet` fica de fora enquanto não estiver montado em rota nenhuma; `A11Y_SHEET_PATH=` o traz de volta): axe-core por padrão, `--keyboard` para o percurso de foco (foco sempre visível, sem fuga do diálogo, Escape devolvendo o foco ao gatilho), `--motion` para `prefers-reduced-motion: reduce` (com `--motion no-preference` como controle negativo), `--width 390` para a varredura estreita, `--theme` e `--lang`. O `node scripts/e2e-site.mjs --admin` confere o que cerca as telas: acesso, tema antes da primeira pintura, idioma, menu, busca, teclado e celular. Como o vocabulário de token do shadcn só resolve dentro de `.admin-root`, o `scripts/check-admin-utilities.ts` roda dentro do `pnpm lint` e reprova o build se uma dessas utilities vazar para o site público; o `scripts/check-admin-colors.ts` reprova quando entra uma cor que não é do tema.
 
 ### SEO e performance
 
@@ -219,7 +219,7 @@ src/
 │   ├── site-theme.tsx              # site: estado do tema (o script de boot dos dois é lib/theme-boot.ts)
 │   ├── site/                       # a estrutura do site (topo, busca, rodapé, idioma, troca de página), ver AGENTS.md
 │   ├── holo/                       # os primitivos do holograma (moldura, botão, card, janela, …), ver AGENTS.md
-│   ├── admin/                      # o backoffice: moldura de terminal, listagens, formulários, diálogos, kanban
+│   ├── admin/                      # o backoffice: estrutura (menu, busca, conta), listagens, formulários, diálogos, kanban
 │   └── ui/                         # primitives shadcn — importados só pelo /admin (ver check-admin-utilities)
 ├── lib/
 │   ├── terminal/
@@ -237,7 +237,7 @@ src/
 ├── i18n/config.ts
 └── proxy.ts                        # roteamento de locale (o middleware do Next 16)
 prisma/                             # schema, migrations, seed
-scripts/                            # check-dictionaries, check-admin-utilities, check-contrast (lint), ingest-knowledge,
+scripts/                            # check-dictionaries, check-admin-utilities, check-admin-colors, check-contrast (lint), ingest-knowledge,
                                     # check-commands-doc, a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + dossiês de projeto para a assistente (ignorado pelo git)
 ```
@@ -251,7 +251,7 @@ knowledge/                          # CV + dossiês de projeto para a assistente
 - Sem `innerHTML`: toda linha de saída é um nó React, e tudo o que o visitante digita é exibido literalmente.
 - Conteúdo mora em `lib/` e nos dicionários; `lib/terminal` só formata.
 - Animações respeitam `prefers-reduced-motion` nas duas superfícies, e as do admin são conferidas contra um controle negativo (`node scripts/a11y-admin-axe.mjs --motion` / `--motion no-preference`).
-- O vocabulário de token do shadcn é exclusivo do admin; o `pnpm lint` reprova quando ele vaza para o site público.
+- O vocabulário de token do shadcn é exclusivo do admin, e o backoffice só usa as cores do tema; o `pnpm lint` reprova o contrário.
 
 ---
 

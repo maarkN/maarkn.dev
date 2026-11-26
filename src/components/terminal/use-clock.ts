@@ -3,11 +3,9 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Wall clock for the status bars and the site's notch: `--:--` on the server,
- * `HH:mm` on the client, in the visitor's zone unless another one is asked for. Lives apart from `status-bar.tsx` because the
- * admin bar (`@/components/admin/terminal/admin-status-bar`) needs the same
- * clock without the theme controls — and must not pull `theme-provider` into
- * an `/admin/**` chunk.
+ * Wall clock for the CLI version's status bar and the site's notch: `--:--` on
+ * the server, `HH:mm` on the client, in the visitor's zone unless another one is
+ * asked for.
  */
 
 const SERVER_TIME = "--:--";

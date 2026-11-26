@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { dbConfigured } from "@/lib/db";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { getAdminFormat } from "@/lib/admin/request";
 import { loadNextSteps } from "./dashboard-data";
 
 /**
@@ -85,6 +85,7 @@ export function NextStepsSkeleton() {
 }
 
 export async function NextStepsCard() {
+  const { formatDateTime, formatNumber } = await getAdminFormat();
   const result = await loadNextSteps(LIMIT);
 
   return (
@@ -128,9 +129,9 @@ export async function NextStepsCard() {
               <TableCell>
                 <div className="flex items-center gap-2">
                   {item.kind === "interview" ? (
-                    <CalendarClock className="size-4 shrink-0 text-violet-500" />
+                    <CalendarClock className="size-4 shrink-0 text-beam-2" />
                   ) : (
-                    <ListChecks className="size-4 shrink-0 text-amber-500" />
+                    <ListChecks className="size-4 shrink-0 text-warn" />
                   )}
                   <span className="truncate">{item.detail || "—"}</span>
                 </div>

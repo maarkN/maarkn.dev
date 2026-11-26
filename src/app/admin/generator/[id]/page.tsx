@@ -101,16 +101,13 @@ function renderMarkdown(md: string): string {
 }
 
 /**
- * Print view. The sheet of paper that becomes the PDF: the light palette below
- * is hardcoded on purpose (the admin chrome is always dark, and a dark CV
- * prints as a black rectangle), and only the solid button variants are used,
- * since `ghost`/`outline` would inherit the dark theme's foreground onto a
- * light background.
+ * Print view. The sheet of paper that becomes the PDF: its colours are paper
+ * and ink on purpose, whatever the theme is (a dark CV prints as a black
+ * rectangle), and they are the one literal paint of the backoffice
+ * (src/lib/admin/color-audit.ts).
  *
- * It DOES wear the chrome — it is an authenticated `/admin` route like any
- * other — but `admin-chrome.module.css` hides the bar, the tree, the
- * breadcrumb and `cd ..` under `@media print`, so what leaves the printer is
- * still the bare sheet.
+ * It wears the shell like any other screen, and the shell leaves the page under
+ * `@media print`: what leaves the printer is the bare sheet.
  */
 export default async function GenerationDetail({
   params,
@@ -131,14 +128,14 @@ export default async function GenerationDetail({
   ].filter((s) => s.body && s.body.trim());
 
   return (
-    <AdminShell email={session.user.email ?? "admin"}>
-    <div className="bg-neutral-100 py-8 print:bg-white print:py-0">
+    <AdminShell
+      email={session.user.email ?? "admin"}
+      name={[g.roleTitle, g.company].filter(Boolean).join(" · ")}
+    >
+    <div className="bg-muted py-8 print:bg-transparent print:py-0">
       <div className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 print:hidden">
-        {/* No "voltar" button: `cd ..` in the chrome's footer is the way out. */}
-        <div className="flex items-center gap-2">
-          <PrintButton />
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-600">
+        <PrintButton />
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>
             {g.roleTitle || "Vaga sem título"}
             {g.company ? ` · ${g.company}` : ""}

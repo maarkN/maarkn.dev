@@ -63,7 +63,7 @@ import {
 } from "@/lib/mcp/scopes";
 // `expiresAt` é um instante real (agora + N dias), não uma data de calendário:
 // por A5 do AGENTS.md isso é `formatDateTime`, em America/Sao_Paulo.
-import { formatDateTime } from "@/lib/format";
+import { useAdminFormat } from "@/components/admin/admin-locale";
 
 /**
  * Rótulos dos presets de expiração. Os valores precisam bater com as chaves de
@@ -94,6 +94,7 @@ function scopeFieldId(scope: McpScope): string {
 }
 
 export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
+  const { formatDateTime } = useAdminFormat();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -194,8 +195,8 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
             </DialogHeader>
 
             <div className="space-y-3">
-              <div className="flex items-start gap-2 bg-amber-500/10 p-3 text-amber-400">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <div className="flex items-start gap-2 bg-warn/10 p-3 text-foreground">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warn" />
                 <p>
                   Guarde em um gerenciador de segredos. Não commite em
                   repositório — este é público — e não cole em chat, issue ou
@@ -376,7 +377,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                         <span
                           className={
                             isWrite(scope)
-                              ? "font-mono text-xs text-amber-400"
+                              ? "font-mono text-xs text-warn"
                               : "font-mono text-xs"
                           }
                         >
@@ -399,7 +400,7 @@ export function CreateKeyDialog({ disabled }: { disabled?: boolean }) {
                 <FieldError id="key-scopes-error">{errors.scopes}</FieldError>
 
                 {writeSelected.length > 0 && (
-                  <p className="flex items-start gap-2 text-xs text-amber-400">
+                  <p className="flex items-start gap-2 text-xs text-warn">
                     <ShieldAlert className="mt-0.5 size-3.5 shrink-0" />
                     <span>
                       {writeSelected.length} escopo(s) de escrita. Esta chave

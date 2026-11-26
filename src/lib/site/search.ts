@@ -1,6 +1,6 @@
 /**
- * Matching of the site's search. Pure: the index is built on the server
- * (search-index.ts) and the window only filters it.
+ * Matching of the search, the site's and the backoffice's. Pure: the site's
+ * index is built on the server (search-index.ts) and the window only filters it.
  */
 import type { SiteTheme } from "@/lib/site-theme";
 
@@ -23,13 +23,18 @@ export type SearchTarget =
   | { type: "theme"; theme: SiteTheme }
   | { type: "language" };
 
-export type SearchItem = {
-  id: string;
-  kind: SearchKind;
+/** What the matching looks at. */
+export type Searchable = {
   title: string;
   /** One line under the title. */
   detail?: string;
   /** What else finds it: technologies, other names. */
+  terms: readonly string[];
+};
+
+export type SearchItem = Searchable & {
+  id: string;
+  kind: SearchKind;
   terms: string[];
   /** `lang` of the title, when it is not the page's. */
   lang?: string;
@@ -57,7 +62,7 @@ const spellings = (text: string) =>
 /** A short token is a name being typed (`go`, `ci`): anywhere inside a word it would be noise. */
 const SHORT = 3;
 
-function weigh(token: string, item: SearchItem): number {
+function weigh(token: string, item: Searchable): number {
   const title = spellings(item.title);
   if (title.includes(token)) return 8;
   if (title.some((word) => word.startsWith(token))) return 6;
@@ -71,7 +76,7 @@ function weigh(token: string, item: SearchItem): number {
 }
 
 /** Every word of the query has to be somewhere in the item. */
-function score(tokens: string[], item: SearchItem): number {
+function score(tokens: string[], item: Searchable): number {
   let total = 0;
   for (const token of tokens) {
     const weight = weigh(token, item);
@@ -85,10 +90,17 @@ function score(tokens: string[], item: SearchItem): number {
 const SUGGESTED = new Set<SearchKind>(["section", "page", "cli", "theme", "language", "cv"]);
 
 export function search(items: readonly SearchItem[], query: string): SearchItem[] {
+  return rank(items, query, ({ kind }) => SUGGESTED.has(kind));
+}
+
+/** The items that match, best first. With nothing typed, the ones worth suggesting. */
+export function rank<Item extends Searchable>(
+  items: readonly Item[],
+  query: string,
+  suggested: (item: Item) => boolean,
+): Item[] {
   const tokens = words(query);
-  if (tokens.length === 0) {
-    return query.trim() === "" ? items.filter((item) => SUGGESTED.has(item.kind)) : [];
-  }
+  if (tokens.length === 0) return query.trim() === "" ? items.filter(suggested) : [];
   return items
     .map((item, index) => ({ item, index, score: score(tokens, item) }))
     .filter((found) => found.score > 0)
