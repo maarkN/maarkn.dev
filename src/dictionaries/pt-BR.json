@@ -297,6 +297,23 @@
         ]
       }
     },
+    "cases": {
+      "dermatology-ai-platform": {
+        "problem": "Levar IA para a consulta de dermatologia sem tirar a decisão do profissional, dentro das regras da Resolução CFM 2.454/2026 e sem um time técnico para construir o produto.",
+        "work": "Fui o único engenheiro: desenho do produto, arquitetura, plataforma web, app nativo, PWA do paciente, API, infraestrutura e builds das lojas. Toda saída da IA espera o aceite de uma pessoa.",
+        "result": "No ar em dermagenix.pro, com transcrição ao vivo, resumo da consulta por IA e sugestão de prescrição que cita as fontes."
+      },
+      "medical-shift-marketplace": {
+        "problem": "Médicos e hospitais combinavam plantões em grupos de WhatsApp e por indicação.",
+        "work": "Reescrevi a API legada e refiz a maior parte do app Flutter, um só código para web, Android e iOS, e respondo pelo backend, pelo painel interno, pela documentação e pela infraestrutura.",
+        "result": "Em beta fechado antes do lançamento: propostas, aceite, chat, contrato digital e avaliação mútua em um só app."
+      },
+      "voip-platform": {
+        "problem": "O Nectar CRM pagava o Twilio pela telefonia, e o especialista por trás do substituto próprio tinha saído.",
+        "work": "Assumi o backend e o VoIP, sobre Asterisk Realtime e NestJS, e fui o líder técnico da transcrição das ligações com IA.",
+        "result": "Entrou em produção num piloto fechado com 4 clientes, com custo por serviço cerca de 60% menor que o do Twilio."
+      }
+    },
     "noLinks": "Sem links públicos",
     "roleHeading": "Meu papel",
     "featuresHeading": "Funcionalidades-chave",

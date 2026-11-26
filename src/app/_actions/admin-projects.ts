@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { locales } from "@/i18n/config";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 import { httpUrlSchema } from "@/lib/http-url";
 import { encodeStringList } from "@/lib/json-list";
+import { MAX_SUCCESS_CASES } from "@/lib/project-text";
+import { terminalHref } from "@/lib/terminal/address";
 import type { ActionResult } from "./action-result";
 
 /**
@@ -15,11 +18,26 @@ import type { ActionResult } from "./action-result";
  * `stackJson`/`featuresJson` stay String-JSON (encoded through
  * `@/lib/json-list`) — migrating those columns to native `String[]` is F1 work,
  * not a presentation refactor. `year` is a String column on purpose too.
+ *
+ * What is saved here is what the public site shows, in each language (ADR 0003).
  */
 
 const CATEGORIES = ["web", "mobile", "ai", "backend", "client"] as const;
 const STATUSES = ["live", "internal", "nda", "archived"] as const;
 const VISIBILITIES = ["public", "private"] as const;
+/** Espelho da sentinela do `<Select>` de caso: o Radix proíbe `value=""`. */
+const NO_CASE = "none";
+
+const tagline = z.string().max(280, "Máximo de 280 caracteres.").optional().or(z.literal(""));
+const description = z
+  .string()
+  .max(8000, "Máximo de 8000 caracteres.")
+  .optional()
+  .or(z.literal(""));
+const paragraph = z.string().max(2000, "Máximo de 2000 caracteres.").optional().or(z.literal(""));
+const features = z
+  .array(z.string().min(1).max(280, "Máximo de 280 caracteres por item."))
+  .max(20, "No máximo 20 itens.");
 
 const projectSchema = z.object({
   slug: z
@@ -60,16 +78,28 @@ const projectSchema = z.object({
   repoUrl: httpUrlSchema.optional().or(z.literal("")),
   demoUrl: httpUrlSchema.optional().or(z.literal("")),
   caseUrl: httpUrlSchema.optional().or(z.literal("")),
-  tagline: z.string().max(280, "Máximo de 280 caracteres.").optional().or(z.literal("")),
-  description: z
-    .string()
-    .max(8000, "Máximo de 8000 caracteres.")
-    .optional()
-    .or(z.literal("")),
-  role: z.string().max(2000, "Máximo de 2000 caracteres.").optional().or(z.literal("")),
-  features: z
-    .array(z.string().min(1).max(280))
-    .max(20, "No máximo 20 itens."),
+  // Sem sufixo é o texto em inglês, como nas colunas.
+  tagline,
+  taglinePt: tagline,
+  description,
+  descriptionPt: description,
+  role: paragraph,
+  rolePt: paragraph,
+  features,
+  featuresPt: features,
+  caseProblemPt: paragraph,
+  caseProblemEn: paragraph,
+  caseWorkPt: paragraph,
+  caseWorkEn: paragraph,
+  caseResultPt: paragraph,
+  caseResultEn: paragraph,
+  /** Posição entre os casos de sucesso; `null` quando não é caso. */
+  casePosition: z
+    .number({ message: "Selecione uma posição válida." })
+    .int("Selecione uma posição válida.")
+    .min(1, "Selecione uma posição válida.")
+    .max(MAX_SUCCESS_CASES, "Selecione uma posição válida.")
+    .nullable(),
   sourceVisibility: z.enum(VISIBILITIES, {
     message: "Selecione a visibilidade do código-fonte.",
   }),
@@ -87,12 +117,25 @@ function trim(v: FormDataEntryValue | null) {
   return typeof v === "string" ? v.trim() : "";
 }
 
-/** Textareas accept "one per line" or comma-separated. */
+/** Short labels: "one per line" or comma-separated. */
 function parseList(value: string): string[] {
   return value
     .split(/[\n,]/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** Sentences: one per line only, because a sentence has commas of its own. */
+function parseLines(value: string): string[] {
+  return value
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** `""` and the select's sentinel mean "not a case"; the rest is for zod. */
+function parsePosition(value: string): number | null {
+  return value === "" || value === NO_CASE ? null : Number(value);
 }
 
 function parseForm(formData: FormData) {
@@ -114,7 +157,18 @@ function parseForm(formData: FormData) {
     tagline: trim(formData.get("tagline")),
     description: trim(formData.get("description")),
     role: trim(formData.get("role")),
-    features: parseList(trim(formData.get("features"))),
+    features: parseLines(trim(formData.get("features"))),
+    taglinePt: trim(formData.get("taglinePt")),
+    descriptionPt: trim(formData.get("descriptionPt")),
+    rolePt: trim(formData.get("rolePt")),
+    featuresPt: parseLines(trim(formData.get("featuresPt"))),
+    caseProblemPt: trim(formData.get("caseProblemPt")),
+    caseProblemEn: trim(formData.get("caseProblemEn")),
+    caseWorkPt: trim(formData.get("caseWorkPt")),
+    caseWorkEn: trim(formData.get("caseWorkEn")),
+    caseResultPt: trim(formData.get("caseResultPt")),
+    caseResultEn: trim(formData.get("caseResultEn")),
+    casePosition: parsePosition(trim(formData.get("casePosition"))),
     sourceVisibility: trim(formData.get("sourceVisibility")) || "public",
     coverImage: trim(formData.get("coverImage")),
   };
@@ -130,9 +184,74 @@ function isUniqueViolation(err: unknown, field: string): boolean {
   return e.code === "P2002" && (e.meta?.target?.includes(field) ?? false);
 }
 
+/**
+ * The public listing and the detail render per request; the CLI version (where
+ * the `projects` command reads from), the home and the sitemap are cached for
+ * an hour. Pages are revalidated by their literal path, one per language: their
+ * route patterns carry route groups.
+ */
 function revalidateProjects() {
   revalidatePath("/admin/projects");
   revalidatePath("/admin");
+  for (const lang of locales) {
+    revalidatePath(`/${lang}`);
+    revalidatePath(terminalHref(lang));
+  }
+  revalidatePath("/sitemap.xml");
+}
+
+/* ── casos de sucesso ────────────────────────────────────────────────────── */
+
+const CASE_FIELDS = {
+  caseProblemPt: "problema (PT)",
+  caseProblemEn: "problema (EN)",
+  caseWorkPt: "trabalho (PT)",
+  caseWorkEn: "trabalho (EN)",
+  caseResultPt: "resultado (PT)",
+  caseResultEn: "resultado (EN)",
+} as const;
+
+type CaseField = keyof typeof CASE_FIELDS;
+type Refusal = { message: string; fieldErrors: Record<string, string> };
+
+const refuse = (fieldErrors: Record<string, string>, message: string): Refusal => ({
+  message,
+  fieldErrors,
+});
+
+/** Um caso conta problema, trabalho e resultado nos dois idiomas. */
+function refuseCaseWithoutText(data: Partial<Record<CaseField, string>>): Refusal | null {
+  const missing = (Object.keys(CASE_FIELDS) as CaseField[]).filter((field) => !data[field]);
+  if (missing.length === 0) return null;
+  const message = `Para ser caso de sucesso, falta: ${missing
+    .map((field) => CASE_FIELDS[field])
+    .join(", ")}.`;
+  return refuse(
+    {
+      casePosition: message,
+      ...Object.fromEntries(missing.map((field) => [field, "Obrigatório em um caso de sucesso."])),
+    },
+    message,
+  );
+}
+
+/** No máximo três casos, e uma posição é de um só. */
+async function refuseTakenCase(id: string | null, position: number): Promise<Refusal | null> {
+  const others = await db.project.findMany({
+    where: { casePosition: { not: null }, ...(id ? { id: { not: id } } : {}) },
+    select: { name: true, casePosition: true },
+    orderBy: { casePosition: "asc" },
+  });
+  if (others.length >= MAX_SUCCESS_CASES) {
+    const message = `Já há ${MAX_SUCCESS_CASES} casos de sucesso (${others
+      .map((p) => p.name)
+      .join(", ")}). Desmarque um antes de marcar outro.`;
+    return refuse({ casePosition: message }, message);
+  }
+  const owner = others.find((p) => p.casePosition === position);
+  if (!owner) return null;
+  const message = `A posição ${position} já é de ${owner.name}. Escolha outra ou desmarque-o.`;
+  return refuse({ casePosition: message }, message);
 }
 
 /**
@@ -181,11 +300,28 @@ export async function saveProject(
     description: emptyToNull(data.description ?? ""),
     role: emptyToNull(data.role ?? ""),
     featuresJson: encodeStringList(data.features),
+    taglinePt: emptyToNull(data.taglinePt ?? ""),
+    descriptionPt: emptyToNull(data.descriptionPt ?? ""),
+    rolePt: emptyToNull(data.rolePt ?? ""),
+    featuresPtJson: encodeStringList(data.featuresPt),
+    caseProblemPt: emptyToNull(data.caseProblemPt ?? ""),
+    caseProblemEn: emptyToNull(data.caseProblemEn ?? ""),
+    caseWorkPt: emptyToNull(data.caseWorkPt ?? ""),
+    caseWorkEn: emptyToNull(data.caseWorkEn ?? ""),
+    caseResultPt: emptyToNull(data.caseResultPt ?? ""),
+    caseResultEn: emptyToNull(data.caseResultEn ?? ""),
+    casePosition: data.casePosition,
     sourceVisibility: data.sourceVisibility,
     coverImage: emptyToNull(data.coverImage ?? ""),
   };
 
   try {
+    if (data.casePosition !== null) {
+      const refusal =
+        refuseCaseWithoutText(data) ?? (await refuseTakenCase(id, data.casePosition));
+      if (refusal) return { ok: false, ...refusal };
+    }
+
     const saved = id
       ? await db.project.update({ where: { id }, data: row })
       : await db.project.create({ data: row });
@@ -203,6 +339,11 @@ export async function saveProject(
         message: "Já existe um projeto com esse slug.",
         fieldErrors: { slug: "Slug já utilizado." },
       };
+    }
+    // Duas gravações ao mesmo tempo passam pela leitura acima; o banco não deixa.
+    if (isUniqueViolation(err, "casePosition")) {
+      const message = "Outro projeto acabou de ocupar essa posição. Recarregue e tente de novo.";
+      return { ok: false, message, fieldErrors: { casePosition: message } };
     }
     console.error("[admin] save project failed", err);
     return { ok: false, message: "Não foi possível salvar o projeto." };

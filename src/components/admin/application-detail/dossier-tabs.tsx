@@ -27,6 +27,7 @@ import type {
   DocKind,
   EventDirection,
   FunnelStage,
+  InterviewStatus,
   Visibility,
 } from "@prisma/client";
 import { FunnelStageBadge } from "@/components/admin/status-badge";
@@ -51,6 +52,7 @@ import {
   EVENT_DIRECTION_LABELS,
   HonestySeverityBadge,
   InterviewOutcomeBadge,
+  InterviewStatusBadge,
   eventChannelLabel,
   eventTypeLabel,
   interviewKindLabel,
@@ -126,6 +128,7 @@ export interface DossierHonestyNote {
 
 export interface DossierInterview {
   id: string;
+  status: InterviewStatus;
   round: number | null;
   kind: string;
   scheduledAt: Date | null;
@@ -670,7 +673,9 @@ function HonestyTab({ notes }: { notes: DossierHonestyNote[] }) {
 
 /* ── 6. entrevistas ───────────────────────────────────────────────────────── */
 
-const INTERVIEW_COLS = 6;
+const INTERVIEW_COLS = 7;
+
+/** Chega na ordem do processo (`dossier.ts`); a linha não reordena nada. */
 
 function InterviewsTab({ format, interviews }: { format: Format; interviews: DossierInterview[] }) {
   return (
@@ -679,8 +684,9 @@ function InterviewsTab({ format, interviews }: { format: Format; interviews: Dos
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-16 text-right">Rodada</TableHead>
+              <TableHead className="w-10 text-right">#</TableHead>
               <TableHead className="w-36">Tipo</TableHead>
+              <TableHead className="w-32">Situação</TableHead>
               <TableHead className="w-40">Quando</TableHead>
               <TableHead className="w-36">Formato</TableHead>
               <TableHead>Participantes</TableHead>
@@ -694,13 +700,23 @@ function InterviewsTab({ format, interviews }: { format: Format; interviews: Dos
                 message="Nenhuma entrevista registrada."
               />
             ) : (
-              interviews.map((interview) => (
+              interviews.map((interview, index) => (
                 <TableRow key={interview.id}>
-                  <TableCell className="text-right align-top tabular-nums">
-                    {interview.round ?? EMPTY}
+                  <TableCell className="text-right align-top tabular-nums text-muted-foreground">
+                    {index + 1}
                   </TableCell>
-                  <TableCell className="align-top font-medium">
-                    {interviewKindLabel(interview.kind)}
+                  <TableCell className="align-top">
+                    <div className="font-medium">
+                      {interviewKindLabel(interview.kind)}
+                    </div>
+                    {interview.round !== null && (
+                      <div className="text-xs tabular-nums text-muted-foreground">
+                        rodada {interview.round}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="align-top">
+                    <InterviewStatusBadge status={interview.status} />
                   </TableCell>
                   <TableCell className="align-top tabular-nums">
                     {format.formatDateTime(interview.scheduledAt)}

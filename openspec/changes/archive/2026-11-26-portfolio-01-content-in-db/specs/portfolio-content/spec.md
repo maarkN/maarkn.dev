@@ -29,11 +29,15 @@ Sem banco disponível, o site público MUST exibir os projetos com o conteúdo d
 - **THEN** a página responde com a semente em vez de erro
 
 ### Requirement: Semente não sobrescreve edição
-A sincronização da semente com o banco MUST criar projetos ausentes e MUST NOT alterar texto já existente.
+A sincronização da semente com o banco MUST criar projetos ausentes e MUST NOT alterar texto já existente. O preenchimento do texto que falta MUST acontecer uma única vez por banco.
 
 #### Scenario: Texto editado sobrevive
 - **WHEN** um texto foi editado no banco e a sincronização roda
 - **THEN** o texto editado permanece
+
+#### Scenario: Deploy não desfaz campo limpo
+- **WHEN** um campo foi limpo no backoffice, ou um caso de sucesso foi desmarcado, e o site é publicado de novo
+- **THEN** o campo continua vazio e o caso continua desmarcado
 
 ### Requirement: Galeria do projeto
 Cada projeto SHALL aceitar imagens em ordem definida, com legenda nos dois idiomas.
@@ -47,7 +51,7 @@ Cada projeto SHALL aceitar imagens em ordem definida, com legenda nos dois idiom
 - **THEN** a seção de galeria não aparece
 
 ### Requirement: Casos de sucesso escolhidos
-A home SHALL exibir no máximo três casos de sucesso, escolhidos e ordenados por Marco, cada um com problema, trabalho e resultado nos dois idiomas.
+Os casos de sucesso do site SHALL ser no máximo três, escolhidos e ordenados no backoffice, cada um com problema, trabalho e resultado nos dois idiomas.
 
 #### Scenario: Quarto caso
 - **WHEN** já há três casos e um quarto é marcado

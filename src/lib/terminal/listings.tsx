@@ -21,6 +21,8 @@ export type ProjectListItem = {
   stack: string[];
   /** Short description already resolved for the locale. */
   tagline: string;
+  /** Set when `tagline` is not written in the language of the page. */
+  taglineLang?: string;
 };
 
 export type ProjectListLabels = {
@@ -62,7 +64,7 @@ export function projectsLines(
       </D>{" "}
       {projectStatus(p.status, statuses)}
       <br />
-      {p.tagline}
+      {p.taglineLang ? <span lang={p.taglineLang}>{p.tagline}</span> : p.tagline}
       <br />
       <D>{p.stack.join(" · ")}</D>
     </Row>

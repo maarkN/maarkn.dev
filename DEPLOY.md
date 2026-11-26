@@ -102,16 +102,19 @@ Everything else the app reads at runtime — including the `/api/mcp` variables
 ## 3. Database + migrations
 ```bash
 docker compose -f docker-compose.prod.yml up -d postgres
-docker compose -f docker-compose.prod.yml run --rm migrate        # prisma migrate deploy
+docker compose -f docker-compose.prod.yml run --rm migrate        # prisma migrate deploy + project text
 ```
+After the schema, the service fills in the projects' text ([§7](#7-project-text)).
+On an empty database there is nothing to fill: the seed below creates the rows.
 
 ## 4. Seed the admin user (first deploy only)
 ```bash
 docker compose -f docker-compose.prod.yml run --rm --entrypoint sh migrate -c "npm run db:seed"
 ```
-Creates the admin user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` plus the 8 starter
-projects. (If you skip projects, the public site falls back to the built-in list
-until you add some in `/admin`.) **Change the admin password after first login.**
+Creates the admin user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` plus the projects of
+the seed, with their text in both languages and the three success cases. (If you
+skip projects, the public site falls back to the built-in list until you add some in
+`/admin`.) **Change the admin password after first login.**
 
 ## 5. Index the knowledge base (for the terminal's `ask` command)
 ```bash
@@ -129,12 +132,82 @@ proxy on; with real origin certificates the zones can use SSL mode "Full (strict
 - Site: `https://maarkn.dev`; CLI version: `https://maarkn.dev/en/terminal` (`?cmd=projects` deep-links work, old ones on the home included)
 - Admin: `https://maarkn.dev/admin` · Generator: `/admin/generator` · Chat log: `/admin/chat`
 
+## 7. Project text
+The database is the source of the projects' text, in Portuguese and English
+([ADR 0003](./docs/adr/0003-banco-como-fonte-do-portfolio.md)). The dictionaries are
+the seed: they complete the database once, give new projects their text and are what
+the site shows without a database. **Fixing copy in a dictionary does not change the
+published site**; edit the project in `/admin/projects`, no deploy needed.
+
+| Command | Creates missing projects | Text of existing ones | Everything else |
+|---|---|---|---|
+| `db:fill-project-text` | no | on the first run, fills empty columns and never overwrites; after it, untouched | untouched |
+| `db:sync-projects` | yes, with text | untouched | year, category, status, featured, cover colours, stack and links follow `src/lib/projects.ts`; the projects in `retiredProjectSlugs` are deleted |
+
+`db:fill-project-text` runs on every deploy and acts on one: the first run leaves a row
+in `DataMigration`, and the next ones stop there. A field cleared or a success case
+unmarked in the backoffice stays that way. A database that had no projects when the
+table was created starts with the row: there is nothing to complete.
+
+The order of a deploy, which `deploy.yml` follows on its own:
+1. build the images, dump the database;
+2. `run --rm migrate`: the additive migration, then `db:fill-project-text`. If the
+   script fails, the deploy stops here with the previous version still serving;
+3. restart the app. The text is already there, so no page is ever without it.
+
+A project added to `src/lib/projects.ts` reaches the database with
+`docker compose -f docker-compose.prod.yml run --rm --entrypoint sh migrate -c "npm run db:sync-projects"`.
+
+**Once, around the deploy that brings the `portfolio_content` migration.** Until then
+the dictionary won over the database for four columns of the projects it knows:
+`tagline`, `description`, `role` and `featuresJson`. The English stored there was
+never on the site and may be older than what is published. From that deploy on it is
+what visitors read. The other columns were always read from the database.
+- *Before*, with the previous version still running, in the app directory of the
+  droplet. A dump first, because the one the deploy takes comes after this; go no
+  further if it fails:
+  ```bash
+  mkdir -p ~/db-backups
+  docker compose -f docker-compose.prod.yml exec -T postgres \
+    sh -c 'pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+    > ~/db-backups/before-portfolio-content-$(date -u +%Y%m%dT%H%M%SZ).dump
+
+  git fetch origin pull/16/head   # only fetches: the checkout stays on the live version
+  align() {
+    git show FETCH_HEAD:scripts/align-english-text.mjs |
+      docker compose -f docker-compose.prod.yml run --rm -T --entrypoint node migrate --input-type=module - "$@"
+  }
+  align           # lists the projects and columns that differ from the site
+  align --write   # replaces those columns with the text of the live version's dictionary
+  ```
+  Lost by `--write`: English text saved in the backoffice in those four columns, which
+  no visitor has seen. It is in the dump. Nothing else is written or deleted, and the
+  script refuses to run after the deploy.
+  **Do not use `db:sync-projects` of the previous version for this**: besides the text,
+  it overwrites name, year, category, status, featured, cover colours, stack,
+  visibility and links, whose edits are on the site today, and deletes the projects in
+  `retiredProjectSlugs`.
+- *After*, read the lines `kept, differs from the seed` in the output of `migrate` of
+  that deploy (the next ones do not repeat them). Each one is text that is now public
+  and is not the dictionary's; fix it in `/admin/projects` if it is not what you want.
+- Check the projects in both languages (`/en/projects`, `/pt-BR/projects`).
+
+The CLI version (`/[lang]/terminal`) is prerendered at build time, without a database:
+its `projects` command shows the seed until the page revalidates (up to one hour after
+the build, or at the first save in `/admin/projects`). Listing, detail pages and social
+cards read the database on every request.
+
+To go back, revert the code: the previous version ignores the new columns. A project
+created while it is reverted has no Portuguese when the new version returns; write it
+in `/admin/projects`.
+
 ## Updating (new code)
 Once CI/CD is set up ([§8](#8-ci-cd-github-actions)) every push to `main` deploys
 automatically. To update by hand, SSH in and run:
 ```bash
 git pull
-docker compose -f docker-compose.prod.yml run --rm migrate         # apply new migrations
+docker compose -f docker-compose.prod.yml build migrate             # `run` reuses an old image
+docker compose -f docker-compose.prod.yml run --rm migrate         # apply new migrations, fill project text
 docker compose -f docker-compose.prod.yml up -d --build app         # rebuild + restart
 ```
 
@@ -254,6 +327,9 @@ under repo → Settings → Environments. Leave it unprotected for auto-deploy, 
   or copy.
 - Local dev uses an isolated pgvector container on host port **5433**
   (`npm run db:up`) + `npm run dev`; the database is `maarkn_website`.
+- `TEST_DATABASE_URL=postgresql://maarkn:maarkn@localhost:5433/maarkn_website pnpm test`
+  also runs the tests that need a real Postgres (`src/lib/portfolio-db.test.ts`), in a
+  database they create and drop.
 - The slim runtime image has no Prisma CLI / tsx by design — migrations, seed and
   ingest run from the `migrate` service (built from the `builder` stage).
 - The image builds with **pnpm** (via corepack, pinned by `package.json`

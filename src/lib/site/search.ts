@@ -28,6 +28,8 @@ export type Searchable = {
   title: string;
   /** One line under the title. */
   detail?: string;
+  /** `lang` of the detail, when it is not the page's. */
+  detailLang?: string;
   /** What else finds it: technologies, other names. */
   terms: readonly string[];
 };

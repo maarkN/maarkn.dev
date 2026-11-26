@@ -14,6 +14,8 @@
  *   so quando ainda estao vazias — mover para "Enviada" carimba a data de
  *   envio; mover para um desfecho carimba o fechamento; voltar atras nao apaga
  *   nem sobrescreve o carimbo original;
+ * - sair de recusada/retirada apaga o motivo de encerramento, e o evento guarda
+ *   qual era;
  * - mover para o estagio em que a candidatura JA esta e no-op: nem `update`,
  *   nem evento. E o que impede o board de encher a linha do tempo de
  *   "stage_change" identicos num duplo clique.
@@ -31,7 +33,12 @@ import type { FunnelStage } from "@prisma/client";
 import type { ActionResult } from "@/app/_actions/action-result";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
-import { FUNNEL_STAGE_LABELS, isFunnelStage } from "@/lib/applications";
+import {
+  FUNNEL_STAGE_LABELS,
+  closureReasonOnStageChange,
+  closureReasonRemovedNote,
+  isFunnelStage,
+} from "@/lib/applications";
 
 /** Estagios que fecham o funil — a mesma lista do MCP. */
 const CLOSING_STAGES: ReadonlySet<FunnelStage> = new Set<FunnelStage>([
@@ -74,6 +81,7 @@ export async function moveApplicationStage(
         stage: true,
         appliedAt: true,
         closedAt: true,
+        closureReason: true,
         folderName: true,
         company: { select: { name: true } },
       },
@@ -96,6 +104,7 @@ export async function moveApplicationStage(
     if (CLOSING_STAGES.has(stage) && !current.closedAt) {
       derived.closedAt = occurredAt;
     }
+    const closure = closureReasonOnStageChange(stage, current.closureReason);
 
     // Uma transacao: candidatura sem evento (ou o contrario) e um buraco na
     // auditoria que nada mais no sistema consegue reconstruir.
@@ -105,6 +114,7 @@ export async function moveApplicationStage(
         data: {
           stage,
           ...derived,
+          ...closure.patch,
           lastMcpTool: "admin:moveApplicationStage",
         },
       }),
@@ -116,6 +126,7 @@ export async function moveApplicationStage(
           fromStage: current.stage,
           toStage: stage,
           subject: `${current.stage} -> ${stage}`,
+          bodyMd: closureReasonRemovedNote(closure.removed),
           lastMcpTool: "admin:moveApplicationStage",
         },
       }),

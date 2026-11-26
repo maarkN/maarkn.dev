@@ -16,7 +16,7 @@ export default async function OpengraphImage({
   const { lang, slug } = await params;
   const l: Locale = hasLocale(lang) ? lang : defaultLocale;
   const dict = await getDictionary(l);
-  const project = await getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug, l);
   const p = dict.projects;
 
   if (!project) {
@@ -29,13 +29,12 @@ export default async function OpengraphImage({
     });
   }
 
-  const tagline = (p.taglines as Record<string, string>)[slug] ?? project.tagline ?? "";
   return terminalOgImage({
     locale: l,
     path: `~/projects/${slug}`,
     command: `cat projects/${slug}.md`,
     title: project.name,
-    subtitle: tagline,
+    subtitle: project.tagline?.value ?? "",
     lines: [
       `${project.year} · ${p.categories[project.category]}`,
       project.stack.join(" · "),

@@ -32,8 +32,14 @@
  *   export $(grep '^DATABASE_URL=' .env.local | xargs)
  */
 
-import { PrismaClient, type FunnelStage, type SponsorshipSignal } from "@prisma/client";
-import { FUNNEL_STAGES, slugPart } from "../src/lib/applications";
+import {
+  PrismaClient,
+  type ClosureReason,
+  type FunnelStage,
+  type Prisma,
+  type SponsorshipSignal,
+} from "@prisma/client";
+import { FUNNEL_STAGES, acceptsClosureReason, slugPart } from "../src/lib/applications";
 
 const db = new PrismaClient();
 
@@ -302,6 +308,17 @@ const CHECKLIST = [
   "Enviado / registrado no tracker",
 ];
 
+/**
+ * Motivo de encerramento por texto livre: os dois contam a mesma historia. Um
+ * texto fora do mapa fica sem motivo, que e um estado valido.
+ */
+const CLOSURE_BY_OUTCOME: Record<string, ClosureReason> = {
+  "Perfil sênior demais para a faixa": "seniority",
+  "Seguiram com candidato local": "location",
+  "Congelaram a vaga": "job_closed",
+  "Retirei: faixa abaixo do piso": "salary",
+};
+
 const ELIMINATION_REASONS = [
   "Exige cidadania",
   "Exige autorização de trabalho prévia",
@@ -389,7 +406,7 @@ async function seedDemo(): Promise<void> {
 
   // ---- empresas ----------------------------------------------------------
   const companyIds = new Map<string, string>();
-  for (const company of COMPANIES) {
+  for (const [index, company] of COMPANIES.entries()) {
     const folderName = `demo-${slugPart(company.name)}`;
     const row = await db.company.create({
       data: {
@@ -402,6 +419,11 @@ async function seedDemo(): Promise<void> {
         sizeBucket: pick(["11-50", "51-200", "201-500", "501-1000", "1000+"]),
         website: `https://${slugPart(company.name)}.example`,
         careersUrl: `https://${slugPart(company.name)}.example/careers`,
+        // Uma em cada quatro fica sem texto: o dossie precisa mostrar o vazio.
+        aboutMd:
+          index % 4 === 3
+            ? null
+            : `${company.name} é uma empresa fictícia de ${company.industry}, em ${company.city}.\n\n_(texto sintético de demonstração)_`,
         visibility: "private",
         sourcePath: `${DEMO_PREFIX}empresas/${folderName}.md`,
         lastSyncRunId: DEMO_RUN_ID,
@@ -445,6 +467,7 @@ async function seedDemo(): Promise<void> {
   let questionCount = 0;
   let honestyCount = 0;
   let checklistCount = 0;
+  let interviewCount = 0;
 
   for (const [index, stage] of plannedStages.entries()) {
     const company = COMPANY_ROTATION[index % COMPANY_ROTATION.length];
@@ -513,6 +536,19 @@ async function seedDemo(): Promise<void> {
     const appliedAt = sent ? daysAgo(daysSinceFound - int(0, 2)) : null;
     const responded = sent && rng() > 0.35;
 
+    const outcomeReason =
+      stage === "rejected"
+        ? pick([
+            "Perfil sênior demais para a faixa",
+            "Seguiram com candidato local",
+            "Congelaram a vaga",
+          ])
+        : stage === "withdrawn"
+          ? "Retirei: faixa abaixo do piso"
+          : stage === "skipped"
+            ? "Descartada na triagem própria"
+            : null;
+
     const application = await db.application.create({
       data: {
         folderName,
@@ -534,18 +570,14 @@ async function seedDemo(): Promise<void> {
         closedAt: ["rejected", "accepted", "withdrawn", "skipped"].includes(stage)
           ? daysAgo(int(1, 20))
           : null,
-        outcomeReason:
-          stage === "rejected"
-            ? pick([
-                "Perfil sênior demais para a faixa",
-                "Seguiram com candidato local",
-                "Congelaram a vaga",
-              ])
-            : stage === "withdrawn"
-              ? "Retirei: faixa abaixo do piso"
-              : stage === "skipped"
-                ? "Descartada na triagem própria"
-                : null,
+        closureReason:
+          acceptsClosureReason(stage) && outcomeReason
+            ? (CLOSURE_BY_OUTCOME[outcomeReason] ?? null)
+            : null,
+        outcomeReason,
+        projectInfoMd: PACKAGED_STAGE_SET.has(stage)
+          ? `Time de plataforma de ${company.name}: API interna e integrações.\n\n_(contexto sintético de demonstração)_`
+          : null,
         targetSalary: SALARY_BY_MARKET[market],
         followUp: sent && rng() > 0.5 ? `cobrar em ${int(3, 15)} dias` : null,
         summaryMd: `Candidatura sintética de demonstração para ${company.name} (${market}).`,
@@ -771,34 +803,74 @@ async function seedDemo(): Promise<void> {
       honestyCount += notes.length;
     }
 
-    // ---- entrevista ------------------------------------------------------
+    // ---- entrevistas -----------------------------------------------------
+    // As quatro situacoes aparecem: na triagem a primeira marcada e as outras so
+    // previstas; mais adiante, uma realizada antes da marcada; na recusada, uma
+    // cancelada.
+    const interviews: Omit<
+      Prisma.InterviewCreateManyInput,
+      "applicationId" | "orderIndex"
+    >[] = [];
+    if (stage === "screening") {
+      interviews.push(
+        { kind: "screening", status: "scheduled", scheduledAt: daysAgo(-3), mode: "video" },
+        { kind: "technical", status: "planned" },
+        { kind: "final", status: "planned" },
+      );
+    }
+    if (stage === "rejected") {
+      interviews.push({ kind: "technical", status: "cancelled", scheduledAt: daysAgo(4) });
+    }
     if (["interview", "final_interview", "offer", "accepted"].includes(stage)) {
-      await db.interview.create({
-        data: {
-          applicationId: application.id,
+      const decided = stage === "offer" || stage === "accepted";
+      const kind =
+        stage === "final_interview" ? "final" : pick(["technical", "system_design", "culture"]);
+      const offset = int(1, 15);
+      interviews.push(
+        {
+          kind: "screening",
+          status: "completed",
+          scheduledAt: daysAgo(16),
+          durationMin: 30,
+          mode: "phone",
+          outcome: "passed",
+          notesMd: "Anotação sintética de demonstração.",
+        },
+        {
           round: stage === "final_interview" ? 3 : 1,
-          kind: stage === "final_interview" ? "final" : pick(["screening", "technical", "system_design"]),
-          scheduledAt: daysAgo(int(1, 15)),
+          kind,
+          status: decided ? "completed" : "scheduled",
+          scheduledAt: daysAgo(decided ? offset : -offset),
           durationMin: pick([30, 45, 60]),
           mode: "video",
           timezone: market === "CA" ? "America/Toronto" : "Europe/Dublin",
           interviewers: [`${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`],
           prepMd: "Preparação sintética de demonstração.",
-          outcome: stage === "offer" || stage === "accepted" ? "passed" : "pending",
-          sourceKey: `${folderName}#interview#1`,
-          visibility: "private",
-          sourcePath: `${DEMO_PREFIX}candidaturas/${folderName}/entrevista.md`,
-          lastSyncRunId: DEMO_RUN_ID,
-          lastMcpTool: "seed:demo",
+          outcome: decided ? "passed" : "pending",
         },
-      });
+      );
+      if (stage === "interview") interviews.push({ kind: "final", status: "planned" });
     }
+    await db.interview.createMany({
+      data: interviews.map((interview, orderIndex) => ({
+        ...interview,
+        applicationId: application.id,
+        orderIndex,
+        sourceKey: `${folderName}#interview#${orderIndex}`,
+        visibility: "private" as const,
+        sourcePath: `${DEMO_PREFIX}candidaturas/${folderName}/entrevista.md`,
+        lastSyncRunId: DEMO_RUN_ID,
+        lastMcpTool: "seed:demo",
+      })),
+    });
+    interviewCount += interviews.length;
   }
 
   console.log(
     `[seed:demo] ${plannedStages.length} candidaturas · ${documentCount} documentos · ` +
       `${eventCount} eventos · ${contactCount} contatos · ${coverageCount} coberturas · ` +
-      `${questionCount} perguntas · ${honestyCount} avisos · ${checklistCount} itens de checklist.`
+      `${questionCount} perguntas · ${honestyCount} avisos · ${checklistCount} itens de checklist · ` +
+      `${interviewCount} entrevistas.`
   );
 
   // ---- radar --------------------------------------------------------------

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "@/i18n/config";
+import { langAttr } from "@/lib/project-text";
 import { getProjectBySlug } from "@/lib/projects-repo";
 import { routeAlternates } from "@/lib/seo";
 import { projectStatus } from "@/lib/terminal/listings";
@@ -10,21 +11,16 @@ import s from "@/components/terminal/page.module.css";
 
 export const dynamic = "force-dynamic";
 
-type Detail = { description: string; role: string; features: string[] };
-
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/projects/[slug]">): Promise<Metadata> {
   const { lang, slug } = await params;
   if (!hasLocale(lang)) return {};
-  const project = await getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug, lang);
   if (!project) return {};
-  const dict = await getDictionary(lang);
-  const tagline =
-    (dict.projects.taglines as Record<string, string>)[slug] ?? project.tagline ?? "";
   return {
     title: project.name,
-    description: tagline,
+    description: project.tagline?.value ?? "",
     alternates: routeAlternates(lang, `/projects/${slug}`),
   };
 }
@@ -32,38 +28,36 @@ export async function generateMetadata({
 /**
  * `cat projects/<slug>.md` — name, metadata table (year, category, status,
  * stack, links), then description, role and features in prose and a plain
- * gallery. Private repos say so instead of linking.
+ * gallery. Private repos say so instead of linking. Text that only exists in the
+ * other language is shown in it, with its `lang`.
  */
 export default async function ProjectDetailPage({ params }: PageProps<"/[lang]/projects/[slug]">) {
   const { lang, slug } = await params;
   if (!hasLocale(lang)) notFound();
 
-  const project = await getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug, lang);
   if (!project) notFound();
 
   const dict = await getDictionary(lang);
   const p = dict.projects;
   const labels = dict.terminal.pages.projects;
 
-  const detail: Detail = (p.details as Record<string, Detail | undefined>)[slug] ?? {
-    description: project.description ?? "",
-    role: project.role ?? "",
-    features: project.features ?? [],
-  };
-  const tagline = (p.taglines as Record<string, string>)[slug] ?? project.tagline ?? "";
-  const captions = (p.gallery as Record<string, Record<string, string> | undefined>)[slug];
+  const { tagline, description, role, features, gallery } = project;
 
   const isPrivate = project.sourceVisibility === "private";
   const demo = project.links?.demo;
   const repo = !isPrivate ? project.links?.repo : undefined;
-  const gallery = project.gallery ?? [];
 
   return (
     <article>
       <h1 className={s.h1} tabIndex={-1}>
         {project.name}
       </h1>
-      <p className={s.lead}>{tagline}</p>
+      {tagline ? (
+        <p className={s.lead} lang={langAttr(tagline, lang)}>
+          {tagline.value}
+        </p>
+      ) : null}
 
       <div className={s.table}>
         <Row width="w12" label={labels.labels.year}>
@@ -92,20 +86,20 @@ export default async function ProjectDetailPage({ params }: PageProps<"/[lang]/p
       </div>
 
       <div className="prose-term">
-        {detail.description ? <p>{detail.description}</p> : null}
+        {description ? <p lang={langAttr(description, lang)}>{description.value}</p> : null}
 
-        {detail.role ? (
+        {role ? (
           <>
             <h2>{p.roleHeading}</h2>
-            <p>{detail.role}</p>
+            <p lang={langAttr(role, lang)}>{role.value}</p>
           </>
         ) : null}
 
-        {detail.features.length > 0 ? (
+        {features ? (
           <>
             <h2>{p.featuresHeading}</h2>
-            <ul>
-              {detail.features.map((feature) => (
+            <ul lang={langAttr(features, lang)}>
+              {features.value.map((feature) => (
                 <li key={feature}>{feature}</li>
               ))}
             </ul>
@@ -120,11 +114,11 @@ export default async function ProjectDetailPage({ params }: PageProps<"/[lang]/p
           </h2>
           <ul className={s.gallery}>
             {gallery.map((shot, i) => {
-              const caption = shot.captionKey ? captions?.[shot.captionKey] : undefined;
-              const alt = caption ?? `${project.name} · ${i + 1}`;
+              const { caption } = shot;
+              const alt = caption?.value ?? `${project.name} · ${i + 1}`;
               return (
                 <li key={`${shot.url}-${i}`}>
-                  <figure>
+                  <figure lang={langAttr(caption, lang)}>
                     {shot.url ? (
                       <Image
                         src={shot.url}
@@ -138,7 +132,7 @@ export default async function ProjectDetailPage({ params }: PageProps<"/[lang]/p
                         [{shot.monogram ?? project.monogram}]
                       </div>
                     )}
-                    {caption ? <figcaption>{caption}</figcaption> : null}
+                    {caption ? <figcaption>{caption.value}</figcaption> : null}
                   </figure>
                 </li>
               );
