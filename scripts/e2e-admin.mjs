@@ -473,10 +473,11 @@ async function keyboard(page, t, { width, height }) {
         const [x, y] = [r.left + Math.min(r.width / 2, 60), tall ? Math.max(r.top + 4, 120) : r.top + r.height / 2];
         const hit = document.elementFromPoint(x, y);
         const s = getComputedStyle(el);
-        const ring = [...el.querySelectorAll("svg path")].some((p) => { const c = getComputedStyle(p); return parseFloat(c.strokeWidth) >= 6 && parseFloat(c.opacity) > 0 });
+        /* A field's frame is around it, on the hologram that holds it. */
+        const ring = [...(el.closest("[data-holo]") || el).querySelectorAll("svg path")].some((p) => { const c = getComputedStyle(p); return parseFloat(c.strokeWidth) >= 6 && parseFloat(c.opacity) > 0 });
         const outline = parseFloat(s.outlineWidth) > 0 && s.outlineStyle !== "none" && !/, 0\\)$/.test(s.outlineColor);
         return {
-          name: (el.getAttribute("aria-label") || el.textContent).trim().replace(/\\s+/g, " ").slice(0, 40),
+          name: (el.getAttribute("aria-label") || el.labels?.[0]?.textContent || el.textContent).trim().replace(/\\s+/g, " ").slice(0, 40),
           where: el.closest("aside") ? "menu" : el.closest("header") ? "topo" : el.closest("main") ? "tela" : el.closest("nav") ? "barra" : "salto",
           seen: ring || outline || /inset|rgb/.test(s.boxShadow),
           inside: tall
@@ -907,12 +908,17 @@ async function board(page, t) {
   const where = `${columns}.findIndex((c) => c.querySelector('[data-card="${card}"]'))`;
 
   /* Arrastar, pelos eventos do navegador. */
-  await page.evaluate(`(() => {
+  /* A frame between the events, as a real drag has: the board learns what is
+     dragged on `dragstart` and only then accepts it. */
+  await page.evaluate(`(async () => {
+    const frame = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 30)));
     const from = document.querySelector('[data-card="${card}"]');
     const to = ${columns}[${first + 1}];
     const data = new DataTransfer();
     from.dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: data }));
+    await frame();
     to.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: data }));
+    await frame();
     to.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: data }));
     from.dispatchEvent(new DragEvent("dragend", { bubbles: true, dataTransfer: data }));
   })()`);
