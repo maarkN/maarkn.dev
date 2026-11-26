@@ -52,9 +52,99 @@ const OWN_PHONE_DIGITS: readonly string[] = OWN_CONTACTS.filter(
   (entry) => !entry.includes("@")
 ).map((entry) => entry.replace(/\D/g, ""));
 
-const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
-/** So numero em formato internacional explicito: `+55 62 ...`, `+1 (555) ...`. */
+/**
+ * So numero em formato internacional explicito: `+55 62 ...`, `+1 (555) ...`.
+ * Linear: so comeca num `+`, e a classe do meio nao contem `+`, entao cada
+ * tentativa percorre uma sequencia que nenhuma outra tentativa percorre.
+ */
 const PHONE_RE = /\+\d[\d\s().-]{6,}\d/g;
+
+// ---------------------------------------------------------------------------
+// e-mail: scanner, nao regex
+// ---------------------------------------------------------------------------
+//
+// A regra era `/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g`. Ela e
+// correta e e um DoS: num texto sem `@` (ou com um `@` sem dominio depois), o
+// motor consome a sequencia inteira de caracteres de e-mail a partir de CADA
+// posicao e desiste no fim dela. Medido nesta maquina: 20 000 caracteres de
+// "a." custavam ~630 ms e 100 000, ~16 s, com o event loop preso. O texto vem
+// de terceiro (sobre a empresa, anotacao de entrevista, corpo de evento) e e
+// mascarado em toda LEITURA, a mesma classe de problema de
+// `tools/_untrusted.ts`.
+//
+// O scanner casa exatamente o mesmo (`redact.test.ts` compara com a regex
+// antiga) e e linear: todo e-mail tem um `@`, e o `@` nao pertence a nenhuma
+// das duas classes, entao cada trecho entre dois `@` e percorrido no maximo
+// duas vezes, como dominio do `@` da esquerda e como parte local do da direita.
+
+const DOT = 0x2e;
+
+function isAsciiLetter(code: number): boolean {
+  return (code >= 0x41 && code <= 0x5a) || (code >= 0x61 && code <= 0x7a);
+}
+
+function isAsciiDigit(code: number): boolean {
+  return code >= 0x30 && code <= 0x39;
+}
+
+/** `[A-Za-z0-9.-]` */
+function isDomainChar(code: number): boolean {
+  return isAsciiLetter(code) || isAsciiDigit(code) || code === DOT || code === 0x2d;
+}
+
+/** `[A-Za-z0-9._%+-]` */
+function isLocalChar(code: number): boolean {
+  return isDomainChar(code) || code === 0x5f || code === 0x25 || code === 0x2b;
+}
+
+/**
+ * Troca cada e-mail pelo que `replace` devolver. Mesmos casamentos, na mesma
+ * ordem, que a regex antiga com `/g`.
+ */
+function replaceEmails(text: string, replace: (email: string) => string): string {
+  const n = text.length;
+  let out = "";
+  // Fim do ultimo casamento: a regex com `/g` recomeca dali, entao a parte
+  // local do proximo nao volta antes dele.
+  let copied = 0;
+  let at = text.indexOf("@");
+
+  while (at >= 0) {
+    // `[A-Za-z0-9._%+-]+` antes do `@`: o casamento comeca no inicio da
+    // sequencia, que e a primeira posicao de onde a regex chegaria a este `@`.
+    let start = at;
+    while (start > copied && isLocalChar(text.charCodeAt(start - 1))) start -= 1;
+
+    // `[A-Za-z0-9.-]+\.[A-Za-z]{2,}`: o `+` guloso devolve caracteres ate o
+    // ultimo `.` seguido de duas letras; as letras vao ate onde houver letra.
+    let domainEnd = at + 1;
+    while (domainEnd < n && isDomainChar(text.charCodeAt(domainEnd))) domainEnd += 1;
+    let end = -1;
+    if (start < at) {
+      for (let dot = domainEnd - 3; dot >= at + 2; dot -= 1) {
+        if (
+          text.charCodeAt(dot) === DOT &&
+          isAsciiLetter(text.charCodeAt(dot + 1)) &&
+          isAsciiLetter(text.charCodeAt(dot + 2))
+        ) {
+          end = dot + 3;
+          while (end < domainEnd && isAsciiLetter(text.charCodeAt(end))) end += 1;
+          break;
+        }
+      }
+    }
+
+    if (end < 0) {
+      at = text.indexOf("@", at + 1);
+      continue;
+    }
+    out += text.slice(copied, start) + replace(text.slice(start, end));
+    copied = end;
+    at = text.indexOf("@", end);
+  }
+
+  return copied === 0 ? text : out + text.slice(copied);
+}
 
 export function isOwnEmail(value: string): boolean {
   return OWN_EMAILS.has(value.toLowerCase());
@@ -72,9 +162,10 @@ export function isOwnPhone(value: string): boolean {
  */
 export function maskContactPii<T extends string | null | undefined>(text: T): T {
   if (typeof text !== "string" || !text) return text;
-  return text
-    .replace(EMAIL_RE, (m) => (isOwnEmail(m) ? m : "[e-mail omitido]"))
-    .replace(PHONE_RE, (m) => (isOwnPhone(m) ? m : "[telefone omitido]")) as T;
+  return replaceEmails(text, (m) => (isOwnEmail(m) ? m : "[e-mail omitido]")).replace(
+    PHONE_RE,
+    (m) => (isOwnPhone(m) ? m : "[telefone omitido]")
+  ) as T;
 }
 
 /** Nomes de campo que nunca devem ter o valor persistido/logado. */

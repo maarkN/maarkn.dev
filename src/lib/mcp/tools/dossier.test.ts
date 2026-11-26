@@ -663,3 +663,39 @@ describe("text of third parties comes fenced", () => {
     expect(row).toMatchObject({ empresa: null, projectInfoMd: null, closureReason: null });
   });
 });
+
+/**
+ * The texts are a third party's, and every read masks the contacts in them. A
+ * long run of characters that can be in an e-mail ("a.a.a.") used to cost the
+ * mask ~630 ms per 20 000 characters, once per row of a list: 20 applications
+ * of one company blocked the server for ~13 s.
+ */
+describe("a long text costs a read milliseconds", () => {
+  const BUDGET_MS = 1_000;
+  const EMAIL_CHARS = "a.".repeat(10_000);
+
+  async function timed(name: string, args: Json): Promise<number> {
+    const started = performance.now();
+    await ok(name, args);
+    return performance.now() - started;
+  }
+
+  it("in a list of the applications of one company", async () => {
+    await ok("upsert_application", { folderName: "a-0", company: { folderName: "acme", aboutMd: EMAIL_CHARS } });
+    for (let n = 1; n < 5; n += 1) {
+      await ok("upsert_application", { folderName: `a-${n}`, company: { folderName: "acme" }, projectInfoMd: EMAIL_CHARS });
+    }
+    expect(await timed("list_applications", {})).toBeLessThan(BUDGET_MS);
+  });
+
+  it("in the dossier", async () => {
+    await ok("upsert_application", { folderName: "a", company: { folderName: "acme", aboutMd: EMAIL_CHARS } });
+    await ok("upsert_interview", {
+      folderName: "a",
+      sourceKey: "a#1",
+      kind: "screening",
+      notesMd: EMAIL_CHARS.repeat(3),
+    });
+    expect(await timed("get_application", { folderName: "a" })).toBeLessThan(BUDGET_MS);
+  });
+});
