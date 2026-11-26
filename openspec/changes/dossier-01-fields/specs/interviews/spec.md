@@ -2,26 +2,26 @@
 
 ## Purpose
 
-Define as etapas do processo seletivo de uma candidatura, previstas ou marcadas, e como a situação de cada uma evolui.
+Define as entrevistas do processo seletivo de uma candidatura, previstas ou marcadas, e como a situação de cada uma evolui.
 
 ## ADDED Requirements
 
 ### Requirement: Entrevista sem data
-Uma entrevista SHALL poder existir sem data, como etapa prevista, com tipo e ordem no processo.
+Uma entrevista SHALL poder existir sem data, como entrevista prevista, com tipo e ordem no processo.
 
 #### Scenario: Processo conhecido de antemão
-- **WHEN** o recrutador informa três etapas e só a primeira tem data
+- **WHEN** o recrutador informa três entrevistas e só a primeira tem data
 - **THEN** o dossiê mostra as três em ordem, a primeira marcada e as outras previstas
 
 #### Scenario: Processo desconhecido
-- **WHEN** nenhuma etapa foi registrada
-- **THEN** o dossiê informa que não há etapas, sem inventar
+- **WHEN** nenhuma entrevista foi registrada
+- **THEN** o dossiê informa que não há entrevistas, sem inventar
 
 ### Requirement: Situação da entrevista
 Toda entrevista SHALL estar em uma situação: prevista, marcada, realizada ou cancelada. Marcada e realizada MUST ter data; prevista MUST NOT ter.
 
-#### Scenario: Marcar uma etapa prevista
-- **WHEN** uma etapa prevista recebe data e hora
+#### Scenario: Marcar uma entrevista prevista
+- **WHEN** uma entrevista prevista recebe data e hora
 - **THEN** passa a marcada e aparece entre os próximos passos
 
 #### Scenario: Marcar sem data
