@@ -1,35 +1,48 @@
 "use client";
 
 /**
- * A lista de empresas do `<Select>` dos formulários, entregue UMA vez.
+ * What every dialog of the screen needs, delivered ONCE: the companies of the
+ * `<Select>` and the words of the two forms.
  *
- * Por que um contexto e não uma prop: o dialog de edição é renderizado dentro
- * do `rows.map()`, e a base tem ~108 empresas. Passar a lista por prop em cada
- * linha copiaria as mesmas 108 opções 20 vezes no payload RSC de cada página —
- * centenas de KB para uma tabela de 20 linhas. O provider embrulha a tela
- * inteira, a lista viaja uma vez, e cada dialog lê do contexto.
- *
- * O provider aceita `children` vindos de Server Components: eles chegam já
- * renderizados e o contexto atravessa a árvore normalmente.
+ * A context and not a prop: the edit dialog is rendered inside the `rows.map()`,
+ * and the database has ~108 companies. Passing them by prop on each row would
+ * copy the same options 20 times into the RSC payload of each page. The
+ * provider wraps the whole screen, the data travels once, each dialog reads it.
+ * Children from Server Components arrive already rendered, and the context
+ * crosses them as usual.
  */
 
 import { createContext, useContext } from "react";
+import type { AdminDictionary } from "@/i18n/config";
 import type { CompanyOption } from "./contacts-query";
 
-const CompanyOptionsContext = createContext<CompanyOption[]>([]);
+export type ContactsWords = Pick<AdminDictionary["contacts"], "contact" | "reference"> & {
+  vocab: Pick<AdminDictionary["vocab"], "channel" | "referenceLanguage">;
+};
+
+const ContactsContext = createContext<{ companies: CompanyOption[]; words: ContactsWords | null }>({
+  companies: [],
+  words: null,
+});
 
 export function CompanyOptionsProvider({
   companies,
+  words,
   children,
 }: {
   companies: CompanyOption[];
+  words: ContactsWords;
   children: React.ReactNode;
 }) {
-  return (
-    <CompanyOptionsContext value={companies}>{children}</CompanyOptionsContext>
-  );
+  return <ContactsContext value={{ companies, words }}>{children}</ContactsContext>;
 }
 
 export function useCompanyOptions(): CompanyOption[] {
-  return useContext(CompanyOptionsContext);
+  return useContext(ContactsContext).companies;
+}
+
+export function useContactsWords(): ContactsWords {
+  const { words } = useContext(ContactsContext);
+  if (!words) throw new Error("useContactsWords outside CompanyOptionsProvider");
+  return words;
 }

@@ -26,6 +26,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import type { AdminDictionary } from "@/i18n/config";
+import { getAdminLabels } from "@/lib/admin/request";
+import { fill } from "@/lib/admin/text";
 import { db, dbConfigured } from "@/lib/db";
 import { slugPart } from "@/lib/applications";
 import type { ActionResult } from "./action-result";
@@ -53,14 +56,20 @@ function emptyToNull(value: string | undefined | null): string | null {
   return value && value.length > 0 ? value : null;
 }
 
-function fieldErrorsOf(error: z.ZodError): Record<string, string> {
+/**
+ * `{ field: sentence }`. zod's own message is raw and in English: the sentence
+ * is the dictionary's, by field, in the language of the screen (A4).
+ */
+function fieldErrorsOf(error: z.ZodError, sentences: Record<string, string>): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const issue of error.issues) {
     const path = issue.path.join(".");
-    if (path && !errors[path]) errors[path] = issue.message;
+    if (path && !errors[path]) errors[path] = sentences[path] ?? sentences.invalid;
   }
   return errors;
 }
+
+type ContactWords = AdminDictionary["contacts"];
 
 /** Sentinela do `<Select>` (o Radix proíbe `value=""`). Espelhada nos dialogs. */
 const NONE = "none";
@@ -76,19 +85,17 @@ const NONE = "none";
  * os dois caminhos de escrita concordem sobre o que é uma URL aceitável.
  */
 const profileUrlSchema = z
-  .url({ protocol: /^https?$/, error: "Informe uma URL http(s) válida." })
+  .url({ protocol: /^https?$/ })
   .max(500)
-  .refine((value) => /^https?:\/\//i.test(value.trim()), {
-    message: "A URL deve começar com http:// ou https://.",
-  });
+  .refine((value) => /^https?:\/\//i.test(value.trim()));
 
 /* ── Contact ──────────────────────────────────────────────────────────────── */
 
 const contactSchema = z.object({
-  name: z.string().min(1, "Informe o nome.").max(160),
+  name: z.string().min(1).max(160),
   roleTitle: z.string().max(160).optional().or(z.literal("")),
   companyId: z.string().max(40).optional().or(z.literal("")),
-  email: z.email("E-mail inválido.").max(200).optional().or(z.literal("")),
+  email: z.email().max(200).optional().or(z.literal("")),
   phone: z.string().max(60).optional().or(z.literal("")),
   linkedinUrl: profileUrlSchema.optional().or(z.literal("")),
   timezone: z.string().max(60).optional().or(z.literal("")),
@@ -105,8 +112,10 @@ export async function saveContact(
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
   await requireAdmin(); // A2
+  const { contacts, common } = await getAdminLabels();
+  const words: ContactWords["contact"] = contacts.contact;
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." }; // A3
+    return { ok: false, message: common.noDatabase }; // A3
   }
 
   const channel = trim(formData.get("channel"));
@@ -123,11 +132,7 @@ export async function saveContact(
     notesMd: trim(formData.get("notesMd")),
   });
   if (!parsed.success) {
-    return {
-      ok: false,
-      message: "Confira os campos destacados.",
-      fieldErrors: fieldErrorsOf(parsed.error),
-    };
+    return { ok: false, message: common.checkFields, fieldErrors: fieldErrorsOf(parsed.error, words.errors) };
   }
   const data = parsed.data;
 
@@ -140,11 +145,7 @@ export async function saveContact(
         select: { id: true },
       });
       if (!company) {
-        return {
-          ok: false,
-          message: "Confira os campos destacados.",
-          fieldErrors: { companyId: "Empresa não encontrada." },
-        };
+        return { ok: false, message: common.checkFields, fieldErrors: { companyId: words.errors.companyId } };
       }
     }
 
@@ -182,7 +183,7 @@ export async function saveContact(
     return {
       ok: true,
       data: { id: row.id },
-      message: id ? "Contato atualizado." : "Contato criado.",
+      message: words.saved,
     };
   } catch (err) {
     if (
@@ -191,33 +192,32 @@ export async function saveContact(
     ) {
       // `@@unique([companyId, name])` (+ os índices parciais da migration
       // `backoffice_dedupe_holes` para contato sem empresa).
-      return {
-        ok: false,
-        message: "Confira os campos destacados.",
-        fieldErrors: { name: "Já existe um contato com esse nome nesta empresa." },
-      };
+      return { ok: false, message: common.checkFields, fieldErrors: { name: words.errors.duplicate } };
     }
     console.error("[admin] save contact failed", safeError(err));
-    return { ok: false, message: "Não foi possível salvar o contato." };
+    return { ok: false, message: words.failed };
   }
 }
 
 export async function deleteContact(id: string): Promise<ActionResult> {
   await requireAdmin(); // A2
+  const { contacts, common } = await getAdminLabels();
+  const words = contacts.contact.delete;
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." };
+    return { ok: false, message: common.noDatabase };
   }
+  let name: string;
   try {
     // Eventos e entrevistas SOBREVIVEM com `contactId = NULL` (`onDelete:
     // SetNull` no schema): a linha do tempo da candidatura não pode sumir
     // porque um contato foi apagado.
-    await db.contact.delete({ where: { id } });
+    ({ name } = await db.contact.delete({ where: { id }, select: { name: true } }));
   } catch (err) {
     console.error("[admin] delete contact failed", safeError(err));
-    return { ok: false, message: "Não foi possível excluir o contato." };
+    return { ok: false, message: words.failed };
   }
   revalidatePath("/admin/contacts");
-  return { ok: true, message: "Contato excluído." };
+  return { ok: true, message: fill(words.done, { name }) };
 }
 
 /* ── ProfessionalReference ────────────────────────────────────────────────── */
@@ -226,14 +226,14 @@ const referenceSchema = z.object({
   slug: z
     .string()
     .max(120)
-    .regex(/^[a-z0-9]+(?:[-.][a-z0-9]+)*$/, "Use apenas letras, números e hífen.")
+    .regex(/^[a-z0-9]+(?:[-.][a-z0-9]+)*$/)
     .optional()
     .or(z.literal("")),
-  name: z.string().min(1, "Informe o nome.").max(160),
+  name: z.string().min(1).max(160),
   relationship: z.string().max(160).optional().or(z.literal("")),
   companyName: z.string().max(160).optional().or(z.literal("")),
   roleTitle: z.string().max(160).optional().or(z.literal("")),
-  email: z.email("E-mail inválido.").max(200).optional().or(z.literal("")),
+  email: z.email().max(200).optional().or(z.literal("")),
   phone: z.string().max(60).optional().or(z.literal("")),
   linkedinUrl: profileUrlSchema.optional().or(z.literal("")),
   language: z.string().max(20).optional().or(z.literal("")),
@@ -245,8 +245,10 @@ export async function saveProfessionalReference(
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
   await requireAdmin(); // A2
+  const { contacts, common } = await getAdminLabels();
+  const words: ContactWords["reference"] = contacts.reference;
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." }; // A3
+    return { ok: false, message: common.noDatabase }; // A3
   }
 
   const language = trim(formData.get("language"));
@@ -263,11 +265,7 @@ export async function saveProfessionalReference(
     noteMd: trim(formData.get("noteMd")),
   });
   if (!parsed.success) {
-    return {
-      ok: false,
-      message: "Confira os campos destacados.",
-      fieldErrors: fieldErrorsOf(parsed.error),
-    };
+    return { ok: false, message: common.checkFields, fieldErrors: fieldErrorsOf(parsed.error, words.errors) };
   }
   const data = parsed.data;
   // `canContact` é checkbox: ausente no FormData significa desmarcado.
@@ -312,21 +310,17 @@ export async function saveProfessionalReference(
     return {
       ok: true,
       data: { id: row.id },
-      message: id ? "Referência atualizada." : "Referência criada.",
+      message: words.saved,
     };
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      return {
-        ok: false,
-        message: "Confira os campos destacados.",
-        fieldErrors: { slug: `A chave “${slug}” já está em uso.` },
-      };
+      return { ok: false, message: common.checkFields, fieldErrors: { slug: fill(words.errors.duplicate, { slug }) } };
     }
     console.error("[admin] save professional reference failed", safeError(err));
-    return { ok: false, message: "Não foi possível salvar a referência." };
+    return { ok: false, message: words.failed };
   }
 }
 
@@ -334,15 +328,18 @@ export async function deleteProfessionalReference(
   id: string,
 ): Promise<ActionResult> {
   await requireAdmin(); // A2
+  const { contacts, common } = await getAdminLabels();
+  const words = contacts.reference.delete;
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." };
+    return { ok: false, message: common.noDatabase };
   }
+  let name: string;
   try {
-    await db.professionalReference.delete({ where: { id } });
+    ({ name } = await db.professionalReference.delete({ where: { id }, select: { name: true } }));
   } catch (err) {
     console.error("[admin] delete professional reference failed", safeError(err));
-    return { ok: false, message: "Não foi possível excluir a referência." };
+    return { ok: false, message: words.failed };
   }
   revalidatePath("/admin/contacts");
-  return { ok: true, message: "Referência excluída." };
+  return { ok: true, message: fill(words.done, { name }) };
 }
