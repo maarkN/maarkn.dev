@@ -1,11 +1,11 @@
 ## 1. Pré-condições
 
-- [ ] 1.1 Listar os valores distintos de `outcomeReason` e `Interview.outcome` numa cópia do banco, para o mapeamento inicial; anexar ao PR
+- [x] 1.1 Listar os valores distintos de `outcomeReason` e `Interview.outcome` numa cópia do banco, para o mapeamento inicial; anexar ao PR
 
 ## 2. Esquema
 
-- [ ] 2.1 Acrescentar o texto da empresa, o contexto do projeto, o motivo de encerramento (enum nativo) e, na entrevista, situação e ordem; migração aditiva aplicada em banco vazio e em cópia de produção
-- [ ] 2.2 Preencher a situação das entrevistas existentes (com data futura: marcada; com resultado: realizada; sem data: prevista); conferir contagens antes e depois
+- [x] 2.1 Acrescentar o texto da empresa, o contexto do projeto, o motivo de encerramento (enum nativo) e, na entrevista, situação e ordem; migração aditiva aplicada em banco vazio e em cópia de produção
+- [x] 2.2 Preencher a situação das entrevistas existentes (com data futura: marcada; com resultado: realizada; sem data: prevista); conferir contagens antes e depois
 
 ## 3. Regras
 
