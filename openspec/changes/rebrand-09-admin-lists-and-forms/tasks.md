@@ -19,7 +19,7 @@
 ## 4. Telas
 
 - [x] 4.1 Aplicar e traduzir as telas listadas na proposal; verificar cada uma nos três temas, 390 e 1440 px, teclado, PT e EN
-- [ ] 4.2 Rótulos de estágio, motivo, situação e visto vindos do dicionário, com cobertura de todos os valores; teste
+- [x] 4.2 Rótulos de estágio, motivo, situação e visto vindos do dicionário, com cobertura de todos os valores; teste
 - [x] 4.3 Coluna de ações de `/admin/api-keys` sem cortar botão, em 390 e 1440 px; teste
 
 ## 5. Aposentar
