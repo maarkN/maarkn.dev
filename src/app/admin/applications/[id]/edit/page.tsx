@@ -2,8 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ApplicationForm } from "@/components/admin/application-form";
 import { PageHeader } from "@/components/admin/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { StateMessage } from "@/components/admin/table-pager";
 import { auth } from "@/lib/auth";
+import { getAdminLabels } from "@/lib/admin/request";
 import { db, dbConfigured } from "@/lib/db";
 import { toDateInputValue } from "@/lib/format";
 
@@ -15,20 +16,15 @@ export default async function EditApplicationPage({
   const session = await auth();
   if (!session?.user) redirect("/admin/login"); // A1
 
-  // A3: sem DATABASE_URL a página degrada em vez de explodir.
+  const { applicationForm, vocab, common } = await getAdminLabels();
+
+  // A3: without DATABASE_URL the page degrades instead of blowing up.
   if (!dbConfigured) {
     return (
-      <AdminShell email={session.user.email ?? "admin"}>
-        <div className="space-y-4">
-          <PageHeader
-            title="Editar candidatura"
-          />
-          <Card>
-            <CardContent className="py-8 text-center text-destructive">
-              DATABASE_URL não configurada — não é possível carregar a
-              candidatura.
-            </CardContent>
-          </Card>
+      <AdminShell email={session.user.email ?? "admin"} translated>
+        <div className="space-y-6 font-text">
+          <PageHeader title={applicationForm.editDescription} />
+          <StateMessage state="failed" message={common.states.noDatabase} />
         </div>
       </AdminShell>
     );
@@ -47,17 +43,14 @@ export default async function EditApplicationPage({
   const companyName = application.company?.name ?? application.folderName;
 
   return (
-    <AdminShell email={session.user.email ?? "admin"} name={companyName}>
-      <div className="space-y-4">
+    <AdminShell email={session.user.email ?? "admin"} name={companyName} translated>
+      <div className="space-y-8 font-text">
         <PageHeader
           title={companyName}
-          description={
-            application.roleTitle ??
-            application.job?.title ??
-            "Editar candidatura"
-          }
+          description={application.roleTitle ?? application.job?.title ?? applicationForm.editDescription}
         />
         <ApplicationForm
+          words={{ form: applicationForm, vocab }}
           application={{
             id: application.id,
             folderName: application.folderName,
