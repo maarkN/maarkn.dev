@@ -141,7 +141,11 @@ async function BoardColumns({
     <KanbanBoard
       data={data}
       cap={BOARD_CARDS_PER_COLUMN}
-      words={{ board, vocab: { stage: vocab.stage, phase: vocab.phase, column: vocab.column }, priority: applications.priority }}
+      words={{
+        board,
+        vocab: { stage: vocab.stage, phase: vocab.phase, column: vocab.column, closureReason: vocab.closureReason },
+        priority: applications.priority,
+      }}
       // References to Server Actions: serializable (AGENTS.md §6).
       moveAction={moveApplicationStage}
       undoAction={undoApplicationStageMove}

@@ -11,7 +11,9 @@ import {
   acceptsClosureReason,
   closureReasonLabel,
   closureReasonOnStageChange,
+  closureReasonRemovedBy,
   closureReasonRemovedNote,
+  closureReasonRestoredNote,
   interviewStatusLabel,
 } from "@/lib/applications";
 
@@ -107,5 +109,20 @@ describe("closure reason by stage", () => {
   it("tells the history which reason went away", () => {
     expect(closureReasonRemovedNote("visa")).toBe("Motivo de encerramento removido: Visto.");
     expect(closureReasonRemovedNote(null)).toBeNull();
+  });
+
+  it.each(CLOSURE_REASONS)("reads %s back from the note that removed it", (reason) => {
+    expect(closureReasonRemovedBy(closureReasonRemovedNote(reason))).toBe(reason);
+  });
+
+  it("reads no reason from any other text", () => {
+    for (const text of [null, undefined, "", "Motivo de encerramento removido: Visa.", "nota\n\nMotivo de encerramento removido: Visto."]) {
+      expect(closureReasonRemovedBy(text)).toBeNull();
+    }
+    expect(closureReasonRemovedBy(closureReasonRestoredNote("visa"))).toBeNull();
+  });
+
+  it("tells the history which reason came back", () => {
+    expect(closureReasonRestoredNote("salary")).toBe("Motivo de encerramento restaurado: Salário.");
   });
 });

@@ -12,7 +12,10 @@
  * column, with a notice that says why and offers to try again. A move that
  * went through says so, with "Desfazer", which undoes that move
  * (`undoApplicationStageMove`, with the event the move recorded): the exact
- * stage it had, and no date of sending the move stamped.
+ * stage it had, no date of sending the move stamped, and the closure reason
+ * the move removed. A card is only ever open, but the application may have
+ * been closed since the board loaded: the move then reopens it, and its notice
+ * says from which stage and which reason went away.
  *
  * The card lands where the server will put it (`placeCard`): a card the answer
  * puts in another place is moved in the DOM again, which takes the focus off
@@ -35,18 +38,18 @@ import { BOARD_COLUMNS, dropStageOf, neighbourColumn, type BoardColumnKey } from
 import { counted, fill } from "@/lib/admin/text";
 import { KanbanCard } from "./kanban-card";
 import { KanbanColumn } from "./kanban-column";
-import type { BoardCard, BoardData, StageMove } from "./kanban-types";
+import type { BoardCard, BoardData, StageMove, StageUndo } from "./kanban-types";
 
 export type BoardWords = {
   board: AdminDictionary["board"];
-  vocab: Pick<AdminDictionary["vocab"], "stage" | "phase" | "column">;
+  vocab: Pick<AdminDictionary["vocab"], "stage" | "phase" | "column" | "closureReason">;
   priority: string;
 };
 
 type Columns = BoardData["columns"];
 type Move = { id: string; to: BoardColumnKey; stage: FunnelStage };
 type MoveAction = (id: string, stage: FunnelStage) => Promise<ActionResult<StageMove>>;
-type UndoAction = (id: string, eventId: string) => Promise<ActionResult>;
+type UndoAction = (id: string, eventId: string) => Promise<ActionResult<StageUndo>>;
 /** A move that undoes another: the event it undoes, and the column the card is in now. */
 type Undoing = { eventId: string; from: BoardColumnKey };
 
@@ -145,8 +148,9 @@ export function KanbanBoard({
     const name = card.company;
     startTransition(async () => {
       addMove({ id, to, stage });
-      const call: Promise<ActionResult<StageMove>> = undoing ? undoAction(id, undoing.eventId) : moveAction(id, stage);
-      const result = await call.catch((): ActionResult<StageMove> => ({ ok: false, message: common.failed }));
+      type Answer = ActionResult<Partial<StageMove> & StageUndo>;
+      const call: Promise<Answer> = undoing ? undoAction(id, undoing.eventId) : moveAction(id, stage);
+      const result = await call.catch((): Answer => ({ ok: false, message: common.failed }));
       if (!result.ok) {
         notify.error(fill(board.failed, { name, column: vocab.column[from] }), {
           detail: result.message,
@@ -155,15 +159,24 @@ export function KanbanBoard({
         return;
       }
       if (undoing) {
-        notify.success(fill(board.unmoved, { name, column: vocab.column[to] }));
+        // Back to a closed stage, which is not on the board: its name, not a column's.
+        const restored = result.data?.restored;
+        notify.success(
+          restored
+            ? fill(board.restored, { name, stage: vocab.stage[restored.stage], reason: vocab.closureReason[restored.reason] })
+            : fill(board.unmoved, { name, column: vocab.column[to] }),
+        );
         return;
       }
       // No event, no move to undo: the server found it there already.
       const eventId = result.data?.eventId;
-      notify.success(
-        fill(board.moved, { name, column: vocab.column[to] }),
-        eventId ? { action: { label: common.undo, onClick: () => move(id, from, card.stage, { eventId, from: to }) } } : undefined,
-      );
+      const reopened = result.data?.reopened;
+      notify.success(fill(board.moved, { name, column: vocab.column[to] }), {
+        detail: reopened
+          ? fill(board.reopened, { stage: vocab.stage[reopened.from], reason: vocab.closureReason[reopened.reason] })
+          : undefined,
+        action: eventId ? { label: common.undo, onClick: () => move(id, from, card.stage, { eventId, from: to }) } : undefined,
+      });
     });
     return true;
   }

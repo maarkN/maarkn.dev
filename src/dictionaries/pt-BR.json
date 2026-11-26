@@ -1491,6 +1491,8 @@
       "none": "Nenhuma",
       "moved": "“{name}” foi para {column}.",
       "unmoved": "“{name}” voltou para {column}.",
+      "reopened": "Ela estava em {stage}, e o motivo de encerramento ({reason}) foi removido.",
+      "restored": "“{name}” voltou para {stage}, com o motivo de encerramento ({reason}).",
       "already": "“{name}” já está em {column}.",
       "failed": "Não foi possível mover “{name}”. Ela continua em {column}.",
       "states": {

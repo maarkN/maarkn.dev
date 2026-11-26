@@ -228,8 +228,10 @@ O `TablePager` escreve "74 registros · Página 2 de 4" e os botões "Anterior P
 arrastar e `←`/`→` pelo teclado, a mudança mostrada na hora (`useOptimistic`) e desfeita sozinha se o
 servidor recusa, e o aviso de sucesso com "Desfazer". "Desfazer" não é outro movimento:
 `moveApplicationStage` devolve o evento que gravou e `undoApplicationStageMove(id, evento)` desfaz aquele
-movimento, com a data de envio que ele carimbou. O foco acompanha o cartão movido pelas setas até as
-transições do quadro terminarem. Ver `@/components/admin/kanban/kanban-board.tsx`.
+movimento, com a data de envio que ele carimbou e o motivo de encerramento que ele apagou. Os dois seguem a
+regra de toda mudança de estágio (`closureReasonOnStageChange`, e o evento na mesma transação). O foco
+acompanha o cartão movido pelas setas até as transições do quadro terminarem. Ver
+`@/components/admin/kanban/kanban-board.tsx`.
 
 ---
 
@@ -466,5 +468,5 @@ notify.success(fill(board.moved, { name, column }), { action: { label: common.un
 | `src/components/ui/*` | os primitivos shadcn (style `radix-lyra`), vestidos como hologramas (A6) |
 | `src/lib/db.ts` | `db` (PrismaClient) e `dbConfigured` |
 | `src/lib/auth.ts` | `auth()` |
-| `src/lib/applications.ts` | **(cliente)** `FUNNEL_STAGES` · `FUNNEL_STAGE_PHASES` · `SENT_STAGES` · `INTERVIEW_STAGES` · `SPONSORSHIP_SIGNALS` · `SPONSORSHIP_ROUTES` · `CLOSURE_REASONS` · `INTERVIEW_STATUSES` · `closureReasonOnStageChange` (todo caminho que escreve `stage` grava o `patch` dela no mesmo update, e o evento leva `closureReasonRemovedNote`) · `APPLICATION_SOURCES` · `slugPart` · `buildFolderName` (os rótulos que ainda moram aqui servem ao dossiê, ao histórico e ao MCP; a tela traduzida lê `admin.vocab`, e `src/lib/admin/vocab.test.ts` confere que as palavras de motivo e situação são as de `CLOSURE_REASON_LABELS` e `INTERVIEW_STATUS_LABELS`) |
+| `src/lib/applications.ts` | **(cliente)** `FUNNEL_STAGES` · `FUNNEL_STAGE_PHASES` · `SENT_STAGES` · `INTERVIEW_STAGES` · `SPONSORSHIP_SIGNALS` · `SPONSORSHIP_ROUTES` · `CLOSURE_REASONS` · `INTERVIEW_STATUSES` · `closureReasonOnStageChange` (todo caminho que escreve `stage` grava o `patch` dela no mesmo update, e o evento leva `closureReasonRemovedNote`; o "Desfazer" do quadro a lê de volta com `closureReasonRemovedBy`) · `APPLICATION_SOURCES` · `slugPart` · `buildFolderName` (os rótulos que ainda moram aqui servem ao dossiê, ao histórico e ao MCP; a tela traduzida lê `admin.vocab`, e `src/lib/admin/vocab.test.ts` confere que as palavras de motivo e situação são as de `CLOSURE_REASON_LABELS` e `INTERVIEW_STATUS_LABELS`) |
 | `src/lib/applications-query.ts` | **(`server-only`)** `parseApplicationFilters` · `parsePage` · `buildApplicationWhere` · `listApplications` (ordem por `APPLICATION_SORT_KEYS`) · `listApplicationMarkets` · `listApplicationSources` · `effectiveSponsorship`/`effectiveMarket` · `APPLICATIONS_PAGE_SIZE` |

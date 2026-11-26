@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FunnelStage } from "@prisma/client";
 import type { ActionResult } from "@/app/_actions/action-result";
 import { ADMIN_WORDS, WithAdminWords } from "@/components/admin/test-labels";
-import { emptyBoard, type BoardCard, type BoardData, type StageMove } from "./kanban-types";
+import { emptyBoard, type BoardCard, type BoardData, type StageMove, type StageUndo } from "./kanban-types";
 
 const custom = vi.fn();
 vi.mock("sonner", () => ({ toast: { custom: (...args: unknown[]) => custom(...args), dismiss: vi.fn() } }));
@@ -33,7 +33,7 @@ const words = ADMIN_WORDS["pt-BR"];
 let root: Root;
 let container: HTMLDivElement;
 const moveAction = vi.fn<(id: string, stage: FunnelStage) => Promise<ActionResult<StageMove>>>();
-const undoAction = vi.fn<(id: string, eventId: string) => Promise<ActionResult>>();
+const undoAction = vi.fn<(id: string, eventId: string) => Promise<ActionResult<StageUndo>>>();
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -93,7 +93,12 @@ const press = (id: string, key: string, init: KeyboardEventInit = {}) =>
     link(id).dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, ...init }));
   });
 /** The notice of the n-th call, as the board built it. */
-const notice = (n = 0) => custom.mock.calls[n][0]("id") as { props: { title: string; tone: string; action?: { label: string; onClick: () => void } } };
+const notice = (n = 0) =>
+  custom.mock.calls[n][0]("id") as {
+    props: { title: string; tone: string; action?: { label: string; onClick: () => void }; children?: { props: { children: string } } };
+  };
+/** The sentence below the title of a notice, when there is one. */
+const detailOf = (n = 0) => notice(n).props.children?.props.children;
 const stageOf = (key: string, id: string) => cardIn(key, id)?.querySelector("[data-stage]")?.textContent;
 const focusedCard = () => document.activeElement?.closest("[data-card]")?.getAttribute("data-card");
 const focusedColumn = () => document.activeElement?.closest("section[data-column]")?.getAttribute("data-column");
@@ -198,6 +203,32 @@ describe("moving with the arrows", () => {
 
     await act(async () => answer.resolve({ ok: true }));
     expect(notice(1).props.title).toBe("“Acme” voltou para Selecionadas.");
+  });
+
+  it("says which closure reason a move removed, and its undo that it came back, by the stage's name", async () => {
+    // Acme was rejected after the board loaded: the card is still in Selecionadas.
+    moveAction.mockResolvedValue({ ok: true, data: { eventId: "ev1", reopened: { from: "rejected", reason: "visa" } } });
+    undoAction.mockResolvedValue({ ok: true, data: { restored: { stage: "rejected", reason: "visa" } } });
+    render();
+    press("a", "ArrowRight");
+    await act(async () => {});
+    render(revalidated());
+    expect(notice().props.title).toBe("“Acme” foi para Prontas.");
+    expect(detailOf()).toBe("Ela estava em Recusada, e o motivo de encerramento (Visto) foi removido.");
+    expect(notice().props.action?.label).toBe("Desfazer");
+
+    await act(async () => notice().props.action!.onClick());
+    expect(undoAction).toHaveBeenCalledWith("a", "ev1");
+    // Recusada is not a column: the notice names the stage, not where the card was.
+    expect(notice(1).props.title).toBe("“Acme” voltou para Recusada, com o motivo de encerramento (Visto).");
+  });
+
+  it("says nothing of a reason when the move removed none", async () => {
+    moveAction.mockResolvedValue({ ok: true, data: { eventId: "ev1" } });
+    render();
+    press("a", "ArrowRight");
+    await act(async () => {});
+    expect(detailOf()).toBeFalsy();
   });
 
   it("says where the card stays when undoing is refused", async () => {

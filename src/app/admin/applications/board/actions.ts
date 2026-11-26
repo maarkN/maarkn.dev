@@ -14,16 +14,20 @@
  *   so quando ainda estao vazias — mover para "Enviada" carimba a data de
  *   envio; mover para um desfecho carimba o fechamento; voltar atras nao apaga
  *   nem sobrescreve o carimbo original;
- * - sair de recusada/retirada apaga o motivo de encerramento, e o evento guarda
- *   qual era;
+ * - sair de recusada/retirada apaga o motivo de encerramento, no mesmo update
+ *   (`closureReasonOnStageChange`, como todo caminho que escreve `stage`), e o
+ *   evento guarda qual era. O quadro so mostra candidaturas abertas: se ela foi
+ *   recusada depois que a tela carregou, o movimento a reabre e devolve
+ *   `reopened` (o estagio que encontrou e o motivo que apagou), para o aviso
+ *   dizer isso;
  * - mover para o estagio em que a candidatura JA esta e no-op: nem `update`,
  *   nem evento. E o que impede o board de encher a linha do tempo de
  *   "stage_change" identicos num duplo clique.
  *
  * "Desfazer" no aviso NAO e outro movimento: e `undoApplicationStageMove`,
  * abaixo, que recebe o evento que o movimento gravou e desfaz o movimento
- * inteiro, a data que ele carimbou inclusive. Um movimento de volta comum
- * deixaria a candidatura "pronta" com data de envio.
+ * inteiro, a data que ele carimbou e o motivo que ele apagou inclusive. Um
+ * movimento de volta comum deixaria a candidatura "pronta" com data de envio.
  *
  * Diferenca deliberada em relacao ao MCP: aqui o evento nasce com `sourceKey`
  * nulo. `sourceKey` e UNIQUE e existe para o upsert idempotente da
@@ -39,8 +43,15 @@ import type { ActionResult } from "@/app/_actions/action-result";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 import { safeDbError } from "@/lib/safe-error";
-import type { StageMove } from "@/components/admin/kanban/kanban-types";
-import { closureReasonOnStageChange, closureReasonRemovedNote, isFunnelStage } from "@/lib/applications";
+import type { StageMove, StageUndo } from "@/components/admin/kanban/kanban-types";
+import {
+  acceptsClosureReason,
+  closureReasonOnStageChange,
+  closureReasonRemovedBy,
+  closureReasonRemovedNote,
+  closureReasonRestoredNote,
+  isFunnelStage,
+} from "@/lib/applications";
 import { getAdminLabels } from "@/lib/admin/request";
 import { fill } from "@/lib/admin/text";
 
@@ -85,7 +96,7 @@ export async function moveApplicationStage(
   }
 
   let label = "";
-  let eventId = "";
+  let moved: StageMove;
   try {
     const current = await db.application.findUnique({
       where: { id },
@@ -141,7 +152,9 @@ export async function moveApplicationStage(
         select: { id: true },
       }),
     ]);
-    eventId = event.id;
+    moved = closure.removed
+      ? { eventId: event.id, reopened: { from: current.stage, reason: closure.removed } }
+      : { eventId: event.id };
   } catch (err) {
     // A action nao lanca (contrato `ActionResult`): sem este catch a UI daria
     // toast de sucesso num movimento que falhou.
@@ -150,7 +163,7 @@ export async function moveApplicationStage(
   }
 
   revalidateFunnel();
-  return { ok: true, data: { eventId }, message: fill(moves.moved, { name: label, stage: vocab.stage[stage] }) };
+  return { ok: true, data: moved, message: fill(moves.moved, { name: label, stage: vocab.stage[stage] }) };
 }
 
 /**
@@ -164,6 +177,13 @@ export async function moveApplicationStage(
  * (Esse sinal depende do carimbo ser o instante do evento, como no MCP; a
  * meia-noite UTC que o A5 pede para `appliedAt` mudaria os dois juntos.)
  *
+ * O motivo de encerramento que o movimento apagou (ele saiu de recusada ou
+ * retirada) volta com o estagio: o evento do movimento diz qual era
+ * (`closureReasonRemovedBy`), e enquanto ela esta onde o movimento a deixou,
+ * aberta, ninguem gravou outro. E o estado que o movimento encontrou, como a
+ * data. Fora isso, desfazer segue a regra de toda mudanca de estagio: voltar a
+ * um estagio aberto apaga um motivo gravado depois do movimento.
+ *
  * Desfazer tambem e mudanca de estagio: grava o seu `ApplicationEvent`, e o
  * evento do movimento fica. A linha do tempo diz que ela foi e voltou.
  *
@@ -173,7 +193,7 @@ export async function moveApplicationStage(
 export async function undoApplicationStageMove(
   id: string,
   eventId: string,
-): Promise<ActionResult> {
+): Promise<ActionResult<StageUndo>> {
   await requireAdmin();
   const { moves, vocab, common } = await getAdminLabels();
   if (!dbConfigured) {
@@ -185,6 +205,7 @@ export async function undoApplicationStageMove(
 
   let label = "";
   let back: FunnelStage;
+  let undone: StageUndo | undefined;
   try {
     const [current, move] = await Promise.all([
       db.application.findUnique({
@@ -193,13 +214,14 @@ export async function undoApplicationStageMove(
           stage: true,
           appliedAt: true,
           closedAt: true,
+          closureReason: true,
           folderName: true,
           company: { select: { name: true } },
         },
       }),
       db.applicationEvent.findFirst({
         where: { id: eventId, applicationId: id, type: "stage_change", lastMcpTool: TOOL.move },
-        select: { fromStage: true, toStage: true, occurredAt: true },
+        select: { fromStage: true, toStage: true, occurredAt: true, bodyMd: true },
       }),
     ]);
     if (!current || !move?.fromStage || !move.toStage) {
@@ -221,10 +243,19 @@ export async function undoApplicationStageMove(
     if (current.appliedAt?.getTime() === stamp) cleared.appliedAt = null;
     if (current.closedAt?.getTime() === stamp) cleared.closedAt = null;
 
+    const removed = closureReasonRemovedBy(move.bodyMd);
+    const restored = removed && !current.closureReason && acceptsClosureReason(back) ? removed : null;
+    const closure = closureReasonOnStageChange(back, current.closureReason);
+
     await db.$transaction([
       db.application.update({
         where: { id },
-        data: { stage: back, ...cleared, lastMcpTool: TOOL.undo },
+        data: {
+          stage: back,
+          ...cleared,
+          ...(restored ? { closureReason: restored } : closure.patch),
+          lastMcpTool: TOOL.undo,
+        },
       }),
       db.applicationEvent.create({
         data: {
@@ -234,17 +265,20 @@ export async function undoApplicationStageMove(
           fromStage: move.toStage,
           toStage: back,
           subject: `${move.toStage} -> ${back}`,
+          bodyMd: restored ? closureReasonRestoredNote(restored) : closureReasonRemovedNote(closure.removed),
           lastMcpTool: TOOL.undo,
         },
       }),
     ]);
+    if (restored) undone = { restored: { stage: back, reason: restored } };
   } catch (err) {
     console.error("[admin] undo application stage move failed", safeDbError(err));
     return { ok: false, message: moves.failed };
   }
 
   revalidateFunnel();
-  return { ok: true, message: fill(moves.moved, { name: label, stage: vocab.stage[back] }) };
+  const message = fill(moves.moved, { name: label, stage: vocab.stage[back] });
+  return undone ? { ok: true, data: undone, message } : { ok: true, message };
 }
 
 /** === invalidateQueries. O board, a lista e o dashboard leem o mesmo funil. */

@@ -23,6 +23,11 @@ const MIGRATION = "20261124160000_dossier_fields";
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("next/navigation", () => ({ redirect: () => {} }));
+// The board and the form write their messages in the language of the request (A4).
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: (name: string) => (name === "admin-locale" ? { name, value: "pt-BR" } : undefined) }),
+  headers: async () => new Headers(),
+}));
 vi.mock("@/lib/auth", () => ({ auth: async () => ({ user: { email: "admin@example.com" } }) }));
 const held = vi.hoisted(() => ({ db: null as unknown }));
 vi.mock("@/lib/db", () => ({
@@ -294,6 +299,34 @@ describe.skipIf(!SERVER)("dossier fields on a real Postgres", () => {
             toStage: "interview",
             bodyMd: "Motivo de encerramento removido: Visto.",
           },
+        ]);
+      });
+
+      it("board: undoing the move puts the reason back with the stage, past the CHECK", async () => {
+        const board = await import("@/app/admin/applications/board/actions");
+        const { id } = await db.application.update({
+          where: { folderName: "acme" },
+          data: { stage: "rejected", closureReason: "visa" },
+        });
+        const move = await board.moveApplicationStage(id, "interview");
+        if (!move.ok || !move.data) throw new Error(`the move failed: ${move.message}`);
+
+        expect(move.data.reopened).toEqual({ from: "rejected", reason: "visa" });
+
+        await expect(board.undoApplicationStageMove(id, move.data.eventId)).resolves.toMatchObject({
+          ok: true,
+          data: { restored: { stage: "rejected", reason: "visa" } },
+        });
+        expect(await acme()).toMatchObject({ stage: "rejected", closureReason: "visa" });
+        expect(
+          await db.applicationEvent.findMany({
+            where: { applicationId: id },
+            orderBy: { occurredAt: "asc" },
+            select: { fromStage: true, toStage: true, bodyMd: true },
+          }),
+        ).toEqual([
+          { fromStage: "rejected", toStage: "interview", bodyMd: "Motivo de encerramento removido: Visto." },
+          { fromStage: "interview", toStage: "rejected", bodyMd: "Motivo de encerramento restaurado: Visto." },
         ]);
       });
     });

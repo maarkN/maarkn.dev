@@ -1,13 +1,14 @@
 /**
  * A move of the board, and its "Desfazer" (spec admin-listing, "Arrastar"):
- * undoing puts the application back as the move found it, the stage and the
- * date the move stamped, and leaves alone what someone else changed.
+ * undoing puts the application back as the move found it, the stage, the date
+ * the move stamped and the closure reason it removed, and leaves alone what
+ * someone else changed.
  *
  * The database is a small fake with the two tables the actions touch; the
  * `$transaction` of an array runs its writes in order, as Prisma does.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { FunnelStage } from "@prisma/client";
+import type { ClosureReason, FunnelStage } from "@prisma/client";
 import ptBR from "@/dictionaries/pt-BR.json";
 
 type App = {
@@ -15,6 +16,7 @@ type App = {
   stage: FunnelStage;
   appliedAt: Date | null;
   closedAt: Date | null;
+  closureReason: ClosureReason | null;
   folderName: string;
   company: { name: string } | null;
   lastMcpTool?: string;
@@ -26,6 +28,7 @@ type Event = {
   type: string;
   fromStage: FunnelStage | null;
   toStage: FunnelStage | null;
+  bodyMd: string | null;
   lastMcpTool: string | null;
 };
 
@@ -51,7 +54,7 @@ const fake = {
   },
   applicationEvent: {
     create: async ({ data, select }: { data: Partial<Event>; select?: Record<string, unknown> }) => {
-      const row = { fromStage: null, toStage: null, lastMcpTool: null, ...data, id: `ev${events.length + 1}` } as Event;
+      const row = { fromStage: null, toStage: null, bodyMd: null, lastMcpTool: null, ...data, id: `ev${events.length + 1}` } as Event;
       events.push(row);
       return pick(row, select);
     },
@@ -86,8 +89,17 @@ beforeEach(() => {
   events = [];
 });
 
-function seed(stage: FunnelStage, dates: Partial<Pick<App, "appliedAt" | "closedAt">> = {}) {
-  apps.set("a1", { id: "a1", stage, appliedAt: null, closedAt: null, folderName: "acme-ca", company: { name: "Acme" }, ...dates });
+function seed(stage: FunnelStage, fields: Partial<Pick<App, "appliedAt" | "closedAt" | "closureReason">> = {}) {
+  apps.set("a1", {
+    id: "a1",
+    stage,
+    appliedAt: null,
+    closedAt: null,
+    closureReason: null,
+    folderName: "acme-ca",
+    company: { name: "Acme" },
+    ...fields,
+  });
   return apps.get("a1")!;
 }
 
@@ -163,6 +175,7 @@ describe("undoing a move of the board", () => {
       type: "stage_change",
       fromStage: "ready",
       toStage: "applied",
+      bodyMd: null,
       lastMcpTool: "update_application_stage",
     });
     for (const [id, eventId] of [["a1", "mcp1"], ["a1", "nope"], ["other", "mcp1"], ["", "mcp1"], ["a1", ""]]) {
@@ -179,5 +192,77 @@ describe("a move of the board", () => {
     const stamped = app.appliedAt;
     await moved("ready");
     expect(app.appliedAt).toBe(stamped);
+  });
+});
+
+describe("the closure reason on the board", () => {
+  // The board shows only open applications: a card can still be moved after
+  // the application was rejected elsewhere, before the screen reloaded.
+  it("a move that reopens a rejected application removes the reason and says which", async () => {
+    const closed = new Date("2026-11-20T15:00:00.000Z");
+    const app = seed("rejected", { closedAt: closed, closureReason: "visa" });
+
+    const result = await moveApplicationStage("a1", "recruiter_contact");
+    expect(result).toEqual({
+      ok: true,
+      data: { eventId: "ev1", reopened: { from: "rejected", reason: "visa" } },
+      message: "“Acme” foi para Contato do recrutador.",
+    });
+    expect(app).toMatchObject({ stage: "recruiter_contact", closureReason: null, closedAt: closed });
+    expect(events[0]).toMatchObject({
+      fromStage: "rejected",
+      toStage: "recruiter_contact",
+      bodyMd: "Motivo de encerramento removido: Visto.",
+    });
+  });
+
+  it("undoing that move puts the reason back with the stage, and the history says so", async () => {
+    const closed = new Date("2026-11-20T15:00:00.000Z");
+    const app = seed("rejected", { closedAt: closed, closureReason: "visa" });
+    const eventId = await moved("recruiter_contact");
+
+    const result = await undoApplicationStageMove("a1", eventId);
+    expect(result).toEqual({
+      ok: true,
+      data: { restored: { stage: "rejected", reason: "visa" } },
+      message: "“Acme” foi para Recusada.",
+    });
+    expect(app).toMatchObject({ stage: "rejected", closureReason: "visa", closedAt: closed });
+    expect(events.map((e) => [e.fromStage, e.toStage, e.bodyMd])).toEqual([
+      ["rejected", "recruiter_contact", "Motivo de encerramento removido: Visto."],
+      ["recruiter_contact", "rejected", "Motivo de encerramento restaurado: Visto."],
+    ]);
+  });
+
+  it("a move with no reason to remove writes no note and reopens nothing, and its undo restores nothing", async () => {
+    const app = seed("ready");
+    const move = await moveApplicationStage("a1", "applied");
+    expect(move).toMatchObject({ ok: true, data: { eventId: "ev1" } });
+    expect(move.ok && move.data).not.toHaveProperty("reopened");
+    expect(await undoApplicationStageMove("a1", "ev1")).not.toHaveProperty("data");
+    expect(app.closureReason).toBeNull();
+    expect(events.map((e) => e.bodyMd)).toEqual([null, null]);
+  });
+
+  it("undoing a move to rejected removes a reason written since, as any reopening does", async () => {
+    const app = seed("ready");
+    const eventId = await moved("rejected");
+    app.closureReason = "salary";
+
+    const result = await undoApplicationStageMove("a1", eventId);
+    expect(result).toEqual({ ok: true, message: "“Acme” foi para Pronta para enviar." });
+    expect(app).toMatchObject({ stage: "ready", closureReason: null, closedAt: null });
+    expect(events[1]).toMatchObject({ toStage: "ready", bodyMd: "Motivo de encerramento removido: Salário." });
+  });
+
+  it("between withdrawn and rejected the reason stays, and the undo leaves the one written since", async () => {
+    const app = seed("withdrawn", { closedAt: new Date("2026-11-20T15:00:00.000Z"), closureReason: "visa" });
+    const eventId = await moved("rejected");
+    expect(app.closureReason).toBe("visa");
+    app.closureReason = "salary";
+
+    await undoApplicationStageMove("a1", eventId);
+    expect(app).toMatchObject({ stage: "withdrawn", closureReason: "salary" });
+    expect(events.map((e) => e.bodyMd)).toEqual([null, null]);
   });
 });

@@ -8,7 +8,7 @@
  * `import type` from Prisma: its runtime never reaches the bundle.
  */
 
-import type { FunnelStage } from "@prisma/client";
+import type { ClosureReason, FunnelStage } from "@prisma/client";
 import { BOARD_COLUMNS, type BoardColumnKey } from "@/lib/admin/funnel";
 
 /** The least a card needs. No long markdown: the board is a dense view. */
@@ -31,8 +31,16 @@ export type BoardColumnData = {
   cards: BoardCard[];
 };
 
-/** What a move of the board answers: the event it recorded, which is what "Desfazer" undoes. */
-export type StageMove = { eventId: string };
+/**
+ * What a move of the board answers: the event it recorded, which is what
+ * "Desfazer" undoes. `reopened` when the application had been closed since the
+ * board loaded (a card shows only open ones): the stage the move found and the
+ * closure reason it removed.
+ */
+export type StageMove = { eventId: string; reopened?: { from: FunnelStage; reason: ClosureReason } };
+
+/** What undoing a move answers when it put back the closure reason that move removed. */
+export type StageUndo = { restored?: { stage: FunnelStage; reason: ClosureReason } };
 
 export type BoardData = {
   columns: Record<BoardColumnKey, BoardColumnData>;

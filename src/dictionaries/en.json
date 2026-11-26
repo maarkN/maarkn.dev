@@ -1492,6 +1492,8 @@
       "none": "None",
       "moved": "“{name}” moved to {column}.",
       "unmoved": "“{name}” went back to {column}.",
+      "reopened": "It was in {stage}, and its closure reason ({reason}) was removed.",
+      "restored": "“{name}” went back to {stage}, with its closure reason ({reason}).",
       "already": "“{name}” is already in {column}.",
       "failed": "“{name}” could not be moved. It is still in {column}.",
       "states": {
