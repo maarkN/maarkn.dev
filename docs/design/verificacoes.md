@@ -94,7 +94,7 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 **Listas e formulários do backoffice** (`--admin`)
 
 80. Na coluna de ações de `/admin/api-keys` todo botão está inteiro, à vista e alcançável, em 390 e 1440 px.
-81. No quadro, arrastar e `←`/`→` levam a candidatura à coluna ao lado, com o foco junto; "Desfazer" a devolve, e depois de recarregar ela está onde começou (é o caso da verificação 28).
+81. No quadro, arrastar e `←`/`→` levam a candidatura à coluna ao lado, com o foco junto, recebido uma vez e mantido quando o servidor responde, mesmo com a seta logo depois de um "Desfazer"; "Desfazer" a devolve, e depois de recarregar ela está onde começou (é o caso da verificação 28).
 
 **Referência do holograma** (`--holo`, com `HOLO_REFERENCE=1 pnpm build`)
 

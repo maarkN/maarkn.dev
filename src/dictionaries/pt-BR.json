@@ -1540,7 +1540,8 @@
       "badStage": "Esse estágio não existe. Recarregue a página.",
       "already": "“{name}” já está em {stage}.",
       "failed": "O banco não gravou a mudança. Tente de novo.",
-      "moved": "“{name}” foi para {stage}."
+      "moved": "“{name}” foi para {stage}.",
+      "changed": "“{name}” mudou de estágio depois disso e está em {stage}. Recarregue a página."
     },
     "jobs": {
       "title": "Vagas",

@@ -22,7 +22,7 @@ import {
   type ApplicationFilters,
 } from "@/lib/applications-query";
 import { ApplicationsToolbar } from "../applications-toolbar";
-import { moveApplicationStage } from "./actions";
+import { moveApplicationStage, undoApplicationStageMove } from "./actions";
 import { BOARD_CARDS_PER_COLUMN, loadBoard } from "./board-data";
 
 // Session guard + searchParams: this route is never prerendered.
@@ -142,8 +142,9 @@ async function BoardColumns({
       data={data}
       cap={BOARD_CARDS_PER_COLUMN}
       words={{ board, vocab: { stage: vocab.stage, phase: vocab.phase, column: vocab.column }, priority: applications.priority }}
-      // A reference to a Server Action: serializable (AGENTS.md §6).
+      // References to Server Actions: serializable (AGENTS.md §6).
       moveAction={moveApplicationStage}
+      undoAction={undoApplicationStageMove}
     />
   );
 }

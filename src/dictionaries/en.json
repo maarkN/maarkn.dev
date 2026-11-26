@@ -1541,7 +1541,8 @@
       "badStage": "That stage does not exist. Reload the page.",
       "already": "“{name}” is already in {stage}.",
       "failed": "The database did not save the change. Try again.",
-      "moved": "“{name}” moved to {stage}."
+      "moved": "“{name}” moved to {stage}.",
+      "changed": "“{name}” changed stage since then and is in {stage}. Reload the page."
     },
     "jobs": {
       "title": "Jobs",

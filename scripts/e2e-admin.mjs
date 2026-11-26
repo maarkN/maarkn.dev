@@ -895,17 +895,26 @@ async function keyActions(page, t) {
 }
 
 /**
- * O quadro (verificação 28): arrastar um cartão para outra coluna muda o
- * estágio e diz isso com "Desfazer", que o devolve; as setas fazem o mesmo.
+ * O quadro (verificações 28 e 81): arrastar um cartão para outra coluna muda o
+ * estágio e diz isso com "Desfazer", que o devolve; as setas fazem o mesmo, e o
+ * foco vai junto e fica, uma vez só, mesmo com a seta logo depois de um
+ * "Desfazer" que o servidor ainda não respondeu.
+ *
+ * O quadro chega numa fronteira de Suspense, hidratada depois do resto da
+ * página: nada acontece nele antes de o React assumir o cartão.
  */
 async function board(page, t) {
   await enter(page, "/admin/applications/board");
-  await page.waitFor(`document.querySelectorAll("section[data-column]").length === 6`, "as seis colunas", 15000);
   const columns = `[...document.querySelectorAll("section[data-column]")]`;
+  const ready = `(() => { const el = ${$("[data-card] [data-card-link]")}; return el && Object.keys(el).some((key) => key.startsWith("__reactProps")) })()`;
+  await page.waitFor(`${columns}.length === 6 && ${ready}`, "o quadro hidratado", 15000);
   const first = await page.evaluate(`${columns}.findIndex((c) => c.querySelector("[data-card]"))`);
   t.ok(first >= 0 && first < 5, "há um cartão que pode ir para a coluna ao lado", first);
   const card = await page.evaluate(`${columns}[${first}].querySelector("[data-card]").dataset.card`);
+  const [here, beside] = await page.evaluate(`[${columns}[${first}].dataset.column, ${columns}[${first + 1}].dataset.column]`);
   const where = `${columns}.findIndex((c) => c.querySelector('[data-card="${card}"]'))`;
+  /** A notice, arrived after the arrows, that says the card went to `column`: the answer of the server. */
+  const answered = (column) => `window.__said.some((text) => text.includes(${js(`foi para ${column}.`)}))`;
 
   /* Arrastar, pelos eventos do navegador. */
   /* A frame between the events, as a real drag has: the board learns what is
@@ -930,14 +939,34 @@ async function board(page, t) {
   await page.waitFor(`${where} === ${first}`, "o cartão de volta", 10000);
   t.ok(true, "desfazer devolve o cartão");
 
-  /* As setas, com o cartão em foco. */
-  await page.evaluate(`document.querySelector('[data-card="${card}"] [data-card-link]').focus()`);
+  /* As setas, com o cartão em foco, sem esperar a resposta do "Desfazer". Cada
+     vez que o cartão recebe o foco, um leitor de tela o anuncia. */
+  await page.evaluate(`(() => {
+    window.__focusIn = 0;
+    window.__said = [];
+    new MutationObserver((records) => {
+      for (const record of records) for (const node of record.addedNodes) window.__said.push(node.textContent);
+    }).observe(document.querySelector("section[aria-live]"), { childList: true, subtree: true });
+    document.addEventListener("focusin", (event) => {
+      if (event.target.closest?.('[data-card="${card}"]')) window.__focusIn += 1;
+    });
+    document.querySelector('[data-card="${card}"] [data-card-link]').focus();
+    window.__focusIn = 0;
+  })()`);
   await page.press("ArrowRight");
   await page.waitFor(`${where} === ${first + 1}`, "a seta leva à coluna ao lado", 8000);
   await page.waitFor(`document.activeElement?.closest("[data-card]")?.dataset.card === ${js(card)}`, "o foco vai junto", 8000);
-  t.ok(true, "a seta move e o foco vai junto");
+  await page.waitFor(answered(beside), "a resposta da seta", 10000);
+  await sleep(300);
+  t.equal(
+    await page.evaluate(`[document.activeElement?.closest("[data-card]")?.dataset.card, window.__focusIn]`),
+    [card, 1],
+    "a seta move, o foco vai junto e fica, e o cartão o recebe uma vez",
+  );
   await page.press("ArrowLeft");
   await page.waitFor(`${where} === ${first}`, "a seta de volta", 8000);
+  await page.waitFor(answered(here), "a resposta da seta de volta", 10000);
+  t.equal(await page.evaluate(`document.activeElement?.closest("[data-card]")?.dataset.card`), card, "o foco volta com ele");
   await page.open("/admin/applications/board");
   await page.waitFor(`${where} === ${first}`, "depois de recarregar, onde começou", 15000);
   t.ok(true, "o banco ficou como estava");

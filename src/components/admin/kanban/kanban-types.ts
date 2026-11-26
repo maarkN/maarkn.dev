@@ -31,6 +31,9 @@ export type BoardColumnData = {
   cards: BoardCard[];
 };
 
+/** What a move of the board answers: the event it recorded, which is what "Desfazer" undoes. */
+export type StageMove = { eventId: string };
+
 export type BoardData = {
   columns: Record<BoardColumnKey, BoardColumnData>;
   total: number;
