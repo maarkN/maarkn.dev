@@ -451,6 +451,33 @@ describe("TerminalApp", () => {
   });
 
   describe("state across pages", () => {
+    it("rebuilding the screen leaves the palette and the font as they are", async () => {
+      const html = document.documentElement;
+      const bar = (i: number) => container.querySelectorAll<HTMLButtonElement>("header button")[i];
+      const click = (el: HTMLElement) => act(() => el.click());
+      // From the defaults, through the bar: its switches are not recorded.
+      if (html.getAttribute("data-theme") !== "soft") await click(bar(0));
+      if (html.getAttribute("data-font") !== "caskaydia") await click(bar(1));
+      expect([html.getAttribute("data-theme"), html.getAttribute("data-font")]).toEqual(["soft", "caskaydia"]);
+
+      await enter("theme");
+      await enter("font");
+      await settle();
+      remount();
+      await settle();
+      // Replayed, a bare `theme` would switch the palette back.
+      expect(screenText()).toContain("theme → classic");
+      expect([html.getAttribute("data-theme"), html.getAttribute("data-font")]).toEqual(["classic", "daddytime"]);
+      expect(container.querySelector("header")!.textContent).toContain("classic");
+
+      // The bar after the command is the latest choice; the rebuild keeps it.
+      await click(bar(0));
+      remount();
+      await settle();
+      expect(html.getAttribute("data-theme")).toBe("soft");
+      expect(container.querySelector("header")!.textContent).toContain("soft");
+    });
+
     it("rebuilds the screen and the history after a navigation", async () => {
       await enter("whoami");
       await enter("projects");
