@@ -1409,6 +1409,7 @@
         "trigger": "Delete the application {name}",
         "title": "Delete the application {name}?",
         "lost": "It leaves the funnel with its history, interviews, documents and checklist. The company and the job stay.",
+        "folder": "Vault folder: {key}.",
         "confirm": "Delete application",
         "done": "Application “{name}” deleted.",
         "failed": "The application could not be deleted. It is still in the funnel."

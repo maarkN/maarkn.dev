@@ -2,7 +2,9 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Save } from "lucide-react";
+import type { ActionResult } from "@/app/_actions/action-result";
 import { setAdminTimeZone } from "@/app/_actions/preferences";
+import { useCommonLabels } from "@/components/admin/admin-locale";
 import { FieldError, FieldHelp, describedBy } from "@/components/admin/field-output";
 import { submitKeepingValues, useFocusFirstInvalid } from "@/components/admin/form-submit";
 import { useNotify } from "@/components/admin/notify";
@@ -11,7 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AdminDictionary } from "@/i18n/config";
 
-/** The time zone of the backoffice. Any name of the runtime; the list only suggests. */
+/**
+ * The time zone of the backoffice. Any name of the runtime; the list only
+ * suggests. A zone it does not know is the field's error; a failure of the
+ * server is a notice with "Tentar de novo", and the field stays as it was (A9).
+ */
 export function TimeZoneForm({
   current,
   zones,
@@ -24,15 +30,21 @@ export function TimeZoneForm({
   const [error, setError] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
   const notify = useNotify();
+  const common = useCommonLabels();
   const form = useRef<HTMLFormElement>(null);
   useFocusFirstInvalid(form, error);
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await setAdminTimeZone(formData).catch(() => ({ ok: false as const, message: labels.failed }));
-      setError(result.ok ? {} : { timeZone: result.message });
-      if (result.ok) notify.success(result.message ?? labels.saved);
-      else notify.error(result.message);
+      const result = await setAdminTimeZone(formData).catch((): ActionResult => ({ ok: false, message: labels.failed }));
+      if (result.ok) {
+        setError({});
+        notify.success(result.message ?? labels.saved);
+        return;
+      }
+      setError(result.fieldErrors ?? {});
+      if (result.fieldErrors) notify.error(result.message);
+      else notify.error(result.message, { action: { label: common.retry, onClick: () => form.current?.requestSubmit() } });
     });
   }
 

@@ -1408,6 +1408,7 @@
         "trigger": "Excluir a candidatura {name}",
         "title": "Excluir a candidatura {name}?",
         "lost": "Ela sai do funil com o histórico, as entrevistas, os documentos e o checklist. A empresa e a vaga continuam.",
+        "folder": "Pasta no vault: {key}.",
         "confirm": "Excluir candidatura",
         "done": "Candidatura “{name}” excluída.",
         "failed": "Não foi possível excluir a candidatura. Ela continua no funil."

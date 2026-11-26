@@ -2,9 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExternalLink, Pencil, Plus } from "lucide-react";
-import { deleteApplication } from "@/app/_actions/applications";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { OpensRow, RowLink, SortableHead } from "@/components/admin/listing";
 import { PageHeader } from "@/components/admin/page-header";
 import { ResultNotice } from "@/components/admin/result-notice";
@@ -36,6 +34,7 @@ import {
   type ApplicationSortKey,
 } from "@/lib/applications-query";
 import { ApplicationsToolbar } from "./applications-toolbar";
+import { DeleteApplication } from "./delete-application";
 
 // Session guard + searchParams: this route is never prerendered.
 export const dynamic = "force-dynamic";
@@ -266,14 +265,13 @@ async function ApplicationsRows({
                         <Pencil aria-hidden="true" />
                       </Link>
                     </Button>
-                    <ConfirmDelete
+                    <DeleteApplication
                       id={row.id}
-                      name={companyName}
-                      title={fill(words.delete.title, { name: companyName })}
-                      lost={words.delete.lost}
-                      confirmLabel={words.delete.confirm}
-                      triggerLabel={fill(words.delete.trigger, { name: companyName })}
-                      action={deleteApplication}
+                      company={companyName}
+                      folderName={row.folderName}
+                      role={roleTitle === EMPTY ? null : roleTitle}
+                      place={place || null}
+                      words={words.delete}
                     />
                   </div>
                 </TableCell>

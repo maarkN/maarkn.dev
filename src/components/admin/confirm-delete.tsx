@@ -33,6 +33,7 @@ export function ConfirmDelete({
   id,
   name,
   title,
+  subject,
   lost,
   confirmLabel,
   triggerLabel,
@@ -46,6 +47,11 @@ export function ConfirmDelete({
   name: string;
   /** The question, as the title of the window: "Excluir a candidatura Acme?". */
   title: string;
+  /**
+   * Which record it is, when the name alone does not tell (two applications at
+   * the same company): read with the window, before what is lost.
+   */
+  subject?: ReactNode;
   /** What goes with it, in one or two sentences. */
   lost: ReactNode;
   /** The verb of the button: "Excluir candidatura". */
@@ -102,6 +108,11 @@ export function ConfirmDelete({
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
+            {subject && (
+              <span data-confirm-subject="" className="mb-2 block text-foreground">
+                {subject}
+              </span>
+            )}
             {lost} {common.confirm.lost}
           </AlertDialogDescription>
         </AlertDialogHeader>
