@@ -4,7 +4,7 @@
 
 ## 2. Esquema
 
-- [ ] 2.1 Acrescentar ao `Project` os textos em PT e EN, o texto de caso em PT e EN e a posição do caso; criar a galeria com ordem, legendas e caminho; migração aditiva aplicada em banco vazio e em cópia de produção
+- [x] 2.1 Acrescentar ao `Project` os textos em PT e EN, o texto de caso em PT e EN e a posição do caso; criar a galeria com ordem, legendas e caminho; migração aditiva aplicada em banco vazio e em cópia de produção
 - [x] 2.2 Garantir no banco no máximo três casos, sem posição repetida; verificar com teste que tenta o quarto
 
 ## 3. Leitura
