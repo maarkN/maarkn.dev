@@ -1,9 +1,9 @@
 import { Prisma } from "@prisma/client";
 
 /**
- * An in-memory stand-in for the few Prisma calls the application tools and the
- * rollback of a sync run make, so their tests run without a database (CI has
- * none). It holds the two CHECKs of the `dossier_fields` migration, with the
+ * An in-memory stand-in for the few Prisma calls the application tools, the
+ * rollback of a sync run and the dossier's loader make, so their tests run
+ * without a database (CI has none). It holds the two CHECKs of the `dossier_fields` migration, with the
  * message Postgres gives: a write that the real database would refuse is
  * refused here too. What only a real Postgres can answer is in
  * `src/lib/dossier-db.test.ts`.
@@ -100,6 +100,23 @@ class Table {
   groupBy = async () => [];
 }
 
+/**
+ * Only what `select` asks for, as Prisma returns it: a field the query leaves
+ * out is not there, and a relation is selected the same way, one level down.
+ */
+function project(value: unknown, select: Where): unknown {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) return value.map((item) => project(item, select));
+  const row = value as Row;
+  const out: Record<string, unknown> = {};
+  for (const [key, spec] of Object.entries(select)) {
+    if (!spec) continue;
+    const nested = typeof spec === "object" ? (spec as { select?: Where }).select : undefined;
+    out[key] = nested ? project(row[key], nested) : (row[key] ?? null);
+  }
+  return out;
+}
+
 /** What Prisma throws when Postgres refuses a row by a CHECK (the message only). */
 function checkViolation(table: string, constraint: string): Error {
   return new Error(
@@ -168,9 +185,11 @@ export function createFakeDb() {
     return {
       ...row,
       company: row.companyId ? await company.findUnique({ where: { id: row.companyId } }) : null,
-      job: null,
+      job: row.jobId ? await job.findUnique({ where: { id: row.jobId } }) : null,
       resumeTemplate: null,
       documents: [],
+      artifacts: [],
+      verifications: [],
       contacts: [],
       checklistItems: [],
       screeningQuestions: [],
@@ -190,10 +209,12 @@ export function createFakeDb() {
     job,
     contact,
     application: Object.assign(Object.create(application) as Table, {
-      findUnique: async (args: { where: Where; include?: Where }) =>
+      findUnique: async (args: { where: Where; include?: Where; select?: Where }) =>
         args.include
           ? withRelations(await application.findUnique(args), args.include)
-          : application.findUnique(args),
+          : args.select
+            ? project(await withRelations(await application.findUnique(args), args.select), args.select)
+            : application.findUnique(args),
       findMany: async (args: { where?: Where; orderBy?: unknown }) =>
         Promise.all((await application.findMany(args)).map((row) => withRelations(row))),
     }),
