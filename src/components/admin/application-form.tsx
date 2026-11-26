@@ -184,7 +184,6 @@ export function ApplicationForm({ application, words }: { application?: Applicat
               setFolderTouched(true);
               setFolderName(value);
             }}
-            label-font
             help={text.fields.folderHelp}
             error={err("folderName")}
           />
@@ -355,7 +354,6 @@ function Field({
   onChange,
   help,
   error,
-  "label-font": labelFont,
 }: {
   name: string;
   label: string;
@@ -366,8 +364,6 @@ function Field({
   onChange: (value: string) => void;
   help?: string;
   error?: string;
-  /** A key, written in the face of labels. */
-  "label-font"?: boolean;
 }) {
   const helpId = help ? `${name}-help` : undefined;
   const errorId = error ? `${name}-error` : undefined;
@@ -386,7 +382,7 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy(helpId, errorId)}
-        className={labelFont ? "w-full [&>input]:font-label [&>input]:text-sm" : "w-full"}
+        className="w-full"
       />
       {help && <FieldHelp id={helpId}>{help}</FieldHelp>}
       <FieldError id={errorId}>{error}</FieldError>

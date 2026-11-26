@@ -160,8 +160,9 @@ body.admin-root {
   padding: 9px 14px;
   font-size: .9375rem;
 }
+/* Taller where a screen asks for it: `[--field-min:16rem]` on the field. */
 .admin-root .admin-field > textarea {
-  min-height: 6.5em;
+  min-height: var(--field-min, 6.5em);
 }
 .admin-root .admin-select {
   display: flex;

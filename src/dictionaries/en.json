@@ -1127,8 +1127,8 @@
       "description": "For the times shown in the backoffice. Dates without a time, such as when an application was sent, do not change with the time zone.",
       "label": "Time zone",
       "help": "A name from the IANA database, such as America/Sao_Paulo.",
-      "save": "save time zone",
-      "saving": "saving…",
+      "save": "Save time zone",
+      "saving": "Saving…",
       "saved": "Time zone saved.",
       "unknown": "Unknown time zone. Use a name from the list.",
       "failed": "The time zone could not be saved."
@@ -1317,6 +1317,70 @@
       "visibility": {
         "public": "Public",
         "private": "Private"
+      },
+      "generatorLanguage": {
+        "en": "English",
+        "pt-BR": "Portuguese"
+      },
+      "chatStatus": {
+        "ok": "Answered",
+        "mock": "Simulated",
+        "pending": "Interrupted",
+        "error": "Error"
+      },
+      "auditStatus": {
+        "ok": "Done",
+        "running": "Running",
+        "denied": "Denied",
+        "error": "Error"
+      },
+      "auditReason": {
+        "missing_header": "no Authorization header",
+        "malformed_header": "malformed Authorization",
+        "malformed_key": "key out of format",
+        "unknown_key": "unknown key",
+        "revoked": "revoked key",
+        "expired": "expired key",
+        "no_scopes": "key without valid scopes",
+        "server_misconfigured": "server misconfigured (no pepper)",
+        "unavailable": "server unavailable",
+        "missing_scope": "insufficient scope",
+        "unknown_tool": "unknown tool",
+        "invalid_arguments": "invalid arguments",
+        "forbidden_argument": "forbidden argument (visibility)",
+        "payload_too_large": "request too large",
+        "invalid_json": "invalid JSON",
+        "bad_origin": "browser origin refused",
+        "method_not_allowed": "HTTP method not allowed",
+        "rate_limited": "call limit reached",
+        "audit_unavailable": "audit unavailable",
+        "tool_error": "error of the tool itself",
+        "internal_error": "internal error"
+      },
+      "keyStatus": {
+        "active": "Active",
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "scope": {
+        "sync:read": "Read the state of the sync (which files changed)",
+        "sync:write": "Open and close sync rounds and record the state",
+        "applications:read": "Read applications, events and checklists",
+        "applications:write": "Create and update applications",
+        "jobs:read": "Read jobs and the radar",
+        "jobs:write": "Create and update jobs",
+        "content:read": "Read experiences, career projects, skills and posts",
+        "content:write": "Create and update experiences and projects",
+        "profile:read": "Read profile facts (salary target, references, rules R1 to R8)",
+        "resume:generate": "Generate a résumé and a cover letter from a job"
+      },
+      "expiry": {
+        "7": "7 days",
+        "30": "30 days",
+        "90": "90 days",
+        "180": "180 days",
+        "365": "1 year",
+        "never": "Never expires"
       }
     },
     "applications": {
@@ -1732,6 +1796,285 @@
         "status": "Status",
         "allStatuses": "All statuses",
         "apply": "Filter"
+      }
+    },
+    "generator": {
+      "title": "CV generator",
+      "description": "Paste the description of a job: the search brings the closest passages of your CV and dossiers, and the generator writes the résumé, the cover letter and the screening answers.",
+      "form": {
+        "label": "Generate materials for a job",
+        "roleTitle": "Job",
+        "company": "Company",
+        "language": "Language of the text",
+        "jobDescription": "Job description",
+        "jobPlaceholder": "Paste the full job description here…",
+        "jobHelp": "The whole posting, not only the title: at least 40 characters.",
+        "grounded": "The text leans on your CV and dossiers: it does not make up facts or degrees.",
+        "submit": "Generate materials",
+        "pending": "Generating…",
+        "done": "Materials generated."
+      },
+      "errors": {
+        "unauthorized": "The session expired. Sign in again.",
+        "short": "Paste a fuller description: at least 40 characters.",
+        "noKey": "The server has no OPENAI_API_KEY. Set it and try again.",
+        "noContext": "The knowledge base is empty. Run pnpm db:ingest and try again.",
+        "failed": "The generation failed. The pasted text is still here.",
+        "framingDown": "The framing validator did not run: nothing was generated or saved.",
+        "blocked": "The framing validator blocked the text ({codes}). Nothing was saved."
+      },
+      "result": {
+        "sources": "Sources: {sources}",
+        "open": "Open the print version",
+        "resume": "Résumé",
+        "coverLetter": "Cover letter",
+        "screening": "Screening answers",
+        "copy": "Copy {what}",
+        "copied": "{what}: copied.",
+        "copyFailed": "The browser did not allow copying. Select the text and copy it by hand.",
+        "download": "Download {what} as Markdown",
+        "empty": "(empty)"
+      },
+      "recent": {
+        "title": "Recent generations",
+        "help": "Each opens in its print version, where the PDF comes from.",
+        "columns": {
+          "role": "Job",
+          "company": "Company",
+          "language": "Language",
+          "created": "Created",
+          "actions": "Actions"
+        },
+        "untitled": "Untitled job",
+        "open": "Open the generation {name}",
+        "states": {
+          "loading": "Loading the generations…",
+          "empty": "Nothing generated yet.",
+          "filtered": "No generations match this search.",
+          "failed": "The generations did not load: the database did not answer."
+        },
+        "filters": {
+          "label": "Search generations",
+          "search": "Search",
+          "searchPlaceholder": "Job or company",
+          "apply": "Search"
+        }
+      },
+      "detail": {
+        "print": "Print or save as PDF",
+        "empty": "This generation is empty."
+      }
+    },
+    "figures": {
+      "label": "Figures"
+    },
+    "chat": {
+      "title": "Assistant",
+      "description": "Every visitor question that reached the model, with the answer and an estimate of tokens. Limits: {perIp} messages per visitor every {minutes} min, and {daily} a day in total.",
+      "figures": {
+        "messages": "Messages",
+        "today": "Today",
+        "visitors": "Visitors",
+        "tokens": "Tokens (estimated)",
+        "tokensToday": "Tokens today",
+        "budget": "Today's budget",
+        "budgetHint": "{used} of {max}"
+      },
+      "columns": {
+        "when": "When",
+        "question": "Question",
+        "visitor": "Visitor",
+        "status": "Status",
+        "tokens": "Tokens",
+        "latency": "Latency"
+      },
+      "showAnswer": "See the answer",
+      "noAnswer": "(no answer recorded)",
+      "model": "Model: {model}",
+      "split": "{prompt} in the question, {answer} in the answer",
+      "states": {
+        "loading": "Loading the questions…",
+        "empty": "No questions yet.",
+        "filtered": "No questions match these filters.",
+        "failed": "The questions did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter questions",
+        "search": "Search",
+        "searchPlaceholder": "Words of the question",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "apply": "Filter"
+      }
+    },
+    "audit": {
+      "title": "Audit",
+      "description": "One line per call to the MCP server, including the denied ones. Arguments and results arrive here summarised and without secrets; no key in the clear is recorded.",
+      "keys": "See the keys",
+      "figures": {
+        "calls": "Calls",
+        "day": "Last 24 h",
+        "denied": "Denied (24 h)",
+        "deniedHint": "probing, scope or limit",
+        "errors": "Errors (24 h)",
+        "running": "Running",
+        "runningHint": "never closed: they hung or brought the process down"
+      },
+      "columns": {
+        "when": "When",
+        "tool": "Tool",
+        "key": "Key",
+        "status": "Status",
+        "latency": "Latency",
+        "origin": "Origin"
+      },
+      "details": "See the details",
+      "arguments": "Arguments",
+      "result": "Result",
+      "unknownKey": "Unidentified key",
+      "callsOf": "Only the calls of the key {name}",
+      "ms": "{ms} ms",
+      "states": {
+        "loading": "Loading the calls…",
+        "empty": "No calls recorded yet.",
+        "filtered": "No calls match these filters.",
+        "failed": "The calls did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter calls",
+        "search": "Search",
+        "searchPlaceholder": "Name of the tool",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "key": "Key",
+        "allKeys": "All keys",
+        "noKey": "No identified key",
+        "apply": "Filter"
+      }
+    },
+    "apiKeys": {
+      "title": "MCP and keys",
+      "description": "The credentials of the MCP server. The key in the clear shows once, when it is created; the database keeps only an HMAC of it.",
+      "audit": "See the audit",
+      "noPepper": "MCP_KEY_PEPPER is not set. Without it the server refuses every call to the MCP and no key can be created. Generate one with openssl rand -base64 48 and restart the process.",
+      "columns": {
+        "name": "Name",
+        "prefix": "Prefix",
+        "scopes": "Scopes",
+        "lastUsed": "Last used",
+        "expires": "Expires",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "createdOn": "created on {date}",
+      "never": "Never",
+      "noExpiry": "Does not expire",
+      "write": "write",
+      "writeHint": "Write scope",
+      "readHint": "Read scope",
+      "calls": "See the calls of the key {name}",
+      "states": {
+        "loading": "Loading the keys…",
+        "empty": "No keys yet. Create the first one to connect the agent.",
+        "filtered": "No keys match these filters.",
+        "failed": "The keys did not load: the database did not answer."
+      },
+      "filters": {
+        "label": "Filter keys",
+        "search": "Search",
+        "searchPlaceholder": "Name or prefix",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "apply": "Filter"
+      },
+      "create": {
+        "trigger": "New key",
+        "title": "New API key",
+        "description": "A credential of the MCP server. Scopes apply per tool, on the server: give only what the key needs.",
+        "name": "Name",
+        "namePlaceholder": "Obsidian agent, macbook",
+        "nameHelp": "This is the name you will type to revoke the key later.",
+        "scopes": "Scopes",
+        "scopesHelp": "There is no inheritance: applications:write does not give applications:read. Tick both when you need both.",
+        "readOnly": "Read only",
+        "clearScopes": "Untick all",
+        "writeWarning": {
+          "one": "1 write scope: this key will be able to change funnel data through the MCP.",
+          "many": "{count} write scopes: this key will be able to change funnel data through the MCP."
+        },
+        "expires": "Expiry",
+        "submit": "Create key",
+        "pending": "Creating…",
+        "created": "Key created. Copy it now: it will not show again.",
+        "shownTitle": "Key created: copy it now",
+        "shownDescription": "This is the only time the key shows. The server keeps only an HMAC of it: neither the panel, the API nor the database can show it again. If you lose it, revoke it and create another.",
+        "secretWarning": "Keep it in a secret manager. Do not put it in a repository (this one is public), nor in a chat, an issue or a log.",
+        "token": "Key",
+        "copy": "Copy the key",
+        "copied": "Key copied.",
+        "copyFailed": "The browser did not allow copying. Select the text and copy it by hand.",
+        "summary": {
+          "name": "Name",
+          "prefix": "Prefix",
+          "expires": "Expires on",
+          "scopes": "Scopes"
+        },
+        "acknowledge": "I keep the key in a safe place and know it will not show again.",
+        "done": "Done",
+        "errors": {
+          "name": "Give the key a name, up to 80 characters.",
+          "scopes": "Tick at least one scope.",
+          "expiresIn": "Choose an expiry from the list.",
+          "invalid": "This value was not accepted: check it."
+        },
+        "noPepper": "MCP_KEY_PEPPER is not set on the server: no key can be created.",
+        "failed": "The key could not be created. Nothing was recorded."
+      },
+      "revoke": {
+        "trigger": "Revoke the key {name}",
+        "title": "Revoke the key {name}?",
+        "lost": "The key {prefix}… is refused on the next call to the MCP. It cannot be reactivated: only another one created.",
+        "confirm": "Revoke key",
+        "pending": "Revoking…",
+        "done": "Key “{name}” revoked.",
+        "missing": "This key no longer exists. Reload the page.",
+        "already": "This key was already revoked.",
+        "mismatch": "The name typed is not the key's.",
+        "failed": "The key could not be revoked. It is still active."
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "The account of the backoffice. Access is for one person only: the account the seed created.",
+      "account": {
+        "title": "Account",
+        "description": "Which identity you sign in to the backoffice with.",
+        "email": "Email",
+        "role": "Role"
+      },
+      "password": {
+        "title": "Change the password",
+        "description": "The current password is checked on the server before the change: an open session alone is not enough. The new one is stored with bcrypt at cost 12, as in the seed.",
+        "noDatabase": "The database is not configured: changing the password is unavailable.",
+        "current": "Current password",
+        "new": "New password",
+        "newHelp": "At least 12 characters, different from the current one.",
+        "confirm": "Repeat the new password",
+        "submit": "Change password",
+        "pending": "Changing…",
+        "done": "Password changed.",
+        "errors": {
+          "currentPassword": "Write the current password.",
+          "newPassword": "The new password needs 12 to 128 characters.",
+          "confirmPassword": "Repeat the new password, exactly the same.",
+          "mismatch": "The repetition is not the same as the new password.",
+          "same": "The new password has to be different from the current one.",
+          "wrong": "The current password does not match.",
+          "invalid": "This value was not accepted: check it."
+        },
+        "noEmail": "The session has no email: sign in again to change the password.",
+        "noUser": "The backoffice account was not found.",
+        "failed": "The password could not be changed. The current one still works."
       }
     }
   }

@@ -16,28 +16,18 @@
  * runtime e a toolbar cliente pode importá-lo sem arrastar a árvore do badge.
  */
 
-import type { StatusStyles } from "@/components/admin/status-badge";
 
 export const KEY_STATUSES = ["active", "revoked", "expired"] as const;
 
 export type KeyStatus = (typeof KEY_STATUSES)[number];
 
-export const KEY_STATUS_STYLES: StatusStyles = {
-  active: {
-    label: "Ativa",
-    className: "text-ok",
-  },
-  expired: {
-    label: "Expirada",
-    className: "text-warn",
-  },
-  revoked: {
-    label: "Revogada",
-    className: "text-destructive",
-  },
+/** The colour of the mark next to the word: a second channel, never the only one. */
+export const KEY_STATUS_TONES: Record<KeyStatus, string> = {
+  active: "bg-ok",
+  expired: "bg-warn",
+  revoked: "bg-destructive",
 };
 
-/** `now` entra por parâmetro para que a página inteira use um único instante. */
 export function keyStatusOf(
   key: { revokedAt: Date | null; expiresAt: Date | null },
   now: number,

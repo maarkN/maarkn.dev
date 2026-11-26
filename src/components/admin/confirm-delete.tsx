@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, useTransition, type ReactNode } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, type LucideIcon } from "lucide-react";
 import type { ActionResult } from "@/app/_actions/action-result";
 import {
   AlertDialog,
@@ -37,6 +37,8 @@ export function ConfirmDelete({
   confirmLabel,
   triggerLabel,
   trigger,
+  icon: Icon = Trash2,
+  pendingLabel,
   action,
 }: {
   id: string;
@@ -52,7 +54,12 @@ export function ConfirmDelete({
   triggerLabel: string;
   /** Another opener, with its own name; the icon button by default. */
   trigger?: ReactNode;
-  action: (id: string) => Promise<ActionResult>;
+  /** The icon of the opener and of the button: a bin by default. */
+  icon?: LucideIcon;
+  /** "Revogando…"; "Excluindo…" by default. */
+  pendingLabel?: string;
+  /** Receives the id, and what was typed, for an action that checks it again. */
+  action: (id: string, typed: string) => Promise<ActionResult>;
 }) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -65,7 +72,7 @@ export function ConfirmDelete({
 
   function run() {
     startTransition(async () => {
-      const result = await action(id).catch((): ActionResult => ({ ok: false, message: common.failed }));
+      const result = await action(id, typed.trim()).catch((): ActionResult => ({ ok: false, message: common.failed }));
       if (!result.ok) {
         notify.error(result.message, { action: { label: common.retry, onClick: run } });
         return;
@@ -87,7 +94,7 @@ export function ConfirmDelete({
       <AlertDialogTrigger asChild>
         {trigger ?? (
           <Button variant="ghost" size="icon-sm" aria-label={triggerLabel} title={triggerLabel}>
-            <Trash2 aria-hidden="true" />
+            <Icon aria-hidden="true" />
           </Button>
         )}
       </AlertDialogTrigger>
@@ -128,8 +135,8 @@ export function ConfirmDelete({
               run();
             }}
           >
-            <Trash2 aria-hidden="true" />
-            {isPending ? common.confirm.pending : confirmLabel}
+            <Icon aria-hidden="true" />
+            {isPending ? (pendingLabel ?? common.confirm.pending) : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

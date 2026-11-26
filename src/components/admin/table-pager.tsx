@@ -204,18 +204,24 @@ export function TableStateRow({
   );
 }
 
-/* TEMPORARY-R09: the old pieces, until every screen is migrated. */
-export const LISTING_INDEX_WIDTH = "";
-export function ListingIndexHead() {
-  return null;
-}
-export function ListingIndexCell(props: { index: number }) {
-  void props;
-  return null;
-}
+/* ── the rows of the screens not redesigned yet ─────────────────────────────
+ * The overview and the dossier still call these (rebrand-10, rebrand-11). Both
+ * screens are in Portuguese until then, so their default words are too. */
+
+/** @deprecated The state of a list is `TableStateRow`, with its next step. */
 export function TableLoadingRow({ cols }: { cols: number }) {
-  return <TableStateRow cols={cols} state="loading" message="…" />;
+  return <TableStateRow cols={cols} state="loading" message="Carregando…" />;
 }
-export function TableEmptyRow({ cols, message = "—", destructive }: { cols: number; message?: string; destructive?: boolean }) {
+
+/** @deprecated The state of a list is `TableStateRow`, with its next step. */
+export function TableEmptyRow({
+  cols,
+  message = "Nenhum registro.",
+  destructive,
+}: {
+  cols: number;
+  message?: string;
+  destructive?: boolean;
+}) {
   return <TableStateRow cols={cols} state={destructive ? "failed" : "empty"} message={message} />;
 }

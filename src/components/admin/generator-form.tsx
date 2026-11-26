@@ -1,178 +1,174 @@
 "use client";
 
 /**
- * CV + cover letter generator form.
+ * The generator: a job description in, a résumé, a cover letter and screening
+ * answers out, grounded on the RAG over the CV and the dossiers.
  *
- * `useTransition` instead of `useActionState` (AGENTS.md §5): the result is in
- * hand inside the same callback, so the toast fires without a `useEffect`
- * watching state — the pattern `react-hooks/set-state-in-effect` flags.
- * `generate` keeps its legacy `(prevState, formData)` signature, so the idle
- * state is passed explicitly; the action module belongs to another workstream
- * and is intentionally untouched here.
+ * A refusal keeps what was pasted (`submitKeepingValues`, A15) and says why, in
+ * the language of the screen: the action answers with a stable code
+ * (`GenError`), and the sentence is the dictionary's. A failure offers to try
+ * again.
  */
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
-import { Download, Copy, Check, FileText, Sparkles } from "lucide-react";
-import { toast } from "sonner";
-import { generate, type GenState } from "@/app/_actions/generator";
+import { useRef, useState, useTransition } from "react";
+import { Check, Copy, Download, FileText, Sparkles } from "lucide-react";
+import { generate, type GenError, type GenState } from "@/app/_actions/generator";
 import { GENERATOR_LANGUAGES } from "@/app/admin/generator/languages";
-import { FieldHelp, RequiredHint } from "@/components/admin/field-output";
-import { submitKeepingValues } from "@/components/admin/form-submit";
+import { useCommonLabels } from "@/components/admin/admin-locale";
+import { FieldError, FieldHelp, RequiredHint, describedBy } from "@/components/admin/field-output";
+import { submitKeepingValues, useFocusFirstInvalid } from "@/components/admin/form-submit";
+import { useNotify } from "@/components/admin/notify";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { AdminDictionary } from "@/i18n/config";
+import { fill } from "@/lib/admin/text";
 
 const IDLE: GenState = { status: "idle" };
 
-/**
- * `src/app/_actions/generator.ts` still returns English strings (and two
- * machine keys). The backoffice is pt-BR (A4), so the copy is mapped here.
- * An unmapped message falls through unchanged rather than being swallowed.
- */
-const ERROR_MESSAGES: Record<string, string> = {
-  unauthorized: "Sessão expirada — entre novamente.",
-  db_unavailable: "Banco de dados não configurado.",
-  "Paste a fuller job description (40+ characters).":
-    "Cole uma descrição de vaga mais completa (mínimo de 40 caracteres).",
-  "OPENAI_API_KEY is not set on the server.":
-    "OPENAI_API_KEY não está definida no servidor.",
-  "Knowledge base is empty — run `npm run db:ingest`.":
-    "A base de conhecimento está vazia — rode `pnpm db:ingest`.",
-  "Generation failed. Check the server logs and try again.":
-    "A geração falhou. Confira os logs do servidor e tente de novo.",
+export type GeneratorWords = {
+  generator: AdminDictionary["generator"];
+  languages: AdminDictionary["vocab"]["generatorLanguage"];
 };
 
-function errorMessage(raw: string): string {
-  return ERROR_MESSAGES[raw] ?? raw;
+/** The sentence of a code; the codes the action may add later still read. */
+function errorText(code: GenError, codes: string | undefined, words: AdminDictionary["generator"]["errors"], noDatabase: string) {
+  switch (code) {
+    case "unauthorized":
+      return words.unauthorized;
+    case "db_unavailable":
+      return noDatabase;
+    case "short":
+      return words.short;
+    case "no_api_key":
+      return words.noKey;
+    case "no_context":
+      return words.noContext;
+    case "framing_down":
+      return words.framingDown;
+    case "framing_blocked":
+      return fill(words.blocked, { codes: codes ?? "" });
+    default:
+      return words.failed;
+  }
 }
 
-export function GeneratorForm() {
+export function GeneratorForm({ words }: { words: GeneratorWords }) {
+  const { generator: text, languages } = words;
+  const common = useCommonLabels();
+  const notify = useNotify();
   const [result, setResult] = useState<GenState>(IDLE);
+  const [fieldError, setFieldError] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const form = useRef<HTMLFormElement>(null);
+  useFocusFirstInvalid(form, fieldError);
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
-      const res = await generate(IDLE, formData);
+      const res = await generate(IDLE, formData).catch((): GenState => ({ status: "error", message: "failed" }));
       setResult(res);
       if (res.status === "error") {
-        toast.error(errorMessage(res.message));
+        const sentence = errorText(res.message, res.codes, text.errors, common.noDatabase);
+        if (res.message === "short") {
+          // The field's own problem: next to it, and the focus goes there.
+          setFieldError({ jobDescription: sentence });
+          return;
+        }
+        setFieldError({});
+        notify.error(sentence, { action: { label: common.retry, onClick: () => form.current?.requestSubmit() } });
         return;
       }
-      if (res.status === "success") {
-        toast.success("Materiais gerados.");
-      }
+      setFieldError({});
+      if (res.status === "success") notify.success(text.form.done);
     });
   }
 
   return (
     <>
-      <Card>
-        <CardContent>
-          <form onSubmit={(event) => submitKeepingValues(event, onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="roleTitle">Vaga</Label>
-                <Input
-                  id="roleTitle"
-                  name="roleTitle"
-                  placeholder="Senior Backend Engineer"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="company">Empresa</Label>
-                <Input id="company" name="company" placeholder="Acme Inc." />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="language">Idioma</Label>
-                {/* Radix renders a hidden native select for `name`, so the
-                    value reaches the FormData without a mirror input. */}
-                <Select name="language" defaultValue="en">
-                  <SelectTrigger id="language" className="w-full">
-                    <SelectValue placeholder="Idioma" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GENERATOR_LANGUAGES.map((l) => (
-                      <SelectItem key={l.value} value={l.value}>
-                        {l.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+      <form
+        ref={form}
+        noValidate
+        aria-label={text.form.label}
+        onSubmit={(event) => submitKeepingValues(event, onSubmit)}
+        className="space-y-5"
+      >
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="roleTitle">{text.form.roleTitle}</Label>
+            <Input id="roleTitle" name="roleTitle" placeholder="Senior Backend Engineer" className="w-full" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="company">{text.form.company}</Label>
+            <Input id="company" name="company" placeholder="Acme Inc." className="w-full" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="language">{text.form.language}</Label>
+            {/* Radix renders a hidden native select for `name`, so the value
+                reaches the FormData without a mirror input. */}
+            <Select name="language" defaultValue="en">
+              <SelectTrigger id="language" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GENERATOR_LANGUAGES.map((language) => (
+                  <SelectItem key={language} value={language}>
+                    {languages[language]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="jobDescription">
-                Descrição da vaga
-                <RequiredHint />
-              </Label>
-              <Textarea
-                id="jobDescription"
-                name="jobDescription"
-                required
-                rows={12}
-                placeholder="Cole aqui a descrição completa da vaga…"
-                className="min-h-64 resize-y font-mono"
-                aria-describedby="jobDescription-help"
-              />
-              <FieldHelp id="jobDescription-help">
-                Mínimo de 40 caracteres — cole a vaga inteira, não só o título.
-              </FieldHelp>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="jobDescription">
+            {text.form.jobDescription}
+            <RequiredHint />
+          </Label>
+          <Textarea
+            id="jobDescription"
+            name="jobDescription"
+            required
+            rows={12}
+            placeholder={text.form.jobPlaceholder}
+            className="w-full [--field-min:16rem]"
+            aria-invalid={Boolean(fieldError.jobDescription)}
+            aria-describedby={describedBy("jobDescription-help", fieldError.jobDescription && "jobDescription-error")}
+          />
+          <FieldHelp id="jobDescription-help">{text.form.jobHelp}</FieldHelp>
+          <FieldError id="jobDescription-error">{fieldError.jobDescription}</FieldError>
+        </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <FieldHelp>
-                Ancorado no seu CV e dossiês — nunca inventa fatos nem diploma.
-              </FieldHelp>
-              <Button type="submit" disabled={isPending}>
-                <Sparkles className="size-4" />
-                {isPending ? "[ gerando… ]" : "[ gerar ]"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <FieldHelp>{text.form.grounded}</FieldHelp>
+          <Button type="submit" disabled={isPending}>
+            <Sparkles aria-hidden="true" />
+            {isPending ? text.form.pending : text.form.submit}
+          </Button>
+        </div>
+      </form>
 
       {result.status === "success" ? (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              Fontes: {result.sources.join(" · ") || "—"}
+            <p className="text-sm text-muted-foreground">
+              {fill(text.result.sources, { sources: result.sources.join(" · ") || "—" })}
             </p>
             {result.id ? (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline">
                 <Link href={`/admin/generator/${result.id}`}>
-                  <FileText className="size-4" />
-                  [ abrir versão de impressão (PDF) ]
+                  <FileText aria-hidden="true" />
+                  {text.result.open}
                 </Link>
               </Button>
             ) : null}
           </div>
-          <ResultBlock
-            title="Currículo"
-            filename="resume.md"
-            content={result.resume}
-          />
-          <ResultBlock
-            title="Carta de apresentação"
-            filename="cover-letter.md"
-            content={result.coverLetter}
-          />
-          <ResultBlock
-            title="Respostas de triagem"
-            filename="screening-answers.md"
-            content={result.screeningAnswers}
-          />
+          <ResultBlock title={text.result.resume} filename="resume.md" content={result.resume} words={text.result} />
+          <ResultBlock title={text.result.coverLetter} filename="cover-letter.md" content={result.coverLetter} words={text.result} />
+          <ResultBlock title={text.result.screening} filename="screening-answers.md" content={result.screeningAnswers} words={text.result} />
         </div>
       ) : null}
     </>
@@ -183,21 +179,24 @@ function ResultBlock({
   title,
   filename,
   content,
+  words,
 }: {
   title: string;
   filename: string;
   content: string;
+  words: AdminDictionary["generator"]["result"];
 }) {
   const [copied, setCopied] = useState(false);
+  const notify = useNotify();
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
-      toast.success("Copiado para a área de transferência.");
+      notify.success(fill(words.copied, { what: title }));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error("O navegador bloqueou o acesso à área de transferência.");
+      notify.error(words.copyFailed);
     }
   };
 
@@ -212,29 +211,27 @@ function ResultBlock({
   };
 
   return (
-    <Card>
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-medium">{title}</h3>
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="sm" onClick={copy}>
-              {copied ? (
-                <Check className="size-4" />
-              ) : (
-                <Copy className="size-4" />
-              )}
-              {copied ? "[ copiado ]" : "[ copiar ]"}
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={download}>
-              <Download className="size-4" />
-              [ .md ]
-            </Button>
-          </div>
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-title text-xl font-[560] [font-stretch:104%]">{title}</h2>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="ghost" onClick={copy}>
+            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+            {fill(words.copy, { what: title.toLowerCase() })}
+          </Button>
+          <Button type="button" variant="ghost" onClick={download}>
+            <Download aria-hidden="true" />
+            {fill(words.download, { what: title.toLowerCase() })}
+          </Button>
         </div>
-        <pre className="max-h-[30rem] overflow-auto border border-border bg-muted/30 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
-          {content || "(vazio)"}
-        </pre>
-      </CardContent>
-    </Card>
+      </div>
+      {/* What was generated is content: Marco's words, never translated. */}
+      <pre
+        tabIndex={0}
+        className="max-h-[30rem] overflow-auto border border-border bg-muted p-4 font-label text-sm leading-relaxed whitespace-pre-wrap"
+      >
+        {content || words.empty}
+      </pre>
+    </section>
   );
 }

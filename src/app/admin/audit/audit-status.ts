@@ -1,70 +1,24 @@
 /**
- * `McpAuditLog.status` / `.reason` → rótulos da UI.
- *
- * Os valores canônicos vivem em `src/lib/mcp/audit.ts` (`AuditStatus`,
- * `AuditReason`), que é `server-only`: este módulo repete as chaves como
- * strings em vez de importá-las, para poder ser lido também pela toolbar
- * cliente. Duplicação consciente e barata — se um motivo novo aparecer sem
- * rótulo aqui, o código cru é exibido, nunca um erro.
- *
- * Sobre `running`: a linha nasce `running` ANTES da execução (a auditoria é
- * fail-closed — sem linha, sem tool). Um `running` que nunca fechou não é
- * ruído: é uma chamada que travou, estourou ou derrubou o processo.
+ * `McpAuditLog.status` and `reason`. The words are in the dictionary
+ * (`admin.vocab.auditStatus`, `admin.vocab.auditReason`); an unknown reason
+ * shows as it is.
  */
 
-import type { StatusStyles } from "@/components/admin/status-badge";
+export const AUDIT_STATUSES = ["ok", "running", "denied", "error"] as const;
+export type AuditStatus = (typeof AUDIT_STATUSES)[number];
 
-export const AUDIT_STATUS_STYLES: StatusStyles = {
-  ok: {
-    label: "OK",
-    className: "text-ok",
-  },
-  running: {
-    label: "Em curso",
-    className: "text-ink-3",
-  },
-  denied: {
-    label: "Recusada",
-    className: "text-warn",
-  },
-  error: {
-    label: "Erro",
-    className: "text-destructive",
-  },
-};
-
-export function isAuditStatus(value: string): boolean {
-  return Object.hasOwn(AUDIT_STATUS_STYLES, value);
+export function isAuditStatus(value: string): value is AuditStatus {
+  return (AUDIT_STATUSES as readonly string[]).includes(value);
 }
 
-/** `McpAuditLog.reason` → texto pt-BR. Chaves = `AuditReason` de `lib/mcp/audit.ts`. */
-export const AUDIT_REASON_LABELS: Record<string, string> = {
-  // autenticação
-  missing_header: "sem header Authorization",
-  malformed_header: "Authorization malformado",
-  malformed_key: "chave fora do formato",
-  unknown_key: "chave inexistente",
-  revoked: "chave revogada",
-  expired: "chave expirada",
-  no_scopes: "chave sem escopos válidos",
-  server_misconfigured: "servidor mal configurado (pepper ausente)",
-  unavailable: "servidor indisponível",
-  // autorização / protocolo
-  missing_scope: "escopo insuficiente",
-  unknown_tool: "tool inexistente",
-  invalid_arguments: "argumentos inválidos",
-  forbidden_argument: "argumento proibido (visibility)",
-  payload_too_large: "payload grande demais",
-  invalid_json: "JSON inválido",
-  bad_origin: "Origin de navegador recusada",
-  method_not_allowed: "método HTTP não permitido",
-  rate_limited: "rate limit estourado",
-  audit_unavailable: "auditoria indisponível",
-  // execução
-  tool_error: "erro de negócio na tool",
-  internal_error: "erro interno",
+/** The colour of the mark next to the word: a second channel, never the only one. */
+export const AUDIT_STATUS_TONES: Record<AuditStatus, string> = {
+  ok: "bg-ok",
+  running: "bg-ink-3",
+  denied: "bg-warn",
+  error: "bg-destructive",
 };
 
-export function auditReasonLabel(reason: string): string {
-  return AUDIT_REASON_LABELS[reason] ?? reason;
+export function auditReasonLabel(words: Record<string, string>, reason: string): string {
+  return words[reason] ?? reason;
 }

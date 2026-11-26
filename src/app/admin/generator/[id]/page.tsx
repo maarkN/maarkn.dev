@@ -3,14 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { Badge } from "@/components/ui/badge";
+import { getAdminLabels } from "@/lib/admin/request";
 import { languageLabel } from "../languages";
 import { PrintButton } from "./print-button";
 
-export const metadata: Metadata = {
-  title: "Geração · admin · maarkn.dev",
-  robots: { index: false, follow: false },
-};
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export const dynamic = "force-dynamic";
 
@@ -118,7 +115,7 @@ export default async function GenerationDetail({
   const { id } = await params;
   if (!dbConfigured) notFound(); // A3
 
-  const g = await db.generation.findUnique({ where: { id } });
+  const [g, { generator: words, vocab }] = await Promise.all([db.generation.findUnique({ where: { id } }), getAdminLabels()]);
   if (!g) notFound();
 
   const sections = [
@@ -131,22 +128,25 @@ export default async function GenerationDetail({
     <AdminShell
       email={session.user.email ?? "admin"}
       name={[g.roleTitle, g.company].filter(Boolean).join(" · ")}
+      translated
     >
-    <div className="bg-muted py-8 print:bg-transparent print:py-0">
-      <div className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 print:hidden">
-        <PrintButton />
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>
-            {g.roleTitle || "Vaga sem título"}
-            {g.company ? ` · ${g.company}` : ""}
-          </span>
-          <Badge variant="secondary">{languageLabel(g.language)}</Badge>
+    <div className="bg-muted py-8 font-text print:bg-transparent print:py-0">
+      <div className="mx-auto mb-6 flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 print:hidden">
+        {/* Not a heading: the generated résumé opens with the page's one <h1>. */}
+        <p className="font-title text-2xl font-[560] [font-stretch:108%]">
+          {g.roleTitle || words.recent.untitled}
+          {g.company ? ` · ${g.company}` : ""}
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm text-muted-foreground">{languageLabel(vocab.generatorLanguage, g.language)}</span>
+          <PrintButton label={words.detail.print} />
         </div>
       </div>
 
-      <article className="mx-auto max-w-3xl bg-white px-12 py-12 text-[13px] leading-relaxed text-neutral-900 shadow-sm print:max-w-none print:px-0 print:py-0 print:shadow-none [&_a]:underline [&_h1]:mb-1 [&_h1]:mt-0 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:border-b [&_h2]:border-neutral-200 [&_h2]:pb-1 [&_h2]:text-[11px] [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-[0.12em] [&_h2]:text-neutral-500 [&_h3]:mb-1 [&_h3]:mt-4 [&_h3]:text-sm [&_h3]:font-bold [&_li]:my-1 [&_p]:my-2 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
+      {/* The generated text: Marco's material, in the language it was written in. */}
+      <article lang={sections.length > 0 ? g.language : undefined} className="mx-auto max-w-3xl bg-white px-12 py-12 text-[13px] leading-relaxed text-neutral-900 shadow-sm print:max-w-none print:px-0 print:py-0 print:shadow-none [&_a]:underline [&_h1]:mb-1 [&_h1]:mt-0 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:border-b [&_h2]:border-neutral-200 [&_h2]:pb-1 [&_h2]:text-[11px] [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-[0.12em] [&_h2]:text-neutral-500 [&_h3]:mb-1 [&_h3]:mt-4 [&_h3]:text-sm [&_h3]:font-bold [&_li]:my-1 [&_p]:my-2 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
         {sections.length === 0 ? (
-          <p className="text-neutral-500">Esta geração está vazia.</p>
+          <p className="text-neutral-500">{words.detail.empty}</p>
         ) : (
           sections.map((s, i) => (
             <section key={s.key} className={i > 0 ? "mt-10 break-before-page" : ""}>

@@ -25,7 +25,7 @@ const { ConfirmDelete } = await import("./confirm-delete");
 
 let root: Root;
 let container: HTMLDivElement;
-const action = vi.fn<(id: string) => Promise<ActionResult>>();
+const action = vi.fn<(id: string, typed: string) => Promise<ActionResult>>();
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -134,7 +134,7 @@ describe("ConfirmDelete", () => {
     open();
     type("Acme");
     await act(async () => confirm().click());
-    expect(action).toHaveBeenCalledWith("app-1");
+    expect(action).toHaveBeenCalledWith("app-1", "Acme");
     expect(dialog()).toBeNull();
     expect(custom).toHaveBeenCalledTimes(1);
   });

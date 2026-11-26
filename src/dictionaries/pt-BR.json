@@ -1126,8 +1126,8 @@
       "description": "Vale para as horas mostradas no backoffice. Datas sem hora, como a de envio de uma candidatura, não mudam com o fuso.",
       "label": "Fuso horário",
       "help": "Um nome da base IANA, como America/Sao_Paulo.",
-      "save": "salvar fuso",
-      "saving": "salvando…",
+      "save": "Salvar fuso",
+      "saving": "Salvando…",
       "saved": "Fuso salvo.",
       "unknown": "Fuso desconhecido. Use um nome da lista.",
       "failed": "Não foi possível salvar o fuso."
@@ -1316,6 +1316,70 @@
       "visibility": {
         "public": "Público",
         "private": "Privado"
+      },
+      "generatorLanguage": {
+        "en": "Inglês",
+        "pt-BR": "Português"
+      },
+      "chatStatus": {
+        "ok": "Respondida",
+        "mock": "Simulada",
+        "pending": "Interrompida",
+        "error": "Erro"
+      },
+      "auditStatus": {
+        "ok": "Concluída",
+        "running": "Em curso",
+        "denied": "Recusada",
+        "error": "Erro"
+      },
+      "auditReason": {
+        "missing_header": "sem o cabeçalho Authorization",
+        "malformed_header": "Authorization malformado",
+        "malformed_key": "chave fora do formato",
+        "unknown_key": "chave inexistente",
+        "revoked": "chave revogada",
+        "expired": "chave expirada",
+        "no_scopes": "chave sem escopos válidos",
+        "server_misconfigured": "servidor mal configurado (sem o pepper)",
+        "unavailable": "servidor indisponível",
+        "missing_scope": "escopo insuficiente",
+        "unknown_tool": "tool inexistente",
+        "invalid_arguments": "argumentos inválidos",
+        "forbidden_argument": "argumento proibido (visibility)",
+        "payload_too_large": "pedido grande demais",
+        "invalid_json": "JSON inválido",
+        "bad_origin": "origem de navegador recusada",
+        "method_not_allowed": "método HTTP não permitido",
+        "rate_limited": "limite de chamadas atingido",
+        "audit_unavailable": "auditoria indisponível",
+        "tool_error": "erro da própria tool",
+        "internal_error": "erro interno"
+      },
+      "keyStatus": {
+        "active": "Ativa",
+        "expired": "Expirada",
+        "revoked": "Revogada"
+      },
+      "scope": {
+        "sync:read": "Consultar o estado da sincronização (quais arquivos mudaram)",
+        "sync:write": "Abrir e fechar rodadas de sincronização e gravar o estado",
+        "applications:read": "Ler candidaturas, eventos e checklists",
+        "applications:write": "Criar e atualizar candidaturas",
+        "jobs:read": "Ler vagas e o radar",
+        "jobs:write": "Criar e atualizar vagas",
+        "content:read": "Ler experiências, projetos de carreira, competências e posts",
+        "content:write": "Criar e atualizar experiências e projetos",
+        "profile:read": "Ler fatos de perfil (pretensão, referências, regras R1 a R8)",
+        "resume:generate": "Gerar currículo e carta a partir de uma vaga"
+      },
+      "expiry": {
+        "7": "7 dias",
+        "30": "30 dias",
+        "90": "90 dias",
+        "180": "180 dias",
+        "365": "1 ano",
+        "never": "Sem expiração"
       }
     },
     "applications": {
@@ -1731,6 +1795,285 @@
         "status": "Situação",
         "allStatuses": "Todas as situações",
         "apply": "Filtrar"
+      }
+    },
+    "generator": {
+      "title": "Gerador de CV",
+      "description": "Cole a descrição de uma vaga: a busca traz os trechos mais próximos do seu CV e dos dossiês, e o gerador redige currículo, carta e respostas de triagem.",
+      "form": {
+        "label": "Gerar materiais para uma vaga",
+        "roleTitle": "Vaga",
+        "company": "Empresa",
+        "language": "Idioma do texto",
+        "jobDescription": "Descrição da vaga",
+        "jobPlaceholder": "Cole aqui a descrição completa da vaga…",
+        "jobHelp": "A vaga inteira, não só o título: pelo menos 40 caracteres.",
+        "grounded": "O texto se apoia no seu CV e nos dossiês: não inventa fatos nem diploma.",
+        "submit": "Gerar materiais",
+        "pending": "Gerando…",
+        "done": "Materiais gerados."
+      },
+      "errors": {
+        "unauthorized": "A sessão expirou. Entre de novo.",
+        "short": "Cole uma descrição mais completa: pelo menos 40 caracteres.",
+        "noKey": "O servidor não tem OPENAI_API_KEY. Configure e tente de novo.",
+        "noContext": "A base de conhecimento está vazia. Rode pnpm db:ingest e tente de novo.",
+        "failed": "A geração falhou. O texto colado continua aqui.",
+        "framingDown": "O validador de enquadramento não rodou: nada foi gerado nem salvo.",
+        "blocked": "O validador de enquadramento bloqueou o texto ({codes}). Nada foi salvo."
+      },
+      "result": {
+        "sources": "Fontes: {sources}",
+        "open": "Abrir a versão de impressão",
+        "resume": "Currículo",
+        "coverLetter": "Carta de apresentação",
+        "screening": "Respostas de triagem",
+        "copy": "Copiar {what}",
+        "copied": "{what}: copiado.",
+        "copyFailed": "O navegador não deixou copiar. Selecione o texto e copie à mão.",
+        "download": "Baixar {what} em Markdown",
+        "empty": "(vazio)"
+      },
+      "recent": {
+        "title": "Gerações recentes",
+        "help": "Cada uma abre na versão de impressão, de onde sai o PDF.",
+        "columns": {
+          "role": "Vaga",
+          "company": "Empresa",
+          "language": "Idioma",
+          "created": "Criada",
+          "actions": "Ações"
+        },
+        "untitled": "Vaga sem título",
+        "open": "Abrir a geração {name}",
+        "states": {
+          "loading": "Carregando as gerações…",
+          "empty": "Nada gerado ainda.",
+          "filtered": "Nenhuma geração com esta busca.",
+          "failed": "As gerações não carregaram: o banco não respondeu."
+        },
+        "filters": {
+          "label": "Buscar gerações",
+          "search": "Busca",
+          "searchPlaceholder": "Vaga ou empresa",
+          "apply": "Buscar"
+        }
+      },
+      "detail": {
+        "print": "Imprimir ou salvar em PDF",
+        "empty": "Esta geração está vazia."
+      }
+    },
+    "figures": {
+      "label": "Números"
+    },
+    "chat": {
+      "title": "Assistente",
+      "description": "Cada pergunta de visitante que chegou ao modelo, com a resposta e uma estimativa de tokens. Limites: {perIp} mensagens por visitante a cada {minutes} min, e {daily} por dia no total.",
+      "figures": {
+        "messages": "Mensagens",
+        "today": "Hoje",
+        "visitors": "Visitantes",
+        "tokens": "Tokens (estimados)",
+        "tokensToday": "Tokens hoje",
+        "budget": "Orçamento do dia",
+        "budgetHint": "{used} de {max}"
+      },
+      "columns": {
+        "when": "Quando",
+        "question": "Pergunta",
+        "visitor": "Visitante",
+        "status": "Situação",
+        "tokens": "Tokens",
+        "latency": "Latência"
+      },
+      "showAnswer": "Ver a resposta",
+      "noAnswer": "(nenhuma resposta registrada)",
+      "model": "Modelo: {model}",
+      "split": "{prompt} na pergunta, {answer} na resposta",
+      "states": {
+        "loading": "Carregando as perguntas…",
+        "empty": "Nenhuma pergunta ainda.",
+        "filtered": "Nenhuma pergunta com estes filtros.",
+        "failed": "As perguntas não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar perguntas",
+        "search": "Busca",
+        "searchPlaceholder": "Palavras da pergunta",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "apply": "Filtrar"
+      }
+    },
+    "audit": {
+      "title": "Auditoria",
+      "description": "Uma linha por chamada ao servidor MCP, inclusive as recusadas. Argumentos e resultados já chegam aqui resumidos e sem segredos; nenhuma chave em claro é gravada.",
+      "keys": "Ver as chaves",
+      "figures": {
+        "calls": "Chamadas",
+        "day": "Últimas 24 h",
+        "denied": "Recusadas (24 h)",
+        "deniedHint": "varredura, escopo ou limite",
+        "errors": "Erros (24 h)",
+        "running": "Em curso",
+        "runningHint": "não fechadas: travaram ou derrubaram o processo"
+      },
+      "columns": {
+        "when": "Quando",
+        "tool": "Tool",
+        "key": "Chave",
+        "status": "Situação",
+        "latency": "Latência",
+        "origin": "Origem"
+      },
+      "details": "Ver os detalhes",
+      "arguments": "Argumentos",
+      "result": "Resultado",
+      "unknownKey": "Chave não identificada",
+      "callsOf": "Só as chamadas da chave {name}",
+      "ms": "{ms} ms",
+      "states": {
+        "loading": "Carregando as chamadas…",
+        "empty": "Nenhuma chamada registrada ainda.",
+        "filtered": "Nenhuma chamada com estes filtros.",
+        "failed": "As chamadas não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar chamadas",
+        "search": "Busca",
+        "searchPlaceholder": "Nome da tool",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "key": "Chave",
+        "allKeys": "Todas as chaves",
+        "noKey": "Sem chave identificada",
+        "apply": "Filtrar"
+      }
+    },
+    "apiKeys": {
+      "title": "MCP e chaves",
+      "description": "As credenciais do servidor MCP. A chave em claro aparece uma única vez, ao ser criada; o banco guarda só um HMAC dela.",
+      "audit": "Ver a auditoria",
+      "noPepper": "MCP_KEY_PEPPER não está configurada. Sem ela o servidor recusa toda chamada ao MCP e nenhuma chave pode ser criada. Gere uma com openssl rand -base64 48 e reinicie o processo.",
+      "columns": {
+        "name": "Nome",
+        "prefix": "Prefixo",
+        "scopes": "Escopos",
+        "lastUsed": "Último uso",
+        "expires": "Expira",
+        "status": "Situação",
+        "actions": "Ações"
+      },
+      "createdOn": "criada em {date}",
+      "never": "Nunca",
+      "noExpiry": "Não expira",
+      "write": "escrita",
+      "writeHint": "Escopo de escrita",
+      "readHint": "Escopo de leitura",
+      "calls": "Ver as chamadas da chave {name}",
+      "states": {
+        "loading": "Carregando as chaves…",
+        "empty": "Nenhuma chave ainda. Crie a primeira para conectar o agente.",
+        "filtered": "Nenhuma chave com estes filtros.",
+        "failed": "As chaves não carregaram: o banco não respondeu."
+      },
+      "filters": {
+        "label": "Filtrar chaves",
+        "search": "Busca",
+        "searchPlaceholder": "Nome ou prefixo",
+        "status": "Situação",
+        "allStatuses": "Todas as situações",
+        "apply": "Filtrar"
+      },
+      "create": {
+        "trigger": "Nova chave",
+        "title": "Nova chave de API",
+        "description": "Uma credencial do servidor MCP. Os escopos valem por tool, no servidor: dê só o que a chave precisa.",
+        "name": "Nome",
+        "namePlaceholder": "agente do Obsidian, macbook",
+        "nameHelp": "É este nome que você vai digitar para revogar a chave depois.",
+        "scopes": "Escopos",
+        "scopesHelp": "Não há herança: applications:write não dá applications:read. Marque os dois quando precisar dos dois.",
+        "readOnly": "Só leitura",
+        "clearScopes": "Desmarcar todos",
+        "writeWarning": {
+          "one": "1 escopo de escrita: esta chave poderá mudar dados do funil pelo MCP.",
+          "many": "{count} escopos de escrita: esta chave poderá mudar dados do funil pelo MCP."
+        },
+        "expires": "Expiração",
+        "submit": "Criar chave",
+        "pending": "Criando…",
+        "created": "Chave criada. Copie agora: ela não aparece de novo.",
+        "shownTitle": "Chave criada: copie agora",
+        "shownDescription": "Esta é a única vez que a chave aparece. O servidor guarda só um HMAC dela: nem o painel, nem a API, nem o banco conseguem mostrá-la de novo. Se perder, revogue e crie outra.",
+        "secretWarning": "Guarde num gerenciador de segredos. Não a coloque num repositório (este é público), nem em chat, issue ou log.",
+        "token": "Chave",
+        "copy": "Copiar a chave",
+        "copied": "Chave copiada.",
+        "copyFailed": "O navegador não deixou copiar. Selecione o texto e copie à mão.",
+        "summary": {
+          "name": "Nome",
+          "prefix": "Prefixo",
+          "expires": "Expira em",
+          "scopes": "Escopos"
+        },
+        "acknowledge": "Guardei a chave num lugar seguro e sei que ela não aparece de novo.",
+        "done": "Concluir",
+        "errors": {
+          "name": "Dê um nome à chave, com até 80 caracteres.",
+          "scopes": "Marque ao menos um escopo.",
+          "expiresIn": "Escolha um prazo da lista.",
+          "invalid": "Este valor não foi aceito: confira."
+        },
+        "noPepper": "MCP_KEY_PEPPER não está configurada no servidor: nenhuma chave pode ser criada.",
+        "failed": "Não foi possível criar a chave. Nada foi gravado."
+      },
+      "revoke": {
+        "trigger": "Revogar a chave {name}",
+        "title": "Revogar a chave {name}?",
+        "lost": "A chave {prefix}… passa a ser recusada na próxima chamada ao MCP. Não há como reativá-la: só criar outra.",
+        "confirm": "Revogar chave",
+        "pending": "Revogando…",
+        "done": "Chave “{name}” revogada.",
+        "missing": "Esta chave não existe mais. Recarregue a página.",
+        "already": "Esta chave já estava revogada.",
+        "mismatch": "O nome digitado não é o da chave.",
+        "failed": "Não foi possível revogar a chave. Ela continua ativa."
+      }
+    },
+    "settings": {
+      "title": "Configurações",
+      "description": "A conta do backoffice. O acesso é de uma pessoa só: a conta criada pelo seed.",
+      "account": {
+        "title": "Conta",
+        "description": "Com que identidade você entra no backoffice.",
+        "email": "E-mail",
+        "role": "Papel"
+      },
+      "password": {
+        "title": "Trocar a senha",
+        "description": "A senha atual é conferida no servidor antes da troca: uma sessão aberta sozinha não basta. A nova é gravada com bcrypt de custo 12, como no seed.",
+        "noDatabase": "O banco não está configurado: a troca de senha fica indisponível.",
+        "current": "Senha atual",
+        "new": "Nova senha",
+        "newHelp": "Pelo menos 12 caracteres, diferente da atual.",
+        "confirm": "Repita a nova senha",
+        "submit": "Trocar senha",
+        "pending": "Trocando…",
+        "done": "Senha trocada.",
+        "errors": {
+          "currentPassword": "Escreva a senha atual.",
+          "newPassword": "A nova senha precisa ter de 12 a 128 caracteres.",
+          "confirmPassword": "Repita a nova senha, exatamente igual.",
+          "mismatch": "A repetição não é igual à nova senha.",
+          "same": "A nova senha precisa ser diferente da atual.",
+          "wrong": "A senha atual não confere.",
+          "invalid": "Este valor não foi aceito: confira."
+        },
+        "noEmail": "A sessão não tem e-mail: entre de novo para trocar a senha.",
+        "noUser": "A conta do backoffice não foi encontrada.",
+        "failed": "Não foi possível trocar a senha. A atual continua valendo."
       }
     }
   }

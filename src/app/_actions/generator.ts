@@ -36,7 +36,8 @@ import { validateFraming } from "@/lib/mcp/tools/_framing";
 
 export type GenState =
   | { status: "idle" }
-  | { status: "error"; message: string }
+  /** `message` is a stable code; the screen writes the sentence (`admin.generator.errors`). */
+  | { status: "error"; message: GenError; codes?: string }
   | {
       status: "success";
       id: string;
@@ -52,6 +53,16 @@ const schema = z.object({
   company: z.string().max(160).optional(),
   roleTitle: z.string().max(160).optional(),
 });
+
+export type GenError =
+  | "unauthorized"
+  | "db_unavailable"
+  | "short"
+  | "no_api_key"
+  | "no_context"
+  | "failed"
+  | "framing_down"
+  | "framing_blocked";
 
 /** Erros esperados do gerador: codigo estavel, seguro para o log. */
 const GENERATOR_SENTINELS = new Set(["no_api_key", "no_context"]);
@@ -70,7 +81,7 @@ export async function generate(_prev: GenState, formData: FormData): Promise<Gen
 
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
-    return { status: "error", message: "Paste a fuller job description (40+ characters)." };
+    return { status: "error", message: "short" };
   }
 
   // Delimita o spec ANTES de o modelo ve-lo, com o mesmo helper do caminho do
@@ -94,11 +105,9 @@ export async function generate(_prev: GenState, formData: FormData): Promise<Gen
     const msg = err instanceof Error ? err.message : "error";
     // Erro do provedor pode carregar pedaco do prompt (= corpus privado + spec).
     console.error("[generator] failed:", GENERATOR_SENTINELS.has(msg) ? msg : safeDbError(err));
-    if (msg === "no_api_key")
-      return { status: "error", message: "OPENAI_API_KEY is not set on the server." };
-    if (msg === "no_context")
-      return { status: "error", message: "Knowledge base is empty — run `npm run db:ingest`." };
-    return { status: "error", message: "Generation failed. Check the server logs and try again." };
+    if (msg === "no_api_key") return { status: "error", message: "no_api_key" };
+    if (msg === "no_context") return { status: "error", message: "no_context" };
+    return { status: "error", message: "failed" };
   }
 
   let verdict;
@@ -111,10 +120,7 @@ export async function generate(_prev: GenState, formData: FormData): Promise<Gen
   } catch (err) {
     // Barreira de vazamento: sem veredito, nao ha entrega. Falha fechada.
     console.error("[generator] framing validation failed", safeDbError(err));
-    return {
-      status: "error",
-      message: "The framing validator did not run — nothing was generated or saved.",
-    };
+    return { status: "error", message: "framing_down" };
   }
 
   if (!verdict.passed) {
@@ -122,10 +128,7 @@ export async function generate(_prev: GenState, formData: FormData): Promise<Gen
     // corpus privado (mesma razao do `SEC_EXCERPT` em `_framing.ts`).
     const codes = [...new Set(verdict.violacoes.map((v) => v.code))].join(", ");
     console.error("[generator] blocked by framing validator:", codes);
-    return {
-      status: "error",
-      message: `Blocked by the framing validator (${verdict.bloqueantes} blocking violation(s): ${codes}). Nothing was saved.`,
-    };
+    return { status: "error", message: "framing_blocked", codes };
   }
 
   let id = "";

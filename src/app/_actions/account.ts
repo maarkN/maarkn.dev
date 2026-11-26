@@ -24,6 +24,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
+import { getAdminLabels } from "@/lib/admin/request";
+import { safeDbError } from "@/lib/safe-error";
 import type { ActionResult } from "./action-result";
 
 /** Same cost factor as `prisma/seed.ts` — a rotation must not weaken the hash. */
@@ -37,29 +39,15 @@ const MIN_PASSWORD_LENGTH = 12;
 /** bcrypt only reads the first 72 bytes; `lib/auth.ts` caps input at 128. */
 const MAX_PASSWORD_LENGTH = 128;
 
+/** The messages are codes; the sentence is the dictionary's, in the language of the screen (A4). */
 const schema = z
   .object({
-    currentPassword: z.string().min(1, "Informe a senha atual."),
-    newPassword: z
-      .string()
-      .min(
-        MIN_PASSWORD_LENGTH,
-        `A nova senha precisa ter ao menos ${MIN_PASSWORD_LENGTH} caracteres.`,
-      )
-      .max(
-        MAX_PASSWORD_LENGTH,
-        `A nova senha pode ter no máximo ${MAX_PASSWORD_LENGTH} caracteres.`,
-      ),
-    confirmPassword: z.string().min(1, "Confirme a nova senha."),
+    currentPassword: z.string().min(1, "currentPassword"),
+    newPassword: z.string().min(MIN_PASSWORD_LENGTH, "newPassword").max(MAX_PASSWORD_LENGTH, "newPassword"),
+    confirmPassword: z.string().min(1, "confirmPassword"),
   })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "A confirmação não confere com a nova senha.",
-  })
-  .refine((d) => d.newPassword !== d.currentPassword, {
-    path: ["newPassword"],
-    message: "A nova senha precisa ser diferente da atual.",
-  });
+  .refine((d) => d.newPassword === d.confirmPassword, { path: ["confirmPassword"], message: "mismatch" })
+  .refine((d) => d.newPassword !== d.currentPassword, { path: ["newPassword"], message: "same" });
 
 export async function changePassword(
   formData: FormData,
@@ -68,7 +56,9 @@ export async function changePassword(
   // control-flow exception, so it stays out of any try/catch.
   const session = await auth();
   if (!session?.user) redirect("/admin/login");
-  if (!dbConfigured) return { ok: false, message: "Banco indisponível." }; // A3
+  const { settings, common } = await getAdminLabels();
+  const words = settings.password;
+  if (!dbConfigured) return { ok: false, message: common.noDatabase }; // A3
 
   const parsed = schema.safeParse({
     currentPassword: String(formData.get("currentPassword") ?? ""),
@@ -79,23 +69,22 @@ export async function changePassword(
     const fieldErrors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
       const key = issue.path.join(".");
-      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+      if (key && !fieldErrors[key]) {
+        fieldErrors[key] = words.errors[issue.message as keyof typeof words.errors] ?? words.errors.invalid;
+      }
     }
-    return { ok: false, message: "Confira os campos destacados.", fieldErrors };
+    return { ok: false, message: common.checkFields, fieldErrors };
   }
 
   const email = session.user.email?.toLowerCase();
   if (!email) {
-    return {
-      ok: false,
-      message: "Sessão sem e-mail — entre novamente para trocar a senha.",
-    };
+    return { ok: false, message: words.noEmail };
   }
 
   try {
     const user = await db.user.findUnique({ where: { email } });
     if (!user) {
-      return { ok: false, message: "Usuário do painel não encontrado." };
+      return { ok: false, message: words.noUser };
     }
 
     const currentOk = await bcrypt.compare(
@@ -103,22 +92,18 @@ export async function changePassword(
       user.passwordHash,
     );
     if (!currentOk) {
-      return {
-        ok: false,
-        message: "Senha atual incorreta.",
-        fieldErrors: { currentPassword: "Senha atual incorreta." },
-      };
+      return { ok: false, message: words.errors.wrong, fieldErrors: { currentPassword: words.errors.wrong } };
     }
 
     const passwordHash = await bcrypt.hash(parsed.data.newPassword, BCRYPT_COST);
     await db.user.update({ where: { id: user.id }, data: { passwordHash } });
 
     revalidatePath("/admin/settings");
-    return { ok: true, message: "Senha alterada." };
+    return { ok: true, message: words.done };
   } catch (err) {
     // Detail stays on the server: the message the UI shows must never leak the
     // hash, the SQL or the user record.
-    console.error("[admin] change password failed", err);
-    return { ok: false, message: "Não foi possível alterar a senha." };
+    console.error("[admin] change password failed", safeDbError(err));
+    return { ok: false, message: words.failed };
   }
 }

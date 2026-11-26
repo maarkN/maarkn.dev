@@ -1,33 +1,21 @@
 /**
- * `ChatLog.status` → badge styles. Colocated with the screen (it is the only
- * consumer) instead of `components/admin/status-badge.tsx`, which is reserved
- * for the enums shared across the backoffice.
- *
- * The import below is type-only, so this module stays a plain object at runtime
- * and the client toolbar can import it without dragging the badge tree along.
- *
- * Values come from `src/lib/chat-log.ts`: a row is written as `pending` before
- * the stream starts and updated to `ok` | `mock` | `error` when it ends —
- * `pending` therefore means the stream never finished.
+ * `ChatLog.status`, from `src/lib/chat-log.ts`: a row is written as `pending`
+ * before the stream starts and set to `ok` | `mock` | `error` when it ends, so
+ * `pending` means the stream never finished. The words are in the dictionary
+ * (`admin.vocab.chatStatus`).
  */
 
-import type { StatusStyles } from "@/components/admin/status-badge";
+export const CHAT_STATUSES = ["ok", "mock", "pending", "error"] as const;
+export type ChatStatus = (typeof CHAT_STATUSES)[number];
 
-export const CHAT_STATUS_STYLES: StatusStyles = {
-  ok: {
-    label: "OK",
-    className: "text-ok",
-  },
-  mock: {
-    label: "Mock",
-    className: "text-ink-3",
-  },
-  pending: {
-    label: "Pendente",
-    className: "text-warn",
-  },
-  error: {
-    label: "Erro",
-    className: "text-destructive",
-  },
+export function isChatStatus(value: string): value is ChatStatus {
+  return (CHAT_STATUSES as readonly string[]).includes(value);
+}
+
+/** The colour of the mark next to the word: a second channel, never the only one. */
+export const CHAT_STATUS_TONES: Record<ChatStatus, string> = {
+  ok: "bg-ok",
+  mock: "bg-ink-3",
+  pending: "bg-warn",
+  error: "bg-destructive",
 };
