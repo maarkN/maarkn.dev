@@ -58,7 +58,7 @@ export function submitKeepingValues(
 ) {
   event.preventDefault();
   // `new FormData(form)` sem `submitter`: nenhum botão de submit do painel
-  // carrega `name`/`value` (todos são `[ salvar ]`, `[ criar … ]`). Se algum
+  // carrega `name`/`value` ("Salvar contato", "Criar chave"…). Se algum
   // passar a carregar, é aqui que o `submitter` entra.
   handler(new FormData(event.currentTarget));
 }

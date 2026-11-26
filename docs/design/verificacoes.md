@@ -91,6 +91,11 @@ O que `scripts/e2e-site.mjs` precisa cobrir ao fim do rebranding. Cada change `r
 77. Todo texto atinge 4.5:1 contra os pixels de trás, e o axe não acha violação, na estrutura e no que ela abre, nos três temas e nos dois idiomas.
 78. Sem JavaScript, o menu leva às telas, dá para sair e o que não responderia não aparece. Na impressão sobra o papel. Nenhuma página do site traz texto do backoffice.
 
+**Listas e formulários do backoffice** (`--admin`)
+
+80. Na coluna de ações de `/admin/api-keys` todo botão está inteiro, à vista e alcançável, em 390 e 1440 px.
+81. No quadro, arrastar e `←`/`→` levam a candidatura à coluna ao lado, com o foco junto; "Desfazer" a devolve, e depois de recarregar ela está onde começou (é o caso da verificação 28).
+
 **Referência do holograma** (`--holo`, com `HOLO_REFERENCE=1 pnpm build`)
 
 37. Cada estado responde em até 100 ms e se distingue dos outros sem a cor do traço.
