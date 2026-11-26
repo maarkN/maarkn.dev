@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Garante que o backoffice use os três temas do site, com cores vindas só dos tokens e contraste verificado, permaneça operável por teclado e leitor de tela, e que suas utilities não vazem para o site público.
+Garante que o backoffice use os três temas do site, com cores vindas só dos tokens e contraste verificado, permaneça operável por teclado e leitor de tela, que suas utilities não vazem para o site público e que sua documentação descreva o que existe.
 
 ## Requirements
 
