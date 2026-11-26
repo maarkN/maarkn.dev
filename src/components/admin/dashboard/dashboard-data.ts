@@ -120,7 +120,7 @@ export type FunnelSnapshot = {
   routeRemote: number;
   /** Rota de relocação (os outros 7 sinais). */
   routeRelocation: number;
-  /** Entrevistas com data marcada e desfecho ainda em aberto. */
+  /** Entrevistas na situação "marcada". */
   interviewsOpen: number;
   /** Próxima entrevista em aberto a partir de hoje (null = nenhuma futura). */
   nextInterviewAt: Date | null;
@@ -166,12 +166,9 @@ export const loadFunnelSnapshot = cache(async (): Promise<FunnelSnapshot> => {
   if (!dbConfigured) return emptySnapshot();
 
   const today = startOfUtcDay();
-  // Entrevista "em aberto": tem data marcada e o desfecho ainda não foi
-  // registrado (`outcome` é texto livre — nulo ou "pending").
-  const openInterview: Prisma.InterviewWhereInput = {
-    scheduledAt: { not: null },
-    OR: [{ outcome: null }, { outcome: "pending" }],
-  };
+  // Entrevista "em aberto" é a MARCADA: a prevista ainda não tem data, e a
+  // realizada e a cancelada já não são um passo a dar.
+  const openInterview: Prisma.InterviewWhereInput = { status: "scheduled" };
 
   try {
     const [
@@ -400,7 +397,7 @@ export type NextStepItem = {
   detail: string;
   /** Data marcada. Só entrevista tem — `followUp` é texto livre (ver abaixo). */
   at: Date | null;
-  /** Entrevista com data no passado e desfecho ainda em aberto. */
+  /** Entrevista marcada cuja data já passou. */
   overdue: boolean;
 };
 
@@ -436,11 +433,7 @@ export const loadNextSteps = cache(
     try {
       const [interviews, followUps, followUpTotal] = await Promise.all([
         db.interview.findMany({
-          where: {
-            scheduledAt: { not: null },
-            OR: [{ outcome: null }, { outcome: "pending" }],
-            application: stillOpen,
-          },
+          where: { status: "scheduled", application: stillOpen },
           orderBy: { scheduledAt: "asc" },
           take: limit,
           select: {

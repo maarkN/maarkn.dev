@@ -941,5 +941,5 @@ toast.info("Nada mudou desde a última sincronização.");
 | `src/components/ui/*` | 19 primitivos shadcn (style `radix-lyra`) |
 | `src/lib/db.ts` | `db` (PrismaClient) e `dbConfigured` |
 | `src/lib/auth.ts` | `auth()` |
-| `src/lib/applications.ts` | **(cliente)** `FUNNEL_STAGES` · `FUNNEL_STAGE_LABELS` · `FUNNEL_STAGE_PHASES` · `SENT_STAGES` · `INTERVIEW_STAGES` · `SPONSORSHIP_SIGNALS` · `SPONSORSHIP_LABELS`/`_HINTS`/`_GATES` · `SPONSORSHIP_ROUTES` (as duas rotas) · `APPLICATION_SOURCES` · `SOURCE_LABELS` · `slugPart` · `buildFolderName` |
+| `src/lib/applications.ts` | **(cliente)** `FUNNEL_STAGES` · `FUNNEL_STAGE_LABELS` · `FUNNEL_STAGE_PHASES` · `SENT_STAGES` · `INTERVIEW_STAGES` · `SPONSORSHIP_SIGNALS` · `SPONSORSHIP_LABELS`/`_HINTS`/`_GATES` · `SPONSORSHIP_ROUTES` (as duas rotas) · `CLOSURE_REASONS`/`CLOSURE_REASON_LABELS` e `INTERVIEW_STATUSES`/`INTERVIEW_STATUS_LABELS` (pt-BR e en) · `closureReasonOnStageChange` (todo caminho que escreve `stage` grava o `patch` dela no mesmo update) · `APPLICATION_SOURCES` · `SOURCE_LABELS` · `slugPart` · `buildFolderName` |
 | `src/lib/applications-query.ts` | **(`server-only`)** `parseApplicationFilters` · `parsePage` · `buildApplicationWhere` · `listApplications` · `listApplicationMarkets` · `listApplicationSources` · `effectiveSponsorship`/`effectiveMarket` · `APPLICATIONS_PAGE_SIZE` |

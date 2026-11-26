@@ -2,10 +2,12 @@ import "server-only";
 import { z } from "zod";
 import {
   BulletLayer,
+  ClosureReason,
   CoverageLevel,
   DocKind,
   EventDirection,
   FunnelStage,
+  InterviewStatus,
   Prisma,
   SourceGeneration,
   SponsorshipSignal,
@@ -51,6 +53,8 @@ export const LIMITS = {
   short: 300,
   /** Texto medio (resumo, motivo, nota curta). */
   text: 4_000,
+  /** Texto corrido que tambem volta em listagem (empresa, contexto do projeto). */
+  prose: 20_000,
   /** Corpo markdown (dossie, descricao de vaga, carta). */
   markdown: 200_000,
   /** Caminho relativo dentro do vault. */
@@ -74,6 +78,7 @@ export const pathSchema = z.string().min(1).max(LIMITS.path);
 export const keySchema = z.string().min(1).max(LIMITS.key);
 export const shortSchema = z.string().max(LIMITS.short);
 export const textSchema = z.string().max(LIMITS.text);
+export const proseSchema = z.string().max(LIMITS.prose);
 export const markdownSchema = z.string().max(LIMITS.markdown);
 /**
  * URL absoluta com **allowlist de esquema**.
@@ -96,7 +101,31 @@ export const urlSchema = z
 /** Data ISO-8601: aceita `2026-08-16` e `2026-08-16T09:30:00Z`. */
 export const dateSchema = z.union([z.iso.date(), z.iso.datetime({ offset: true })]);
 
+/**
+ * Data E hora com fuso, para um instante real. `2026-08-16` sozinho viraria
+ * meia-noite UTC, que em Sao Paulo e a noite do dia anterior.
+ */
+export const dateTimeSchema = z.iso.datetime({ offset: true });
+
+/** Fuso IANA (`America/Toronto`). */
+export const timezoneSchema = z
+  .string()
+  .max(60)
+  .refine(
+    (value) => {
+      try {
+        new Intl.DateTimeFormat("en", { timeZone: value });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: "Fuso desconhecido. Use um nome IANA, como 'America/Toronto'." }
+  );
+
 export const funnelStageSchema = z.enum(FunnelStage);
+export const closureReasonSchema = z.enum(ClosureReason);
+export const interviewStatusSchema = z.enum(InterviewStatus);
 export const sponsorshipSchema = z.enum(SponsorshipSignal);
 export const docKindSchema = z.enum(DocKind);
 export const coverageLevelSchema = z.enum(CoverageLevel);
