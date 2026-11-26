@@ -165,10 +165,10 @@ export const HonestySeverityBadge = makeStatusBadge(
 /* ── Interview.status (`interview_status`) ────────────────────────────────── */
 
 const INTERVIEW_STATUS_CLASSNAMES: Record<InterviewStatus, string> = {
-  planned: "text-comment",
-  scheduled: "text-cyan",
-  completed: "text-green",
-  cancelled: "text-comment",
+  planned: "text-ink-3",
+  scheduled: "text-beam-2",
+  completed: "text-ok",
+  cancelled: "text-ink-3",
 };
 
 export const INTERVIEW_STATUS_STYLES: StatusStyles = Object.fromEntries(
