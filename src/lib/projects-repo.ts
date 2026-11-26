@@ -1,8 +1,22 @@
 import "server-only";
 import { cache } from "react";
-import { db } from "@/lib/db";
+import type { Locale } from "@/i18n/config";
+import { db, dbConfigured } from "@/lib/db";
 import { httpHref } from "@/lib/http-url";
 import { decodeStringList } from "@/lib/json-list";
+import {
+  MAX_SUCCESS_CASES,
+  resolveCaption,
+  resolveCase,
+  resolveText,
+  seedCaption,
+  seedCasePosition,
+  storedCaseText,
+  storedText,
+  type Localized,
+  type ResolvedCase,
+  type ResolvedText,
+} from "@/lib/project-text";
 import {
   projects as staticProjects,
   projectCategories,
@@ -12,17 +26,51 @@ import {
   type SourceVisibility,
 } from "@/lib/projects";
 
-/** A project enriched with the long-form content stored in the DB columns. */
-export type RepoProject = Project & {
-  tagline: string | null;
-  description: string | null;
-  role: string | null;
-  features: string[];
+/** One image of the gallery. Without a `url` it is a stylized placeholder. */
+export type RepoImage = {
+  url: string;
+  caption: Localized<string> | null;
+  monogram?: string;
 };
 
-type ProjectRow = Awaited<ReturnType<typeof db.project.findMany>>[number];
+/**
+ * A project with its text resolved for one language. Each piece carries the
+ * language it is written in, because a project with text in one language only
+ * is shown in that one.
+ */
+export type RepoProject = Omit<Project, "gallery"> &
+  ResolvedText & {
+    gallery: RepoImage[];
+    /** Set when the project is a success case of the home. */
+    successCase: ResolvedCase | null;
+  };
 
-function rowToProject(row: ProjectRow): RepoProject {
+/** Deduped within a request; `null` means "use the seed". */
+const readRows = cache(async () => {
+  if (!dbConfigured) return null;
+  try {
+    const rows = await db.project.findMany({
+      include: { images: { orderBy: { position: "asc" } } },
+      orderBy: [{ featured: "desc" }, { year: "desc" }, { createdAt: "asc" }],
+    });
+    return rows.length > 0 ? rows : null;
+  } catch (err) {
+    console.error("[projects-repo] DB read failed; using the seed", err);
+    return null;
+  }
+});
+
+type ProjectRow = NonNullable<Awaited<ReturnType<typeof readRows>>>[number];
+
+/**
+ * A path on this site, or nothing. Second lock, like `httpHref` below: next/image
+ * throws on a host it does not know, and one bad row would take the page down.
+ */
+function sitePath(path: string): string | null {
+  return /^\/(?![/\\])[^\s\\]*$/.test(path) && !path.includes("..") ? path : null;
+}
+
+function rowToProject(row: ProjectRow, lang: Locale): RepoProject {
   return {
     slug: row.slug,
     name: row.name,
@@ -45,15 +93,28 @@ function rowToProject(row: ProjectRow): RepoProject {
       case: httpHref(row.caseUrl),
     },
     coverImage: row.coverImage ?? null,
-    tagline: row.tagline ?? null,
-    description: row.description ?? null,
-    role: row.role ?? null,
-    features: decodeStringList(row.featuresJson),
+    ...resolveText(lang, row.slug, storedText(row)),
+    gallery: row.images.flatMap((image) => {
+      const url = sitePath(image.path);
+      if (!url) return [];
+      const captions = { en: image.captionEn, "pt-BR": image.captionPt };
+      return [{ url, caption: resolveCaption(lang, captions) }];
+    }),
+    successCase: resolveCase(lang, row.slug, row.casePosition, storedCaseText(row)),
   };
 }
 
-function staticToRepo(p: Project): RepoProject {
-  return { ...p, tagline: null, description: null, role: null, features: [] };
+function seedToProject({ gallery = [], ...project }: Project, lang: Locale): RepoProject {
+  return {
+    ...project,
+    ...resolveText(lang, project.slug, null),
+    gallery: gallery.map(({ url, captionKey, monogram }) => ({
+      url,
+      caption: resolveCaption(lang, seedCaption(project.slug, captionKey)),
+      monogram,
+    })),
+    successCase: resolveCase(lang, project.slug, seedCasePosition(project.slug), null),
+  };
 }
 
 const curatedIndex = new Map(staticProjects.map((p, i) => [p.slug, i]));
@@ -78,41 +139,32 @@ export function sortByCuratedOrder<T extends { slug: string; featured: boolean; 
   });
 }
 
-/** All projects, DB-first with a static fallback. Deduped within a request. */
-export const getAllProjects = cache(async (): Promise<RepoProject[]> => {
-  try {
-    const rows = await db.project.findMany({
-      orderBy: [{ featured: "desc" }, { year: "desc" }, { createdAt: "asc" }],
-    });
-    if (rows.length === 0) return staticProjects.map(staticToRepo);
-    return sortByCuratedOrder(rows.map(rowToProject));
-  } catch (err) {
-    console.error("[projects-repo] DB read failed; using static fallback", err);
-    return staticProjects.map(staticToRepo);
-  }
+/**
+ * All projects in one language. The database wins; without it, or when it fails
+ * or has no project, the seed in the repository (ADR 0003).
+ */
+export const getAllProjects = cache(async (lang: Locale): Promise<RepoProject[]> => {
+  const rows = await readRows();
+  if (!rows) return staticProjects.map((project) => seedToProject(project, lang));
+  return sortByCuratedOrder(rows.map((row) => rowToProject(row, lang)));
 });
 
-export const getFeaturedProjects = cache(async (): Promise<RepoProject[]> => {
-  return (await getAllProjects()).filter((p) => p.featured);
+export const getFeaturedProjects = cache(async (lang: Locale): Promise<RepoProject[]> => {
+  return (await getAllProjects(lang)).filter((p) => p.featured);
 });
 
-export async function getProjectBySlug(slug: string): Promise<RepoProject | null> {
-  return (await getAllProjects()).find((p) => p.slug === slug) ?? null;
+export async function getProjectBySlug(slug: string, lang: Locale): Promise<RepoProject | null> {
+  return (await getAllProjects(lang)).find((p) => p.slug === slug) ?? null;
 }
 
-/**
- * Tagline map for cards: dictionary copy wins for the known slugs (bilingual);
- * projects added through the admin fall back to their DB tagline.
- */
-export function buildTaglines(
-  projects: RepoProject[],
-  dictTaglines: Record<string, string>
-): Record<string, string> {
-  const map: Record<string, string> = { ...dictTaglines };
-  for (const p of projects) {
-    if (!map[p.slug]) map[p.slug] = p.tagline ?? "";
-  }
-  return map;
+/** The success cases of the home, in the order Marco chose; at most three. */
+export async function getSuccessCases(
+  lang: Locale,
+): Promise<(RepoProject & { successCase: ResolvedCase })[]> {
+  return (await getAllProjects(lang))
+    .flatMap((p) => (p.successCase ? [{ ...p, successCase: p.successCase }] : []))
+    .sort((a, b) => a.successCase.position - b.successCase.position)
+    .slice(0, MAX_SUCCESS_CASES);
 }
 
 export { projectCategories };

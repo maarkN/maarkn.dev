@@ -58,6 +58,10 @@ _Avoid_: App, trabalho
 O dossiê privado de um trabalho feito, do qual um projeto público pode derivar.
 _Avoid_: Projeto (sozinho)
 
+**Semente**:
+O conteúdo dos projetos guardado no repositório: preenche o banco uma vez, dá texto ao projeto novo e aparece quando não há banco ou texto em nenhum dos idiomas. Nunca vence um texto do banco.
+_Avoid_: Fallback, mock, texto padrão
+
 **Caso de sucesso**:
 Um dos três projetos escolhidos para abrir a home, contado como problema, trabalho e resultado.
 _Avoid_: Destaque, featured

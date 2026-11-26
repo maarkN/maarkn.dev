@@ -26,7 +26,8 @@
  *   4. criar contato                → ERRO de servidor primeiro, depois sucesso
  *   5. excluir contato              → eco `rm -rf`, trava por digitação, toast
  *   6. upload de imagem no projeto  → `attach:` + arquivo em disco + servido
- *      (e, na sequência, criar / editar / excluir o projeto)
+ *      (e, na sequência, criar / editar / excluir o projeto, o texto de cada
+ *      idioma no site e a recusa do caso sem texto e do quarto caso)
  *   7. gerar CV com vaga curta      → toast de erro da action do gerador
  *   8. excluir a candidatura        → o banco volta como estava
  * Em todo toast: `data-type`, o marcador (`✓`/`✗`) como TEXTO `aria-hidden`, o
@@ -1117,6 +1118,81 @@ try {
       proj2.tagline === `Tagline de verificação ${STAMP}`,
       "a alteração persistiu no banco",
       String(proj2.tagline),
+    );
+
+    step("6c2. projeto · o texto de cada idioma chega ao site");
+    const EN_TAGLINE = `English summary ${STAMP}`;
+    const PT_TAGLINE = `Resumo em português ${STAMP}`;
+    await goto(`/admin/projects/${projectId}/edit`);
+    require_(await waitExists("#taglinePt"), "o formulário tem o resumo em português");
+    await fill("#tagline", EN_TAGLINE);
+    await fill("#taglinePt", PT_TAGLINE);
+    await fill("#featuresPt", "Uma entrega, com vírgula\nOutra entrega");
+    await click("#featured", "destaque na home");
+    await drainToasts();
+    await clickText("button[type=submit]", "salvar alterações");
+    await waitToast((t) => t.text === "Projeto atualizado.", "de sucesso do texto bilíngue");
+    const bilingual = await prisma.project.findUnique({ where: { id: projectId } });
+    expect(
+      bilingual.tagline === EN_TAGLINE && bilingual.taglinePt === PT_TAGLINE,
+      "cada idioma ficou na sua coluna",
+      `${bilingual.tagline} | ${bilingual.taglinePt}`,
+    );
+    expect(
+      bilingual.featuresPtJson === '["Uma entrega, com vírgula","Outra entrega"]',
+      "a vírgula não parte a entrega",
+      bilingual.featuresPtJson,
+    );
+    const publicText = (path) =>
+      jsonAsync(`fetch(${js(path)}).then((r) => r.text()).then((t) => ({
+        en: t.includes(${js(EN_TAGLINE)}), pt: t.includes(${js(PT_TAGLINE)}) }))`);
+    for (const path of [`projects/${PROJECT_SLUG}`, "projects", ""]) {
+      const en = await publicText(`/en/${path}`.replace(/\/$/, ""));
+      const pt = await publicText(`/pt-BR/${path}`.replace(/\/$/, ""));
+      const where = path === "" ? "a home (comando projects)" : `/${path}`;
+      expect(en.en && !en.pt, `em inglês, ${where} traz o resumo em inglês`, JSON.stringify(en));
+      expect(pt.pt && !pt.en, `em português, ${where} traz o resumo em português`, JSON.stringify(pt));
+    }
+
+    step("6c3. projeto · caso de sucesso sem texto, e o quarto caso");
+    await goto(`/admin/projects/${projectId}/edit`);
+    require_(await waitExists("#casePosition"), "o formulário tem a posição do caso");
+    const chooseFirst = async () => {
+      await click("#casePosition", "posição do caso");
+      await clickText('[role="option"]', "1º caso");
+    };
+    await chooseFirst();
+    await drainToasts();
+    await clickText("button[type=submit]", "salvar alterações");
+    const semTexto = await waitToast((t) => t.type === "error", "de recusa do caso sem texto");
+    expect(
+      semTexto.hit.text.startsWith("Para ser caso de sucesso, falta:"),
+      "a recusa diz o que falta",
+      semTexto.hit.text,
+    );
+    expect(
+      (await prisma.project.findUnique({ where: { id: projectId } })).casePosition === null,
+      "nada foi marcado",
+    );
+    // Página nova: o toast de erro fica em cima do botão de salvar, e com o
+    // ponteiro sobre ele o relógio do sonner para.
+    await goto(`/admin/projects/${projectId}/edit`);
+    require_(await waitExists("#casePosition"), "o formulário reabriu");
+    await chooseFirst();
+    for (const part of ["Problem", "Work", "Result"]) {
+      for (const lang of ["Pt", "En"]) await fill(`#case${part}${lang}`, `${part} ${lang} ${STAMP}`);
+    }
+    const others = await prisma.project.count({ where: { casePosition: { not: null } } });
+    const firstTaken = (await prisma.project.count({ where: { casePosition: 1 } })) > 0;
+    await drainToasts();
+    await clickText("button[type=submit]", "salvar alterações");
+    const marcado = await waitToast((t) => t.text !== "", "da marcação do caso");
+    const expected =
+      others >= 3 ? "Já há 3 casos de sucesso" : firstTaken ? "A posição 1 já é de" : "Projeto atualizado.";
+    expect(marcado.hit.text.startsWith(expected), `com ${others} caso(s), a resposta é a certa`, marcado.hit.text);
+    expect(
+      (await prisma.project.count({ where: { casePosition: { not: null } } })) <= 3,
+      "nunca há mais de três casos",
     );
 
     step("6d. projeto · excluir");

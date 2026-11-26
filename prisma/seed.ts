@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { newRow } from "../src/lib/project-seed";
 import { projects as STATIC_PROJECTS } from "../src/lib/projects";
-import { encodeStringList } from "../src/lib/json-list";
 import { buildFolderName, slugPart } from "../src/lib/applications";
 
 const db = new PrismaClient();
@@ -37,25 +37,7 @@ async function seedProjects() {
   }
 
   for (const p of STATIC_PROJECTS) {
-    await db.project.create({
-      data: {
-        slug: p.slug,
-        name: p.name,
-        year: p.year,
-        category: p.category,
-        status: p.status,
-        featured: p.featured,
-        monogram: p.monogram,
-        accentFrom: p.accent.from,
-        accentTo: p.accent.to,
-        stackJson: encodeStringList(p.stack),
-        sourceVisibility: p.sourceVisibility ?? "public",
-        repoUrl: p.sourceVisibility === "private" ? null : p.links?.repo ?? null,
-        demoUrl: p.links?.demo ?? null,
-        caseUrl: p.links?.case ?? null,
-        featuresJson: encodeStringList([]),
-      },
-    });
+    await db.project.create({ data: newRow(p, { withCase: true }) });
   }
   console.log(`[seed] inserted ${STATIC_PROJECTS.length} projects.`);
 }

@@ -19,7 +19,7 @@ A [Next.js 16](https://nextjs.org) application in TypeScript, styled with CSS to
 - **Boot sequence** — six lines typed character by character on the first visit of a browser session (3–5 s), skippable with any key or tap, skipped entirely under `prefers-reduced-motion`. `reboot` runs it again.
 - **Shell** — tmux-style status bar (`maarkn@dev · title · theme · font · lang · clock`), a command menu with numeric shortcuts (`1`–`6`, `?`, `⌫`), a scrollable screen and a prompt `maarkn@dev:~$` with a synthetic cursor. On phones the menu becomes a horizontal strip at the bottom.
 - **Command engine** — case-insensitive resolution with aliases (`about` → `whoami`, `work` → `projects`, `resume` → `cv`…), history with `↑`/`↓`, `Tab` autocomplete (commands, `cat <file>`, `cd <dir>`), `Ctrl+C` / `Ctrl+L`, async commands that can append or repaint lines while running, and an interactive prompt commands can take over to ask questions.
-- **Content commands** — `whoami`, `experience`, `skills`, `projects` + `open <n>`, `writing` + `read <n>`, `contact`, `cv`, `ls` / `cat <file>`, `neofetch`. They only *format* what the rest of the site already knows: projects from the repository (Postgres with a static fallback), timeline and toolkit from `lib/`, posts from Ghost (mocked when the CMS is missing). Nothing is duplicated inside the terminal.
+- **Content commands** — `whoami`, `experience`, `skills`, `projects` + `open <n>`, `writing` + `read <n>`, `contact`, `cv`, `ls` / `cat <file>`, `neofetch`. They only *format* what the rest of the site already knows: projects and their text from the repository (Postgres, with the seed as fallback), timeline and toolkit from `lib/`, posts from Ghost (mocked when the CMS is missing). Nothing is duplicated inside the terminal.
 - **`ask <question>`** — the site's RAG assistant inside the terminal: streamed token by token, markdown rendered in the terminal's typography, conversation context kept for the session (`ask --new` forgets it), `Ctrl+C` aborts. Backed by `/api/chat` with a per-IP and daily rate limit, an admin log, and canned demo replies when no API key is configured. An optional flag forwards unknown three-word-plus input to the assistant.
 - **`mail`** — the contact form as a conversation: name → email → company → message → `send? [Y/n]`, validated inline with the same Zod schema as the server action, `Esc` / `Ctrl+C` cancel, answers never enter the history, one message per minute per tab.
 - **Navigation** — `cd projects|career|blog|links`, `cd ~` back home, `pwd`, `lang en|pt`, and deep-links such as `/en?cmd=projects` or `/pt-BR?cmd=whoami;skills`. The screen is rebuilt when you come back from an inner page; old anchors (`/#contact`, `/#projects`, `/#about`) still land on the right command.
@@ -130,7 +130,7 @@ pnpm test:e2e
 
 ### End-to-end checks
 
-`scripts/e2e-site.mjs` drives headless Chrome over the public site as `pnpm start` serves it: it opens each page, scrolls with real wheel input and reports every assertion. Today it walks the home in both locales; the full list it has to cover by the end of the rebranding is in [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), and each `rebrand-*` change adds its own cases to `CASES`.
+`scripts/e2e-site.mjs` drives headless Chrome over the public site as `pnpm start` serves it: it opens each page, scrolls with real wheel input and reports every assertion. Today it walks the home and every project in both locales; the full list it has to cover by the end of the rebranding is in [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), and each `rebrand-*` change adds its own cases to `CASES`.
 
 - `--width 390 --height 844` for the narrow viewport, `--only home:pt-BR` for some of the cases, `--verbose` to list what passed, `--json` for the raw result.
 - `E2E_BASE` points it at another address, `CHROME_PATH` at another Chrome (the default is the macOS path), `CDP_PORT` at another debugging port.
@@ -168,7 +168,14 @@ pnpm db:migrate   # prisma migrate dev
 pnpm db:seed      # admin user + starter projects
 pnpm db:ingest    # embed knowledge/**/*.md into pgvector (needs OPENAI_API_KEY)
 pnpm db:studio    # Prisma Studio
+
+pnpm db:sync-projects       # create the projects missing from the database; never touches text
+pnpm db:fill-project-text   # copy the seed's text into empty columns, once per database; never overwrites
 ```
+
+**The database is the source of the projects' text**, in Portuguese and English, and `/admin/projects` is where it is edited. `lib/projects.ts` and the dictionaries are the **seed**: they complete the database once, give new projects their text and are what the site shows without one, so fixing a project's copy in a dictionary does not change a site that has a database ([ADR 0003](./docs/adr/0003-banco-como-fonte-do-portfolio.md), [`DEPLOY.md` §7](./DEPLOY.md#7-project-text)).
+
+Tests that need a real Postgres run when `TEST_DATABASE_URL` is set (for the container above, `postgresql://maarkn:maarkn@localhost:5433/maarkn_website`); they create and drop a database of their own. Without it, they are skipped.
 
 `knowledge/` holds the CV and project dossiers the assistant answers from; only its README is versioned (see [`knowledge/README.md`](./knowledge/README.md)).
 
@@ -218,7 +225,7 @@ src/
 │   │   ├── ask-command.tsx · mail-command.tsx
 │   │   ├── data.ts                 # assembles TerminalData on the server
 │   │   ├── deeplink.ts · session.ts · anchors.ts · locale.ts · files.ts · listings.tsx · rich.tsx
-│   ├── projects-repo.ts · projects.ts · timeline.ts · toolkit.ts · site.ts · ghost.ts
+│   ├── projects-repo.ts · project-text.ts · project-seed.ts · project-fill.ts · projects.ts · timeline.ts · toolkit.ts · site.ts · ghost.ts
 │   ├── chat-client.ts · chat-system-prompt.ts · chat-log.ts · rag.ts · embeddings.ts · rate-limit.ts
 │   ├── contact-schema.ts · seo.ts · og.tsx · db.ts · auth.ts · uploads.ts
 ├── dictionaries/en.json · pt-BR.json
@@ -226,7 +233,8 @@ src/
 └── proxy.ts                        # locale routing (Next 16's middleware)
 prisma/                             # schema, migrations, seed
 scripts/                            # check-dictionaries, check-admin-utilities (lint), ingest-knowledge,
-                                    # check-commands-doc, a11y-admin-axe, a11y-dialog-accname, e2e-site
+                                    # sync-projects, fill-project-text, align-english-text, check-commands-doc,
+                                    # a11y-admin-axe, a11y-dialog-accname, e2e-site
 knowledge/                          # CV + project dossiers for the assistant (gitignored)
 ```
 
@@ -237,7 +245,7 @@ knowledge/                          # CV + project dossiers for the assistant (g
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org).
 - Command and file names in the terminal stay in English in both languages; only descriptions and messages are translated, and `pnpm lint` fails when the two dictionaries drift.
 - No `innerHTML`: every output line is a React node, and everything a visitor types is displayed literally.
-- Content lives in `lib/` and the dictionaries; `lib/terminal` only formats it.
+- Content lives in the database (projects), `lib/` and the dictionaries; `lib/terminal` only formats it.
 - Animations respect `prefers-reduced-motion` on both surfaces, and the admin's are checked against a negative control (`node scripts/a11y-admin-axe.mjs --motion` / `--motion no-preference`).
 - The shadcn token vocabulary is admin-only; `pnpm lint` fails when it leaks into the public site.
 
