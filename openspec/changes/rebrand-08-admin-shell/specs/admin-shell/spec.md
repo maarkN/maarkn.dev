@@ -36,7 +36,7 @@ O backoffice SHALL oferecer busca por telas, candidaturas e ações, e um botão
 Toda a interface do backoffice SHALL existir em português e inglês, começar pelo idioma do site e poder ser trocada no menu da conta, sem mudar o endereço.
 
 #### Scenario: Primeiro acesso em inglês
-- **WHEN** o site foi usado em inglês e o backoffice é aberto pela primeira vez
+- **WHEN** o idioma escolhido no site é inglês e o backoffice é aberto pela primeira vez
 - **THEN** a interface está em inglês
 
 #### Scenario: Troca

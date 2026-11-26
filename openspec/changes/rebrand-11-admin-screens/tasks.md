@@ -8,6 +8,7 @@
 - [ ] 2.2 Editar empresa, contexto e motivo, com aviso de que o texto da empresa vale para outras candidaturas; testes
 - [ ] 2.3 Entrevistas previstas e marcadas, reordenar, marcar, remarcar e pendência do Google; testes
 - [ ] 2.4 Anexar, ver e consultar o histórico do documento enviado; testes de arquivo inválido e acima do limite
+- [ ] 2.5 Aba ativa do dossiê marcada, também para leitor de tela; corrigir as variantes `data-*` das primitivas que o Radix não emite; teste
 
 ## 3. Agenda
 

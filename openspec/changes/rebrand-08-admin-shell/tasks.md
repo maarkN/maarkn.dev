@@ -16,7 +16,7 @@
 
 ## 4. Estrutura
 
-- [ ] 4.1 Menu em grupos, recolhível, com dica e item atual; barra inferior no celular; verificar nos três temas, 390, 1024 e 1440 px, teclado e leitor de tela
+- [x] 4.1 Menu em grupos, recolhível, com dica e item atual; barra inferior no celular; verificar nos três temas, 390, 1024 e 1440 px e com teclado (o leitor de tela foi adiado em 2026-11-26 para a 3.6 de `rebrand-12-cutover`)
 - [x] 4.2 Busca com páginas, candidaturas e ações, sem expor dado no HTML inicial; testes de permissão e de teclado
 - [x] 4.3 "Criar" e menu da conta; teste de teclado
 - [x] 4.4 Login novo, com erro genérico e limite por IP intactos; testes existentes passam
