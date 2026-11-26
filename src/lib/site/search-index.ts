@@ -1,6 +1,7 @@
 import "server-only";
 import type { Dictionary, Locale } from "@/i18n/config";
-import { getAllProjects, buildTaglines } from "@/lib/projects-repo";
+import { langAttr } from "@/lib/project-text";
+import { getAllProjects } from "@/lib/projects-repo";
 import { site } from "@/lib/site";
 import { SITE_THEMES } from "@/lib/site-theme";
 import { terminalHref } from "@/lib/terminal/address";
@@ -15,8 +16,7 @@ import { SEARCH_KINDS, type SearchItem } from "./search";
 export async function buildSearchIndex(dict: Dictionary, locale: Locale): Promise<SearchItem[]> {
   const t = dict.site;
   const { terms } = t.search;
-  const projects = await getAllProjects();
-  const taglines = buildTaglines(projects, dict.projects.taglines);
+  const projects = await getAllProjects(locale);
   const roles = dict.about.timeline as Record<string, { role: string; summary: string }>;
   const other = locale === "en" ? "pt-BR" : "en";
 
@@ -46,7 +46,8 @@ export async function buildSearchIndex(dict: Dictionary, locale: Locale): Promis
       id: `project-${project.slug}`,
       kind: "project" as const,
       title: project.name,
-      detail: taglines[project.slug] || undefined,
+      detail: project.tagline?.value || undefined,
+      detailLang: langAttr(project.tagline, locale),
       terms: [...project.stack, dict.projects.categories[project.category], project.year],
       target: { type: "page" as const, href: `${pageHref(locale, "projects")}/${project.slug}` },
     })),

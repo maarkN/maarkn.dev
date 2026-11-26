@@ -14,6 +14,8 @@
  *   so quando ainda estao vazias — mover para "Enviada" carimba a data de
  *   envio; mover para um desfecho carimba o fechamento; voltar atras nao apaga
  *   nem sobrescreve o carimbo original;
+ * - sair de recusada/retirada apaga o motivo de encerramento, e o evento guarda
+ *   qual era;
  * - mover para o estagio em que a candidatura JA esta e no-op: nem `update`,
  *   nem evento. E o que impede o board de encher a linha do tempo de
  *   "stage_change" identicos num duplo clique.
@@ -38,7 +40,7 @@ import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
 import { safeDbError } from "@/lib/safe-error";
 import type { StageMove } from "@/components/admin/kanban/kanban-types";
-import { isFunnelStage } from "@/lib/applications";
+import { closureReasonOnStageChange, closureReasonRemovedNote, isFunnelStage } from "@/lib/applications";
 import { getAdminLabels } from "@/lib/admin/request";
 import { fill } from "@/lib/admin/text";
 
@@ -91,6 +93,7 @@ export async function moveApplicationStage(
         stage: true,
         appliedAt: true,
         closedAt: true,
+        closureReason: true,
         folderName: true,
         company: { select: { name: true } },
       },
@@ -110,6 +113,7 @@ export async function moveApplicationStage(
     if (CLOSING_STAGES.has(stage) && !current.closedAt) {
       derived.closedAt = occurredAt;
     }
+    const closure = closureReasonOnStageChange(stage, current.closureReason);
 
     // Uma transacao: candidatura sem evento (ou o contrario) e um buraco na
     // auditoria que nada mais no sistema consegue reconstruir.
@@ -119,6 +123,7 @@ export async function moveApplicationStage(
         data: {
           stage,
           ...derived,
+          ...closure.patch,
           lastMcpTool: TOOL.move,
         },
       }),
@@ -130,6 +135,7 @@ export async function moveApplicationStage(
           fromStage: current.stage,
           toStage: stage,
           subject: `${current.stage} -> ${stage}`,
+          bodyMd: closureReasonRemovedNote(closure.removed),
           lastMcpTool: TOOL.move,
         },
         select: { id: true },

@@ -2,15 +2,15 @@
  * Vocabulario compartilhado do funil de candidaturas.
  *
  * Fonte da verdade: os enums NATIVOS do Postgres (`funnel_stage`,
- * `sponsorship_signal`) declarados em `prisma/schema.prisma`. Este arquivo so
- * traduz para pt-BR e agrupa — nao inventa valor nenhum. O `satisfies` em cada
- * lista faz o TypeScript quebrar o build se um valor sair do schema sem sair
- * daqui (e vice-versa).
+ * `sponsorship_signal`, `closure_reason`, `interview_status`) declarados em
+ * `prisma/schema.prisma`. Este arquivo so traduz e agrupa — nao inventa valor
+ * nenhum. O `satisfies` em cada lista faz o TypeScript quebrar o build se um
+ * valor sair do schema sem sair daqui (e vice-versa).
  *
- * **O import de `@prisma/client` e `import type`** de proposito: este modulo e
- * importado por Client Components (toolbar, formulario, badges) e um import de
- * valor arrastaria o runtime do Prisma para o bundle do navegador. Tipo e
- * apagado na compilacao; nada do Prisma chega ao cliente.
+ * **Os imports sao `import type`** de proposito: este modulo e importado por
+ * Client Components (toolbar, formulario, badges) e um import de valor
+ * arrastaria o runtime do Prisma (ou o `server-only` do i18n) para o bundle do
+ * navegador. Tipo e apagado na compilacao; nada disso chega ao cliente.
  *
  * O tracker plano `JobApplication` (com `status` = not_applied|applied|replied|
  * interview|offer|rejected e `sponsorsVisa Boolean`) morreu no F2a — a
@@ -19,7 +19,13 @@
  * `FUNNEL_STAGES`; se procurava `sponsorsVisa`, leia a secao "duas rotas".
  */
 
-import type { FunnelStage, SponsorshipSignal } from "@prisma/client";
+import type {
+  ClosureReason,
+  FunnelStage,
+  InterviewStatus,
+  SponsorshipSignal,
+} from "@prisma/client";
+import type { Locale } from "@/i18n/config";
 
 /* ── funil ────────────────────────────────────────────────────────────────
  *
@@ -165,6 +171,129 @@ export function stageLabel(value: string | null | undefined): string {
 
 export function isFunnelStage(value: string): value is FunnelStage {
   return (FUNNEL_STAGES as readonly string[]).includes(value);
+}
+
+/* ── motivo de encerramento ────────────────────────────────────────────────
+ *
+ * A categoria que explica por que uma candidatura RECUSADA ou RETIRADA acabou.
+ * Silencio do recrutador nao e motivo, e estagio (`no_response`, `ghosted`).
+ * O texto livre continua em `Application.outcomeReason`, em qualquer estagio.
+ *
+ * Os rotulos ficam aqui nos dois idiomas, num mapa so: o backoffice de hoje usa
+ * o portugues e as telas do rebranding usam os dois.
+ */
+
+/** Idioma dos rotulos enquanto a interface do backoffice e so em portugues (A4). */
+const ADMIN_LOCALE: Locale = "pt-BR";
+
+export const CLOSURE_REASONS = [
+  "salary",
+  "visa",
+  "technical_fit",
+  "seniority",
+  "language",
+  "location",
+  "job_closed",
+  "internal_candidate",
+  "withdrawal",
+  "not_informed",
+  "other",
+] as const satisfies readonly ClosureReason[];
+
+export const CLOSURE_REASON_LABELS: Record<
+  ClosureReason,
+  Record<Locale, string>
+> = {
+  salary: { "pt-BR": "Salário", en: "Salary" },
+  visa: { "pt-BR": "Visto", en: "Visa" },
+  technical_fit: { "pt-BR": "Aderência técnica", en: "Technical fit" },
+  seniority: { "pt-BR": "Senioridade", en: "Seniority" },
+  language: { "pt-BR": "Idioma", en: "Language" },
+  location: { "pt-BR": "Local", en: "Location" },
+  job_closed: { "pt-BR": "Vaga fechada", en: "Job closed" },
+  internal_candidate: {
+    "pt-BR": "Candidato interno",
+    en: "Internal candidate",
+  },
+  withdrawal: { "pt-BR": "Desistência", en: "Withdrawal" },
+  not_informed: { "pt-BR": "Não informado", en: "Not informed" },
+  other: { "pt-BR": "Outro", en: "Other" },
+};
+
+export function closureReasonLabel(
+  value: ClosureReason,
+  locale: Locale = ADMIN_LOCALE,
+): string {
+  return CLOSURE_REASON_LABELS[value][locale];
+}
+
+/** Os unicos estagios em que uma candidatura tem motivo de encerramento. */
+export const CLOSURE_REASON_STAGES = [
+  "rejected",
+  "withdrawn",
+] as const satisfies readonly FunnelStage[];
+
+export function acceptsClosureReason(stage: FunnelStage): boolean {
+  return (CLOSURE_REASON_STAGES as readonly FunnelStage[]).includes(stage);
+}
+
+export type ClosureReasonChange = {
+  /** Para espalhar no `data` do update do estagio. Vazio = nao mexe. */
+  patch: { closureReason?: ClosureReason | null };
+  /** O motivo que esta mudanca apaga, para o historico. */
+  removed: ClosureReason | null;
+};
+
+/**
+ * O que uma mudanca de estagio faz com o motivo: sair de recusada/retirada o
+ * apaga, e ir de uma para a outra o mantem. TODO caminho que escreve `stage`
+ * (as tools do MCP, as tres telas e a reversao de uma rodada) passa por aqui e
+ * grava o `patch` no MESMO update — o CHECK `Application_closureReason_stage`
+ * recusa a linha que ficar no meio.
+ */
+export function closureReasonOnStageChange(
+  to: FunnelStage,
+  current: ClosureReason | null | undefined,
+): ClosureReasonChange {
+  if (!current || acceptsClosureReason(to)) return { patch: {}, removed: null };
+  return { patch: { closureReason: null }, removed: current };
+}
+
+/** Corpo do evento de mudanca de estagio que apagou um motivo; `null` se nao apagou. */
+export function closureReasonRemovedNote(
+  removed: ClosureReason | null,
+): string | null {
+  return removed
+    ? `Motivo de encerramento removido: ${closureReasonLabel(removed)}.`
+    : null;
+}
+
+/* ── situacao da entrevista ────────────────────────────────────────────────
+ * As regras que ligam a situacao a data estao em `@/lib/interviews`.
+ */
+
+export const INTERVIEW_STATUSES = [
+  "planned",
+  "scheduled",
+  "completed",
+  "cancelled",
+] as const satisfies readonly InterviewStatus[];
+
+export const INTERVIEW_STATUS_LABELS: Record<
+  InterviewStatus,
+  Record<Locale, string>
+> = {
+  planned: { "pt-BR": "Prevista", en: "Planned" },
+  scheduled: { "pt-BR": "Marcada", en: "Scheduled" },
+  completed: { "pt-BR": "Realizada", en: "Completed" },
+  cancelled: { "pt-BR": "Cancelada", en: "Cancelled" },
+};
+
+export function interviewStatusLabel(
+  value: InterviewStatus,
+  locale: Locale = ADMIN_LOCALE,
+): string {
+  return INTERVIEW_STATUS_LABELS[value][locale];
 }
 
 /* ── duas rotas: patrocinio de visto NAO e um booleano ────────────────────

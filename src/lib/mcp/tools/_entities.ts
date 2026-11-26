@@ -11,6 +11,7 @@ import {
   normalizeSlug,
   normalizeUrl,
   omitUndefined,
+  proseSchema,
   seenStamp,
   shortSchema,
   urlSchema,
@@ -51,6 +52,11 @@ export const companyInputSchema = z.object({
   vendorFolderName: keySchema
     .optional()
     .describe("Body shop/intermediaria: a pasta da empresa que INTERMEDIA esta (ex.: Huckleberry -> 'Devlane')."),
+  aboutMd: proseSchema
+    .optional()
+    .describe(
+      "Sobre a empresa: o que ela faz, tamanho, momento, cultura. Pertence a EMPRESA, entao aparece em todas as candidaturas feitas nela; o que for so de uma vaga vai em projectInfoMd."
+    ),
   notesMd: markdownSchema.optional(),
 });
 
@@ -111,6 +117,7 @@ export async function upsertCompany(
     industry: input.industry,
     sizeBucket: input.sizeBucket,
     vendorCompanyId,
+    aboutMd: input.aboutMd,
     notesMd: input.notesMd,
   });
 
@@ -265,6 +272,28 @@ export async function requireApplicationId(folderName: string): Promise<{
     );
   }
   return row;
+}
+
+/** Contato desta candidatura (ou da empresa dela) pelo nome. Nunca cria. */
+export async function requireContactId(
+  contactName: string,
+  applicationId: string
+): Promise<string> {
+  const name = normalizeKey(contactName, "contactName");
+  const contact = await db.contact.findFirst({
+    where: {
+      name,
+      OR: [{ applicationId }, { company: { applications: { some: { id: applicationId } } } }],
+    },
+    select: { id: true },
+  });
+  if (!contact) {
+    throw new McpToolError(
+      `Nenhum contato '${name}' vinculado a esta candidatura. Grave-o antes com 'upsert_application' (bloco contacts).`,
+      "invalid_arguments"
+    );
+  }
+  return contact.id;
 }
 
 export async function findJobId(sourceUrl: string): Promise<string | null> {

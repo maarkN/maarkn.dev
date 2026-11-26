@@ -17,11 +17,12 @@
  * aqui, é o caminho normal para um valor que ainda não foi catalogado.
  */
 
-import type { CoverageLevel, DocKind } from "@prisma/client";
+import type { CoverageLevel, DocKind, InterviewStatus } from "@prisma/client";
 import {
   makeStatusBadge,
   type StatusStyles,
 } from "@/components/admin/status-badge";
+import { INTERVIEW_STATUSES, interviewStatusLabel } from "@/lib/applications";
 
 /* ── RequirementCoverage.coverage (`coverage_level`) ──────────────────────── */
 
@@ -159,6 +160,30 @@ export const HONESTY_SEVERITY_STYLES: StatusStyles = {
 export const HonestySeverityBadge = makeStatusBadge(
   HONESTY_SEVERITY_STYLES,
   "HonestySeverity",
+);
+
+/* ── Interview.status (`interview_status`) ────────────────────────────────── */
+
+const INTERVIEW_STATUS_CLASSNAMES: Record<InterviewStatus, string> = {
+  planned: "text-ink-3",
+  scheduled: "text-beam-2",
+  completed: "text-ok",
+  cancelled: "text-ink-3",
+};
+
+export const INTERVIEW_STATUS_STYLES: StatusStyles = Object.fromEntries(
+  INTERVIEW_STATUSES.map((status) => [
+    status,
+    {
+      label: interviewStatusLabel(status),
+      className: INTERVIEW_STATUS_CLASSNAMES[status],
+    },
+  ]),
+);
+
+export const InterviewStatusBadge = makeStatusBadge(
+  INTERVIEW_STATUS_STYLES,
+  "InterviewStatus",
 );
 
 /* ── Interview.outcome — texto livre ──────────────────────────────────────── */

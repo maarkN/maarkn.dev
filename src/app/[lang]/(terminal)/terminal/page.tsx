@@ -37,7 +37,7 @@ export default async function TerminalPage({ params }: PageProps<"/[lang]/termin
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
-  const data = await loadTerminalData(dict);
+  const data = await loadTerminalData(dict, lang);
 
   return (
     <TerminalApp

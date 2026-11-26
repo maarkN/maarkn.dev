@@ -19,7 +19,7 @@ Uma aplicação [Next.js 16](https://nextjs.org) em TypeScript, estilizada com t
 - **Sequência de boot** — seis linhas digitadas caractere a caractere na primeira visita da sessão do navegador (3–5 s), puláveis com qualquer tecla ou toque e omitidas por completo com `prefers-reduced-motion`. `reboot` roda de novo.
 - **Shell** — barra de status estilo tmux (`maarkn@dev · título · theme · font · lang · relógio`), menu de comandos com atalhos numéricos (`1`–`6`, `?`, `⌫`), tela rolável e prompt `maarkn@dev:~$` com cursor sintético. No celular o menu vira uma faixa horizontal no rodapé.
 - **Engine de comandos** — resolução sem distinção de maiúsculas com aliases (`about` → `whoami`, `work` → `projects`, `resume` → `cv`…), histórico com `↑`/`↓`, autocomplete com `Tab` (comandos, `cat <arquivo>`, `cd <dir>`), `Ctrl+C` / `Ctrl+L`, comandos assíncronos que anexam ou repintam linhas enquanto rodam e um prompt interativo que os comandos podem assumir para fazer perguntas.
-- **Comandos de conteúdo** — `whoami`, `experience`, `skills`, `projects` + `open <n>`, `writing` + `read <n>`, `contact`, `cv`, `ls` / `cat <arquivo>`, `neofetch`. Eles só *formatam* o que o resto do site já sabe: projetos do repositório (Postgres com fallback estático), timeline e toolkit de `lib/`, posts do Ghost (mockados quando o CMS não está configurado). Nada é duplicado dentro do terminal.
+- **Comandos de conteúdo** — `whoami`, `experience`, `skills`, `projects` + `open <n>`, `writing` + `read <n>`, `contact`, `cv`, `ls` / `cat <arquivo>`, `neofetch`. Eles só *formatam* o que o resto do site já sabe: projetos e seus textos do repositório (Postgres, com a semente como fallback), timeline e toolkit de `lib/`, posts do Ghost (mockados quando o CMS não está configurado). Nada é duplicado dentro do terminal.
 - **`ask <pergunta>`** — a assistente RAG do site dentro do terminal: streaming token a token, markdown renderizado na tipografia do terminal, contexto da conversa mantido na sessão (`ask --new` esquece), `Ctrl+C` aborta. Por trás está o `/api/chat`, com limite por IP e por dia, log no admin e respostas de demonstração quando não há chave de API. Uma flag opcional encaminha para a assistente qualquer entrada desconhecida com três ou mais palavras.
 - **`mail`** — o formulário de contato como conversa: nome → email → empresa → mensagem → `send? [Y/n]`, validado em linha com o mesmo schema Zod da server action, `Esc` / `Ctrl+C` cancelam, respostas nunca entram no histórico, uma mensagem por minuto por aba.
 - **Navegação** — `cd projects|career|blog|links`, `cd ~` para voltar ao início, `pwd`, `lang en|pt` e deep-links como `/en/terminal?cmd=projects` ou `/pt-BR/terminal?cmd=whoami;skills` (os antigos, na home, são redirecionados). A tela é reconstruída quando você volta de uma página do site, e a barra tem o caminho de volta para a página de onde você veio.
@@ -134,7 +134,7 @@ pnpm test:e2e
 
 ### Verificações de ponta a ponta
 
-O `scripts/e2e-site.mjs` dirige o Chrome headless pelo site público como o `pnpm start` o serve: abre cada página, rola com a roda do mouse de verdade e relata cada asserção. Hoje ele percorre a Versão CLI nos dois idiomas, confere que o tema já está lá na primeira pintura e cobre o topo, a busca, os idiomas e a passagem de uma página a outra; a lista completa do que precisa cobrir ao fim do rebranding está em [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), e cada change `rebrand-*` acrescenta os seus casos em `CASES`.
+O `scripts/e2e-site.mjs` dirige o Chrome headless pelo site público como o `pnpm start` o serve: abre cada página, rola com a roda do mouse de verdade e relata cada asserção. Hoje ele percorre a Versão CLI e cada projeto nos dois idiomas, confere que o tema já está lá na primeira pintura, cobre o topo, a busca, os idiomas e a passagem de uma página a outra, e confere que a Versão CLI mantém a paleta e a fonte na troca de idioma; a lista completa do que precisa cobrir ao fim do rebranding está em [`docs/design/verificacoes.md`](./docs/design/verificacoes.md), e cada change `rebrand-*` acrescenta os seus casos em `CASES`.
 
 - `--width 390 --height 844` para a viewport estreita, `--only busca` para parte dos casos, `--verbose` para listar o que passou, `--json` para o resultado cru.
 - `--holo` roda no lugar deles os casos da referência do holograma (`/[lang]/holo`), uma página interna que a produção não tem: gere com `HOLO_REFERENCE=1 pnpm build`, ou use `pnpm dev`. `--shots <pasta>` também grava as capturas nos três temas, em 1x e 2x.
@@ -173,7 +173,14 @@ pnpm db:migrate   # prisma migrate dev
 pnpm db:seed      # usuário admin + projetos iniciais
 pnpm db:ingest    # embeda knowledge/**/*.md no pgvector (precisa de OPENAI_API_KEY)
 pnpm db:studio    # Prisma Studio
+
+pnpm db:sync-projects       # cria os projetos que faltam no banco; nunca mexe em texto
+pnpm db:fill-project-text   # copia o texto da semente para colunas vazias, uma vez por banco; nunca sobrescreve
 ```
+
+**O banco é a fonte do texto dos projetos**, em português e inglês, e é em `/admin/projects` que ele se edita. `lib/projects.ts` e os dicionários são a **semente**: completam o banco uma vez, dão texto aos projetos novos e são o que o site mostra sem ele, então corrigir o texto de um projeto no dicionário não muda um site que tem banco ([ADR 0003](./docs/adr/0003-banco-como-fonte-do-portfolio.md), [`DEPLOY.md` §7](./DEPLOY.md#7-project-text)).
+
+Os testes que precisam de um Postgres de verdade rodam quando `TEST_DATABASE_URL` existe (para o container acima, `postgresql://maarkn:maarkn@localhost:5433/maarkn_website`); eles criam e apagam um banco próprio. Sem a variável, são pulados.
 
 `knowledge/` guarda o CV e os dossiês de projeto de onde a assistente responde; só o README dela é versionado (veja [`knowledge/README.md`](./knowledge/README.md)).
 
@@ -230,7 +237,7 @@ src/
 │   │   ├── ask-command.tsx · mail-command.tsx
 │   │   ├── data.ts                 # monta TerminalData no servidor
 │   │   ├── deeplink.ts · session.ts · anchors.ts · locale.ts · files.ts · listings.tsx · rich.tsx
-│   ├── projects-repo.ts · projects.ts · timeline.ts · toolkit.ts · site.ts · ghost.ts
+│   ├── projects-repo.ts · project-text.ts · project-seed.ts · project-fill.ts · projects.ts · timeline.ts · toolkit.ts · site.ts · ghost.ts
 │   ├── chat-client.ts · chat-system-prompt.ts · chat-log.ts · rag.ts · embeddings.ts · rate-limit.ts
 │   ├── contact-schema.ts · seo.ts · og.tsx · db.ts · auth.ts · uploads.ts
 ├── dictionaries/en.json · pt-BR.json
@@ -238,7 +245,8 @@ src/
 └── proxy.ts                        # roteamento de locale (o middleware do Next 16)
 prisma/                             # schema, migrations, seed
 scripts/                            # check-dictionaries, check-admin-utilities, check-admin-colors, check-contrast (lint), ingest-knowledge,
-                                    # check-commands-doc, a11y-admin-axe, e2e-site
+                                    # sync-projects, fill-project-text, align-english-text, check-commands-doc,
+                                    # a11y-admin-axe, e2e-site
 knowledge/                          # CV + dossiês de projeto para a assistente (ignorado pelo git)
 ```
 
@@ -249,7 +257,7 @@ knowledge/                          # CV + dossiês de projeto para a assistente
 - Commits seguem o [Conventional Commits](https://www.conventionalcommits.org).
 - Nomes de comandos e arquivos do terminal ficam em inglês nos dois idiomas; só descrições e mensagens são traduzidas, e `pnpm lint` falha quando os dois dicionários divergem.
 - Sem `innerHTML`: toda linha de saída é um nó React, e tudo o que o visitante digita é exibido literalmente.
-- Conteúdo mora em `lib/` e nos dicionários; `lib/terminal` só formata.
+- Conteúdo mora no banco (projetos), em `lib/` e nos dicionários; `lib/terminal` só formata.
 - Animações respeitam `prefers-reduced-motion` nas duas superfícies, e as do admin são conferidas contra um controle negativo (`node scripts/a11y-admin-axe.mjs --motion` / `--motion no-preference`).
 - O vocabulário de token do shadcn é exclusivo do admin, e o backoffice só usa as cores do tema; o `pnpm lint` reprova o contrário.
 

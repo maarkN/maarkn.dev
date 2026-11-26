@@ -25,6 +25,7 @@
     "db:seed:demo": "tsx prisma/seed-demo.ts",
     "db:ingest": "tsx scripts/ingest-knowledge.ts",
     "db:sync-projects": "tsx scripts/sync-projects.ts",
+    "db:fill-project-text": "tsx scripts/fill-project-text.ts",
     "db:studio": "prisma studio"
   },
   "prisma": {

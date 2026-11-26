@@ -12,6 +12,7 @@
  *   node scripts/e2e-site.mjs             # ou: pnpm test:e2e
  *   … --width 390 --height 844            # viewport estreita
  *   … --only cli:percurso                 # só os casos cujo nome contém isso
+ *   … --only cli-lang                     # a paleta e a fonte na troca de idioma
  *   … --holo                              # só a referência do holograma, que
  *                                         # não vai para produção: precisa de
  *                                         # HOLO_REFERENCE=1 pnpm build
@@ -38,6 +39,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { adminCases } from "./e2e-admin.mjs";
 import { chromeCases } from "./e2e-chrome.mjs";
+import { cliLookCases } from "./e2e-cli-look.mjs";
 import { holoCases } from "./e2e-holo.mjs";
 import { themeCases } from "./e2e-theme.mjs";
 
@@ -138,17 +140,70 @@ async function walkTerminal(page, t, locale) {
   t.equal(page.errors, [], "nenhum erro no console");
 }
 
+/**
+ * Os projetos: a lista e o detalhe de cada um, no idioma da rota, venha o texto
+ * do banco ou da semente. Nenhum campo pode aparecer vazio, e o que só existe
+ * no outro idioma precisa dizer em qual está.
+ */
+async function walkProjects(page, t, locale) {
+  await page.open(`/${locale}/projects`);
+  t.equal(await page.evaluate(`document.documentElement.lang`), locale, "idioma do documento");
+  const links = await page.evaluate(
+    `[...new Set([...document.querySelectorAll("main a[href]")]
+       .map((a) => a.getAttribute("href"))
+       .filter((href) => href.startsWith("/${locale}/projects/")))]`,
+  );
+  t.ok(links.length > 0, "a lista tem projetos");
+
+  for (const href of links) {
+    await page.open(href);
+    const found = await page.evaluate(
+      `(() => {
+        const article = document.querySelector("article");
+        const text = (el) => (el ? el.textContent.trim() : null);
+        const prose = [...article.querySelectorAll(".prose-term > p, .prose-term li")];
+        const lead = article.querySelector("h1 + p");
+        const gallery = article.querySelector('section[aria-labelledby="gallery"]');
+        const marked = [...article.querySelectorAll("[lang]")].map((el) => el.lang);
+        return {
+          h1: [...document.querySelectorAll("h1")].map(text),
+          empty: [...article.querySelectorAll("p, h2, li, figcaption")].filter((el) => !text(el) && !el.querySelector("img")).length,
+          lead: text(lead),
+          prose: prose.length,
+          headings: article.querySelectorAll(".prose-term h2").length,
+          description: document.querySelector('meta[name="description"]')?.content ?? null,
+          images: gallery ? gallery.querySelectorAll("img, [role=img]").length : null,
+          withoutAlt: article.querySelectorAll("img:not([alt]), img[alt='']").length,
+          sameLang: marked.filter((lang) => lang === "${locale}").length,
+        };
+      })()`,
+    );
+    const name = href.split("/").pop();
+    t.equal(found.h1.length, 1, `${name}: um único h1`);
+    t.ok(found.lead, `${name}: tem resumo`);
+    t.ok(found.prose >= 3, `${name}: tem descrição, função e entregas`, `${found.prose} blocos`);
+    t.equal(found.headings, 2, `${name}: tem os títulos de função e de entregas`);
+    t.equal(found.empty, 0, `${name}: nenhum campo vazio`);
+    t.equal(found.description, found.lead, `${name}: a metadata traz o resumo`);
+    t.ok(found.images === null || found.images > 0, `${name}: sem imagens, não há seção de galeria`);
+    t.equal(found.withoutAlt, 0, `${name}: toda imagem tem texto alternativo`);
+    t.equal(found.sameLang, 0, `${name}: só marca o idioma do que está em outro`);
+  }
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
 const CASES = HOLO
   ? holoCases({ shots: SHOTS, width: WIDTH })
   : ADMIN
   ? adminCases({ width: WIDTH, height: HEIGHT })
   : [
-      ...["en", "pt-BR"].map((locale) => ({
-        name: `cli:percurso:${locale}`,
-        run: (page, t) => walkTerminal(page, t, locale),
-      })),
+      ...["en", "pt-BR"].flatMap((locale) => [
+        { name: `cli:percurso:${locale}`, run: (page, t) => walkTerminal(page, t, locale) },
+        { name: `projects:${locale}`, run: (page, t) => walkProjects(page, t, locale) },
+      ]),
       ...themeCases,
       ...chromeCases({ width: WIDTH, height: HEIGHT }),
+      ...cliLookCases,
     ];
 
 /* ── asserções ───────────────────────────────────────────────────────────── */
@@ -469,6 +524,31 @@ async function createPage(cdp) {
     return Buffer.from(data, "base64");
   };
 
+  /** Recarrega o documento, como F5. */
+  const reload = async () => {
+    response = null;
+    const loaded = new Promise((resolve) => {
+      const stop = cdp.on((msg) => {
+        if (msg.sessionId !== sessionId || msg.method !== "Page.loadEventFired") return;
+        stop();
+        resolve();
+      });
+    });
+    await call("Page.reload");
+    await loaded;
+    if (response?.status !== 200) throw new Error(`recarregar respondeu ${response?.status ?? "nada"}`);
+  };
+
+  /**
+   * O botão voltar do navegador. Uma navegação do roteador é do mesmo
+   * documento e não dispara `load`: quem chama espera o que precisa.
+   */
+  const back = async () => {
+    const { currentIndex, entries } = await call("Page.getNavigationHistory");
+    if (currentIndex < 1) throw new Error("não há para onde voltar");
+    await call("Page.navigateToHistoryEntry", { entryId: entries[currentIndex - 1].id });
+  };
+
   return {
     errors,
     open,
@@ -487,6 +567,8 @@ async function createPage(cdp) {
     press,
     type,
     screenshot,
+    reload,
+    back,
     call,
     /** Eventos CDP desta aba. Devolve o desligamento. */
     on: (method, handler) =>

@@ -18,8 +18,9 @@ import { db, dbConfigured } from "@/lib/db";
  * ── Por que `select` explícito e não `include` ─────────────────────────────
  * `include: { documents: true }` traria `contentMd` de todo documento — o
  * markdown inteiro do CV e da carta, por candidatura, para desenhar uma tabela
- * de metadados. O mesmo vale para `Job.descriptionMd`/`requirementsMd`. As
- * colunas longas só entram onde a tela realmente as mostra.
+ * de metadados. O mesmo vale para `Job.requirementsMd`. As colunas longas só
+ * entram onde a tela realmente as mostra: `Job.descriptionMd`,
+ * `Company.aboutMd` e `projectInfoMd`, no bloco de contexto.
  *
  * ── Ordenação ──────────────────────────────────────────────────────────────
  * Fixada aqui, não na tela: `events` em ordem CRONOLÓGICA ascendente (a
@@ -43,8 +44,10 @@ const DOSSIER_SELECT = {
   appliedAt: true,
   firstResponseAt: true,
   closedAt: true,
+  closureReason: true,
   outcomeReason: true,
   targetSalary: true,
+  projectInfoMd: true,
   summaryMd: true,
   notesMd: true,
   visibility: true,
@@ -70,6 +73,7 @@ const DOSSIER_SELECT = {
       market: true,
       industry: true,
       sizeBucket: true,
+      aboutMd: true,
     },
   },
   job: {
@@ -88,6 +92,7 @@ const DOSSIER_SELECT = {
       active: true,
       priority: true,
       fitScore: true,
+      descriptionMd: true,
     },
   },
   resumeTemplate: { select: { id: true, key: true, name: true } },
@@ -154,6 +159,8 @@ const DOSSIER_SELECT = {
   interviews: {
     select: {
       id: true,
+      orderIndex: true,
+      status: true,
       round: true,
       kind: true,
       scheduledAt: true,
@@ -166,7 +173,8 @@ const DOSSIER_SELECT = {
       outcome: true,
       contact: { select: { id: true, name: true } },
     },
-    orderBy: [{ round: "asc" }, { scheduledAt: "asc" }],
+    // A ordem do processo; a data so desempata.
+    orderBy: [{ orderIndex: "asc" }, { scheduledAt: "asc" }, { createdAt: "asc" }],
   },
   screeningQuestions: {
     select: {

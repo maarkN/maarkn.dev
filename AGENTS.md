@@ -69,4 +69,4 @@ Built on `docs/design/fundamentos.md` and `docs/design/moldura.md`. Every elemen
 - What the MCP writes is born private. Agents create and move records. The one tool that deletes is `revert_sync_run`, which undoes a closed sync run and asks for explicit confirmation; publishing follows ADR 0005.
 - Files that contain personal data are never served from `/uploads`, which is public and cached forever.
 - Prisma migrations are additive while the rebranding branch is open: two branches change the schema.
-- Every visible string of the public site comes from `src/dictionaries/*.json`, in both locales.
+- Every visible string of the public site comes from `src/dictionaries/*.json`, in both locales, except the projects' text: the database is its source, in both languages, and the dictionaries only seed it (ADR 0003). A fix to published project copy goes in the backoffice; no script or migration overwrites text that is already in the database.

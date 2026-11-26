@@ -10,6 +10,7 @@ import {
   SponsorshipBadge,
   VisibilityBadge,
 } from "@/components/admin/status-badge";
+import { DossierContext } from "@/components/admin/application-detail/dossier-context";
 import { ApplicationDossierTabs } from "@/components/admin/application-detail/dossier-tabs";
 import { VerificationBadge } from "@/components/admin/application-detail/detail-badges";
 import {
@@ -26,7 +27,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { SPONSORSHIP_HINTS, sourceLabel } from "@/lib/applications";
+import {
+  SPONSORSHIP_HINTS,
+  closureReasonLabel,
+  sourceLabel,
+} from "@/lib/applications";
 import { auth } from "@/lib/auth";
 import { dbConfigured } from "@/lib/db";
 import { getAdminFormat } from "@/lib/admin/request";
@@ -257,6 +262,12 @@ export default async function ApplicationDetailPage({
                   <span className="tabular-nums">{formatDate(app.closedAt)}</span>
                 }
               />
+              <InfoField
+                label="Motivo de encerramento"
+                value={
+                  app.closureReason ? closureReasonLabel(app.closureReason) : undefined
+                }
+              />
               <InfoField label="Motivo do desfecho" value={app.outcomeReason} />
 
               <InfoField label="Aderência" value={app.fit} />
@@ -403,6 +414,13 @@ export default async function ApplicationDetailPage({
           interviews={app.interviews}
           checklistItems={app.checklistItems}
           checklistAction={setChecklistItemDone}
+        />
+
+        {/* ── empresa, projeto e vaga: sempre as três, mesmo vazias ──────────── */}
+        <DossierContext
+          company={company}
+          projectInfoMd={app.projectInfoMd}
+          job={job}
         />
 
         <p className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
