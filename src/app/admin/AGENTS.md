@@ -226,7 +226,10 @@ O `TablePager` escreve "74 registros · Página 2 de 4" e os botões "Anterior P
 **O quadro** (`/admin/applications/board`) é a mesma leitura em seis colunas (`BOARD_COLUMNS` em
 `@/lib/admin/funnel`): contagem real por coluna (`groupBy`), teto de cartões por coluna com o resto contado,
 arrastar e `←`/`→` pelo teclado, a mudança mostrada na hora (`useOptimistic`) e desfeita sozinha se o
-servidor recusa, e o aviso de sucesso com "Desfazer". Ver `@/components/admin/kanban/kanban-board.tsx`.
+servidor recusa, e o aviso de sucesso com "Desfazer". "Desfazer" não é outro movimento:
+`moveApplicationStage` devolve o evento que gravou e `undoApplicationStageMove(id, evento)` desfaz aquele
+movimento, com a data de envio que ele carimbou. O foco acompanha o cartão movido pelas setas até as
+transições do quadro terminarem. Ver `@/components/admin/kanban/kanban-board.tsx`.
 
 ---
 
@@ -359,6 +362,7 @@ import { deleteApplication } from "@/app/_actions/applications";
   id={row.id}
   name={companyName}
   title={fill(words.delete.title, { name: companyName })}   // "Excluir a candidatura Acme?"
+  subject={<>{which} · {folder}</>}                         // qual delas, quando o nome não diz
   lost={words.delete.lost}                                  // o que vai junto
   confirmLabel={words.delete.confirm}                       // "Excluir candidatura"
   triggerLabel={fill(words.delete.trigger, { name: companyName })}
@@ -368,7 +372,10 @@ import { deleteApplication } from "@/app/_actions/applications";
 
 A action **retorna** `ActionResult` (não `void`, senão não há aviso de falha) e recebe `(id, digitado)` —
 quem precisa conferir o nome de novo no servidor confere (`revokeApiKey`). Revogar uma chave usa o mesmo
-componente com `icon={Ban}`.
+componente com `icon={Ban}`. Quando dois registros podem ter o mesmo nome (duas candidaturas na mesma
+empresa, uma por mercado), `subject` diz qual é, dentro da descrição da janela: a lista de candidaturas usa
+`DeleteApplication` (`src/app/admin/applications/delete-application.tsx`), com a vaga, o lugar e a pasta no
+vault.
 
 > **Por que `action={deleteApplication}` e não `onConfirm={() => deleteApplication(row.id)}`:** um Server
 > Component **não pode** passar uma função arbitrária para um Client Component — a arrow function não é

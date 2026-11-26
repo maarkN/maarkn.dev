@@ -81,11 +81,15 @@ describe("a refusal of a field", () => {
 });
 
 describe("a success", () => {
-  it("uses the verb of its button", async () => {
+  // The scenario "Salvar contato" of spec admin-forms: the notice uses the verb of the button.
+  it.each([
+    ["pt-BR", "Salvar contato", "Contato salvo."],
+    ["en", "Save contact", "Contact saved."],
+  ] as const)("uses the verb of its button, in %s", async (locale, button, said) => {
     update.mockResolvedValue({ id: "c1" });
-    jar = { "admin-locale": "en" };
+    jar = { "admin-locale": locale };
     const result = await saveContact("c1", form({ name: "Jane Doe" }));
-    expect(result).toEqual({ ok: true, data: { id: "c1" }, message: "Contact saved." });
-    expect(en.admin.contacts.contact.save).toBe("Save contact");
+    expect(result).toEqual({ ok: true, data: { id: "c1" }, message: said });
+    expect({ "pt-BR": ptBR, en }[locale].admin.contacts.contact.save).toBe(button);
   });
 });

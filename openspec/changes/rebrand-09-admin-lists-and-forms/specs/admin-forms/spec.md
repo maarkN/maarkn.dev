@@ -27,9 +27,9 @@ O erro SHALL aparecer junto ao campo, dizer o que houve e como corrigir, ser anu
 ### Requirement: Botões dizem o que fazem
 O botão SHALL nomear a ação, e a confirmação MUST usar o mesmo verbo.
 
-#### Scenario: Salvar projeto
-- **WHEN** Marco usa "Salvar projeto"
-- **THEN** o aviso diz "Projeto salvo"
+#### Scenario: Salvar contato
+- **WHEN** Marco usa "Salvar contato"
+- **THEN** o aviso diz "Contato salvo"
 
 ### Requirement: Confirmação destrutiva
 Excluir SHALL pedir a digitação do nome do registro, dizer o que se perde e ter cancelar como padrão.
