@@ -36,12 +36,14 @@ ps: ## Show container status
 deploy: ## Manual deploy: sync main, migrate, rebuild app (mirrors CI)
 	git fetch --prune origin
 	git reset --hard origin/main
+	$(COMPOSE) build migrate # `run` reuses the image of the previous deploy
 	$(COMPOSE) up -d postgres
 	$(COMPOSE) run --rm migrate
 	$(COMPOSE) up -d --build app
 	docker image prune -f
 
-migrate: ## Apply Prisma migrations (prisma migrate deploy)
+migrate: ## Apply Prisma migrations and fill in the projects' text
+	$(COMPOSE) build migrate
 	$(COMPOSE) up -d postgres
 	$(COMPOSE) run --rm migrate
 

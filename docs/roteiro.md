@@ -14,6 +14,15 @@ O OpenSpec não guarda ordem entre changes; ela fica aqui. Cada proposal repete 
 | 6 | `agent-01-portfolio-drafts` | portfolio-01 |
 | 7 | `agent-02-skills-plugin` | dossier-01, dossier-02, agenda-01, agent-01 |
 
+### Correções
+
+Independentes das demais; entram quando aprovadas. Depois de cada merge, trazer a `main` para `feat/rebranding`.
+
+| Change | Depende de |
+|---|---|
+| `cli-01-language-keeps-look` | infra-01 |
+| `infra-02-next-upgrade` | infra-01 |
+
 ## Trilha B: `feat/rebranding`
 
 | Ordem | Change | Depende de |

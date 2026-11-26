@@ -36,6 +36,8 @@ import {
   FUNNEL_STAGES,
   SPONSORSHIP_SIGNALS,
   buildFolderName,
+  closureReasonOnStageChange,
+  closureReasonRemovedNote,
   slugPart,
 } from "@/lib/applications";
 import type { ActionResult } from "./action-result";
@@ -329,7 +331,15 @@ export async function updateApplication(
   try {
     const companyId = await resolveCompanyId(data);
     const jobId = await resolveJobId(data, companyId);
-    await db.application.update({
+    const current = await db.application.findUnique({
+      where: { id },
+      select: { stage: true, closureReason: true },
+    });
+    const closure = closureReasonOnStageChange(
+      data.stage,
+      current?.closureReason,
+    );
+    const update = db.application.update({
       where: { id },
       data: {
         ...applicationData(data, { companyId, jobId, folderName }),
@@ -338,10 +348,32 @@ export async function updateApplication(
         // que a sincronizacao do vault associou, e a tela nao tem como saber se
         // o campo veio vazio por escolha ou porque a URL vive so no vault.
         jobId: jobId ?? undefined,
+        ...closure.patch,
         lastMcpTool: "admin:updateApplication",
         lastSeenAt: new Date(),
       },
     });
+    // O formulario tambem muda o estagio, e reabrir uma candidatura apaga o
+    // motivo de encerramento: sem o evento, o historico nao explicaria nem um
+    // nem outro. Na mesma transacao, como nos outros dois caminhos da tela.
+    if (current && current.stage !== data.stage) {
+      await db.$transaction([
+        update,
+        db.applicationEvent.create({
+          data: {
+            applicationId: id,
+            type: "stage_change",
+            fromStage: current.stage,
+            toStage: data.stage,
+            subject: `${current.stage} -> ${data.stage}`,
+            bodyMd: closureReasonRemovedNote(closure.removed),
+            lastMcpTool: "admin:updateApplication",
+          },
+        }),
+      ]);
+    } else {
+      await update;
+    }
   } catch (err) {
     const duplicate = uniqueViolation(err);
     if (duplicate) {

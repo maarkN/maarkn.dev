@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/seo";
-import { locales } from "@/i18n/config";
+import { defaultLocale, locales } from "@/i18n/config";
 import { getPosts } from "@/lib/ghost";
 import { projects as staticProjects } from "@/lib/projects";
 import { getAllProjects } from "@/lib/projects-repo";
@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const [posts, projects] = await Promise.all([
     getPosts(50).catch(() => []),
-    getAllProjects().catch(() => staticProjects),
+    getAllProjects(defaultLocale).catch(() => staticProjects),
   ]);
 
   const entries: Entry[] = [

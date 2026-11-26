@@ -98,6 +98,60 @@ describe("ProjectForm — nenhuma mensagem órfã", () => {
   });
 });
 
+describe("ProjectForm — texto nos dois idiomas e caso de sucesso", () => {
+  it.each([
+    ["taglinePt", "Resumo (PT)"],
+    ["tagline", "Resumo (EN)"],
+    ["descriptionPt", "Descrição (PT)"],
+    ["description", "Descrição (EN)"],
+    ["rolePt", "Função (PT)"],
+    ["role", "Função (EN)"],
+    ["featuresPt", "Entregas (PT)"],
+    ["features", "Entregas (EN)"],
+    ["caseProblemPt", "Problema (PT)"],
+    ["caseProblemEn", "Problema (EN)"],
+    ["caseWorkPt", "Trabalho (PT)"],
+    ["caseWorkEn", "Trabalho (EN)"],
+    ["caseResultPt", "Resultado (PT)"],
+    ["caseResultEn", "Resultado (EN)"],
+  ])("#%s é editável e se chama %s", (id, label) => {
+    expect(container.querySelector(`textarea#${id}[name="${id}"]`)).not.toBeNull();
+    expect(container.querySelector(`label[for="${id}"]`)?.textContent).toBe(label);
+  });
+
+  it("preenche cada campo com o texto do seu idioma e a posição do caso", () => {
+    act(() => root.unmount());
+    root = createRoot(container);
+    act(() =>
+      root.render(
+        <ProjectForm
+          project={{
+            id: "p1",
+            tagline: "summary",
+            taglinePt: "resumo",
+            features: ["one", "two"],
+            featuresPt: ["um", "dois"],
+            casePosition: 2,
+          }}
+        />,
+      ),
+    );
+    const value = (selector: string) =>
+      container.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector)?.value;
+    expect(value("#tagline")).toBe("summary");
+    expect(value("#taglinePt")).toBe("resumo");
+    expect(value("#features")).toBe("one\ntwo");
+    expect(value("#featuresPt")).toBe("um\ndois");
+    expect(value('input[type="hidden"][name="casePosition"]')).toBe("2");
+  });
+
+  it("um projeto novo não é caso de sucesso", () => {
+    expect(
+      container.querySelector<HTMLInputElement>('input[type="hidden"][name="casePosition"]')?.value,
+    ).toBe("none");
+  });
+});
+
 describe("ProjectForm — o upload de capa", () => {
   it("liga a ajuda ao campo antes de qualquer erro", () => {
     const input = container.querySelector<HTMLInputElement>("#coverImageFile")!;

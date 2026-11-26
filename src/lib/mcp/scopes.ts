@@ -39,8 +39,9 @@ export type McpScope = (typeof MCP_SCOPES)[number];
 export const MCP_SCOPE_LABELS: Record<McpScope, string> = {
   "sync:read": "Consultar estado de sincronizacao (quais arquivos mudaram)",
   "sync:write": "Abrir/fechar rodadas de sincronizacao e gravar sync state",
-  "applications:read": "Ler candidaturas, eventos e checklists",
-  "applications:write": "Criar/atualizar candidaturas (upsert por folderName)",
+  "applications:read": "Ler candidaturas, entrevistas, eventos e checklists",
+  "applications:write":
+    "Criar/atualizar candidaturas (upsert por folderName) e entrevistas",
   "jobs:read": "Ler vagas e o radar",
   "jobs:write": "Criar/atualizar vagas (upsert por sourceUrl)",
   "content:read": "Ler experiencias, projetos de carreira, skills e posts",

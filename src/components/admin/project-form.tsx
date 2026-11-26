@@ -70,6 +70,17 @@ export type ProjectInput = {
   description?: string | null;
   role?: string | null;
   features?: string[];
+  taglinePt?: string | null;
+  descriptionPt?: string | null;
+  rolePt?: string | null;
+  featuresPt?: string[];
+  caseProblemPt?: string | null;
+  caseProblemEn?: string | null;
+  caseWorkPt?: string | null;
+  caseWorkEn?: string | null;
+  caseResultPt?: string | null;
+  caseResultEn?: string | null;
+  casePosition?: number | null;
   coverImage?: string | null;
 };
 
@@ -106,12 +117,40 @@ const LINK_FIELDS: FieldSpec[] = [
   { name: "caseUrl", label: "URL do case externo", type: "url" },
 ];
 
-const CONTENT_FIELDS: FieldSpec[] = [
+const STACK_FIELDS: FieldSpec[] = [
   { name: "stack", label: "Stack", required: true, rows: 3, help: "Um item por linha (ou separados por vírgula)." },
-  { name: "tagline", label: "Tagline", rows: 2, help: "Um parágrafo curto, usado nos cards." },
-  { name: "description", label: "Descrição longa", rows: 6, help: "Linguagem simples. Exibida na página de detalhe." },
-  { name: "role", label: "Meu papel", rows: 4 },
-  { name: "features", label: "Principais entregas", rows: 5, help: "Um item por linha." },
+];
+
+/** O texto que o site mostra em cada idioma; em branco, vale o do outro. */
+const PT_FIELDS: FieldSpec[] = [
+  { name: "taglinePt", label: "Resumo (PT)", rows: 2, help: "Um parágrafo curto, usado nos cards." },
+  { name: "descriptionPt", label: "Descrição (PT)", rows: 6, help: "Linguagem simples. Exibida na página de detalhe." },
+  { name: "rolePt", label: "Função (PT)", rows: 4 },
+  { name: "featuresPt", label: "Entregas (PT)", rows: 5, help: "Um item por linha." },
+];
+
+const EN_FIELDS: FieldSpec[] = [
+  { name: "tagline", label: "Resumo (EN)", rows: 2, help: "Um parágrafo curto, usado nos cards." },
+  { name: "description", label: "Descrição (EN)", rows: 6, help: "Linguagem simples. Exibida na página de detalhe." },
+  { name: "role", label: "Função (EN)", rows: 4 },
+  { name: "features", label: "Entregas (EN)", rows: 5, help: "Um item por linha." },
+];
+
+const CASE_FIELDS: FieldSpec[] = [
+  { name: "caseProblemPt", label: "Problema (PT)", rows: 3 },
+  { name: "caseProblemEn", label: "Problema (EN)", rows: 3 },
+  { name: "caseWorkPt", label: "Trabalho (PT)", rows: 3 },
+  { name: "caseWorkEn", label: "Trabalho (EN)", rows: 3 },
+  { name: "caseResultPt", label: "Resultado (PT)", rows: 3 },
+  { name: "caseResultEn", label: "Resultado (EN)", rows: 3 },
+];
+
+/** `none` e não `""`: o Radix reserva a string vazia. Três: o limite de casos. */
+const CASE_POSITION_OPTIONS: Option[] = [
+  { value: "none", label: "Não é caso de sucesso" },
+  { value: "1", label: "1º caso" },
+  { value: "2", label: "2º caso" },
+  { value: "3", label: "3º caso" },
 ];
 
 const CATEGORY_OPTIONS: Option[] = Object.entries(PROJECT_CATEGORY_STYLES).map(
@@ -225,8 +264,24 @@ export function ProjectForm({ project }: { project?: ProjectInput }) {
           {fields(LINK_FIELDS)}
         </Section>
 
-        <Section title="Stack e conteúdo" className="md:col-span-2">
-          {fields(CONTENT_FIELDS)}
+        <Section title="Stack" className="md:col-span-2">
+          {fields(STACK_FIELDS)}
+        </Section>
+
+        <Section title="Texto em português">{fields(PT_FIELDS)}</Section>
+
+        <Section title="Texto em inglês">{fields(EN_FIELDS)}</Section>
+
+        <Section title="Caso de sucesso" className="md:col-span-2">
+          <SelectField
+            name="casePosition"
+            label="Posição na home"
+            options={CASE_POSITION_OPTIONS}
+            defaultValue={project?.casePosition ? String(project.casePosition) : "none"}
+            help="No máximo três. Um caso precisa de problema, trabalho e resultado nos dois idiomas."
+            error={errors.casePosition}
+          />
+          {fields(CASE_FIELDS)}
         </Section>
       </div>
 

@@ -37,6 +37,8 @@ import { db, dbConfigured } from "@/lib/db";
 import {
   FUNNEL_STAGE_LABELS,
   SPONSORSHIP_SIGNALS,
+  closureReasonOnStageChange,
+  closureReasonRemovedNote,
   isFunnelStage,
 } from "@/lib/applications";
 import type { ActionResult } from "@/app/_actions/action-result";
@@ -120,7 +122,7 @@ export async function moveApplicationStage(
   try {
     const current = await db.application.findUnique({
       where: { id },
-      select: { stage: true },
+      select: { stage: true, closureReason: true },
     });
     if (!current) {
       return { ok: false, message: "Candidatura não encontrada." };
@@ -132,10 +134,17 @@ export async function moveApplicationStage(
       };
     }
 
+    // Sair de recusada/retirada apaga o motivo de encerramento, no mesmo update.
+    const closure = closureReasonOnStageChange(stage, current.closureReason);
     await db.$transaction([
       db.application.update({
         where: { id },
-        data: { stage, lastMcpTool: TOOL.stage, lastSeenAt: new Date() },
+        data: {
+          stage,
+          ...closure.patch,
+          lastMcpTool: TOOL.stage,
+          lastSeenAt: new Date(),
+        },
       }),
       db.applicationEvent.create({
         data: {
@@ -143,6 +152,7 @@ export async function moveApplicationStage(
           type: "stage_change",
           fromStage: current.stage,
           toStage: stage,
+          bodyMd: closureReasonRemovedNote(closure.removed),
           lastMcpTool: TOOL.stage,
         },
       }),

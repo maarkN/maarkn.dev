@@ -75,14 +75,36 @@ model Project {
   repoUrl          String?
   demoUrl          String?
   caseUrl          String?
-  /// Plain-language tagline shown on cards.
+  /// Project text, one column per language (ADR 0003). The unsuffixed columns
+  /// are the English ones: they existed first and the migration was additive.
+  /// An empty column is not an empty field on the site: `projects-repo` falls
+  /// back to the other language and then to the seed in the dictionaries.
+  ///
+  /// Plain-language summary shown on cards.
   tagline          String?
+  taglinePt        String?
   /// Long-form description rendered on the detail page.
   description      String?
+  descriptionPt    String?
   /// Short paragraph describing Marco's role on the project.
   role             String?
+  rolePt           String?
   /// JSON-encoded array of bullet strings.
   featuresJson     String   @default("[]")
+  featuresPtJson   String   @default("[]")
+  /// Success case ("caso de sucesso"): problem, work and result.
+  caseProblemEn    String?
+  caseProblemPt    String?
+  caseWorkEn       String?
+  caseWorkPt       String?
+  caseResultEn     String?
+  caseResultPt     String?
+  /// Order among the success cases of the home, or null when it is not one.
+  /// At most three: the migration adds a CHECK (1 to 3) next to this unique
+  /// index, and another CHECK that refuses a position while any of the six
+  /// columns above is empty. Prisma has no syntax for CHECK; they live only in
+  /// the `portfolio_content` migration.
+  casePosition     Int?     @unique
   /// "public" exposes the repo button when repoUrl is set; "private" hides it
   /// in favor of a "Private project" pill.
   sourceVisibility String   @default("public")
@@ -96,8 +118,36 @@ model Project {
   /// metadado de relacao (nao adiciona coluna nem altera nenhuma query atual).
   careerProject CareerProject?
 
+  images ProjectImage[]
+
   @@index([featured])
   @@index([category])
+}
+
+/// One image of a project's gallery. The file lives in `/uploads`, which is
+/// public and cached forever: fine for images meant to be public, and the
+/// reason nothing with personal data ever goes there.
+model ProjectImage {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// Order in the gallery, from 1.
+  position  Int
+  /// Path served by this site, e.g. "/uploads/<uuid>.webp". Never a full URL.
+  path      String
+  captionEn String?
+  captionPt String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, position])
+}
+
+/// One-off content scripts that already ran on this database. A row here is
+/// what makes a script that runs on every deploy act on the first one only.
+model DataMigration {
+  name      String   @id
+  appliedAt DateTime @default(now())
 }
 
 /// RAG knowledge base: chunked, embedded slices of Marco's curated CV/dossiers.
@@ -262,6 +312,39 @@ enum SponsorshipSignal {
   newcomer_friendly // NU Stream, Korah, VPC
 
   @@map("sponsorship_signal")
+}
+
+/// Motivo de encerramento: a categoria que explica por que uma candidatura
+/// `rejected` ou `withdrawn` acabou. Silencio do recrutador nao e motivo, e
+/// estagio (`no_response`, `ghosted`). O texto livre continua em
+/// `Application.outcomeReason`. Um CHECK (migration `dossier_fields`) impede o
+/// motivo em qualquer outro estagio.
+enum ClosureReason {
+  salary
+  visa
+  technical_fit
+  seniority
+  language
+  location
+  job_closed
+  internal_candidate
+  withdrawal // desistencia de Marco
+  not_informed
+  other
+
+  @@map("closure_reason")
+}
+
+/// Situacao da entrevista. Coerente com a data por CHECK (migration
+/// `dossier_fields`): `scheduled` e `completed` tem `scheduledAt`, `planned`
+/// nao tem, `cancelled` pode ter ou nao.
+enum InterviewStatus {
+  planned
+  scheduled
+  completed
+  cancelled
+
+  @@map("interview_status")
 }
 
 /// Tipos de arquivo por pasta de candidatura no vault.
@@ -449,6 +532,8 @@ model Company {
   vendorCompanyId String?
   vendorCompany   Company?  @relation("CompanyVendor", fields: [vendorCompanyId], references: [id], onDelete: SetNull)
   vendorClients   Company[] @relation("CompanyVendor")
+  /// O que se sabe da empresa. Vale para todas as candidaturas feitas nela.
+  aboutMd         String?
   notesMd         String?
 
   visibility       Visibility        @default(private)
@@ -588,8 +673,13 @@ model Application {
   appliedAt       DateTime?
   firstResponseAt DateTime?
   closedAt        DateTime?
+  /// Categoria do encerramento, so em `rejected` e `withdrawn`.
+  closureReason   ClosureReason?
+  /// Texto livre do desfecho; vale em qualquer estagio.
   outcomeReason   String?
   targetSalary    String?
+  /// Contexto do projeto: o produto ou o time em que se trabalharia.
+  projectInfoMd   String?
   summaryMd       String?
   notesMd         String?
 
@@ -786,12 +876,16 @@ model ApplicationEvent {
 }
 
 model Interview {
-  id            String      @id @default(cuid())
+  id            String          @id @default(cuid())
   applicationId String
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  /// Posicao no processo seletivo (0 = primeira).
+  orderIndex    Int             @default(0)
+  status        InterviewStatus @default(planned)
   round         Int?
   /// screening | technical | system_design | culture | final ...
   kind          String
+  /// Nulo enquanto a entrevista e so prevista.
   scheduledAt   DateTime?
   durationMin   Int?
   /// video | phone | onsite
@@ -799,10 +893,10 @@ model Interview {
   timezone      String?
   interviewers  String[]
   contactId     String?
-  contact       Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contact       Contact?        @relation(fields: [contactId], references: [id], onDelete: SetNull)
   prepMd        String?
   notesMd       String?
-  /// passed | failed | pending | cancelled
+  /// passed | failed | pending. `cancelled` e legado: hoje e `status`.
   outcome       String?
 
   sourceKey     String?    @unique
