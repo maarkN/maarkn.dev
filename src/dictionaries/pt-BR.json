@@ -1215,6 +1215,25 @@
         "ghosted": "Ghosting",
         "skipped": "Descartada"
       },
+      "closureReason": {
+        "salary": "Salário",
+        "visa": "Visto",
+        "technical_fit": "Aderência técnica",
+        "seniority": "Senioridade",
+        "language": "Idioma",
+        "location": "Local",
+        "job_closed": "Vaga fechada",
+        "internal_candidate": "Candidato interno",
+        "withdrawal": "Desistência",
+        "not_informed": "Não informado",
+        "other": "Outro"
+      },
+      "interviewStatus": {
+        "planned": "Prevista",
+        "scheduled": "Marcada",
+        "completed": "Realizada",
+        "cancelled": "Cancelada"
+      },
       "phase": {
         "pre_send": "Antes do envio",
         "sent": "Enviada",

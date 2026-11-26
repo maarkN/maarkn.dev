@@ -3,7 +3,12 @@
  * (task 4.2 of rebrand-09): the stage, the visa, the statuses, the reasons. A
  * value added to an enum without its words fails here, instead of showing its
  * raw key on screen.
+ *
+ * The closure reason and the interview status are read from the database
+ * enums themselves, so a value added to the schema fails here even before
+ * anyone lists it in `@/lib/applications`.
  */
+import { ClosureReason, InterviewStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import en from "@/dictionaries/en.json";
 import ptBR from "@/dictionaries/pt-BR.json";
@@ -16,8 +21,10 @@ import { EMPLOYMENT_TYPES, JOB_LINK_KEYS, RADAR_NO_VERDICT, RADAR_VERDICTS, VERI
 import { AUDIT_REASONS } from "@/app/admin/audit/audit-status";
 import {
   APPLICATION_SOURCES,
+  CLOSURE_REASON_LABELS,
   FUNNEL_STAGES,
   FUNNEL_STAGE_PHASES,
+  INTERVIEW_STATUS_LABELS,
   SPONSORSHIP_ROUTE_KEYS,
   SPONSORSHIP_SIGNALS,
 } from "@/lib/applications";
@@ -27,6 +34,8 @@ import { projectCategories } from "@/lib/projects";
 
 const SETS: [keyof typeof en.admin.vocab, readonly string[]][] = [
   ["stage", FUNNEL_STAGES],
+  ["closureReason", Object.values(ClosureReason)],
+  ["interviewStatus", Object.values(InterviewStatus)],
   ["phase", FUNNEL_STAGE_PHASES.map((phase) => phase.key)],
   ["column", BOARD_COLUMNS.map((column) => column.key)],
   ["visa", SPONSORSHIP_SIGNALS],
@@ -73,6 +82,23 @@ describe("the stages", () => {
     for (const stage of FUNNEL_STAGES) {
       if (same.has(stage)) continue;
       expect(en.admin.vocab.stage[stage], stage).not.toBe(ptBR.admin.vocab.stage[stage]);
+    }
+  });
+});
+
+describe.each([
+  ["pt-BR", ptBR.admin.vocab],
+  ["en", en.admin.vocab],
+] as const)("the closure reasons and interview statuses in %s", (locale, vocab) => {
+  // The history (the note of a stage change that removed a reason) and the MCP
+  // write the words of `@/lib/applications`; a screen writes these. They are
+  // the same words, or the notice and the history would name one reason twice.
+  it("are the words of @/lib/applications", () => {
+    for (const reason of Object.values(ClosureReason)) {
+      expect(vocab.closureReason[reason], reason).toBe(CLOSURE_REASON_LABELS[reason][locale]);
+    }
+    for (const status of Object.values(InterviewStatus)) {
+      expect(vocab.interviewStatus[status], status).toBe(INTERVIEW_STATUS_LABELS[status][locale]);
     }
   });
 });

@@ -1216,6 +1216,25 @@
         "ghosted": "Ghosted",
         "skipped": "Discarded"
       },
+      "closureReason": {
+        "salary": "Salary",
+        "visa": "Visa",
+        "technical_fit": "Technical fit",
+        "seniority": "Seniority",
+        "language": "Language",
+        "location": "Location",
+        "job_closed": "Job closed",
+        "internal_candidate": "Internal candidate",
+        "withdrawal": "Withdrawal",
+        "not_informed": "Not informed",
+        "other": "Other"
+      },
+      "interviewStatus": {
+        "planned": "Planned",
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
       "phase": {
         "pre_send": "Before sending",
         "sent": "Sent",
