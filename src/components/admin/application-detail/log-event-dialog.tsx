@@ -19,7 +19,7 @@
 
 import { useState, useTransition } from "react";
 import { CalendarPlus } from "lucide-react";
-import { toast } from "sonner";
+import { useNotify } from "@/components/admin/notify";
 import type { ActionResult } from "@/app/_actions/action-result";
 import {
   FieldError,
@@ -78,6 +78,7 @@ export function LogEventDialog({
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const notify = useNotify();
 
   const [type, setType] = useState<string>("note");
   const [direction, setDirection] = useState<string>(NONE);
@@ -105,7 +106,7 @@ export function LogEventDialog({
       const parsed = new Date(local); // hora local do navegador
       if (Number.isNaN(parsed.getTime())) {
         setErrors({ occurredAt: "Data inválida." });
-        toast.error("Confira os campos destacados.");
+        notify.error("Confira os campos destacados.");
         return;
       }
       formData.set("occurredAt", parsed.toISOString());
@@ -115,12 +116,12 @@ export function LogEventDialog({
       const res = await action(id, formData);
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {});
-        toast.error(res.message);
+        notify.error(res.message);
         return;
       }
       reset();
       setOpen(false);
-      toast.success(res.message ?? "Evento registrado.");
+      notify.success(res.message ?? "Evento registrado.");
     });
   }
 

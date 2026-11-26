@@ -14,7 +14,7 @@
  */
 
 import { useTransition } from "react";
-import { toast } from "sonner";
+import { useNotify } from "@/components/admin/notify";
 import type { ActionResult } from "@/app/_actions/action-result";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -36,6 +36,7 @@ export function ChecklistToggle({
   action: ChecklistToggleAction;
 }) {
   const [isPending, startTransition] = useTransition();
+  const notify = useNotify();
 
   return (
     <Checkbox
@@ -48,10 +49,10 @@ export function ChecklistToggle({
         startTransition(async () => {
           const res = await action(itemId, value);
           if (!res.ok) {
-            toast.error(res.message);
+            notify.error(res.message);
             return;
           }
-          toast.success(res.message ?? "Checklist atualizada.");
+          notify.success(res.message ?? "Checklist atualizada.");
         });
       }}
     />

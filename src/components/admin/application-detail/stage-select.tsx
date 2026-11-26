@@ -24,7 +24,7 @@
 
 import { useState, useTransition } from "react";
 import { ArrowRightLeft } from "lucide-react";
-import { toast } from "sonner";
+import { useNotify } from "@/components/admin/notify";
 import type { FunnelStage } from "@prisma/client";
 import type { ActionResult } from "@/app/_actions/action-result";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ export function StageSelect({
 }) {
   const [draft, setDraft] = useState<string>(stage);
   const [isPending, startTransition] = useTransition();
+  const notify = useNotify();
   const dirty = draft !== stage;
 
   function move() {
@@ -66,10 +67,10 @@ export function StageSelect({
         // Volta o rascunho para o valor real: manter o botão "Mover" aceso
         // sobre um estágio recusado convida a repetir o mesmo erro.
         setDraft(stage);
-        toast.error(res.message);
+        notify.error(res.message);
         return;
       }
-      toast.success(res.message ?? "Estágio atualizado.");
+      notify.success(res.message ?? "Estágio atualizado.");
     });
   }
 
