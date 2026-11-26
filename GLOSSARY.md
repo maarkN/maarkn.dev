@@ -38,6 +38,18 @@ _Avoid_: Rejection cause, causa de rejeição
 **Dossiê**:
 Tudo o que se sabe sobre uma candidatura, reunido em um lugar.
 
+**Estágio** (`FunnelStage`):
+O ponto exato em que a candidatura está no funil, como "Triagem" ou "Entrevista final".
+_Avoid_: Status, etapa
+
+**Fase**:
+Um grupo de estágios vizinhos (antes do envio, enviada, em avaliação, desfecho), mostrado pela marca ao lado do nome do estágio.
+_Avoid_: Categoria, estágio (sozinho)
+
+**Quadro**:
+A vista das candidaturas abertas em seis colunas, onde se muda o estágio arrastando ou pelas setas.
+_Avoid_: Kanban, board
+
 ## Agenda
 
 **Compromisso**:
@@ -127,6 +139,10 @@ _Avoid_: Admin, painel, dashboard
 **Estrutura** (`AdminShell`):
 O que cerca toda tela do backoffice: menu, topo, caminho e a barra do celular.
 _Avoid_: Chrome, moldura, layout
+
+**Aviso**:
+O resultado de uma ação, mostrado no canto da tela, que some sozinho e pode ser dispensado.
+_Avoid_: Toast, notificação
 
 **Caminho** (`trail`):
 De onde se chega a uma tela que está dentro de outra, até ela.

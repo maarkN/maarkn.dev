@@ -1,0 +1,32 @@
+## Context
+
+Ver proposal.md. Depois de `rebrand-08-admin-shell`, a estrutura em volta das telas já estava no desenho novo e nos dois idiomas, mas o conteúdo continuava o da bko-03/bko-04: listagens pintadas como `ls`, botões entre colchetes, erros com `stderr:`, toast como linha de saída, quadro em 17 colunas movido por menu, tudo em pt-BR. `docs/design/backoffice.md` define o que cada tela mostra; a captura do quadro (`docs/design/screens/backoffice-quadro.webp`) é a única referência visual de lista e quadro.
+
+## Goals / Non-Goals
+
+**Goals:** primitivos de `src/components/ui/**` no desenho do site; listas, quadro, formulários, confirmações e avisos das telas da proposal; essas telas traduzidas.
+
+**Non-Goals:** visão geral, dossiê, agenda e editor de projeto (rebrand-10 e rebrand-11), que mudam só no que os primitivos compartilhados mudam e continuam em português; funções novas que o design cita para essas telas ("Caso na home", "marcar como lacuna", descartar vaga, skills do plugin).
+
+## Decisions
+
+As decisões abaixo foram tomadas onde os artefatos e `docs/design/` não dizem; precisam da aprovação de Marco antes do arquivamento.
+
+- **Os primitivos shadcn viram hologramas, em vez de trocados pelos de `@/components/holo`.** `Button` desenha `HoloFrame` (com `asChild`, a moldura entra no filho por `Slot.Slottable`), `Input`/`Textarea`/`SelectTrigger` a moldura de campo, `Dialog`/`AlertDialog` a janela de painel. Mantém a acessibilidade do Radix (foco preso, `Esc`, foco devolvido) e não obriga a reescrever as 94 chamadas de `Button`. Consequência: o CSS de módulo do holograma fica fora de `@layer` e vence utilities de `display` e `position` postas num botão; quem precisa delas envolve o botão (regra A6).
+- **As seis colunas do quadro** saem da captura: Selecionadas (radar, selecionada, pacote em redação), Prontas (pacote pronto, aguardando meu envio, pronta para enviar), Enviadas (enviada), Em conversa (contato do recrutador, triagem), Avaliação e entrevistas (avaliação, desafio técnico, entrevista, entrevista final, checagem de referências) e Ofertas (oferta). Só as candidaturas abertas estão no quadro: os desfechos que encerram (aceita, recusada, retirada, sem resposta, ghosting, descartada) não. Soltar numa coluna dá o estágio que a nomeia (selecionada, pronta para enviar, enviada, contato do recrutador, entrevista, oferta); mudar entre estágios da mesma coluna continua no dossiê. Alternativa descartada: as quatro fases de `FUNNEL_STAGE_PHASES` como colunas, que não batem com a captura.
+- **Arrastar é o arrastar nativo do HTML, e o teclado são `←`/`→` no cartão em foco.** Nenhuma dependência nova (`@dnd-kit` custaria ~40 kB). O cartão vai à coluna na hora (`useOptimistic`); a recusa do servidor encerra a transição e ele volta, com o motivo e "Tentar de novo"; o sucesso diz para onde foi e oferece "Desfazer", que volta ao estágio exato de antes. Limite: no toque, arrastar depende do navegador; o dossiê continua mudando o estágio.
+- **A marca de fase é uma forma, não uma cor:** losango vazio antes do envio, cheio depois de enviada, losango dentro de losango em avaliação, quadrado no desfecho. A cor da fase continua como segundo canal.
+- **O aviso é o `HoloNotice` dentro do sonner.** O sonner mantém a região viva (existe antes do primeiro aviso, então o aviso é lido) e o tempo que pausa sob o ponteiro; o `Toaster` passa a `unstyled` e cada aviso é um `HoloNotice` sem papel próprio (`announce={false}`), para não ser lido duas vezes. `HoloNotice` ganhou `action` (o próximo passo) e `lang`. `useNotify` marca o aviso com o idioma da tela que o chamou, inclusive nas telas ainda em português.
+- **Lista sem página de registro não abre linha.** Vagas, assistente, auditoria e chaves não têm tela de registro: a linha não é clicável; o anúncio, a candidatura e as chamadas de uma chave são links próprios. Contatos e referências abrem na janela de edição: o clique na linha aperta o botão de editar (`data-row-open`), que também é o caminho do teclado.
+- **Filtros têm rótulo visível**, porque o requisito "Campos claros" vale para eles. No celular ficam atrás de um botão que diz quantos estão aplicados, para a lista não começar uma tela abaixo do título.
+- **As actions das telas traduzidas escrevem a mensagem com `getAdminLabels()`**, no idioma da requisição; zod valida sem mensagem própria e a frase de cada campo vem do dicionário. O gerador devolve códigos estáveis (`GenError`), e a tela escreve a frase.
+- **`StatusBadge` fica como legado** para o dossiê e a visão geral, que ainda mostram `[valor]`; as telas desta change mostram a palavra do dicionário (`admin.vocab`).
+- **A variante `data-checked:` do `Checkbox` virou `data-[state=checked]:`**, porque o formulário de referência e a criação de chave dependem de ver a caixa marcada. É uma das variantes que a tarefa 2.5 de `rebrand-11-admin-screens` corrige; as demais ficam lá.
+
+## Risks / Trade-offs
+
+- [Telas fora do escopo com primitivos novos e rótulos antigos, como `[ salvar ]` dentro de uma moldura] → Só na branch de integração; rebrand-10 e rebrand-11 refazem essas telas, e `rebrand-12-cutover` confere que não sobrou nada.
+- [Rótulos de "motivo" (motivo de encerramento) e "situação" (situação da entrevista) da tarefa 4.2 dependem dos enums de `dossier-01-fields`, que ainda não chegaram a `feat/rebranding`] → A tarefa fica aberta; os rótulos entram quando essa change chegar.
+- ["Notas" está na lista de telas traduzidas, mas não existe tela de notas (o menu a mostra como "em breve")] → Nada a traduzir aqui; registrado no PR.
+- [`pnpm exec knip` não roda: knip não é dependência do projeto] → A remoção do que deixou de ser usado foi conferida pela leitura e por busca; a verificação com knip fica pendente.
+- [`scripts/smoke-admin-write.mjs` ainda procura `stderr:` e rótulos entre colchetes] → A ampliação dele é a tarefa 5.1 de `rebrand-11-admin-screens`.

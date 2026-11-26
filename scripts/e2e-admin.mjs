@@ -136,7 +136,7 @@ async function access(page, t) {
   const inside = await records(page);
   t.equal(inside.length, 4, "há um registro de cada para abrir");
   await page.open("/admin/applications");
-  const company = await page.evaluate(`${$("tbody td:nth-child(2) span")}.textContent`);
+  const company = await page.evaluate(`${$("tbody .admin-row-link")}.textContent`);
   t.ok(company.length > 2, "há uma candidatura na lista", company);
 
   for (const path of [...SCREENS, ...inside]) {
@@ -327,7 +327,7 @@ async function languages(page, t) {
   /* A troca, no menu da conta, com a tela aberta. */
   await hydrated(page);
   const date = `[...document.querySelectorAll("tbody td")].map((td) => td.textContent).find((text) => /\\d{4}, \\d\\d:\\d\\d$/.test(text))`;
-  const before = await page.evaluate(`({ path: location.pathname, date: ${date}, name: ${$("tbody td:nth-child(2)")}.textContent })`);
+  const before = await page.evaluate(`({ path: location.pathname, date: ${date}, name: ${$("tbody .admin-row-link")}.textContent })`);
   t.ok(/^[A-Z][a-z]{2} \d{1,2}, \d{4}, \d\d:\d\d$/.test(before.date), "datas em inglês, com o mês por nome", before.date);
   const pick = async (option) => {
     await page.evaluate(`${shown("[data-account]")}.focus()`);
@@ -342,7 +342,7 @@ async function languages(page, t) {
     await listed(page);
   };
   await pick("pt-BR");
-  const after = await page.evaluate(`({ path: location.pathname, date: ${date}, name: ${$("tbody td:nth-child(2)")}.textContent })`);
+  const after = await page.evaluate(`({ path: location.pathname, date: ${date}, name: ${$("tbody .admin-row-link")}.textContent })`);
   t.equal(after.path, before.path, "o endereço não muda");
   t.ok(/^\d\d\/\d\d\/\d{4}, \d\d:\d\d$/.test(after.date), "datas em português", after.date);
   t.equal(after.name, before.name, "o que foi escrito por Marco continua como foi escrito");
@@ -354,8 +354,12 @@ async function languages(page, t) {
   t.equal(await page.evaluate(lang), "pt-BR", "vale nos próximos acessos, mesmo com o navegador em inglês");
   await hydrated(page);
   await pick("en");
+  t.equal(await page.evaluate(`${$("main [lang]")}.lang`), "en", "a tela traduzida está em inglês");
+  t.ok((await page.evaluate(`${$("main h1")}.textContent`)) === "Settings", "com as palavras dela em inglês");
+  await page.open("/admin");
   t.equal(await page.evaluate(`${$("main [lang]")}.lang`), "pt-BR", "a tela ainda não traduzida diz que está em português");
-  t.equal(await page.evaluate(`${$("main [lang] [lang]")}.lang`), "en", "e a parte traduzida, que está em inglês");
+  await page.open("/admin/settings");
+  await hydrated(page);
   const site = await fetch(`${BASE}/en`);
   t.equal(site.status, 200, "e o site continua no idioma do endereço");
 
@@ -715,8 +719,8 @@ async function menu(page, t, { width }) {
 
 async function search(page, t) {
   await enter(page, "/admin/applications");
-  const company = await page.evaluate(`${$("tbody td:nth-child(2) span")}.textContent`);
-  const all = await page.evaluate(`[...document.querySelectorAll("tbody td:nth-child(2) span:first-child")].map((el) => el.textContent)`);
+  const company = await page.evaluate(`${$("tbody .admin-row-link")}.textContent`);
+  const all = await page.evaluate(`[...document.querySelectorAll("tbody .admin-row-link")].map((el) => el.textContent)`);
 
   await page.open("/admin/settings");
   const html = await page.evaluate(`fetch(location.href).then((r) => r.text())`);
@@ -859,6 +863,81 @@ async function noScript(page, t, { width }) {
   t.equal(status, "opaqueredirect", "e a sessão acabou");
 }
 
+/**
+ * A coluna de ações das chaves (rebrand-09, 4.3): todo botão inteiro dentro da
+ * célula, à vista e alcançável no ponto do meio, na largura do comando.
+ */
+async function keyActions(page, t) {
+  await enter(page, "/admin/api-keys");
+  await listed(page);
+  const cut = await page.evaluate(`(() => {
+    const rows = [...document.querySelectorAll("tbody tr")].filter((tr) => tr.cells.length > 1);
+    const out = [];
+    for (const tr of rows) {
+      const cell = tr.cells[tr.cells.length - 1];
+      const box = cell.getBoundingClientRect();
+      for (const el of cell.querySelectorAll("a, button")) {
+        const r = el.getBoundingClientRect();
+        el.scrollIntoView({ block: "center", inline: "center" });
+        const s = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(s.x + s.width / 2, s.y + s.height / 2);
+        const inside = r.left >= box.left - 0.5 && r.right <= box.right + 0.5 && r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5;
+        if (!el.checkVisibility() || !inside || !(hit && el.contains(hit)) || r.width < 24)
+          out.push((el.getAttribute("aria-label") || el.textContent).trim() + " " + Math.round(r.left) + "-" + Math.round(r.right) + " em " + Math.round(box.left) + "-" + Math.round(box.right));
+      }
+    }
+    return { rows: rows.length, out };
+  })()`);
+  t.ok(cut.rows > 0, "há uma chave na lista", cut.rows);
+  t.equal(cut.out, [], "nenhum botão cortado ou coberto");
+  t.ok((await page.evaluate(`document.documentElement.scrollWidth`)) <= (await page.evaluate(`innerWidth`)), "sem rolagem horizontal");
+}
+
+/**
+ * O quadro (verificação 28): arrastar um cartão para outra coluna muda o
+ * estágio e diz isso com "Desfazer", que o devolve; as setas fazem o mesmo.
+ */
+async function board(page, t) {
+  await enter(page, "/admin/applications/board");
+  await page.waitFor(`document.querySelectorAll("section[data-column]").length === 6`, "as seis colunas", 15000);
+  const columns = `[...document.querySelectorAll("section[data-column]")]`;
+  const first = await page.evaluate(`${columns}.findIndex((c) => c.querySelector("[data-card]"))`);
+  t.ok(first >= 0 && first < 5, "há um cartão que pode ir para a coluna ao lado", first);
+  const card = await page.evaluate(`${columns}[${first}].querySelector("[data-card]").dataset.card`);
+  const where = `${columns}.findIndex((c) => c.querySelector('[data-card="${card}"]'))`;
+
+  /* Arrastar, pelos eventos do navegador. */
+  await page.evaluate(`(() => {
+    const from = document.querySelector('[data-card="${card}"]');
+    const to = ${columns}[${first + 1}];
+    const data = new DataTransfer();
+    from.dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: data }));
+    to.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: data }));
+    to.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: data }));
+    from.dispatchEvent(new DragEvent("dragend", { bubbles: true, dataTransfer: data }));
+  })()`);
+  await page.waitFor(`${where} === ${first + 1}`, "o cartão na coluna ao lado", 8000);
+  const undo = `[...document.querySelectorAll("section[aria-live] button")].find((b) => /^(Desfazer|Undo)$/.test(b.textContent.trim()))`;
+  await page.waitFor(`Boolean(${undo})`, "o aviso com Desfazer", 10000);
+  t.ok(true, "arrastar muda a coluna e oferece desfazer");
+  await page.evaluate(`${undo}.click()`);
+  await page.waitFor(`${where} === ${first}`, "o cartão de volta", 10000);
+  t.ok(true, "desfazer devolve o cartão");
+
+  /* As setas, com o cartão em foco. */
+  await page.evaluate(`document.querySelector('[data-card="${card}"] [data-card-link]').focus()`);
+  await page.press("ArrowRight");
+  await page.waitFor(`${where} === ${first + 1}`, "a seta leva à coluna ao lado", 8000);
+  await page.waitFor(`document.activeElement?.closest("[data-card]")?.dataset.card === ${js(card)}`, "o foco vai junto", 8000);
+  t.ok(true, "a seta move e o foco vai junto");
+  await page.press("ArrowLeft");
+  await page.waitFor(`${where} === ${first}`, "a seta de volta", 8000);
+  await page.open("/admin/applications/board");
+  await page.waitFor(`${where} === ${first}`, "depois de recarregar, onde começou", 15000);
+  t.ok(true, "o banco ficou como estava");
+  t.equal(page.errors, [], "nenhum erro no console");
+}
+
 /** Os textos do backoffice não saem em página nenhuma do site. */
 async function apart(page, t) {
   for (const path of ["/en", "/pt-BR", "/en/projects", "/pt-BR/career", "/pt-BR/terminal", "/en/blog"]) {
@@ -892,6 +971,8 @@ export function adminCases({ width, height }) {
     ["admin:impressao", print],
     ["admin:sem-js", noScript],
     ["admin:aparencia", look],
+    ["admin:acoes-chaves", keyActions],
+    ["admin:quadro", board],
     ["admin:site", apart],
   ].map(([name, run]) => ({ name, run: (page, t) => run(page, t, size) }));
 }
