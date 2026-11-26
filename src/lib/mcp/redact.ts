@@ -168,6 +168,46 @@ export function maskContactPii<T extends string | null | undefined>(text: T): T 
   ) as T;
 }
 
+/** Folga do corte de `maskContactPiiHead`: um e-mail tem no maximo 254 caracteres. */
+const HEAD_SLACK = 256;
+/** Dois caracteres que podem estar, lado a lado, dentro de um e-mail... */
+const EMAIL_PAIR_RE = /^[A-Za-z0-9._%+@-]{2}$/;
+/** ...ou dentro de um telefone. */
+const PHONE_PAIR_RE = /^[\d\s().+-]{2}$/;
+
+/** Nenhum e-mail nem telefone atravessa o corte entre `text[at - 1]` e `text[at]`. */
+function isContactBoundary(text: string, at: number): boolean {
+  const pair = text.slice(at - 1, at + 1);
+  return !EMAIL_PAIR_RE.test(pair) && !PHONE_PAIR_RE.test(pair);
+}
+
+/**
+ * Os primeiros `max` caracteres de `maskContactPii(text)`, e se o texto
+ * mascarado passaria disso, sem mascarar o texto inteiro.
+ *
+ * Mascarar depois de cortar esconderia mal: um telefone partido no corte nao e
+ * reconhecido. Mascarar o texto inteiro para mostrar o comeco dele e pagar por
+ * tudo, em cada linha de uma lista. Aqui o corte e feito com folga, num ponto
+ * que nenhum contato atravessa: ali o comeco mascarado e igual ao comeco do
+ * texto inteiro mascarado. Sem um ponto assim na folga (um texto inteiro de
+ * caracteres de e-mail), ou se a mascara encurtar demais o comeco, o texto
+ * inteiro e mascarado, o que tambem e linear.
+ */
+export function maskContactPiiHead(
+  text: string,
+  max: number
+): { head: string; truncated: boolean } {
+  for (let cut = Math.min(max + HEAD_SLACK, text.length - 1); cut > max; cut -= 1) {
+    if (!isContactBoundary(text, cut)) continue;
+    const head = maskContactPii(text.slice(0, cut));
+    // O resto, nao vazio, ainda vem depois: o texto mascarado passa de `max`.
+    if (head.length >= max) return { head: head.slice(0, max), truncated: true };
+    break;
+  }
+  const masked = maskContactPii(text);
+  return { head: masked.slice(0, max), truncated: masked.length > max };
+}
+
 /** Nomes de campo que nunca devem ter o valor persistido/logado. */
 const SECRET_KEY_RE =
   /(?:^|_|-)?(?:api[_-]?key|apikey|key|token|secret|password|passwd|senha|authorization|auth|credential|pepper|cookie|session)(?:$|_|-)?/i;

@@ -9,7 +9,7 @@ import {
 } from "@/lib/applications";
 import { db } from "@/lib/db";
 import { defineMcpTool, jsonResult, McpToolError, type McpToolContext } from "@/lib/mcp/tool";
-import { maskContactPii } from "@/lib/mcp/redact";
+import { maskContactPii, maskContactPiiHead } from "@/lib/mcp/redact";
 import {
   LIMITS,
   assertOpenSyncRun,
@@ -959,12 +959,17 @@ export const logApplicationEvent = defineMcpTool({
 /** Quanto de um texto longo cabe numa LISTA: cem dossies inteiros nao cabem. */
 const EXCERPT_CHARS = 500;
 
-/** Mascara antes de cortar: um telefone partido no meio nao seria reconhecido. */
+/**
+ * O comeco mascarado de um texto longo. So o comeco passa pela mascara: a
+ * lista mostra 500 caracteres de cada um dos ate 20 000 de cada linha, e o
+ * texto da empresa se repete em todas as candidaturas dela.
+ */
 function excerpt(text: string | null): string | null {
-  const masked = maskContactPii(text);
-  if (masked === null || masked.length <= EXCERPT_CHARS) return masked;
-  const cut = masked.slice(0, EXCERPT_CHARS).replace(/[\uD800-\uDBFF]$/, "");
-  return `${cut}… [trecho de ${masked.length} caracteres; o texto inteiro vem em get_application]`;
+  if (text === null) return null;
+  const { head, truncated } = maskContactPiiHead(text, EXCERPT_CHARS);
+  if (!truncated) return head;
+  const cut = head.replace(/[\uD800-\uDBFF]$/, "");
+  return `${cut}… [trecho de ${text.length} caracteres; o texto inteiro vem em get_application]`;
 }
 
 export const listApplications = defineMcpTool({

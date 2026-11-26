@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isOwnEmail, isOwnPhone, maskContactPii } from "@/lib/mcp/redact";
+import { isOwnEmail, isOwnPhone, maskContactPii, maskContactPiiHead } from "@/lib/mcp/redact";
 
 /**
  * `maskContactPii` runs over third-party text on every READ (the company's
@@ -92,3 +92,59 @@ describe("maskContactPii — cost", () => {
   });
 });
 
+/**
+ * A list shows the beginning of each long text. Only the beginning goes through
+ * the mask, and what comes out is the beginning of the whole text masked.
+ */
+describe("maskContactPiiHead", () => {
+  const whole = (text: string, max: number) => {
+    const masked = maskContactPii(text);
+    return { head: masked.slice(0, max), truncated: masked.length > max };
+  };
+
+  const TOKENS = [
+    "word ",
+    "prose, ",
+    "\n",
+    "jane@acme.example ",
+    "jane@acme.example",
+    "+1 (555) 010-0199 ",
+    "+1 (555) 010-0199",
+    "   ",
+    `${"x".repeat(200)}@acme.example `,
+    "a.".repeat(150),
+    "é",
+    "x@y.zz",
+  ];
+
+  it("equals the beginning of the whole text masked, on 3000 random texts", () => {
+    const rand = seeded(20261127);
+    for (let n = 0; n < 3000; n += 1) {
+      const max = [1, 40, 500][n % 3];
+      const target = Math.floor(rand() * (max + 1200));
+      let input = "";
+      while (input.length < target) input += TOKENS[Math.floor(rand() * TOKENS.length)];
+      expect(maskContactPiiHead(input, max), `max ${max}, input: ${JSON.stringify(input)}`).toEqual(
+        whole(input, max),
+      );
+    }
+  });
+
+  it("a contact across the cut is masked whole", () => {
+    for (let pad = 400; pad <= 800; pad += 1) {
+      const input = `${"w ".repeat(pad / 2)}jane@acme.example +1 (555) 010-0199 ${"tail ".repeat(200)}`;
+      const { head } = maskContactPiiHead(input, 500);
+      expect(head).not.toMatch(/jane|acme|555|0199/);
+      expect(maskContactPiiHead(input, 500)).toEqual(whole(input, 500));
+    }
+  });
+
+  it("long contacts that shrink the beginning do not let a piece of the next one out", () => {
+    const longEmail = `${"x".repeat(240)}@acme.example`;
+    const input = `${`${longEmail} `.repeat(4)}${"y".repeat(300)}@acme.example ${"tail ".repeat(400)}`;
+    const { head } = maskContactPiiHead(input, 500);
+    expect(head).not.toContain("x");
+    expect(head).not.toContain("y");
+    expect(maskContactPiiHead(input, 500)).toEqual(whole(input, 500));
+  });
+});
