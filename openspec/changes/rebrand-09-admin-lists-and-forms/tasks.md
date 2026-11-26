@@ -1,6 +1,6 @@
 ## 1. Pré-condições
 
-- [ ] 1.1 Listar no PR as telas cobertas e os comportamentos que não podem mudar (confirmação por digitação, formulário que preserva o digitado, contagem real do quadro)
+- [x] 1.1 Listar no PR as telas cobertas e os comportamentos que não podem mudar (confirmação por digitação, formulário que preserva o digitado, contagem real do quadro)
 
 ## 2. Listas
 
@@ -18,15 +18,15 @@
 
 ## 4. Telas
 
-- [ ] 4.1 Aplicar e traduzir as telas listadas na proposal; verificar cada uma nos três temas, 390 e 1440 px, teclado, PT e EN
+- [x] 4.1 Aplicar e traduzir as telas listadas na proposal; verificar cada uma nos três temas, 390 e 1440 px, teclado, PT e EN
 - [ ] 4.2 Rótulos de estágio, motivo, situação e visto vindos do dicionário, com cobertura de todos os valores; teste
-- [ ] 4.3 Coluna de ações de `/admin/api-keys` sem cortar botão, em 390 e 1440 px; teste
+- [x] 4.3 Coluna de ações de `/admin/api-keys` sem cortar botão, em 390 e 1440 px; teste
 
 ## 5. Aposentar
 
 - [ ] 5.1 Reescrever as regras A9 a A13 do `AGENTS.md` do backoffice e remover o que não é mais usado; verificar pela leitura e por `pnpm exec knip`
-- [ ] 5.2 `scripts/a11y-admin-axe.mjs` (com teclado, movimento e 390 px) sem violação nos três temas
+- [x] 5.2 `scripts/a11y-admin-axe.mjs` (com teclado, movimento e 390 px) sem violação nos três temas
 
 ## 6. Fechamento
 
-- [ ] 6.1 Gates: `pnpm lint`, `pnpm test` e `pnpm build` (sem `DATABASE_URL`) passam; `openspec validate --all --strict` passa
+- [x] 6.1 Gates: `pnpm lint`, `pnpm test` e `pnpm build` (sem `DATABASE_URL`) passam; `openspec validate --all --strict` passa
