@@ -31,7 +31,10 @@ import type { FunnelStage } from "@prisma/client";
 import type { ActionResult } from "@/app/_actions/action-result";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
-import { FUNNEL_STAGE_LABELS, isFunnelStage } from "@/lib/applications";
+import { safeDbError } from "@/lib/safe-error";
+import { isFunnelStage } from "@/lib/applications";
+import { getAdminLabels } from "@/lib/admin/request";
+import { fill } from "@/lib/admin/text";
 
 /** Estagios que fecham o funil — a mesma lista do MCP. */
 const CLOSING_STAGES: ReadonlySet<FunnelStage> = new Set<FunnelStage>([
@@ -55,15 +58,17 @@ export async function moveApplicationStage(
   stage: string,
 ): Promise<ActionResult> {
   await requireAdmin();
+  // The messages go to a notice of a translated screen: its language (A4).
+  const { moves, vocab, common } = await getAdminLabels();
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." };
+    return { ok: false, message: common.noDatabase };
   }
   // Argumento de Server Action vem do cliente: valide como se fosse HTTP cru.
   if (typeof id !== "string" || id.length === 0 || id.length > 60) {
-    return { ok: false, message: "Candidatura inválida." };
+    return { ok: false, message: moves.missing };
   }
   if (typeof stage !== "string" || !isFunnelStage(stage)) {
-    return { ok: false, message: "Estágio inválido." };
+    return { ok: false, message: moves.badStage };
   }
 
   let label = "";
@@ -79,15 +84,12 @@ export async function moveApplicationStage(
       },
     });
     if (!current) {
-      return { ok: false, message: "Candidatura não encontrada." };
+      return { ok: false, message: moves.missing };
     }
     label = current.company?.name ?? current.folderName;
 
     if (current.stage === stage) {
-      return {
-        ok: true,
-        message: `“${label}” já estava em ${FUNNEL_STAGE_LABELS[stage]}.`,
-      };
+      return { ok: true, message: fill(moves.already, { name: label, stage: vocab.stage[stage] }) };
     }
 
     const occurredAt = new Date();
@@ -123,16 +125,13 @@ export async function moveApplicationStage(
   } catch (err) {
     // A action nao lanca (contrato `ActionResult`): sem este catch a UI daria
     // toast de sucesso num movimento que falhou.
-    console.error("[admin] move application stage failed", err);
-    return { ok: false, message: "Não foi possível mover a candidatura." };
+    console.error("[admin] move application stage failed", safeDbError(err));
+    return { ok: false, message: moves.failed };
   }
 
   // === invalidateQueries. O board, a lista e o dashboard leem o mesmo funil.
   revalidatePath("/admin/applications/board");
   revalidatePath("/admin/applications");
   revalidatePath("/admin");
-  return {
-    ok: true,
-    message: `“${label}” movida para ${FUNNEL_STAGE_LABELS[stage]}.`,
-  };
+  return { ok: true, message: fill(moves.moved, { name: label, stage: vocab.stage[stage] }) };
 }

@@ -1,83 +1,45 @@
 /**
- * Vocabulario do board Kanban de candidaturas.
+ * What the board of applications carries from the server to the browser.
  *
- * Este modulo e **client-safe** de proposito: o card e a coluna sao renderizados
- * no cliente (menu "mover para" + transition) e o carregador de dados
- * (`src/app/admin/applications/board/board-data.ts`) e `server-only`. O tipo do
- * card vive aqui, no meio, para que os dois lados nao dependam um do outro —
- * o `select` do Prisma e conferido contra `KanbanCardData` na compilacao.
- *
- * O import de `@prisma/client` e `import type` pelo mesmo motivo de
- * `@/lib/applications`: tipo e apagado na compilacao, o runtime do Prisma nunca
- * chega ao bundle do navegador.
+ * Client-safe on purpose: the card and the column are rendered in the browser
+ * (dragging, the arrows, the optimistic move), and the loader
+ * (`src/app/admin/applications/board/board-data.ts`) is `server-only`. The type
+ * of the card lives here, in between, so that neither side depends on the other.
+ * `import type` from Prisma: its runtime never reaches the bundle.
  */
 
-import type { FunnelStage, SponsorshipSignal } from "@prisma/client";
-import { FUNNEL_STAGES } from "@/lib/applications";
+import type { FunnelStage } from "@prisma/client";
+import { BOARD_COLUMNS, type BoardColumnKey } from "@/lib/admin/funnel";
 
-/** Payload minimo do cartao. Nada de markdown longo: o board e uma visao densa. */
-export type KanbanCardData = {
+/** The least a card needs. No long markdown: the board is a dense view. */
+export type BoardCard = {
   id: string;
-  folderName: string;
+  company: string;
+  role: string | null;
   stage: FunnelStage;
-  roleTitle: string | null;
-  market: string | null;
-  /** `null` = herda o sinal da vaga (ver `effectiveSponsorship`). */
-  sponsorship: SponsorshipSignal | null;
+  /** Market and location, already joined. */
+  place: string | null;
   priority: number | null;
-  company: { name: string } | null;
-  job: {
-    title: string;
-    market: string | null;
-    sponsorship: SponsorshipSignal;
-    locationText: string | null;
-  } | null;
+  /** What to chase, as Marco wrote it. */
+  followUp: string | null;
 };
 
-/**
- * Os cinco desfechos SEM sucesso. Ganham UMA coluna agrupada ("Encerradas") em
- * vez de cinco colunas proprias: sao arquivo morto do funil, cada card ja
- * carrega o badge do estagio exato e o cabecalho da coluna quebra a contagem
- * por estagio. `offer` e `accepted` NAO entram aqui — desfecho bom merece
- * coluna propria, e sao justamente as duas que se quer ver de longe.
- */
-export const CLOSED_STAGES = [
-  "rejected",
-  "withdrawn",
-  "no_response",
-  "ghosted",
-  "skipped",
-] as const satisfies readonly FunnelStage[];
+export type BoardColumnData = {
+  /** The REAL count (a `groupBy`), not the number of cards on screen. */
+  count: number;
+  /** At most `BOARD_CARDS_PER_COLUMN`. */
+  cards: BoardCard[];
+};
 
-const CLOSED_STAGE_SET: ReadonlySet<FunnelStage> = new Set(CLOSED_STAGES);
-
-export function isClosedStage(stage: FunnelStage): boolean {
-  return CLOSED_STAGE_SET.has(stage);
-}
-
-/** O que o board precisa do banco: contagem exata por estagio + os cards. */
-export type KanbanBoardData = {
-  /** Contagem REAL por estagio (vem de um `groupBy`, nao do tamanho da lista). */
-  counts: Record<FunnelStage, number>;
-  /** Cards ja limitados a `BOARD_CARDS_PER_COLUMN` por estagio. */
-  cards: Record<FunnelStage, KanbanCardData[]>;
+export type BoardData = {
+  columns: Record<BoardColumnKey, BoardColumnData>;
   total: number;
-  /** `true` quando a consulta falhou ou nao ha `DATABASE_URL` (regra A3). */
+  /** The reading failed, or there is no `DATABASE_URL` (A3). */
   failed: boolean;
 };
 
-/** `Record<FunnelStage, T>` com todos os 21 estagios preenchidos. */
-export function stageRecord<T>(make: () => T): Record<FunnelStage, T> {
-  return Object.fromEntries(
-    FUNNEL_STAGES.map((stage) => [stage, make()]),
-  ) as Record<FunnelStage, T>;
-}
-
-export function emptyKanbanBoard(failed: boolean): KanbanBoardData {
-  return {
-    counts: stageRecord(() => 0),
-    cards: stageRecord<KanbanCardData[]>(() => []),
-    total: 0,
-    failed,
-  };
+export function emptyBoard(failed: boolean): BoardData {
+  const columns = {} as Record<BoardColumnKey, BoardColumnData>;
+  for (const { key } of BOARD_COLUMNS) columns[key] = { count: 0, cards: [] };
+  return { columns, total: 0, failed };
 }
