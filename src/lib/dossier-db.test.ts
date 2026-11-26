@@ -98,8 +98,11 @@ describe.skipIf(!SERVER)("dossier fields on a real Postgres", () => {
       }
       const rows: [string, string, number | null, string, string | null][] = [
         // id, application, round, scheduledAt (SQL), outcome
-        ["future", "a", 1, "now() + interval '3 days'", null],
-        ["future-pending", "a", 2, "now() + interval '9 days'", "pending"],
+        // In "a" the round and the date disagree, so only the round puts
+        // "future" first; the one without a round comes after both.
+        ["future", "a", 1, "now() + interval '9 days'", null],
+        ["future-pending", "a", 2, "now() + interval '3 days'", "pending"],
+        ["future-unnumbered", "a", null, "now() + interval '1 day'", null],
         ["past-passed", "b", null, "now() - interval '9 days'", "passed"],
         ["past-failed", "b", null, "now() - interval '3 days'", "Failed"],
         ["past-open", "b", null, "now() - interval '1 day'", null],
@@ -132,7 +135,7 @@ describe.skipIf(!SERVER)("dossier fields on a real Postgres", () => {
     }
 
     it("loses and creates no row", async () => {
-      expect(before).toEqual({ interviews: 11, applications: 3, companies: 1 });
+      expect(before).toEqual({ interviews: 12, applications: 3, companies: 1 });
       expect(await counts()).toEqual(before);
     });
 
@@ -140,6 +143,7 @@ describe.skipIf(!SERVER)("dossier fields on a real Postgres", () => {
       expect(Object.fromEntries(Object.values(after).map((row) => [row.id, row.status]))).toEqual({
         future: "scheduled",
         "future-pending": "scheduled",
+        "future-unnumbered": "scheduled",
         "past-passed": "completed",
         "past-failed": "completed",
         "past-open": "scheduled",
@@ -162,7 +166,9 @@ describe.skipIf(!SERVER)("dossier fields on a real Postgres", () => {
     it("orders by round, then date, then registration, inside each application", () => {
       const order = (ids: string[]) =>
         ids.sort((x, y) => after[x].orderIndex - after[y].orderIndex);
-      expect(order(["future-pending", "future"])).toEqual(["future", "future-pending"]);
+      expect(order(["future-unnumbered", "future-pending", "future"])).toEqual([
+        "future", "future-pending", "future-unnumbered",
+      ]);
       expect(order(["past-open", "past-passed", "past-pending", "past-blank", "past-failed"])).toEqual([
         "past-passed", "past-failed", "past-open", "past-blank", "past-pending",
       ]);
