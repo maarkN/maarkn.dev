@@ -192,10 +192,10 @@ what visitors read. The other columns were always read from the database.
   and is not the dictionary's; fix it in `/admin/projects` if it is not what you want.
 - Check the projects in both languages (`/en/projects`, `/pt-BR/projects`).
 
-The home is prerendered at build time, without a database: its `projects` command
-shows the seed until the page revalidates (up to one hour after the build, or at the
-first save in `/admin/projects`). Listing, detail pages and social cards read the
-database on every request.
+The CLI version (`/[lang]/terminal`) is prerendered at build time, without a database:
+its `projects` command shows the seed until the page revalidates (up to one hour after
+the build, or at the first save in `/admin/projects`). Listing, detail pages and social
+cards read the database on every request.
 
 To go back, revert the code: the previous version ignores the new columns. A project
 created while it is reverted has no Portuguese when the new version returns; write it

@@ -57,7 +57,7 @@ A fonte `daddytime` MUST NOT ser baixada enquanto a fonte ativa for `caskaydia`.
 Trocar de idioma MUST manter a paleta e a fonte ativas, na tela e no armazenamento, por qualquer caminho e nos dois sentidos. Trocar de idioma MUST NOT gravar a paleta nem a fonte; o valor guardado muda quando o visitante as troca e na carga do documento, pela migração de valores antigos e pelo padrão da primeira visita.
 
 #### Scenario: Comando lang
-- **WHEN** o visitante usa `classic` e `daddytime` em `/en` e executa `lang pt`
+- **WHEN** o visitante usa `classic` e `daddytime` em `/en/terminal` e executa `lang pt`
 - **THEN** a tela em português continua em `classic` e `daddytime`, e recarregar mantém os dois
 
 #### Scenario: Controle da barra
