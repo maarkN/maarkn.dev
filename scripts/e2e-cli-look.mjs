@@ -3,8 +3,9 @@
  * idioma. O idioma é parâmetro do layout raiz: trocar recria o <html> com
  * `soft` e `caskaydia` sem recarregar o documento, e o script de
  * inicialização não roda de novo. A escolha do visitante tem de continuar na
- * tela e no armazenamento, nos dois sentidos, pelo comando `lang`, pela barra
- * de uma página interna (com o mouse e com o teclado) e pelo botão voltar.
+ * tela e no armazenamento, nos dois sentidos, pelo comando `lang` da Versão
+ * CLI (`/[lang]/terminal`), pela barra de uma página interna (com o mouse e
+ * com o teclado) e pelo botão voltar.
  *
  * Cada caso roda com e sem movimento reduzido; a largura é a do script
  * (`--width 390 --height 844` para a estreita).
@@ -34,7 +35,12 @@ const BLOCK_STORAGE = `
   });
 `;
 
-const BUTTONS = `[...document.querySelectorAll("header:has(button) button")]`;
+/**
+ * A barra da Versão CLI, que as páginas internas também têm. O topo do site é
+ * outro `header` com botões (`.site-root`) e vem antes dela no documento.
+ */
+const BAR = "header:not(.site-root):has(button)";
+const BUTTONS = `[...document.querySelectorAll(${JSON.stringify(`${BAR} button`)})]`;
 
 /** A paleta e a fonte como a tela as mostra: o <html> e os dois botões da barra. */
 const LOOK = `(() => {
@@ -108,16 +114,16 @@ async function arrived(page, locale, path) {
 /**
  * O visitante escolhe `classic` e `daddytime` (`by` diz como), troca de idioma
  * pelo mesmo caminho, volta pelo navegador e recarrega.
- *   comando  — `theme classic`, `font daddytime`, `lang <outro>` na home
- *   alternar — `theme`, `font` sem argumento, `lang <outro>` na home
+ *   comando  — `theme classic`, `font daddytime`, `lang <outro>` na Versão CLI
+ *   alternar — `theme`, `font` sem argumento, `lang <outro>` na Versão CLI
  *   barra    — os três botões da barra de /links, com o mouse
  *   teclado  — os mesmos botões, com Tab e Enter
  */
 async function keepsLook(page, t, { from, by, motion, blocked = false }) {
   const to = other(from);
-  const onHome = by === "comando" || by === "alternar";
-  const start = onHome ? `/${from}` : `/${from}/links`;
-  const target = onHome ? `/${to}` : `/${to}/links`;
+  const onTerminal = by === "comando" || by === "alternar";
+  const start = onTerminal ? `/${from}/terminal` : `/${from}/links`;
+  const target = onTerminal ? `/${to}/terminal` : `/${to}/links`;
 
   await page.prefer({ motion });
   await page.beforeLoad(blocked ? BLOCK_STORAGE : WATCH_WRITES);
@@ -136,20 +142,20 @@ async function keepsLook(page, t, { from, by, motion, blocked = false }) {
     await tabTo(page, 1);
     await page.press("Enter");
   } else {
-    await page.click(`header:has(button) button:nth-of-type(1)`);
-    await page.click(`header:has(button) button:nth-of-type(2)`);
+    await page.click(`${BAR} button:nth-of-type(1)`);
+    await page.click(`${BAR} button:nth-of-type(2)`);
   }
   await page.waitFor(`JSON.stringify(${LOOK}) === ${JSON.stringify(JSON.stringify(EXPECTED))}`, "a escolha entrar", 5000);
   const mark = blocked ? 0 : await page.evaluate(`window.__writes.length`);
   await page.evaluate(WATCH_FRAMES);
 
-  if (onHome) {
+  if (onTerminal) {
     await command(page, `lang ${SHORT[to]}`);
   } else if (by === "teclado") {
     await tabTo(page, 2);
     await page.press("Enter");
   } else {
-    await page.click(`header:has(button) button:nth-of-type(3)`);
+    await page.click(`${BAR} button:nth-of-type(3)`);
   }
   await arrived(page, to, target);
   t.equal(await page.evaluate(LOOK), EXPECTED, `em ${to}, a tela continua em classic e daddytime`);
@@ -174,7 +180,7 @@ async function keepsLook(page, t, { from, by, motion, blocked = false }) {
   t.equal(page.errors, [], "nenhum erro no console");
 
   await page.reload();
-  if (onHome) await page.waitFor(`!document.querySelector("[data-boot]")`, "o boot terminar");
+  if (onTerminal) await page.waitFor(`!document.querySelector("[data-boot]")`, "o boot terminar");
   await sleep(300);
   if (blocked) {
     /* Sem armazenamento a escolha vive só na memória do documento. */
