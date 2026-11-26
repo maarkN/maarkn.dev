@@ -51,7 +51,7 @@ Cada projeto SHALL aceitar imagens em ordem definida, com legenda nos dois idiom
 - **THEN** a seção de galeria não aparece
 
 ### Requirement: Casos de sucesso escolhidos
-A home SHALL exibir no máximo três casos de sucesso, escolhidos e ordenados por Marco, cada um com problema, trabalho e resultado nos dois idiomas.
+Os casos de sucesso do site SHALL ser no máximo três, escolhidos e ordenados no backoffice, cada um com problema, trabalho e resultado nos dois idiomas.
 
 #### Scenario: Quarto caso
 - **WHEN** já há três casos e um quarto é marcado
