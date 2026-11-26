@@ -5,7 +5,8 @@
  * - never `throw` from an action the UI awaits (the error becomes a generic
  *   error screen and the toast is lost) — catch, log on the server, return
  *   `{ ok: false, message }`;
- * - `message` is pt-BR text ready to drop into `toast.success` / `toast.error`;
+ * - `message` is text ready for a notice (`useNotify`), in the language of the
+ *   screen that calls the action (`getAdminLabels()` on a translated one);
  * - never leak internals (stack, SQL, another user's e-mail) through `message`;
  * - `fieldErrors` is `{ [field name]: message }`, built from a zod issue list.
  */

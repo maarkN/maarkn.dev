@@ -2,9 +2,8 @@
 /**
  * A régua de acessibilidade do backoffice — três medições sobre o admin REAL.
  *
- * Mesma mecânica de scripts/a11y-dialog-accname.mjs: Chrome headless por CDP,
- * WebSocket nativo do Node, zero dependência nova. A diferença é que aqui a
- * página é o admin servido pelo `next dev`, não uma fixture — contraste, foco
+ * Chrome headless por CDP, WebSocket nativo do Node, zero dependência nova. A
+ * página é o admin servido de verdade, não uma fixture — contraste, foco
  * e movimento só são mensuráveis com o CSS compilado, os tokens de
  * `.admin-root` e os dados do Postgres no lugar.
  *
@@ -156,22 +155,34 @@ const ROUTES = [
   { name: "chat", path: "/admin/chat" },
   { name: "settings", path: "/admin/settings" },
 
-  /* Overlays. O gatilho é procurado por `aria-label`/texto porque o `asChild`
-     do Radix entrega o `data-slot` do Button, não o do trigger. */
+  /* Overlays. O gatilho é procurado pelo `data-slot` que o Radix passa ao botão
+     (`asChild`): vale nos dois idiomas, porque não depende do rótulo. */
   {
     name: "overlay:alert-dialog excluir candidatura",
     path: "/admin/applications",
-    openSelector: 'button[aria-label^="Excluir a candidatura"]',
+    openSelector: '[data-slot="alert-dialog-trigger"]',
   },
   {
     name: "overlay:alert-dialog excluir projeto",
     path: "/admin/projects",
-    openSelector: 'button[aria-label^="Excluir "]',
+    openSelector: '[data-slot="alert-dialog-trigger"]',
   },
   {
     name: "overlay:alert-dialog excluir contato",
     path: "/admin/contacts",
-    openSelector: 'button[aria-label^="Excluir "]',
+    openSelector: '[data-slot="alert-dialog-trigger"]',
+  },
+  { name: "overlay:dialog novo contato", path: "/admin/contacts", openSelector: '[data-slot="dialog-trigger"]' },
+  {
+    name: "overlay:dialog nova referência",
+    path: "/admin/contacts?tab=references",
+    openSelector: '[data-slot="dialog-trigger"]',
+  },
+  { name: "overlay:dialog nova chave", path: "/admin/api-keys", openSelector: '[data-slot="dialog-trigger"]' },
+  {
+    name: "overlay:alert-dialog revogar chave",
+    path: "/admin/api-keys",
+    openSelector: '[data-slot="alert-dialog-trigger"]',
   },
   /* A estrutura. O gatilho que não está à vista nesta largura não conta: a barra
      do celular e o menu lateral nunca aparecem juntos. */
