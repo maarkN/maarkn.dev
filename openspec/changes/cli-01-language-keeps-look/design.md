@@ -14,10 +14,11 @@ Na home há uma segunda causa, achada ao reproduzir (tarefa 1.1). A Versão CLI 
 
 - **Quem manda é a escolha em memória, depois o armazenamento, depois o atributo.** Ao remontar, o provedor reaplica a escolha antes da pintura. A memória cobre o armazenamento bloqueado.
 - **Gravar só na troca feita pelo visitante**, não ao montar. É o efeito de montagem que hoje apaga a escolha.
-- **A reconstrução da tela não mexe na aparência.** Ao reexecutar, `theme` e `font` recebem a aparência só para leitura: imprimem a linha e não trocam nada. Quem restaura a aparência é o provedor.
+- **A reconstrução da tela não mexe na aparência** (ampliação aceita em 2026-11-26: sem ela, um `theme` sem argumento seguido de `lang pt` ainda terminava em `soft`). Ao reexecutar, `theme` e `font` recebem a aparência só para leitura: imprimem a linha e não trocam nada. Quem restaura a aparência é o provedor.
 - **Alternativa descartada: trocar de idioma recarregando o documento.** É o que o topo novo faz, mas a Versão CLI perderia a continuidade da sessão, e o botão voltar continuaria quebrado.
 
 ## Risks / Trade-offs
 
 - [O script de inicialização migra valores antigos e continua gravando] → Fica como está; a migração acontece na carga do documento.
+- [A tela reconstruída mostra o valor atual em `theme` e `font` sem argumento, não o que eles imprimiram antes] → A aparência fica certa; só a transcrição perde fidelidade, como já acontecia na `main`.
 - [`feat/rebranding` moveu o script de inicialização para outro arquivo] → Trazer a `main` para a branch logo depois do merge e rodar lá o e2e.
