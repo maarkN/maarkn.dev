@@ -165,6 +165,16 @@ describe("moving with the arrows", () => {
     expect(moveAction).toHaveBeenLastCalledWith("a", "shortlisted");
   });
 
+  it("says where the card stays when undoing is refused", async () => {
+    moveAction.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ ok: false, message: "O banco não gravou a mudança." });
+    render();
+    press("a", "ArrowRight");
+    await act(async () => {});
+    await act(async () => notice().props.action!.onClick());
+    expect(notice(1).props.tone).toBe("bad");
+    expect(notice(1).props.title).toBe("Não foi possível mover “Acme”. Ela continua em Prontas.");
+  });
+
   it("goes nowhere past the first column, nor with a modifier", () => {
     render();
     press("a", "ArrowLeft");

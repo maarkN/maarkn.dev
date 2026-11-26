@@ -99,10 +99,15 @@ export function KanbanBoard({
     return null;
   }
 
-  function move(id: string, to: BoardColumnKey, stage: FunnelStage = dropStageOf(to), undoing = false) {
+  /**
+   * @param undoing the column the card is in now, when the move undoes another:
+   *   the card is found where it was before, and the refusal names where it stays.
+   */
+  function move(id: string, to: BoardColumnKey, stage: FunnelStage = dropStageOf(to), undoing?: BoardColumnKey) {
     const found = locate(id);
     if (!found || (found.column === to && !undoing)) return;
-    const { card, column: from } = found;
+    const { card } = found;
+    const from = undoing ?? found.column;
     const name = card.company;
     startTransition(async () => {
       addMove({ id, to, stage });
@@ -119,7 +124,7 @@ export function KanbanBoard({
         return;
       }
       notify.success(fill(board.moved, { name, column: vocab.column[to] }), {
-        action: { label: common.undo, onClick: () => move(id, from, card.stage, true) },
+        action: { label: common.undo, onClick: () => move(id, from, card.stage, to) },
       });
     });
   }
