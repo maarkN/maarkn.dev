@@ -10,13 +10,7 @@ import { buildSearchIndex } from "./search-index";
 
 vi.mock("server-only", () => ({}));
 // The repository is the pages' own; here it answers as it does without a database.
-vi.mock("@/lib/projects-repo", async () => {
-  const { projects: all } = await import("@/lib/projects");
-  return {
-    getAllProjects: vi.fn(async () => all),
-    buildTaglines: (_: unknown, taglines: Record<string, string>) => taglines,
-  };
-});
+vi.mock("@/lib/db", () => ({ db: {}, dbConfigured: false }));
 
 const DICTIONARIES = [
   ["en", en],
@@ -51,6 +45,16 @@ describe.each(DICTIONARIES)("search index in %s", (locale, dict) => {
     }
     const [language] = index.filter(({ kind }) => kind === "language");
     expect(language.lang).toBe(locale === "en" ? "pt-BR" : "en");
+  });
+
+  it("describes each project with its tagline in this language", async () => {
+    const index = await buildSearchIndex(dict, locale);
+    const taglines = dict.projects.taglines as Record<string, string>;
+    for (const { slug } of projects) {
+      const item = index.find(({ id }) => id === `project-${slug}`)!;
+      expect(item.detail).toBe(taglines[slug]);
+      expect(item.detailLang).toBeUndefined();
+    }
   });
 
   it("finds the projects and the experiences with Flutter", async () => {

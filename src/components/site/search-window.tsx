@@ -222,7 +222,7 @@ function SearchBody({
               <>
                 <span className={styles.resultText}>
                   <span lang={option.item.lang}>{option.item.title}</span>
-                  {option.item.detail && <small>{option.item.detail}</small>}
+                  {option.item.detail && <small lang={option.item.detailLang}>{option.item.detail}</small>}
                 </span>
                 <span className={styles.resultKind}>{labels.kinds[option.item.kind]}</span>
               </>
