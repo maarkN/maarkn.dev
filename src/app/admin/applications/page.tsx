@@ -45,7 +45,7 @@ const COLS = 7;
 
 type Params = Record<string, string | string[] | undefined>;
 
-/** On a phone the list keeps the company and the stage; the rest is in the dossier. */
+/** On a phone the list keeps the company, the stage and the actions; the rest is in the dossier. */
 const WIDE = "hidden md:table-cell";
 
 export default async function ApplicationsPage({ searchParams }: PageProps<"/admin/applications">) {
@@ -214,7 +214,7 @@ async function ApplicationsRows({
                     </div>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="max-w-0 truncate">
                   <StageLabel stage={row.stage} words={vocab} />
                 </TableCell>
                 <TableCell className={`${WIDE} max-w-0`}>
@@ -233,20 +233,24 @@ async function ApplicationsRows({
                 <TableCell className={`${WIDE} font-label text-xs whitespace-nowrap`}>
                   {formatDateTime(row.updatedAt)}
                 </TableCell>
-                <TableCell className={`${WIDE} text-right`}>
+                {/* On a phone too: deleting an application happens here. */}
+                <TableCell className="text-right">
                   <div className="inline-flex items-center gap-1.5">
                     {linkable && (
-                      <Button asChild variant="ghost" size="icon-sm">
-                        <a
-                          href={jobUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={fill(words.openJob, { name: companyName })}
-                          title={fill(words.openJob, { name: companyName })}
-                        >
-                          <ExternalLink aria-hidden="true" />
-                        </a>
-                      </Button>
+                      // The wrapper hides it on a phone: a hologram's own `display` outranks a utility.
+                      <span className="max-md:hidden">
+                        <Button asChild variant="ghost" size="icon-sm">
+                          <a
+                            href={jobUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={fill(words.openJob, { name: companyName })}
+                            title={fill(words.openJob, { name: companyName })}
+                          >
+                            <ExternalLink aria-hidden="true" />
+                          </a>
+                        </Button>
+                      </span>
                     )}
                     <Button asChild variant="ghost" size="icon-sm">
                       <Link
@@ -315,13 +319,13 @@ function ApplicationsTable({
     <Table className="table-fixed">
       <TableHeader>
         <TableRow>
-          {head("company", columns.company, "w-[45%] md:w-auto")}
+          {head("company", columns.company, "w-auto")}
           <TableHead className={WIDE}>{columns.role}</TableHead>
-          {head("stage", columns.stage, "w-[55%] md:w-48")}
+          {head("stage", columns.stage, "w-32 md:w-48")}
           <TableHead className={`${WIDE} w-52`}>{columns.visa}</TableHead>
           {head("sent", columns.sent, `${WIDE} w-28`, "desc")}
           {head("updated", columns.updated, `${WIDE} w-36`, "desc")}
-          <TableHead className={`${WIDE} w-36 text-right`}>{columns.actions}</TableHead>
+          <TableHead className="w-28 text-right md:w-36">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
