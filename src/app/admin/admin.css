@@ -143,7 +143,10 @@ body.admin-root {
   [data-slot="tabs-content"],
   [data-slot="table-container"]
 ):not([data-holo]):focus-visible {
-  outline: 2px solid var(--ring);
+  /* `--beam-3` and not `--ring`: inside a window (a hologram's panel) `--ring`
+     is the opacity of the frame's focus ring, a number, and an outline made of
+     it is thrown away whole. A checkbox in a dialog had no focus at all. */
+  outline: 2px solid var(--beam-3);
   outline-offset: 2px;
 }
 
