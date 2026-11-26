@@ -1,155 +1,164 @@
 "use client";
 
 /**
- * Filters + pager for `/admin/projects`. One client component owns the URL:
- * the URL is the query key (AGENTS.md §1), so both halves write to it.
- *
- * Filters are draft → applied (no debounce): typing only changes local state,
- * the submit pushes the new querystring.
+ * The filters of the projects, and their pager. The same recipe as the other
+ * lists (AGENTS.md §4.2): one Client Component owns the URL and writes it on
+ * "Filtrar"; any change of filter goes back to the first page, the order stays.
  */
 
-import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import {
-  PROJECT_CATEGORY_STYLES,
-  PROJECT_STATUS_STYLES,
-} from "@/components/admin/status-badge";
+import { FilterPanel } from "@/components/admin/filter-panel";
 import { TablePager } from "@/components/admin/table-pager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { AdminDictionary } from "@/i18n/config";
+import { projectCategories, type ProjectStatus } from "@/lib/projects";
 
-/** `<SelectItem value="">` is forbidden by Radix — "all" is the sentinel. */
+/** Sentinel: `<SelectItem value="">` is forbidden by Radix. */
 const ALL = "all";
+const STATUSES: ProjectStatus[] = ["live", "internal", "nda", "archived"];
 
-interface Props {
-  q: string;
-  category: string;
-  status: string;
+type Filters = { q: string; category: string; status: string };
+
+export type ProjectsToolbarWords = {
+  filters: AdminDictionary["projects"]["filters"];
+  vocab: Pick<AdminDictionary["vocab"], "projectCategory" | "projectStatus">;
+  clear: string;
+};
+
+type Props = Filters & {
+  words?: ProjectsToolbarWords;
   page: number;
-  totalPages: number;
-  total: number;
   position: "top" | "bottom";
-}
+  totalPages?: number;
+  total?: number;
+  sort?: { key: string; dir: string };
+};
 
-export function ProjectsToolbar(p: Props) {
+export function ProjectsToolbar(props: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [draft, setDraft] = useState<Filters>({ q: props.q, category: props.category, status: props.status });
 
-  const [draftQ, setDraftQ] = useState(p.q);
-  const [draftCategory, setDraftCategory] = useState(p.category);
-  const [draftStatus, setDraftStatus] = useState(p.status);
-
-  function push(next: {
-    q?: string;
-    category?: string;
-    status?: string;
-    page?: number;
-  }) {
+  function push(next: Filters, page = 1) {
     const params = new URLSearchParams();
-    const q = next.q ?? draftQ;
-    const category = next.category ?? draftCategory;
-    const status = next.status ?? draftStatus;
-    // Any filter change resets to page 1.
-    const page = next.page ?? 1;
-    if (q) params.set("q", q);
-    if (category) params.set("category", category);
-    if (status) params.set("status", status);
+    for (const key of ["q", "category", "status"] as const) if (next[key]) params.set(key, next[key]);
+    if (props.sort) {
+      params.set("sort", props.sort.key);
+      params.set("dir", props.sort.dir);
+    }
     if (page > 1) params.set("page", String(page));
-    const qs = params.toString();
-    startTransition(() => router.push(qs ? `${pathname}?${qs}` : pathname));
+    const query = params.toString();
+    startTransition(() => router.push(query ? `${pathname}?${query}` : pathname));
   }
 
-  if (p.position === "bottom") {
+  if (props.position === "bottom") {
     return (
       <TablePager
-        page={p.page}
-        totalPages={p.totalPages}
-        total={p.total}
+        page={props.page}
+        totalPages={props.totalPages ?? 1}
+        total={props.total}
         disabled={isPending}
-        onPageChange={(page) => push({ page })}
+        onPageChange={(page) => push(props, page)}
       />
     );
   }
 
-  const hasFilters = Boolean(p.q || p.category || p.status);
+  const { filters, vocab, clear } = props.words!;
+  const applied = [props.q, props.category, props.status].filter(Boolean).length;
 
   return (
-    <form
-      className="flex flex-wrap items-end gap-2 pb-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        push({});
-      }}
-    >
-      <Input
-        value={draftQ}
-        onChange={(e) => setDraftQ(e.target.value)}
-        placeholder="Buscar por nome ou slug…"
-        className="w-56"
-        aria-label="Buscar projetos"
-      />
-      <Select
-        value={draftCategory || ALL}
-        onValueChange={(v) => setDraftCategory(v === ALL ? "" : v)}
+    <FilterPanel applied={applied}>
+      <form
+        aria-label={filters.label}
+        className="flex flex-wrap items-end gap-x-3 gap-y-4 pb-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          push(draft);
+        }}
       >
-        <SelectTrigger className="w-44" aria-label="Categoria">
-          <SelectValue placeholder="Categoria" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>Todas as categorias</SelectItem>
-          {Object.entries(PROJECT_CATEGORY_STYLES).map(([value, style]) => (
-            <SelectItem key={value} value={value}>
-              {style.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select
-        value={draftStatus || ALL}
-        onValueChange={(v) => setDraftStatus(v === ALL ? "" : v)}
-      >
-        <SelectTrigger className="w-44" aria-label="Status">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>Todos os status</SelectItem>
-          {Object.entries(PROJECT_STATUS_STYLES).map(([value, style]) => (
-            <SelectItem key={value} value={value}>
-              {style.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button type="submit" variant="outline" size="sm" disabled={isPending}>
-        <Search className="size-4" />
-        [ filtrar ]
-      </Button>
-      {hasFilters && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={isPending}
-          onClick={() => {
-            setDraftQ("");
-            setDraftCategory("");
-            setDraftStatus("");
-            push({ q: "", category: "", status: "", page: 1 });
-          }}
-        >
-          <X className="size-4" />
-          [ limpar ]
-        </Button>
-      )}
-    </form>
+        <div className="w-full sm:w-64">
+          <Label htmlFor="projects-q" className="pb-1.5">
+            {filters.search}
+          </Label>
+          <Input
+            id="projects-q"
+            type="search"
+            value={draft.q}
+            onChange={(event) => setDraft((d) => ({ ...d, q: event.target.value }))}
+            placeholder={filters.searchPlaceholder}
+            className="w-full"
+          />
+        </div>
+        <div className="w-full sm:w-48">
+          <Label htmlFor="projects-category" className="pb-1.5">
+            {filters.category}
+          </Label>
+          <Select
+            value={draft.category || ALL}
+            onValueChange={(value) => setDraft((d) => ({ ...d, category: value === ALL ? "" : value }))}
+          >
+            <SelectTrigger id="projects-category" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allCategories}</SelectItem>
+              {projectCategories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {vocab.projectCategory[category]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full sm:w-48">
+          <Label htmlFor="projects-status" className="pb-1.5">
+            {filters.status}
+          </Label>
+          <Select
+            value={draft.status || ALL}
+            onValueChange={(value) => setDraft((d) => ({ ...d, status: value === ALL ? "" : value }))}
+          >
+            <SelectTrigger id="projects-status" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filters.allStatuses}</SelectItem>
+              {STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {vocab.projectStatus[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2 pb-1">
+          <Button type="submit" variant="outline" disabled={isPending}>
+            <Search aria-hidden="true" />
+            {filters.apply}
+          </Button>
+          {applied > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isPending}
+              onClick={() => {
+                const empty = { q: "", category: "", status: "" };
+                setDraft(empty);
+                push(empty);
+              }}
+            >
+              <X aria-hidden="true" />
+              {clear}
+            </Button>
+          )}
+        </div>
+      </form>
+    </FilterPanel>
   );
 }

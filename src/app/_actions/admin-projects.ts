@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db, dbConfigured } from "@/lib/db";
+import { safeDbError } from "@/lib/safe-error";
+import { getAdminLabels } from "@/lib/admin/request";
+import { fill } from "@/lib/admin/text";
 import { httpUrlSchema } from "@/lib/http-url";
 import { encodeStringList } from "@/lib/json-list";
 import type { ActionResult } from "./action-result";
@@ -211,16 +214,18 @@ export async function saveProject(
 
 export async function deleteProject(id: string): Promise<ActionResult> {
   await requireAdmin();
+  // The list of projects is translated: its notices speak its language (A4).
+  const { projects, common } = await getAdminLabels();
   if (!dbConfigured) {
-    return { ok: false, message: "Banco indisponível. Configure DATABASE_URL." };
+    return { ok: false, message: common.noDatabase };
   }
 
   try {
-    const row = await db.project.delete({ where: { id } });
+    const row = await db.project.delete({ where: { id }, select: { name: true } });
     revalidateProjects();
-    return { ok: true, message: `Projeto "${row.name}" excluído.` };
+    return { ok: true, message: fill(projects.delete.done, { name: row.name }) };
   } catch (err) {
-    console.error("[admin] delete project failed", err);
-    return { ok: false, message: "Não foi possível excluir o projeto." };
+    console.error("[admin] delete project failed", safeDbError(err));
+    return { ok: false, message: projects.delete.failed };
   }
 }
