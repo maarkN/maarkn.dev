@@ -45,8 +45,13 @@ const COLS = 7;
 
 type Params = Record<string, string | string[] | undefined>;
 
-/** On a phone the list keeps the company, the stage and the actions; the rest is in the dossier. */
-const WIDE = "hidden md:table-cell";
+/**
+ * On a phone the list keeps the company, the stage and the actions; the rest is
+ * in the dossier. The other columns come in where they fit: from a laptop
+ * (1024 px) and from a desktop (1280 px) up.
+ */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
 export default async function ApplicationsPage({ searchParams }: PageProps<"/admin/applications">) {
   const session = await auth();
@@ -204,7 +209,7 @@ async function ApplicationsRows({
                   </div>
                   {row.fit && <div className="truncate text-sm text-muted-foreground">{row.fit}</div>}
                 </TableCell>
-                <TableCell className={`${WIDE} max-w-0`}>
+                <TableCell className={`${LG} max-w-0`}>
                   <div className="truncate" title={roleTitle}>
                     {roleTitle}
                   </div>
@@ -217,7 +222,7 @@ async function ApplicationsRows({
                 <TableCell className="max-w-0 truncate">
                   <StageLabel stage={row.stage} words={vocab} />
                 </TableCell>
-                <TableCell className={`${WIDE} max-w-0`}>
+                <TableCell className={`${XL} max-w-0`}>
                   {sponsorship ? (
                     <span className="block truncate" title={vocab.visaHint[sponsorship]}>
                       {vocab.visa[sponsorship]}
@@ -229,8 +234,8 @@ async function ApplicationsRows({
                     <span className="block text-sm text-muted-foreground">{words.inherited}</span>
                   )}
                 </TableCell>
-                <TableCell className={`${WIDE} font-label text-xs whitespace-nowrap`}>{formatDate(row.appliedAt)}</TableCell>
-                <TableCell className={`${WIDE} font-label text-xs whitespace-nowrap`}>
+                <TableCell className={`${XL} font-label text-xs whitespace-nowrap`}>{formatDate(row.appliedAt)}</TableCell>
+                <TableCell className={`${LG} font-label text-xs whitespace-nowrap`}>
                   {formatDateTime(row.updatedAt)}
                 </TableCell>
                 {/* On a phone too: deleting an application happens here. */}
@@ -320,11 +325,11 @@ function ApplicationsTable({
       <TableHeader>
         <TableRow>
           {head("company", columns.company, "w-auto")}
-          <TableHead className={WIDE}>{columns.role}</TableHead>
+          <TableHead className={LG}>{columns.role}</TableHead>
           {head("stage", columns.stage, "w-32 md:w-48")}
-          <TableHead className={`${WIDE} w-52`}>{columns.visa}</TableHead>
-          {head("sent", columns.sent, `${WIDE} w-28`, "desc")}
-          {head("updated", columns.updated, `${WIDE} w-36`, "desc")}
+          <TableHead className={`${XL} w-52`}>{columns.visa}</TableHead>
+          {head("sent", columns.sent, `${XL} w-28`, "desc")}
+          {head("updated", columns.updated, `${LG} w-36`, "desc")}
           <TableHead className="w-28 text-right md:w-36">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>

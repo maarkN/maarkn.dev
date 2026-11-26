@@ -27,7 +27,9 @@ const PATH = "/admin/chat";
 const PAGE_SIZE = 25;
 const COLS = 6;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a laptop (1024 px) and from a desktop (1280 px) up. */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -256,8 +258,8 @@ async function ChatRows({
                   </div>
                 </details>
               </TableCell>
-              <TableCell className={`${WIDE} font-label text-xs text-muted-foreground`}>{r.clientKeyHash.slice(0, 8)}</TableCell>
-              <TableCell className={WIDE}>
+              <TableCell className={`${XL} font-label text-xs text-muted-foreground`}>{r.clientKeyHash.slice(0, 8)}</TableCell>
+              <TableCell className={LG}>
                 <StatusWord tone={isChatStatus(r.status) ? CHAT_STATUS_TONES[r.status] : "bg-ink-3"}>
                   {isChatStatus(r.status) ? vocab.chatStatus[r.status] : r.status}
                 </StatusWord>
@@ -268,7 +270,7 @@ async function ChatRows({
                   {fill(words.split, { prompt: formatNumber(r.promptTokens), answer: formatNumber(r.answerTokens) })}
                 </span>
               </TableCell>
-              <TableCell className={`${WIDE} text-right font-label text-sm text-muted-foreground`}>
+              <TableCell className={`${XL} text-right font-label text-sm text-muted-foreground`}>
                 {r.latencyMs ? `${formatNumber(Math.round(r.latencyMs / 100) / 10)} s` : "—"}
               </TableCell>
             </TableRow>
@@ -288,10 +290,10 @@ function ChatTable({ labels, children }: { labels: AdminDictionary; children: Re
         <TableRow>
           <TableHead className="w-28 md:w-40">{columns.when}</TableHead>
           <TableHead>{columns.question}</TableHead>
-          <TableHead className={`${WIDE} w-28`}>{columns.visitor}</TableHead>
-          <TableHead className={`${WIDE} w-36`}>{columns.status}</TableHead>
+          <TableHead className={`${XL} w-28`}>{columns.visitor}</TableHead>
+          <TableHead className={`${LG} w-36`}>{columns.status}</TableHead>
           <TableHead className="w-28 text-right md:w-44">{columns.tokens}</TableHead>
-          <TableHead className={`${WIDE} w-24 text-right`}>{columns.latency}</TableHead>
+          <TableHead className={`${XL} w-24 text-right`}>{columns.latency}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>

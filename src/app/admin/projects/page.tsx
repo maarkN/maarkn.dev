@@ -27,7 +27,9 @@ export const dynamic = "force-dynamic";
 const PATH = "/admin/projects";
 const PAGE_SIZE = 20;
 const COLS = 7;
-const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a laptop (1024 px) and from a desktop (1280 px) up. */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
 const SORT_KEYS = ["name", "updated"] as const;
 type SortKey = (typeof SORT_KEYS)[number];
@@ -193,10 +195,10 @@ async function ProjectsRows({
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className={WIDE}>{vocab.projectCategory[p.category as ProjectCategory] ?? p.category}</TableCell>
-                <TableCell className={WIDE}>{vocab.projectStatus[p.status as ProjectStatus] ?? p.status}</TableCell>
-                <TableCell className={WIDE}>{vocab.visibility[p.sourceVisibility as SourceVisibility] ?? p.sourceVisibility}</TableCell>
-                <TableCell className={WIDE}>
+                <TableCell className={LG}>{vocab.projectCategory[p.category as ProjectCategory] ?? p.category}</TableCell>
+                <TableCell className={LG}>{vocab.projectStatus[p.status as ProjectStatus] ?? p.status}</TableCell>
+                <TableCell className={XL}>{vocab.visibility[p.sourceVisibility as SourceVisibility] ?? p.sourceVisibility}</TableCell>
+                <TableCell className={XL}>
                   {p.featured ? (
                     <span className="inline-flex items-center gap-1.5">
                       <Star aria-hidden="true" className="size-4 fill-current text-warn" />
@@ -206,7 +208,7 @@ async function ProjectsRows({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className={`${WIDE} font-label text-xs whitespace-nowrap`}>{formatDateTime(p.updatedAt)}</TableCell>
+                <TableCell className={`${XL} font-label text-xs whitespace-nowrap`}>{formatDateTime(p.updatedAt)}</TableCell>
                 <TableCell className="text-right">
                   <div className="inline-flex items-center gap-1.5">
                     <Button asChild variant="ghost" size="icon-sm">
@@ -263,11 +265,11 @@ function ProjectsTable({
       <TableHeader>
         <TableRow>
           {head("name", columns.project, "w-auto", "asc")}
-          <TableHead className={`${WIDE} w-32`}>{columns.category}</TableHead>
-          <TableHead className={`${WIDE} w-32`}>{columns.status}</TableHead>
-          <TableHead className={`${WIDE} w-28`}>{columns.source}</TableHead>
-          <TableHead className={`${WIDE} w-36`}>{columns.featured}</TableHead>
-          {head("updated", columns.updated, `${WIDE} w-40`, "desc")}
+          <TableHead className={`${LG} w-32`}>{columns.category}</TableHead>
+          <TableHead className={`${LG} w-32`}>{columns.status}</TableHead>
+          <TableHead className={`${XL} w-28`}>{columns.source}</TableHead>
+          <TableHead className={`${XL} w-36`}>{columns.featured}</TableHead>
+          {head("updated", columns.updated, `${XL} w-40`, "desc")}
           <TableHead className="w-28 text-right">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>

@@ -29,6 +29,8 @@ const PATH = "/admin/generator";
 const PAGE_SIZE = 10;
 const COLS = 5;
 const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a laptop (1024 px) up. */
+const LG = "hidden lg:table-cell";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -170,8 +172,8 @@ async function GenerationsRows({
                 <TableCell className={`${WIDE} max-w-0 truncate`} title={g.company ?? undefined}>
                   {g.company || "—"}
                 </TableCell>
-                <TableCell className={WIDE}>{languageLabel(vocab.generatorLanguage, g.language)}</TableCell>
-                <TableCell className={`${WIDE} font-label text-xs whitespace-nowrap`}>{formatDateTime(g.createdAt)}</TableCell>
+                <TableCell className={LG}>{languageLabel(vocab.generatorLanguage, g.language)}</TableCell>
+                <TableCell className={`${LG} font-label text-xs whitespace-nowrap`}>{formatDateTime(g.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <Button asChild variant="ghost" size="icon-sm">
                     <Link href={href} aria-label={fill(words.recent.open, { name })} title={fill(words.recent.open, { name })}>
@@ -197,8 +199,8 @@ function GenerationsTable({ labels, children }: { labels: AdminDictionary; child
         <TableRow>
           <TableHead>{columns.role}</TableHead>
           <TableHead className={WIDE}>{columns.company}</TableHead>
-          <TableHead className={`${WIDE} w-32`}>{columns.language}</TableHead>
-          <TableHead className={`${WIDE} w-44`}>{columns.created}</TableHead>
+          <TableHead className={`${LG} w-32`}>{columns.language}</TableHead>
+          <TableHead className={`${LG} w-44`}>{columns.created}</TableHead>
           <TableHead className="w-24 text-right">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>

@@ -56,6 +56,9 @@ export const dynamic = "force-dynamic";
 const PATH = "/admin/contacts";
 const COLS = 5;
 const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a laptop (1024 px) and from a desktop (1280 px) up. */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -223,7 +226,7 @@ async function ContactRows({
                   )}
                 </TableCell>
 
-                <TableCell className={`${WIDE} max-w-0`}>
+                <TableCell className={`${LG} max-w-0`}>
                   <ContactLinks
                     email={row.email}
                     phone={row.phone}
@@ -232,7 +235,7 @@ async function ContactRows({
                   />
                 </TableCell>
 
-                <TableCell className={WIDE}>
+                <TableCell className={XL}>
                   <div>{wordFor(vocab.channel, row.channel)}</div>
                   <div className="text-sm text-muted-foreground">
                     {[
@@ -327,7 +330,7 @@ async function ReferenceRows({
                     </div>
                   </TableCell>
 
-                  <TableCell className={`${WIDE} max-w-0`}>
+                  <TableCell className={`${LG} max-w-0`}>
                     <ContactLinks
                       email={row.email}
                       phone={row.phone}
@@ -336,7 +339,7 @@ async function ReferenceRows({
                     />
                   </TableCell>
 
-                  <TableCell className={WIDE}>
+                  <TableCell className={XL}>
                     {row.canContact ? (
                       <div>{words.canContact}</div>
                     ) : (
@@ -410,8 +413,8 @@ function PeopleTable({
         <TableRow>
           <TableHead>{columns.name}</TableHead>
           <TableHead className={WIDE}>{contacts ? columns.company : columns.relationship}</TableHead>
-          <TableHead className={`${WIDE} w-64`}>{columns.contact}</TableHead>
-          <TableHead className={`${WIDE} w-52`}>{contacts ? columns.channel : columns.consent}</TableHead>
+          <TableHead className={`${LG} w-64`}>{columns.contact}</TableHead>
+          <TableHead className={`${XL} w-52`}>{contacts ? columns.channel : columns.consent}</TableHead>
           <TableHead className="w-28 text-right">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>

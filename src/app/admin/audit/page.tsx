@@ -31,7 +31,8 @@ const PAGE_SIZE = 25;
 const COLS = 6;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const KEY_OPTIONS_LIMIT = 50;
-const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a desktop (1280 px) up. */
+const XL = "hidden xl:table-cell";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -314,7 +315,7 @@ async function AuditRows({
                   </div>
                 </details>
               </TableCell>
-              <TableCell className={`${WIDE} max-w-0`}>
+              <TableCell className={`${XL} max-w-0`}>
                 {r.apiKey ? (
                   <Link
                     href={`${PATH}?key=${r.apiKey.id}`}
@@ -334,10 +335,10 @@ async function AuditRows({
                 </StatusWord>
                 {r.reason && <span className="mt-1 block text-sm text-muted-foreground">{auditReasonLabel(vocab.auditReason, r.reason)}</span>}
               </TableCell>
-              <TableCell className={`${WIDE} text-right font-label text-sm text-muted-foreground`}>
+              <TableCell className={`${XL} text-right font-label text-sm text-muted-foreground`}>
                 {r.latencyMs === null ? "—" : fill(words.ms, { ms: formatNumber(r.latencyMs) })}
               </TableCell>
-              <TableCell className="hidden max-w-0 lg:table-cell">
+              <TableCell className={`${XL} max-w-0`}>
                 <span className="font-label text-xs">{r.ip ?? "—"}</span>
                 {r.userAgent && (
                   <span className="mt-0.5 block truncate text-xs text-muted-foreground" title={r.userAgent}>
@@ -368,10 +369,10 @@ function AuditTable({ labels, children }: { labels: AdminDictionary; children: R
         <TableRow>
           <TableHead className="w-28 md:w-40">{columns.when}</TableHead>
           <TableHead>{columns.tool}</TableHead>
-          <TableHead className={`${WIDE} w-48`}>{columns.key}</TableHead>
+          <TableHead className={`${XL} w-48`}>{columns.key}</TableHead>
           <TableHead className="w-32 md:w-48">{columns.status}</TableHead>
-          <TableHead className={`${WIDE} w-24 text-right`}>{columns.latency}</TableHead>
-          <TableHead className="hidden w-48 lg:table-cell">{columns.origin}</TableHead>
+          <TableHead className={`${XL} w-24 text-right`}>{columns.latency}</TableHead>
+          <TableHead className={`${XL} w-48`}>{columns.origin}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>

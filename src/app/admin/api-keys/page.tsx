@@ -34,7 +34,9 @@ export const dynamic = "force-dynamic";
 const PATH = "/admin/api-keys";
 const PAGE_SIZE = 20;
 const COLS = 7;
-const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a laptop (1024 px) and from a desktop (1280 px) up. */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -248,7 +250,7 @@ async function KeysRows({
                     {fill(words.createdOn, { date: formatDateTime(r.createdAt) })}
                   </span>
                 </TableCell>
-                <TableCell className={`${WIDE} font-label text-sm whitespace-nowrap`}>{r.keyPrefix}…</TableCell>
+                <TableCell className={`${LG} font-label text-sm whitespace-nowrap`}>{r.keyPrefix}…</TableCell>
                 <TableCell className="hidden xl:table-cell">
                   {r.scopes.length === 0 ? (
                     <span className="text-muted-foreground">—</span>
@@ -266,10 +268,10 @@ async function KeysRows({
                     </ul>
                   )}
                 </TableCell>
-                <TableCell className={`${WIDE} font-label text-xs`}>
+                <TableCell className={`${XL} font-label text-xs`}>
                   {r.lastUsedAt ? formatDateTime(r.lastUsedAt) : words.never}
                 </TableCell>
-                <TableCell className={`${WIDE} font-label text-xs`}>
+                <TableCell className={`${LG} font-label text-xs`}>
                   {r.expiresAt ? formatDateTime(r.expiresAt) : words.noExpiry}
                 </TableCell>
                 <TableCell>
@@ -311,10 +313,10 @@ function KeysTable({ labels, children }: { labels: AdminDictionary; children: Re
       <TableHeader>
         <TableRow>
           <TableHead>{columns.name}</TableHead>
-          <TableHead className={`${WIDE} w-32`}>{columns.prefix}</TableHead>
+          <TableHead className={`${LG} w-32`}>{columns.prefix}</TableHead>
           <TableHead className="hidden w-52 xl:table-cell">{columns.scopes}</TableHead>
-          <TableHead className={`${WIDE} w-32`}>{columns.lastUsed}</TableHead>
-          <TableHead className={`${WIDE} w-32`}>{columns.expires}</TableHead>
+          <TableHead className={`${XL} w-32`}>{columns.lastUsed}</TableHead>
+          <TableHead className={`${LG} w-32`}>{columns.expires}</TableHead>
           <TableHead className="w-32">{columns.status}</TableHead>
           <TableHead className="w-28 text-right">{columns.actions}</TableHead>
         </TableRow>

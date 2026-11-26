@@ -55,7 +55,9 @@ export const dynamic = "force-dynamic";
 
 const PATH = "/admin/jobs";
 const COLS = 7;
-const WIDE = "hidden md:table-cell";
+/** Columns that only fit from a laptop (1024 px) and from a desktop (1280 px) up. */
+const LG = "hidden lg:table-cell";
+const XL = "hidden xl:table-cell";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -260,7 +262,7 @@ function JobRow({ row, format, labels }: { row: JobListRow; format: Format; labe
         )}
       </TableCell>
 
-      <TableCell className={`${WIDE} max-w-0`}>
+      <TableCell className={`${LG} max-w-0`}>
         <span className="block truncate">{verdict ?? vocab.verdict.none}</span>
         {hit?.eliminationReason && (
           <span className="block text-sm text-muted-foreground" title={hit.eliminationReason}>
@@ -275,20 +277,20 @@ function JobRow({ row, format, labels }: { row: JobListRow; format: Format; labe
         )}
       </TableCell>
 
-      <TableCell className={`${WIDE} max-w-0`}>
+      <TableCell className={`${XL} max-w-0`}>
         <span className="block truncate" title={vocab.visaHint[row.sponsorship]}>
           {vocab.visa[row.sponsorship]}
         </span>
       </TableCell>
 
-      <TableCell className={`${WIDE} font-label text-xs whitespace-nowrap`}>
+      <TableCell className={`${XL} font-label text-xs whitespace-nowrap`}>
         {formatDate(row.postedAt)}
         {hit?.radarScan?.scannedAt && (
           <div className="text-muted-foreground">{fill(words.scannedOn, { date: formatDate(hit.radarScan.scannedAt) })}</div>
         )}
       </TableCell>
 
-      <TableCell className={`${WIDE} max-w-0`}>
+      <TableCell className={`${XL} max-w-0`}>
         {application ? (
           <Link href={`/admin/applications/${application.id}`} className="block min-w-0 hover:underline" title={application.folderName}>
             <StageLabel stage={application.stage} words={vocab} />
@@ -348,10 +350,10 @@ function JobsTable({
         <TableRow>
           {head("title", columns.job, "w-auto", "asc")}
           {head("score", columns.score, "w-20 md:w-24", "desc")}
-          <TableHead className={`${WIDE} w-48`}>{columns.verdict}</TableHead>
-          <TableHead className={`${WIDE} w-48`}>{columns.visa}</TableHead>
-          {head("posted", columns.posted, `${WIDE} w-36`, "desc")}
-          <TableHead className={`${WIDE} w-44`}>{columns.funnel}</TableHead>
+          <TableHead className={`${LG} w-48`}>{columns.verdict}</TableHead>
+          <TableHead className={`${XL} w-48`}>{columns.visa}</TableHead>
+          {head("posted", columns.posted, `${XL} w-36`, "desc")}
+          <TableHead className={`${XL} w-44`}>{columns.funnel}</TableHead>
           <TableHead className="w-24 text-right md:w-28">{columns.actions}</TableHead>
         </TableRow>
       </TableHeader>
