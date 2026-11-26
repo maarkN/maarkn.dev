@@ -65,17 +65,27 @@ describe("the document of the backoffice", () => {
     expect((await generateMetadata()).robots).toEqual({ index: false, follow: false });
   });
 
-  it("has one place for notices, in the language of the screens that use it", async () => {
-    jar = { "admin-locale": "en" };
-    const notices = (await document()).querySelectorAll(`section[aria-label^="${ptBR.admin.shell.notices}"]`);
-    expect(notices).toHaveLength(1);
-    expect(notices[0].closest("[lang]")?.getAttribute("lang")).toBe("pt-BR");
+  it("has one place for notices, named in the language of the interface", async () => {
+    // Each notice says the language of its own words (`useNotify`): the place is
+    // the document's, in the language of the request.
+    for (const [locale, texts] of [["pt-BR", ptBR], ["en", en]] as const) {
+      jar = { "admin-locale": locale };
+      const sent = await document();
+      const notices = sent.querySelectorAll(`section[aria-label^="${texts.admin.shell.notices}"]`);
+      expect(notices).toHaveLength(1);
+      expect(notices[0].closest("[lang]")?.getAttribute("lang")).toBe(locale);
+      expect(sent.querySelectorAll("section[aria-live]")).toHaveLength(1);
+    }
   });
 });
 
 describe("the shell of a screen", () => {
-  const screen = async () =>
-    document(<TooltipProvider>{await AdminShell({ email: "marco@example.com", children: <p id="screen">Vagas</p> })}</TooltipProvider>);
+  const screen = async (translated = false) =>
+    document(
+      <TooltipProvider>
+        {await AdminShell({ email: "marco@example.com", translated, children: <p id="screen">Vagas</p> })}
+      </TooltipProvider>,
+    );
 
   it("is in the language of the request, and says the screen is still in Portuguese", async () => {
     jar = { "admin-locale": "en" };
@@ -83,6 +93,13 @@ describe("the shell of a screen", () => {
     expect(sent.querySelector("aside nav")?.getAttribute("aria-label")).toBe(en.admin.shell.menu);
     expect(sent.querySelector("#screen")?.closest("[lang]")?.getAttribute("lang")).toBe("pt-BR");
     expect(sent.querySelector("aside")?.closest("[lang]")?.getAttribute("lang")).toBe("en");
+  });
+
+  it("speaks the language of the interface once the screen is translated", async () => {
+    for (const locale of ["en", "pt-BR"] as const) {
+      jar = { "admin-locale": locale };
+      expect((await screen(true)).querySelector("#screen")?.closest("[lang]")?.getAttribute("lang")).toBe(locale);
+    }
   });
 
   it("comes with the menu as it was left", async () => {

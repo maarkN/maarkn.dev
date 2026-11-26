@@ -326,7 +326,7 @@ export async function listJobMarkets(): Promise<string[]> {
       .filter((market): market is string => Boolean(market))
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list job markets failed", err);
+    console.error("[admin] list job markets failed", safeDbError(err));
     return [];
   }
 }
@@ -349,7 +349,7 @@ export async function listRadarVerdicts(): Promise<string[]> {
       .filter((verdict): verdict is string => Boolean(verdict))
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list radar verdicts failed", err);
+    console.error("[admin] list radar verdicts failed", safeDbError(err));
     return [];
   }
 }
@@ -373,7 +373,7 @@ export async function countUnmappedRadarHits(): Promise<number> {
   try {
     return await db.radarHit.count({ where: { jobId: null } });
   } catch (err) {
-    console.error("[admin] count unmapped radar hits failed", err);
+    console.error("[admin] count unmapped radar hits failed", safeDbError(err));
     return 0;
   }
 }

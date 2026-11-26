@@ -3,27 +3,7 @@
  * de `Job`.
  *
  * Este módulo é importável pelo CLIENTE (a toolbar usa os rótulos) e por isso
- * não toca no Prisma nem em `@/lib/db`. O `import type { StatusStyles }` é
- * apagado na compilação.
- *
- * ── Por que os vereditos NÃO são um enum ──────────────────────────────────
- * `RadarHit.verdict` e `DescriptionVerification.verdict` são `String` no
- * schema, de propósito: são dois vocabulários paralelos que vêm do vault e
- * ainda não foram inventariados (o comentário do `schema.prisma` registra isso
- * em `DescriptionVerification`). O que existe hoje na base é
- * `kept | eliminated | shortlisted` no radar e `confirmado | divergente |
- * inacessível | expirada` na verificação — mas a varredura real usa outros
- * rótulos (`top_find`, `approved`, `stretch`).
- *
- * A consequência de projeto: o mapa abaixo é uma TRADUÇÃO, não uma validação.
- * Um veredito desconhecido nunca some da tela nem quebra o filtro — o
- * `StatusBadge` cai no `variant="outline"` com a chave crua, e as opções do
- * `<Select>` são lidas do banco (`listRadarVerdicts`), não desta lista.
- */
-
-import type { StatusStyles } from "@/components/admin/status-badge";
-
-/**
+ * não toca no Prisma nem em `@/lib/db`. O `/**
  * Sentinela do filtro "vaga sem veredito de radar" (o Radix proíbe `value=""`).
  * Colide com um veredito que se chamasse literalmente `none` — improvável o
  * bastante para não pagar o preço de um parâmetro de URL a mais, e a colisão
@@ -31,95 +11,16 @@ import type { StatusStyles } from "@/components/admin/status-badge";
  */
 export const RADAR_NO_VERDICT = "none";
 
-export const RADAR_VERDICT_LABELS: Record<string, string> = {
-  top_find: "Achado top",
-  shortlisted: "Selecionada",
-  approved: "Aprovada",
-  kept: "Mantida",
-  stretch: "Stretch",
-  eliminated: "Eliminada",
-  not_verified: "Não verificada",
-};
+/** The verdicts that have a word in the dictionary; any other shows as it is. */
+export const RADAR_VERDICTS = ["top_find", "shortlisted", "approved", "kept", "stretch", "eliminated", "not_verified"] as const;
 
-/**
- * A cor codifica a DECISÃO, não o rótulo: verde = entra no funil, âmbar =
- * fica em observação, vermelho = caiu numa regra eliminatória.
- */
-export const RADAR_VERDICT_STYLES: StatusStyles = {
-  top_find: {
-    label: RADAR_VERDICT_LABELS.top_find,
-    className: "text-ok",
-  },
-  shortlisted: {
-    label: RADAR_VERDICT_LABELS.shortlisted,
-    className: "text-ok",
-  },
-  approved: {
-    label: RADAR_VERDICT_LABELS.approved,
-    className: "text-ok",
-  },
-  kept: {
-    label: RADAR_VERDICT_LABELS.kept,
-    className: "text-warn",
-  },
-  stretch: {
-    label: RADAR_VERDICT_LABELS.stretch,
-    className: "text-warn",
-  },
-  eliminated: {
-    label: RADAR_VERDICT_LABELS.eliminated,
-    className: "text-destructive",
-  },
-  not_verified: {
-    label: RADAR_VERDICT_LABELS.not_verified,
-    className: "text-ink-3",
-  },
-};
-
-export function radarVerdictLabel(value: string | null | undefined): string {
-  if (!value) return "sem veredito";
-  return RADAR_VERDICT_LABELS[value] ?? value;
-}
-
-/* ── verificação de descrição (vocabulário 3, em pt-BR no vault) ──────────── */
-
-export const VERIFICATION_VERDICT_STYLES: StatusStyles = {
-  confirmado: {
-    label: "Confirmada",
-    className: "text-ok",
-  },
-  divergente: {
-    label: "Divergente",
-    className: "text-warn",
-  },
-  inacessível: {
-    label: "Inacessível",
-    className: "text-ink-3",
-  },
-  expirada: {
-    label: "Expirada",
-    className: "text-destructive",
-  },
-};
+/** Verdicts of the check of a description against its source (vocabulary 3, in pt-BR in the vault). */
+export const VERIFICATION_VERDICTS = ["confirmado", "divergente", "inacessível", "expirada"] as const;
 
 /* ── vínculo com o funil ──────────────────────────────────────────────────── */
 
-/**
- * A pergunta de triagem do radar: "o que ainda não virou candidatura?".
- * `unlinked` é o filtro que transforma esta tela numa fila de trabalho.
- */
 export const JOB_LINK_KEYS = ["unlinked", "linked"] as const;
 export type JobLinkFilter = (typeof JOB_LINK_KEYS)[number];
-
-export const JOB_LINK_LABELS: Record<JobLinkFilter, string> = {
-  unlinked: "Sem candidatura",
-  linked: "Com candidatura",
-};
-
-export const JOB_LINK_HINTS: Record<JobLinkFilter, string> = {
-  unlinked: "Vagas do radar que ainda não entraram no funil — a fila de trabalho.",
-  linked: "Vagas que já têm candidatura aberta.",
-};
 
 export function isJobLinkFilter(value: string): value is JobLinkFilter {
   return (JOB_LINK_KEYS as readonly string[]).includes(value);
@@ -127,30 +28,8 @@ export function isJobLinkFilter(value: string): value is JobLinkFilter {
 
 /* ── modalidade e contrato (texto livre no schema, lista curada aqui) ─────── */
 
-const WORK_MODE_LABELS: Record<string, string> = {
-  remote: "Remoto",
-  hybrid: "Híbrido",
-  onsite: "Presencial",
-};
-
-const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
-  full_time: "CLT/full-time",
-  contract: "Contrato",
-  b2b: "B2B",
-  freelance: "Freelance",
-};
-
-export function workModeLabel(value: string | null | undefined): string | null {
-  if (!value) return null;
-  return WORK_MODE_LABELS[value] ?? value;
-}
-
-export function employmentTypeLabel(
-  value: string | null | undefined,
-): string | null {
-  if (!value) return null;
-  return EMPLOYMENT_TYPE_LABELS[value] ?? value;
-}
+export const WORK_MODES = ["remote", "hybrid", "onsite"] as const;
+export const EMPLOYMENT_TYPES = ["full_time", "contract", "b2b", "freelance"] as const;
 
 /* ── board de origem ──────────────────────────────────────────────────────── */
 

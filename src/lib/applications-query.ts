@@ -1,6 +1,7 @@
 import "server-only";
 import type { FunnelStage, Prisma, SponsorshipSignal } from "@prisma/client";
 import { db, dbConfigured } from "@/lib/db";
+import { safeDbError } from "@/lib/safe-error";
 import type { Sort } from "@/lib/admin/sort";
 import {
   FUNNEL_STAGE_PHASES,
@@ -299,7 +300,7 @@ export async function listApplications(args: {
     });
     return { rows, total, page, totalPages, failed: false };
   } catch (err) {
-    console.error("[admin] list applications failed", err);
+    console.error("[admin] list applications failed", safeDbError(err));
     return empty;
   }
 }
@@ -326,7 +327,7 @@ export async function listApplicationMarkets(): Promise<string[]> {
     }
     return [...markets].sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list application markets failed", err);
+    console.error("[admin] list application markets failed", safeDbError(err));
     return [];
   }
 }
@@ -346,7 +347,7 @@ export async function listApplicationSources(): Promise<string[]> {
       .filter((source): source is string => Boolean(source))
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
   } catch (err) {
-    console.error("[admin] list application sources failed", err);
+    console.error("[admin] list application sources failed", safeDbError(err));
     return [];
   }
 }

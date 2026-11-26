@@ -1372,7 +1372,7 @@
         "content:read": "Read experiences, career projects, skills and posts",
         "content:write": "Create and update experiences and projects",
         "profile:read": "Read profile facts (salary target, references, rules R1 to R8)",
-        "resume:generate": "Generate a résumé and a cover letter from a job"
+        "resume:generate": "Generate a resume and a cover letter from a job"
       },
       "expiry": {
         "7": "7 days",
@@ -1800,7 +1800,7 @@
     },
     "generator": {
       "title": "CV generator",
-      "description": "Paste the description of a job: the search brings the closest passages of your CV and dossiers, and the generator writes the résumé, the cover letter and the screening answers.",
+      "description": "Paste the description of a job: the search brings the closest passages of your CV and dossiers, and the generator writes the resume, the cover letter and the screening answers.",
       "form": {
         "label": "Generate materials for a job",
         "roleTitle": "Job",
@@ -1826,7 +1826,7 @@
       "result": {
         "sources": "Sources: {sources}",
         "open": "Open the print version",
-        "resume": "Résumé",
+        "resume": "Resume",
         "coverLetter": "Cover letter",
         "screening": "Screening answers",
         "copy": "Copy {what}",

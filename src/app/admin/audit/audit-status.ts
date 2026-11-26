@@ -19,6 +19,35 @@ export const AUDIT_STATUS_TONES: Record<AuditStatus, string> = {
   error: "bg-destructive",
 };
 
+/**
+ * The reasons the MCP server writes (`src/lib/mcp/**`): authentication,
+ * authorisation and protocol, execution. They have words; an unknown one shows
+ * as it is.
+ */
+export const AUDIT_REASONS = [
+  "missing_header",
+  "malformed_header",
+  "malformed_key",
+  "unknown_key",
+  "revoked",
+  "expired",
+  "no_scopes",
+  "server_misconfigured",
+  "unavailable",
+  "missing_scope",
+  "unknown_tool",
+  "invalid_arguments",
+  "forbidden_argument",
+  "payload_too_large",
+  "invalid_json",
+  "bad_origin",
+  "method_not_allowed",
+  "rate_limited",
+  "audit_unavailable",
+  "tool_error",
+  "internal_error",
+] as const;
+
 export function auditReasonLabel(words: Record<string, string>, reason: string): string {
   return words[reason] ?? reason;
 }
